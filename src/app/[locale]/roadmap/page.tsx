@@ -30,12 +30,12 @@ import {
         },
         {
           key: "phase4",
-          completed_tasks: ["task1", "task2"],
+          completed_tasks: ["task1", "task2", "task4"],
           pending_tasks: ["pending_task1", "pending_task3"]
         },
         {
           key: "phase5",
-          completed_tasks: ["task1", "task2"],
+          completed_tasks: ["task1", "task2", "task3"],
           pending_tasks: []
         },
         {

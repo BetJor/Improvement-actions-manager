@@ -178,6 +178,7 @@
         "tasks": {
           "task1": "Crear un flujo de Genkit para obtener los grupos de un usuario (con datos de muestra).",
           "task2": "Implementar el planificador de workflows inteligente para generar planes de trabajo dinámicos.",
+          "task4": "Implementar un asistente para mejorar la redacción de observaciones.",
           "pending_task1": "Pendiente: Conectar el flujo de Genkit a la API real de Google Groups.",
           "pending_task3": "Pendiente: Crear un asistente de IA para el análisis de causas."
         }
@@ -187,7 +188,8 @@
         "duration": "Estimado: 1-2 días",
         "tasks": {
           "task1": "Desarrollar la página de configuración con pestañas para las tablas de datos maestros.",
-          "task2": "Implementar funcionalidades CRUD (Crear, Leer, Actualizar, Borrar) para los datos."
+          "task2": "Implementar funcionalidades CRUD (Crear, Leer, Actualizar, Borrar) para los datos.",
+          "task3": "Crear la página de configuración de los prompts de la IA."
         }
       },
       "phase6": {

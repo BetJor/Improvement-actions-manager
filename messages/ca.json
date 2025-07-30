@@ -178,6 +178,7 @@
         "tasks": {
           "task1": "Crear un flux de Genkit per a obtenir els grups d'un usuari (amb dades de mostra).",
           "task2": "Implementar el planificador de workflows intel·ligent per a generar planes de treball dinàmics.",
+          "task4": "Implementar un assistent per a millorar la redacció d'observacions.",
           "pending_task1": "Pendent: Connectar el flux de Genkit a l'API real de Google Groups.",
           "pending_task3": "Pendent: Crear un assistent d'IA per a l'anàlisi de causes."
         }
@@ -187,7 +188,8 @@
         "duration": "Estimat: 1-2 dies",
         "tasks": {
           "task1": "Desenvolupar la pàgina de configuració amb pestanyes per a les taules de dades mestres.",
-          "task2": "Implementar funcionalitats CRUD (Crear, Llegir, Actualitzar, Esborrar) per a les dades."
+          "task2": "Implementar funcionalitats CRUD (Crear, Llegir, Actualitzar, Esborrar) per a les dades.",
+          "task3": "Crear la pàgina de configuració dels prompts de l'IA."
         }
       },
        "phase6": {
