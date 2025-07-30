@@ -134,62 +134,52 @@
   "RoadmapPage": {
     "title": "Roadmap del Proyecto",
     "description": "Una visión general de las fases completadas y las tareas pendientes.",
-    "completed": {
-      "title": "Fases Completadas",
-      "description": "Los grandes hitos de desarrollo que ya se han alcanzado.",
-      "phases": {
-        "phase1": {
-          "title": "Fase 1: Configuración Inicial y Estructura",
-          "duration": "Estimado: 1-2 días",
-          "tasks": {
-            "task1": "Configurar proyecto Next.js con TypeScript y Tailwind CSS.",
-            "task2": "Estructurar la aplicación con el directorio App e i18n.",
-            "task3": "Implementar la disposición principal, incluyendo la barra lateral y la cabecera."
-          }
-        },
-        "phase2": {
-          "title": "Fase 2: Autenticación y Gestión de Usuarios",
-          "duration": "Estimado: 2-3 días",
-          "tasks": {
-            "task1": "Integrar Firebase Authentication para el inicio de sesión con Google.",
-            "task2": "Crear rutas protegidas y gestionar las sesiones de los usuarios."
-          }
-        },
-        "phase3": {
-          "title": "Fase 3: Funcionalidad Principal (Acciones de Mejora)",
-          "duration": "Estimado: 3-5 días",
-          "tasks": {
-            "task1": "Crear la página para ver, filtrar y ordenar las acciones de mejora.",
-            "task2": "Desarrollar el formulario para crear nuevas acciones de mejora.",
-            "task3": "Implementar la página de detalle para cada acción de mejora."
-          }
-        },
-        "phase4": {
-          "title": "Fase 4: Integración de IA con Genkit",
-          "duration": "Estimado: 2-3 días",
-          "tasks": {
-            "task1": "Crear un flujo de Genkit para obtener los grupos de un usuario (con datos de muestra).",
-            "task2": "Implementar el planificador de workflows inteligente para generar planes de trabajo dinámicos."
-          }
-        },
-        "phase5": {
-          "title": "Fase 5: Gestión de Datos Maestros (CRUD)",
-          "duration": "Estimado: 1-2 días",
-          "tasks": {
-            "task1": "Desarrollar la página de configuración con pestañas para las tablas de datos maestros.",
-            "task2": "Implementar funcionalidades CRUD (Crear, Leer, Actualizar, Borrar) para los datos."
-          }
+    "phases": {
+      "title": "Fases del Desarrollo",
+      "description": "Los grandes hitos de desarrollo que ya se han alcanzado y los que quedan pendientes.",
+      "phase1": {
+        "title": "Fase 1: Configuración Inicial y Estructura",
+        "duration": "Estimado: 1-2 días",
+        "tasks": {
+          "task1": "Configurar proyecto Next.js con TypeScript y Tailwind CSS.",
+          "task2": "Estructurar la aplicación con el directorio App e i18n.",
+          "task3": "Implementar la disposición principal, incluyendo la barra lateral y la cabecera."
         }
-      }
-    },
-    "backlog": {
-      "title": "Tareas Pendientes (Backlog)",
-      "description": "Esta es una lista de tareas de desarrollo pendientes para mejorar la aplicación.",
-      "col": {
-        "id": "ID Tarea",
-        "title": "Título",
-        "description": "Descripción",
-        "priority": "Prioridad"
+      },
+      "phase2": {
+        "title": "Fase 2: Autenticación y Gestión de Usuarios",
+        "duration": "Estimado: 2-3 días",
+        "tasks": {
+          "task1": "Integrar Firebase Authentication para el inicio de sesión con Google.",
+          "task2": "Crear rutas protegidas y gestionar las sesiones de los usuarios."
+        }
+      },
+      "phase3": {
+        "title": "Fase 3: Funcionalidad Principal (Acciones de Mejora)",
+        "duration": "Estimado: 3-5 días",
+        "tasks": {
+          "task1": "Crear la página para ver, filtrar y ordenar las acciones de mejora.",
+          "task2": "Desarrollar el formulario para crear nuevas acciones de mejora.",
+          "task3": "Implementar la página de detalle para cada acción de mejora.",
+          "pending_task2": "Pendiente: Implementar formularios de Análisis y Verificación para interactuar con el workflow."
+        }
+      },
+      "phase4": {
+        "title": "Fase 4: Integración de IA con Genkit",
+        "duration": "Estimado: 2-3 días",
+        "tasks": {
+          "task1": "Crear un flujo de Genkit para obtener los grupos de un usuario (con datos de muestra).",
+          "task2": "Implementar el planificador de workflows inteligente para generar planes de trabajo dinámicos.",
+          "pending_task1": "Pendiente: Conectar el flujo de Genkit a la API real de Google Groups."
+        }
+      },
+      "phase5": {
+        "title": "Fase 5: Gestión de Datos Maestros (CRUD)",
+        "duration": "Estimado: 1-2 días",
+        "tasks": {
+          "task1": "Desarrollar la página de configuración con pestañas para las tablas de datos maestros.",
+          "task2": "Implementar funcionalidades CRUD (Crear, Leer, Actualizar, Borrar) para los datos."
+        }
       }
     }
   },

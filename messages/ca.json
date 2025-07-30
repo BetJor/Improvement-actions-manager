@@ -134,62 +134,52 @@
   "RoadmapPage": {
     "title": "Roadmap del Projecte",
     "description": "Una visió general de les fases completades i les tasques pendents.",
-    "completed": {
-      "title": "Fases Completades",
-      "description": "Les grans fites de desenvolupament que ja s'han assolit.",
-      "phases": {
-        "phase1": {
-          "title": "Fase 1: Configuració Inicial i Estructura",
-          "duration": "Estimat: 1-2 dies",
-          "tasks": {
-            "task1": "Configurar projecte Next.js amb TypeScript i Tailwind CSS.",
-            "task2": "Estructurar l'aplicació amb el directori App i i18n.",
-            "task3": "Implementar la disposició principal, incloent-hi la barra lateral i la capçalera."
-          }
-        },
-        "phase2": {
-          "title": "Fase 2: Autenticació i Gestió d'Usuaris",
-          "duration": "Estimat: 2-3 dies",
-          "tasks": {
-            "task1": "Integrar Firebase Authentication per a l'inici de sessió amb Google.",
-            "task2": "Crear rutes protegides i gestionar les sessions dels usuaris."
-          }
-        },
-        "phase3": {
-          "title": "Fase 3: Funcionalitat Principal (Accions de Millora)",
-          "duration": "Estimat: 3-5 dies",
-          "tasks": {
-            "task1": "Crear la pàgina per a veure, filtrar i ordenar les accions de millora.",
-            "task2": "Desenvolupar el formulari per a crear noves accions de millora.",
-            "task3": "Implementar la pàgina de detall per a cada acció de millora."
-          }
-        },
-        "phase4": {
-          "title": "Fase 4: Integració d'IA amb Genkit",
-          "duration": "Estimat: 2-3 dies",
-          "tasks": {
-            "task1": "Crear un flux de Genkit per a obtenir els grups d'un usuari (amb dades de mostra).",
-            "task2": "Implementar el planificador de workflows intel·ligent per a generar plans de treball dinàmics."
-          }
-        },
-        "phase5": {
-          "title": "Fase 5: Gestió de Dades Mestres (CRUD)",
-          "duration": "Estimat: 1-2 dies",
-          "tasks": {
-            "task1": "Desenvolupar la pàgina de configuració amb pestanyes per a les taules de dades mestres.",
-            "task2": "Implementar funcionalitats CRUD (Crear, Llegir, Actualitzar, Esborrar) per a les dades."
-          }
+    "phases": {
+      "title": "Fases del Desenvolupament",
+      "description": "Les grans fites de desenvolupament que ja s'han assolit i les que queden pendents.",
+      "phase1": {
+        "title": "Fase 1: Configuració Inicial i Estructura",
+        "duration": "Estimat: 1-2 dies",
+        "tasks": {
+          "task1": "Configurar projecte Next.js amb TypeScript i Tailwind CSS.",
+          "task2": "Estructurar l'aplicació amb el directori App i i18n.",
+          "task3": "Implementar la disposició principal, incloent-hi la barra lateral i la capçalera."
         }
-      }
-    },
-    "backlog": {
-      "title": "Tasques Pendents (Backlog)",
-      "description": "Aquesta és una llista de tasques de desenvolupament pendents per a millorar l'aplicació.",
-      "col": {
-        "id": "ID Tasca",
-        "title": "Títol",
-        "description": "Descripció",
-        "priority": "Prioritat"
+      },
+      "phase2": {
+        "title": "Fase 2: Autenticació i Gestió d'Usuaris",
+        "duration": "Estimat: 2-3 dies",
+        "tasks": {
+          "task1": "Integrar Firebase Authentication per a l'inici de sessió amb Google.",
+          "task2": "Crear rutes protegides i gestionar les sessions dels usuaris."
+        }
+      },
+      "phase3": {
+        "title": "Fase 3: Funcionalitat Principal (Accions de Millora)",
+        "duration": "Estimat: 3-5 dies",
+        "tasks": {
+          "task1": "Crear la pàgina per a veure, filtrar i ordenar les accions de millora.",
+          "task2": "Desenvolupar el formulari per a crear noves accions de millora.",
+          "task3": "Implementar la pàgina de detall per a cada acció de millora.",
+          "pending_task2": "Pendent: Implementar formularis d'Anàlisi i Verificació per interactuar amb el workflow."
+        }
+      },
+      "phase4": {
+        "title": "Fase 4: Integració d'IA amb Genkit",
+        "duration": "Estimat: 2-3 dies",
+        "tasks": {
+          "task1": "Crear un flux de Genkit per a obtenir els grups d'un usuari (amb dades de mostra).",
+          "task2": "Implementar el planificador de workflows intel·ligent per a generar plans de treball dinàmics.",
+          "pending_task1": "Pendent: Connectar el flux de Genkit a l'API real de Google Groups."
+        }
+      },
+      "phase5": {
+        "title": "Fase 5: Gestió de Dades Mestres (CRUD)",
+        "duration": "Estimat: 1-2 dies",
+        "tasks": {
+          "task1": "Desenvolupar la pàgina de configuració amb pestanyes per a les taules de dades mestres.",
+          "task2": "Implementar funcionalitats CRUD (Crear, Llegir, Actualitzar, Esborrar) per a les dades."
+        }
       }
     }
   },
