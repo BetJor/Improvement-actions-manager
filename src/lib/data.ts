@@ -21,8 +21,104 @@ export const groups: UserGroup[] = [
   { id: 'rsc-committee@example.com', name: 'Comitè RSC', userIds: ['user-3', 'user-4'] },
 ];
 
+const today = new Date();
+
+const mockActions: ImprovementAction[] = [
+    {
+      id: "AM-24001",
+      title: "Optimització del procés de facturació",
+      type: "Correctiva",
+      status: "Pendiente Análisis",
+      description: "S'ha detectat un retard significatiu en el cicle de facturació que afecta el flux de caixa. Cal analitzar les causes i proposar una solució.",
+      creator: users[2],
+      responsibleGroupId: groups[0].id,
+      responsibleUser: users[1],
+      creationDate: format(subDays(today, 15), 'dd/MM/yyyy'),
+      analysisDueDate: format(subDays(today, -15), 'dd/MM/yyyy'),
+      implementationDueDate: format(subDays(today, -45), 'dd/MM/yyyy'),
+      closureDueDate: format(subDays(today, -60), 'dd/MM/yyyy'),
+      analysis: {
+        causes: "La introducció manual de dades i la manca d'un sistema centralitzat generen colls d'ampolla i errors humans.",
+        proposedAction: "Implementar un programari de facturació automatitzat i integrar-lo amb el CRM actual. Formar el personal sobre el nou sistema.",
+        responsible: users[1],
+        date: format(subDays(today, 10), 'dd/MM/yyyy')
+      }
+    },
+    {
+      id: "AM-24002",
+      title: "Actualització de la política de seguretat",
+      type: "ACSGSI",
+      status: "Pendiente Comprobación",
+      description: "Revisar i actualitzar la política de seguretat de la informació per a complir amb la nova normativa ISO 27001.",
+      creator: users[4],
+      responsibleGroupId: groups[1].id,
+      creationDate: format(subDays(today, 40), 'dd/MM/yyyy'),
+      analysisDueDate: format(subDays(today, 25), 'dd/MM/yyyy'),
+      implementationDueDate: format(subDays(today, -20), 'dd/MM/yyyy'),
+      closureDueDate: format(subDays(today, -35), 'dd/MM/yyyy')
+    },
+    {
+        id: "AM-24003",
+        title: "Millora del temps de resposta a tiquets de suport",
+        type: "SAU",
+        status: "Finalizada",
+        description: "El temps mitjà de primera resposta a les consultes dels clients excedeix l'objectiu de 4 hores.",
+        creator: users[2],
+        responsibleGroupId: groups[2].id,
+        creationDate: format(subDays(today, 60), 'dd/MM/yyyy'),
+        analysisDueDate: format(subDays(today, 45), 'dd/MM/yyyy'),
+        implementationDueDate: format(subDays(today, 15), 'dd/MM/yyyy'),
+        closureDueDate: format(subDays(today, 0), 'dd/MM/yyyy'),
+        analysis: {
+          causes: "Distribució de càrrega de treball desigual entre els agents i manca de respostes predefinides per a consultes comunes.",
+          proposedAction: "Implementar un sistema d'assignació automàtica de tiquets i crear una base de coneixement amb plantilles de resposta.",
+          responsible: users[0],
+          date: format(subDays(today, 55), 'dd/MM/yyyy')
+        },
+        verification: {
+          notes: "El temps de resposta mitjà s'ha reduït a 2.5 hores.",
+          isCompliant: true,
+          date: format(subDays(today, 10), 'dd/MM/yyyy')
+        },
+        closure: {
+          notes: "L'acció es considera eficaç i es tanca.",
+          isCompliant: true,
+          date: format(subDays(today, 1), 'dd/MM/yyyy')
+        }
+      },
+      {
+        id: "AM-24004",
+        title: "No conformitat en l'auditoria interna",
+        type: "IV",
+        status: "Pendiente de Cierre",
+        description: "S'ha detectat una no conformitat menor en el procediment de control de documents durant l'última auditoria interna.",
+        creator: users[3],
+        responsibleGroupId: groups[3].id,
+        creationDate: format(subDays(today, 35), 'dd/MM/yyyy'),
+        analysisDueDate: format(subDays(today, 20), 'dd/MM/yyyy'),
+        implementationDueDate: format(subDays(today, 5), 'dd/MM/yyyy'),
+        closureDueDate: format(subDays(today, -10), 'dd/MM/yyyy')
+      },
+      {
+        id: "AM-24005",
+        title: "Pla de formació en gestió de riscos",
+        type: "ACRSC",
+        status: "Borrador",
+        description: "Esborrany per a definir un nou pla de formació anual per a tot el personal sobre la identificació i gestió de riscos operatius.",
+        creator: users[0],
+        responsibleGroupId: groups[4].id,
+        creationDate: format(subDays(today, 2), 'dd/MM/yyyy'),
+        analysisDueDate: format(subDays(today, -28), 'dd/MM/yyyy'),
+        implementationDueDate: format(subDays(today, -58), 'dd/MM/yyyy'),
+        closureDueDate: format(subDays(today, -73), 'dd/MM/yyyy')
+      }
+];
+
 // Funció per obtenir les dades de Firestore
 export const getActions = async (): Promise<ImprovementAction[]> => {
+    // TEMPORAL: Retornem mock data mentre s'activa l'API de Firestore.
+    return mockActions;
+    /*
     const actionsCol = collection(db, 'actions');
     const actionsSnapshot = await getDocs(actionsCol);
     const actionsList = actionsSnapshot.docs.map(doc => {
@@ -33,9 +129,14 @@ export const getActions = async (): Promise<ImprovementAction[]> => {
       return { id: doc.id, ...data } as ImprovementAction;
     });
     return actionsList;
+    */
 }
 
 export const getActionById = async (id: string): Promise<ImprovementAction | null> => {
+    // TEMPORAL: Retornem mock data mentre s'activa l'API de Firestore.
+    const action = mockActions.find(a => a.id === id) || null;
+    return action;
+    /*
     const actionDocRef = doc(db, 'actions', id);
     const actionDocSnap = await getDoc(actionDocRef);
 
@@ -46,4 +147,5 @@ export const getActionById = async (id: string): Promise<ImprovementAction | nul
     } else {
         return null;
     }
+    */
 }
