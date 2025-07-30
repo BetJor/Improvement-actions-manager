@@ -15,6 +15,7 @@
     "actions": "Acciones",
     "myGroups": "Mis Grupos",
     "settings": "Configuración",
+    "aiSettings": "Configuración IA",
     "roadmap": "Roadmap"
   },
   "ActionsPage": {
@@ -221,5 +222,16 @@
     "deleteConfirmationMessage": "Esta acción no se puede deshacer. Esto eliminará permanentemente el elemento.",
     "cancel": "Cancelar",
     "continue": "Continuar"
+  },
+  "AiSettingsPage": {
+    "title": "Configuración de la IA",
+    "description": "Gestiona los prompts y otros parámetros de los asistentes de Inteligencia Artificial.",
+    "form": {
+      "improvePrompt": {
+        "label": "Prompt de Mejora de Observaciones",
+        "placeholder": "Introduce aquí el prompt que usará la IA para mejorar las observaciones..."
+      },
+      "save": "Guardar Cambios"
+    }
   }
 }

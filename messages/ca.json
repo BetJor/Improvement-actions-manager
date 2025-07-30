@@ -15,6 +15,7 @@
     "actions": "Accions",
     "myGroups": "Els Meus Grups",
     "settings": "Configuració",
+    "aiSettings": "Configuració IA",
     "roadmap": "Roadmap"
   },
   "ActionsPage": {
@@ -176,7 +177,7 @@
         "duration": "Estimat: 2-3 dies",
         "tasks": {
           "task1": "Crear un flux de Genkit per a obtenir els grups d'un usuari (amb dades de mostra).",
-          "task2": "Implementar el planificador de workflows intel·ligent per a generar plans de treball dinàmics.",
+          "task2": "Implementar el planificador de workflows intel·ligent per a generar planes de treball dinàmics.",
           "pending_task1": "Pendent: Connectar el flux de Genkit a l'API real de Google Groups.",
           "pending_task3": "Pendent: Crear un assistent d'IA per a l'anàlisi de causes."
         }
@@ -221,5 +222,16 @@
     "deleteConfirmationMessage": "Aquesta acció no es pot desfer. Això eliminarà permanentment l'element.",
     "cancel": "Cancel·lar",
     "continue": "Continuar"
+  },
+  "AiSettingsPage": {
+    "title": "Configuració de l'IA",
+    "description": "Gestiona els prompts i altres paràmetres dels assistents d'Intel·ligència Artificial.",
+    "form": {
+      "improvePrompt": {
+        "label": "Prompt de Millora d'Observacions",
+        "placeholder": "Introdueix aquí el prompt que utilitzarà l'IA per a millorar les observacions..."
+      },
+      "save": "Desar Canvis"
+    }
   }
 }

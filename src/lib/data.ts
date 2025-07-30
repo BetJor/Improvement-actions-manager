@@ -262,3 +262,42 @@ export async function deleteMasterDataItem(collectionName: string, itemId: strin
     await deleteDoc(docRef);
 }
 
+
+// --- CRUD for AI Prompts ---
+const DEFAULT_IMPROVE_WRITING_PROMPT = `
+You are an expert in quality management systems. Your task is to convert the following text into a formal non-conformity description suitable for a formal report.
+
+The response should be structured, detailed, and professional. It must include:
+1.  A concise and descriptive title for the non-conformity.
+2.  A clear description of the finding.
+3.  An analysis of the potential risks and consequences (e.g., safety, compliance, etc.).
+4.  A mention of the immediate corrective action required or suggested.
+
+The response MUST be in the same language as the original text.
+
+Respond ONLY with the generated title in the 'title' field and the full detailed description in the 'description' field of the JSON output.
+
+Original text to convert:
+"{{text}}"
+`;
+
+
+export async function getPrompt(promptId: 'improveWriting'): Promise<string> {
+    const docRef = doc(db, 'app_settings', 'prompts');
+    const docSnap = await getDoc(docRef);
+
+    if (docSnap.exists() && docSnap.data()?.[promptId]) {
+        return docSnap.data()?.[promptId];
+    }
+    
+    // If it doesn't exist, return the default and don't write it to the DB
+    // It will be written on the first save from the settings page.
+    return DEFAULT_IMPROVE_WRITING_PROMPT;
+}
+
+export async function updatePrompt(promptId: 'improveWriting', newPrompt: string): Promise<void> {
+    const docRef = doc(db, 'app_settings', 'prompts');
+    // Use setDoc with merge: true to create the document if it doesn't exist
+    // or update the specific field if it does.
+    await setDoc(docRef, { [promptId]: newPrompt }, { merge: true });
+}

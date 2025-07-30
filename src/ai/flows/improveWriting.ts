@@ -8,6 +8,7 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
+import { getPrompt } from '@/lib/data';
 
 const ImproveWritingInputSchema = z.object({
   text: z.string().describe("The text to be improved."),
@@ -24,29 +25,6 @@ export async function improveWriting(input: ImproveWritingInput): Promise<Improv
   return improveWritingFlow(input);
 }
 
-const improveWritingPrompt = ai.definePrompt({
-    name: 'improveWritingPrompt',
-    input: { schema: ImproveWritingInputSchema },
-    output: { schema: ImproveWritingOutputSchema },
-    prompt: `
-      You are an expert in quality management systems. Your task is to convert the following text into a formal non-conformity description suitable for a formal report.
-
-      The response should be structured, detailed, and professional. It must include:
-      1.  A concise and descriptive title for the non-conformity.
-      2.  A clear description of the finding.
-      3.  An analysis of the potential risks and consequences (e.g., safety, compliance, etc.).
-      4.  A mention of the immediate corrective action required or suggested.
-
-      The response MUST be in the same language as the original text.
-      
-      Respond ONLY with the generated title in the 'title' field and the full detailed description in the 'description' field of the JSON output.
-
-      Original text to convert:
-      "{{text}}"
-    `,
-});
-
-
 const improveWritingFlow = ai.defineFlow(
   {
     name: 'improveWritingFlow',
@@ -54,6 +32,17 @@ const improveWritingFlow = ai.defineFlow(
     outputSchema: ImproveWritingOutputSchema,
   },
   async (input) => {
+    // Get the dynamic prompt from Firestore
+    const promptText = await getPrompt('improveWriting');
+
+    // Define the prompt dynamically
+    const improveWritingPrompt = ai.definePrompt({
+        name: 'improveWritingPrompt',
+        input: { schema: ImproveWritingInputSchema },
+        output: { schema: ImproveWritingOutputSchema },
+        prompt: promptText,
+    });
+    
     const { output } = await improveWritingPrompt(input);
     return output!;
   }
