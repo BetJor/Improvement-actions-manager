@@ -31,6 +31,7 @@ const improveWritingPrompt = ai.definePrompt({
         You are a professional writing assistant. Your task is to improve the following text.
         Correct any grammatical errors, improve clarity, and ensure a professional tone.
         Maintain the original meaning of the text.
+        The response MUST be in the same language as the original text.
         Respond ONLY with the improved text in the 'improvedText' field of the JSON output.
 
         Text to improve:
