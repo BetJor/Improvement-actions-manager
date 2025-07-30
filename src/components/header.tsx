@@ -1,5 +1,6 @@
 "use client"
-import { CircleUser, Menu } from "lucide-react"
+import { CircleUser, Menu, Users } from "lucide-react"
+import Link from "next/link"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -63,8 +64,14 @@ export function Header() {
             <DropdownMenuContent align="end">
                 <DropdownMenuLabel>{user ? user.displayName : t("myAccount")}</DropdownMenuLabel>
                 <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link href="/my-groups">
+                    <Users className="mr-2 h-4 w-4" />
+                    <span>{t("myGroups")}</span>
+                  </Link>
+                </DropdownMenuItem>
                 <DialogTrigger asChild>
-                <DropdownMenuItem>{t("settings")}</DropdownMenuItem>
+                  <DropdownMenuItem>{t("settings")}</DropdownMenuItem>
                 </DialogTrigger>
                 <DropdownMenuItem>{t("support")}</DropdownMenuItem>
                 <DropdownMenuSeparator />

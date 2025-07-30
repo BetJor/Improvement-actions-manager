@@ -2,6 +2,7 @@
   "Header": {
     "title": "Acciones de Mejora",
     "myAccount": "Mi Cuenta",
+    "myGroups": "Mis Grupos",
     "settings": "Configuración",
     "support": "Soporte",
     "logout": "Cerrar Sesión"
@@ -112,5 +113,14 @@
     "selectLanguage": "Selecciona un idioma",
     "catalan": "Catalán",
     "spanish": "Español"
+  },
+    "MyGroupsPage": {
+    "title": "Mis Grupos",
+    "description": "Estos son los grupos a los que perteneces.",
+    "col": {
+      "name": "Nombre del Grupo",
+      "id": "ID (Email del Grupo)"
+    },
+    "noGroups": "No perteneces a ningún grupo."
   }
 }

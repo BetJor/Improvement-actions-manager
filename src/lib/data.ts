@@ -1,4 +1,4 @@
-import type { ImprovementAction, User } from './types';
+import type { ImprovementAction, User, UserGroup } from './types';
 import { subDays, format } from 'date-fns';
 
 export const users: User[] = [
@@ -7,6 +7,16 @@ export const users: User[] = [
   { id: 'user-3', name: 'Laura Martinez', role: 'Creator', avatar: 'https://i.pravatar.cc/150?u=a04258114e29026702d', email: 'laura.martinez@example.com' },
   { id: 'user-4', name: 'Javier López', role: 'Committee', avatar: 'https://i.pravatar.cc/150?u=a042581f4e29026708c', email: 'javier.lopez@example.com' },
   { id: 'user-5', name: 'Sofía Hernandez', role: 'Admin', avatar: 'https://i.pravatar.cc/150?u=a0425e8ff4e29026704d', email: 'sofia.hernandez@example.com' },
+];
+
+export const groups: UserGroup[] = [
+  { id: 'finance@example.com', name: 'Departament Financer', userIds: ['user-1', 'user-2'] },
+  { id: 'it-security@example.com', name: 'Seguretat Informàtica', userIds: ['user-5'] },
+  { id: 'customer-support@example.com', name: 'Atenció al Client', userIds: ['user-1', 'user-3'] },
+  { id: 'quality-management@example.com', name: 'Gestió de Qualitat', userIds: ['user-2', 'user-4'] },
+  { id: 'risk-management@example.com', name: 'Gestió de Riscos', userIds: ['user-1', 'user-5'] },
+  { id: 'it-legacy-systems@example.com', name: 'Sistemes Legacy', userIds: ['user-5'] },
+  { id: 'rsc-committee@example.com', name: 'Comitè RSC', userIds: ['user-3', 'user-4'] },
 ];
 
 export const actions: ImprovementAction[] = [
@@ -144,4 +154,8 @@ export const getActions = async () => {
 export const getActionById = async (id: string) => {
     // await new Promise(resolve => setTimeout(resolve, 500));
     return actions.find(action => action.id === id) || null;
+}
+
+export const getGroupsForUser = async (userId: string) => {
+  return groups.filter(g => g.userIds.includes(userId));
 }

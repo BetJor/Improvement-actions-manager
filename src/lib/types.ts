@@ -25,6 +25,7 @@ export interface User {
 export interface UserGroup {
   id: string; // p.ex., l'email del Google Group
   name: string;
+  userIds: string[];
 }
 
 export interface ImprovementAction {

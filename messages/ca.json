@@ -2,6 +2,7 @@
   "Header": {
     "title": "Accions de Millora",
     "myAccount": "El Meu Compte",
+    "myGroups": "Els Meus Grups",
     "settings": "Configuració",
     "support": "Suport",
     "logout": "Tancar Sessió"
@@ -112,5 +113,14 @@
     "selectLanguage": "Selecciona un idioma",
     "catalan": "Català",
     "spanish": "Espanyol"
+  },
+  "MyGroupsPage": {
+    "title": "Els Meus Grups",
+    "description": "Aquests són els grups als quals pertanys.",
+    "col": {
+      "name": "Nom del Grup",
+      "id": "ID (Email del Grup)"
+    },
+    "noGroups": "No pertanys a cap grup."
   }
 }
