@@ -16,51 +16,6 @@ import {
   import { getTranslations } from "next-intl/server"
   import { CheckCircle2 } from "lucide-react"
 
-  const timeline = [
-    {
-      title: "Phase 1: Initial Setup & Structure",
-      duration: "Estimated: 1-2 days",
-      tasks: [
-        "Setup Next.js project with TypeScript and Tailwind CSS.",
-        "Structure the application with the App directory and i18n.",
-        "Implement the main layout, including the sidebar and header."
-      ],
-    },
-    {
-      title: "Phase 2: Authentication & User Management",
-      duration: "Estimated: 2-3 days",
-      tasks: [
-        "Integrate Firebase Authentication for Google sign-in.",
-        "Create protected routes and manage user sessions."
-      ],
-    },
-    {
-      title: "Phase 3: Core Functionality (Improvement Actions)",
-      duration: "Estimated: 3-5 days",
-      tasks: [
-        "Create the page to view, filter, and sort improvement actions.",
-        "Develop the form to create new improvement actions.",
-        "Implement the detail page for each improvement action."
-      ],
-    },
-    {
-      title: "Phase 4: AI Integration with Genkit",
-      duration: "Estimated: 2-3 days",
-      tasks: [
-        "Create a Genkit flow to get a user's groups (mocked).",
-        "Implement the intelligent workflow planner to generate dynamic work plans."
-      ],
-    },
-    {
-      title: "Phase 5: Master Data Management (CRUD)",
-      duration: "Estimated: 1-2 days",
-      tasks: [
-          "Develop the settings page with tabs for master data tables.",
-          "Implement CRUD (Create, Read, Update, Delete) functionalities for the data."
-      ],
-    }
-  ];
-  
   const backlogItems = [
     {
       id: "TASK-001",
@@ -80,6 +35,29 @@ import {
   export default async function RoadmapPage() {
     const t = await getTranslations("RoadmapPage")
   
+    const timeline = [
+        {
+          key: "phase1",
+          tasks: ["task1", "task2", "task3"]
+        },
+        {
+          key: "phase2",
+          tasks: ["task1", "task2"]
+        },
+        {
+          key: "phase3",
+          tasks: ["task1", "task2", "task3"]
+        },
+        {
+          key: "phase4",
+          tasks: ["task1", "task2"]
+        },
+        {
+          key: "phase5",
+          tasks: ["task1", "task2"]
+        }
+    ];
+
     return (
         <div className="flex flex-col gap-6">
             <div>
@@ -99,11 +77,11 @@ import {
                          <div className="absolute left-0 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-primary/10">
                             <CheckCircle2 className="h-5 w-5 text-primary" />
                          </div>
-                        <h3 className="font-semibold">{phase.title}</h3>
-                        <p className="text-sm text-muted-foreground mb-2">{phase.duration}</p>
+                        <h3 className="font-semibold">{t(`completed.phases.${phase.key}.title`)}</h3>
+                        <p className="text-sm text-muted-foreground mb-2">{t(`completed.phases.${phase.key}.duration`)}</p>
                         <ul className="list-disc list-inside space-y-1 text-sm">
                             {phase.tasks.map((task, taskIndex) => (
-                                <li key={taskIndex}>{task}</li>
+                                <li key={taskIndex}>{t(`completed.phases.${phase.key}.tasks.${task}`)}</li>
                             ))}
                         </ul>
                       </div>
