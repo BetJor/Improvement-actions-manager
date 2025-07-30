@@ -1,4 +1,4 @@
-import type { ImprovementAction, User, UserGroup, ImprovementActionType, ActionUserInfo, ActionCategory, ActionSubcategory } from './types';
+import type { ImprovementAction, User, UserGroup, ImprovementActionType, ActionUserInfo, ActionCategory, ActionSubcategory, AffectedArea } from './types';
 import { subDays, format, addDays } from 'date-fns';
 import { db } from './firebase';
 import { collection, getDocs, doc, getDoc, addDoc, query, orderBy, limit } from 'firebase/firestore';
@@ -40,6 +40,14 @@ export const subcategories: ActionSubcategory[] = [
     { id: 'sub-6', categoryId: 'cat-3', name: 'Avaluació de riscos' },
     { id: 'sub-7', categoryId: 'cat-3', name: 'Formació i sensibilització del personal' },
 ]
+
+export const affectedAreasData: AffectedArea[] = [
+    { id: 'area-1', name: 'Direcció Assistència Sanitària' },
+    { id: 'area-2', name: 'Departament de Compres' },
+    { id: 'area-3', name: 'Recursos Humans' },
+    { id: 'area-4', name: 'Tecnologies de la Informació (TI)' },
+    { id: 'area-5', name: 'Manteniment i Serveis Generals' },
+];
 
 // Funció per obtenir les dades de Firestore
 export const getActions = async (): Promise<ImprovementAction[]> => {

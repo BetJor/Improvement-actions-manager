@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { groups, createAction, actionTypes, categories, subcategories } from "@/lib/data"
+import { groups, createAction, actionTypes, categories, subcategories, affectedAreasData } from "@/lib/data"
 import type { ImprovementActionType, ActionSubcategory } from "@/lib/types"
 import { useToast } from "@/hooks/use-toast"
 import { useRouter } from "next/navigation"
@@ -87,11 +87,13 @@ export default function NewActionPage() {
       // Find the name of the category, subcategory and type to store in the DB
       const categoryName = categories.find(c => c.id === values.category)?.name || values.category;
       const subcategoryName = subcategories.find(s => s.id === values.subcategory)?.name || values.subcategory;
+      const affectedAreaName = affectedAreasData.find(a => a.id === values.affectedAreas)?.name || values.affectedAreas;
 
       const actionData = {
         ...values,
         category: categoryName,
         subcategory: subcategoryName,
+        affectedAreas: affectedAreaName,
         creator: {
           id: user.uid,
           name: user.displayName || "Usuari desconegut",
@@ -197,9 +199,18 @@ export default function NewActionPage() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>AA.FF. Implicades</FormLabel>
-                    <FormControl>
-                      <Input placeholder="p. ex., Direcció Assistència Sanitària" {...field} disabled={isSubmitting} />
-                    </FormControl>
+                    <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isSubmitting}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecciona una àrea implicada" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {affectedAreasData.map(area => (
+                          <SelectItem key={area.id} value={area.id}>{area.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}

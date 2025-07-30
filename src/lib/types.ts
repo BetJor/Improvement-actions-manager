@@ -39,6 +39,11 @@ export interface ActionSubcategory {
   name: string;
 }
 
+export interface AffectedArea {
+  id: string;
+  name: string;
+}
+
 // Representa la informació de l'usuari emmagatzemada dins d'una acció.
 // És més lleuger que l'objecte User complet.
 export interface ActionUserInfo {
