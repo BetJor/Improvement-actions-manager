@@ -60,16 +60,17 @@ export function Header() {
               <Bell className="h-5 w-5" />
               <span className="sr-only">{tSidebar("toggleNotifications")}</span>
             </Button>
-            {user && <span className="text-sm font-medium hidden md:inline-block">{user.displayName}</span>}
+            
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                  <Button variant="ghost" className="flex items-center gap-2 relative h-8 rounded-full">
                     <Avatar className="h-8 w-8">
                       {user?.photoURL && <AvatarImage src={user.photoURL} alt={user.displayName || 'User'} />}
                       <AvatarFallback>
                         {user?.displayName ? user.displayName.charAt(0).toUpperCase() : <CircleUser className="h-5 w-5" />}
                       </AvatarFallback>
                     </Avatar>
+                    {user && <span className="text-sm font-medium hidden md:inline-block">{user.displayName}</span>}
                   </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
