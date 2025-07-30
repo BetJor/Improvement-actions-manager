@@ -28,13 +28,13 @@ const improveWritingPrompt = ai.definePrompt({
     input: { schema: ImproveWritingInputSchema },
     output: { schema: ImproveWritingOutputSchema },
     prompt: `
-        You are a professional writing assistant. Your task is to improve the following text.
-        Correct any grammatical errors, improve clarity, and ensure a professional tone.
-        Maintain the original meaning of the text.
+        You are an expert in quality management systems. Your task is to convert the following text into a formal non-conformity description.
+        The description should be clear, concise, and professional, suitable for a formal report.
+        Correct any grammatical errors and improve clarity, but maintain the core meaning of the original text.
         The response MUST be in the same language as the original text.
         Respond ONLY with the improved text in the 'improvedText' field of the JSON output.
 
-        Text to improve:
+        Original text to convert:
         "{{text}}"
     `,
 });
