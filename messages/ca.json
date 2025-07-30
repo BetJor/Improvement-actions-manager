@@ -8,11 +8,12 @@
     "logout": "Tancar Sessió"
   },
   "AppSidebar": {
-    "title": "IAM",
+    "title": "Accions de Millora",
     "toggleNotifications": "Activar/desactivar notificacions",
     "dashboard": "Panell de Control",
     "actions": "Accions",
-    "backlog": "Tasques Pendents"
+    "backlog": "Tasques Pendents",
+    "myGroups": "Els Meus Grups"
   },
   "ActionsPage": {
     "title": "Accions de Millora",

@@ -1,5 +1,5 @@
 "use client"
-import { CircleUser, Menu, Users, Bell } from "lucide-react"
+import { CircleUser, Menu, Users, Bell, Home, ListChecks, Archive, GanttChartSquare } from "lucide-react"
 import Link from "next/link"
 import {
   DropdownMenu,
@@ -24,12 +24,49 @@ import { useTranslations } from "next-intl"
 import { LanguageSwitcher } from "./language-switcher"
 import { useAuth } from "@/hooks/use-auth"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
+import { usePathname } from "next/navigation"
+import React from "react"
+
+
+const pageConfig: { [key: string]: { icon: React.ElementType, titleKey: string } } = {
+  '/dashboard': { icon: Home, titleKey: 'dashboard' },
+  '/actions': { icon: ListChecks, titleKey: 'actions' },
+  '/actions/new': { icon: ListChecks, titleKey: 'actions' },
+  '/actions/[id]': { icon: ListChecks, titleKey: 'actions' },
+  '/backlog': { icon: Archive, titleKey: 'backlog' },
+  '/my-groups': { icon: Users, titleKey: 'myGroups' },
+};
+
 
 export function Header() {
   const t = useTranslations('Header');
   const tSidebar = useTranslations('AppSidebar');
   const tDialog = useTranslations('SettingsDialog');
   const { user, logout } = useAuth();
+  const pathname = usePathname();
+
+  const getCurrentPageConfig = () => {
+    const segments = pathname.split('/').filter(Boolean);
+    let effectivePath = '';
+    if (segments.length > 1) {
+      if (segments[1] === 'actions' && segments.length > 2) {
+        effectivePath = '/actions/[id]';
+      } else {
+        effectivePath = `/${segments[1]}`;
+      }
+    }
+  
+    const config = pageConfig[effectivePath];
+    if (config) {
+      const PageIcon = config.icon || GanttChartSquare;
+      const title = tSidebar(config.titleKey as any);
+      return { Icon: PageIcon, title };
+    }
+  
+    return { Icon: GanttChartSquare, title: t('title') };
+  };
+
+  const { Icon, title } = getCurrentPageConfig();
 
   return (
     <header className="flex h-14 items-center gap-4 border-b bg-card px-4 lg:h-[60px] lg:px-6 sticky top-0 z-30">
@@ -50,11 +87,11 @@ export function Header() {
             </SheetContent>
         </Sheet>
 
-        <div className="w-full flex-1">
-          <h1 className="font-semibold text-lg">
-              {t("title")}
-          </h1>
+        <div className="w-full flex-1 flex items-center gap-2">
+            <Icon className="h-5 w-5 text-muted-foreground" />
+            <h1 className="font-semibold text-lg">{title}</h1>
         </div>
+
         <div className="flex items-center gap-4">
             <Button variant="ghost" size="icon" className="rounded-full">
               <Bell className="h-5 w-5" />

@@ -8,11 +8,12 @@
     "logout": "Cerrar Sesión"
   },
   "AppSidebar": {
-    "title": "IAM",
+    "title": "Acciones de Mejora",
     "toggleNotifications": "Activar/desactivar notificaciones",
     "dashboard": "Panel de Control",
     "actions": "Acciones",
-    "backlog": "Tareas Pendientes"
+    "backlog": "Tareas Pendientes",
+    "myGroups": "Mis Grupos"
   },
   "ActionsPage": {
     "title": "Acciones de Mejora",
