@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { groups, createAction, getActionTypes, getCategories, getSubcategories, getAffectedAreas } from "@/lib/data"
+import { createAction, getActionTypes, getCategories, getSubcategories, getAffectedAreas, groups } from "@/lib/data"
 import type { ImprovementActionType, ActionCategory, ActionSubcategory, AffectedArea } from "@/lib/types"
 import { useToast } from "@/hooks/use-toast"
 import { useRouter } from "next/navigation"
@@ -33,12 +33,12 @@ import { useState, useMemo, useEffect } from "react"
 import { Loader2 } from "lucide-react"
 
 const formSchema = z.object({
-  title: z.string().min(1, "El títol és requerit."), // Asunto
+  title: z.string().min(1, "El títol és requerit."),
   category: z.string().min(1, "La categoria és requerida."),
   subcategory: z.string().min(1, "La subcategoria és requerida."),
   affectedAreas: z.string().min(1, "Les àrees implicades són requerides."),
   assignedTo: z.string().min(1, "El camp 'assignat a' és requerit."),
-  description: z.string().min(1, "Les observacions són requerides."), // Observaciones
+  description: z.string().min(1, "Les observacions són requerides."),
   type: z.string().min(1, "El tipus d'acció és requerit."),
   responsibleGroupId: z.string({ required_error: "Has de seleccionar un grup responsable." }),
 })
@@ -50,13 +50,11 @@ export default function NewActionPage() {
   const { user } = useAuth()
   const [isSubmitting, setIsSubmitting] = useState(false)
   
-  // State for master data
   const [actionTypes, setActionTypes] = useState<ImprovementActionType[]>([]);
   const [categories, setCategories] = useState<ActionCategory[]>([]);
   const [subcategories, setSubcategories] = useState<ActionSubcategory[]>([]);
   const [affectedAreas, setAffectedAreas] = useState<AffectedArea[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(true);
-
 
   useEffect(() => {
     async function loadMasterData() {
@@ -86,7 +84,6 @@ export default function NewActionPage() {
     loadMasterData();
   }, [toast]);
 
-
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -97,6 +94,7 @@ export default function NewActionPage() {
       assignedTo: "",
       description: "",
       type: "",
+      responsibleGroupId: "",
     },
   })
 
@@ -127,7 +125,6 @@ export default function NewActionPage() {
           name: user.displayName || "Usuari desconegut",
           avatar: user.photoURL || undefined,
         },
-        // We are passing the full arrays to find the names from the IDs
         allCategories: categories,
         allSubcategories: subcategories,
         allAffectedAreas: affectedAreas,
@@ -214,7 +211,7 @@ export default function NewActionPage() {
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Selecciona una subcategoria" />
-                        </SelectTrigger>
+                        </Trigger>
                       </FormControl>
                       <SelectContent>
                         {filteredSubcategories.map(sub => (
@@ -348,3 +345,5 @@ export default function NewActionPage() {
     </Card>
   )
 }
+
+    

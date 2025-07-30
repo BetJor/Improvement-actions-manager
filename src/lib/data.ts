@@ -24,19 +24,18 @@ export const groups: UserGroup[] = [
 
 // --- Master Data from Firestore ---
 
-async function seedCollection<T extends { [key: string]: any }>(collectionName: string, data: T[], idField?: string) {
+async function seedCollection<T extends { id: string, [key: string]: any }>(collectionName: string, data: T[]) {
     const collectionRef = collection(db, collectionName);
-    const snapshot = await getDocs(query(collectionRef, limit(1)));
-    
-    if (snapshot.empty) {
+    const docRef = doc(collectionRef, data[0].id); // Check only for the first item's existence
+    const docSnap = await getDoc(docRef);
+
+    if (!docSnap.exists()) {
       console.log(`Seeding '${collectionName}' collection...`);
       const batch = writeBatch(db);
       data.forEach(item => {
-        const docRef = idField ? doc(collectionRef, item[idField]) : doc(collectionRef);
+        const docRef = doc(collectionRef, item.id);
         const dataToSet = { ...item };
-        if (idField) {
-            delete dataToSet[idField];
-        }
+        delete dataToSet.id; // Don't store the id field inside the document
         batch.set(docRef, dataToSet);
       });
       await batch.commit();
@@ -47,12 +46,12 @@ async function seedCollection<T extends { [key: string]: any }>(collectionName: 
 
 export const getActionTypes = async (): Promise<ImprovementActionType[]> => {
   const mockActionTypes = [
-    { name: "No Conformitat" },
-    { name: "Observació" },
-    { name: "Oportunitat de Millora" },
-    { name: "Reclamació de Client" },
-    { name: "Auditoria Interna" },
-    { name: "Auditoria Externa" },
+    { id: "T01", name: "No Conformitat" },
+    { id: "T02", name: "Observació" },
+    { id: "T03", name: "Oportunitat de Millora" },
+    { id: "T04", name: "Reclamació de Client" },
+    { id: "T05", name: "Auditoria Interna" },
+    { id: "T06", name: "Auditoria Externa" },
   ];
   await seedCollection('actionTypes', mockActionTypes);
 
@@ -68,7 +67,7 @@ export const getCategories = async (): Promise<ActionCategory[]> => {
         { id: "C03", name: "Medi Ambient" },
         { id: "C04", name: "Seguretat de la Informació" },
     ];
-    await seedCollection('categories', mockCategories, 'id');
+    await seedCollection('categories', mockCategories);
 
 
   const categoriesCol = collection(db, 'categories');
@@ -78,14 +77,14 @@ export const getCategories = async (): Promise<ActionCategory[]> => {
 
 export const getSubcategories = async (): Promise<ActionSubcategory[]> => {
     const mockSubcategories = [
-        { categoryId: "C01", name: "Processos interns" },
-        { categoryId: "C01", name: "Producte no conforme" },
-        { categoryId: "C02", name: "Accidents laborals" },
-        { categoryId: "C02", name: "Equips de protecció" },
-        { categoryId: "C03", name: "Gestió de residus" },
-        { categoryId: "C03", name: "Consum energètic" },
-        { categoryId: "C04", name: "Control d'accés" },
-        { categoryId: "C04", name: "Incidents de seguretat" },
+        { id: "SC01", categoryId: "C01", name: "Processos interns" },
+        { id: "SC02", categoryId: "C01", name: "Producte no conforme" },
+        { id: "SC03", categoryId: "C02", name: "Accidents laborals" },
+        { id: "SC04", categoryId: "C02", name: "Equips de protecció" },
+        { id: "SC05", categoryId: "C03", name: "Gestió de residus" },
+        { id: "SC06", categoryId: "C03", name: "Consum energètic" },
+        { id: "SC07", categoryId: "C04", name: "Control d'accés" },
+        { id: "SC08", categoryId: "C04", name: "Incidents de seguretat" },
       ];
     await seedCollection('subcategories', mockSubcategories);
 
@@ -96,11 +95,11 @@ export const getSubcategories = async (): Promise<ActionSubcategory[]> => {
 
 export const getAffectedAreas = async (): Promise<AffectedArea[]> => {
     const mockAffectedAreas = [
-        { name: "Departament de Producció" },
-        { name: "Departament de Logística" },
-        { name: "Departament Financer" },
-        { name: "Recursos Humans" },
-        { name: "IT" },
+        { id: "A01", name: "Departament de Producció" },
+        { id: "A02", name: "Departament de Logística" },
+        { id: "A03", name: "Departament Financer" },
+        { id: "A04", name: "Recursos Humans" },
+        { id: "A05", name: "IT" },
       ];
     await seedCollection('affectedAreas', mockAffectedAreas);
 
