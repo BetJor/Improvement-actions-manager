@@ -1,7 +1,8 @@
+
 import type { ImprovementAction, User, UserGroup, ImprovementActionType, ActionUserInfo, ActionCategory, ActionSubcategory, AffectedArea } from './types';
 import { subDays, format, addDays } from 'date-fns';
 import { db } from './firebase';
-import { collection, getDocs, doc, getDoc, addDoc, query, orderBy, limit } from 'firebase/firestore';
+import { collection, getDocs, doc, getDoc, addDoc, query, orderBy, limit, writeBatch } from 'firebase/firestore';
 
 export const users: User[] = [
   { id: 'user-1', name: 'Ana García', role: 'Director', avatar: 'https://i.pravatar.cc/150?u=a042581f4e29026024d', email: 'ana.garcia@example.com' },
@@ -23,25 +24,92 @@ export const groups: UserGroup[] = [
 
 // --- Master Data from Firestore ---
 
+async function seedCollection<T extends { [key: string]: any }>(collectionName: string, data: T[]) {
+    const collectionRef = collection(db, collectionName);
+    const snapshot = await getDocs(query(collectionRef, limit(1)));
+    
+    if (snapshot.empty) {
+      console.log(`Seeding '${collectionName}' collection...`);
+      const batch = writeBatch(db);
+      data.forEach(item => {
+        const docRef = doc(collectionRef); 
+        batch.set(docRef, item);
+      });
+      await batch.commit();
+      console.log(`'${collectionName}' collection seeded successfully.`);
+    }
+}
+
 export const getActionTypes = async (): Promise<ImprovementActionType[]> => {
+  const mockActionTypes = [
+    { name: "No Conformitat" },
+    { name: "Observació" },
+    { name: "Oportunitat de Millora" },
+    { name: "Reclamació de Client" },
+    { name: "Auditoria Interna" },
+    { name: "Auditoria Externa" },
+  ];
+  await seedCollection('actionTypes', mockActionTypes);
+
   const typesCol = collection(db, 'actionTypes');
   const snapshot = await getDocs(query(typesCol, orderBy("name")));
   return snapshot.docs.map(doc => doc.data() as ImprovementActionType);
 };
 
 export const getCategories = async (): Promise<ActionCategory[]> => {
+    const mockCategories = [
+        { id: "C01", name: "Gestió de la Qualitat" },
+        { id: "C02", name: "Seguretat i Salut Laboral" },
+        { id: "C03", name: "Medi Ambient" },
+        { id: "C04", name: "Seguretat de la Informació" },
+    ];
+    // For categories, we need to add them with specific IDs, so we can't use the generic seed function
+    const collectionRef = collection(db, 'categories');
+    const snapshot = await getDocs(query(collectionRef, limit(1)));
+    if(snapshot.empty) {
+        console.log("Seeding 'categories' collection...");
+        const batch = writeBatch(db);
+        mockCategories.forEach(cat => {
+            const docRef = doc(db, "categories", cat.id);
+            batch.set(docRef, { name: cat.name });
+        });
+        await batch.commit();
+        console.log("'categories' collection seeded successfully.");
+    }
+
   const categoriesCol = collection(db, 'categories');
-  const snapshot = await getDocs(query(categoriesCol, orderBy("name")));
-  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ActionCategory));
+  const snapshot_data = await getDocs(query(categoriesCol, orderBy("name")));
+  return snapshot_data.docs.map(doc => ({ id: doc.id, ...doc.data() } as ActionCategory));
 };
 
 export const getSubcategories = async (): Promise<ActionSubcategory[]> => {
+    const mockSubcategories = [
+        { categoryId: "C01", name: "Processos interns" },
+        { categoryId: "C01", name: "Producte no conforme" },
+        { categoryId: "C02", name: "Accidents laborals" },
+        { categoryId: "C02", name: "Equips de protecció" },
+        { categoryId: "C03", name: "Gestió de residus" },
+        { categoryId: "C03", name: "Consum energètic" },
+        { categoryId: "C04", name: "Control d'accés" },
+        { categoryId: "C04", name: "Incidents de seguretat" },
+      ];
+    await seedCollection('subcategories', mockSubcategories);
+
   const subcategoriesCol = collection(db, 'subcategories');
   const snapshot = await getDocs(query(subcategoriesCol, orderBy("name")));
   return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ActionSubcategory));
 };
 
 export const getAffectedAreas = async (): Promise<AffectedArea[]> => {
+    const mockAffectedAreas = [
+        { name: "Departament de Producció" },
+        { name: "Departament de Logística" },
+        { name: "Departament Financer" },
+        { name: "Recursos Humans" },
+        { name: "IT" },
+      ];
+    await seedCollection('affectedAreas', mockAffectedAreas);
+
   const affectedAreasCol = collection(db, 'affectedAreas');
   const snapshot = await getDocs(query(affectedAreasCol, orderBy("name")));
   return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as AffectedArea));
