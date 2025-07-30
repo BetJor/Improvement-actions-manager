@@ -197,7 +197,8 @@ export default function NewActionPage() {
     setIsImprovingText(true);
     try {
         const response = await improveWriting({ text: currentDescription });
-        form.setValue('description', response.improvedText);
+        form.setValue('title', response.title);
+        form.setValue('description', response.description);
         toast({
             title: "Text millorat",
             description: "La redacció ha estat millorada per la IA.",

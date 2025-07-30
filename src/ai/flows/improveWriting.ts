@@ -15,7 +15,8 @@ const ImproveWritingInputSchema = z.object({
 export type ImproveWritingInput = z.infer<typeof ImproveWritingInputSchema>;
 
 const ImproveWritingOutputSchema = z.object({
-  improvedText: z.string().describe("The improved text."),
+  title: z.string().describe("The suggested title for the non-conformity."),
+  description: z.string().describe("The improved and detailed description of the non-conformity."),
 });
 export type ImproveWritingOutput = z.infer<typeof ImproveWritingOutputSchema>;
 
@@ -28,14 +29,20 @@ const improveWritingPrompt = ai.definePrompt({
     input: { schema: ImproveWritingInputSchema },
     output: { schema: ImproveWritingOutputSchema },
     prompt: `
-        You are an expert in quality management systems. Your task is to convert the following text into a formal non-conformity description.
-        The description should be clear, concise, and professional, suitable for a formal report.
-        Correct any grammatical errors and improve clarity, but maintain the core meaning of the original text.
-        The response MUST be in the same language as the original text.
-        Respond ONLY with the improved text in the 'improvedText' field of the JSON output.
+      You are an expert in quality management systems. Your task is to convert the following text into a formal non-conformity description suitable for a formal report.
 
-        Original text to convert:
-        "{{text}}"
+      The response should be structured, detailed, and professional. It must include:
+      1.  A concise and descriptive title for the non-conformity.
+      2.  A clear description of the finding.
+      3.  An analysis of the potential risks and consequences (e.g., safety, compliance, etc.).
+      4.  A mention of the immediate corrective action required or suggested.
+
+      The response MUST be in the same language as the original text.
+      
+      Respond ONLY with the generated title in the 'title' field and the full detailed description in the 'description' field of the JSON output.
+
+      Original text to convert:
+      "{{text}}"
     `,
 });
 
