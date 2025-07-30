@@ -1,3 +1,4 @@
+
 {
   "Header": {
     "title": "Accions de Millora",
@@ -13,7 +14,8 @@
     "dashboard": "Panell de Control",
     "actions": "Accions",
     "backlog": "Tasques Pendents",
-    "myGroups": "Els Meus Grups"
+    "myGroups": "Els Meus Grups",
+    "settings": "Configuració"
   },
   "ActionsPage": {
     "title": "Accions de Millora",
@@ -134,5 +136,9 @@
       "description": "Descripció",
       "priority": "Prioritat"
     }
+  },
+  "SettingsPage": {
+    "title": "Configuració",
+    "description": "Aquí podràs gestionar les taules mestres de l'aplicació, com ara categories, tipus d'acció, etc."
   }
 }

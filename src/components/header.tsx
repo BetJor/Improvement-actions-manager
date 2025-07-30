@@ -1,6 +1,6 @@
 
 "use client"
-import { CircleUser, Menu, Users, Bell, Home, ListChecks, Archive, GanttChartSquare } from "lucide-react"
+import { CircleUser, Menu, Users, Bell, Home, ListChecks, Archive, GanttChartSquare, Settings } from "lucide-react"
 import Link from "next/link"
 import {
   DropdownMenu,
@@ -36,6 +36,7 @@ const pageConfig: { [key: string]: { icon: React.ElementType, titleKey: string }
   '/actions/[id]': { icon: ListChecks, titleKey: 'actions' },
   '/backlog': { icon: Archive, titleKey: 'backlog' },
   '/my-groups': { icon: Users, titleKey: 'myGroups' },
+  '/settings': { icon: Settings, titleKey: 'settings' },
 };
 
 
@@ -49,11 +50,12 @@ export function Header() {
   const getCurrentPageConfig = () => {
     const segments = pathname.split('/').filter(Boolean);
     let effectivePath = '';
-    // This logic handles nested routes like /actions/[id]
+    
+    // This logic handles nested routes like /actions/[id] or /settings/general
     if (segments.length > 1) {
         if (segments[1] === 'actions' && segments.length > 2) {
             effectivePath = `/${segments[1]}/[id]`;
-        } else {
+        } else if (pageConfig[`/${segments[1]}`]) {
             effectivePath = `/${segments[1]}`;
         }
     }

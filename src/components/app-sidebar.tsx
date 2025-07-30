@@ -3,7 +3,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Home, ListChecks, Archive, GanttChartSquare } from "lucide-react"
+import { Home, ListChecks, Archive, GanttChartSquare, Settings } from "lucide-react"
 import { useTranslations } from "next-intl"
 import {
   Sidebar,
@@ -25,6 +25,7 @@ export function AppSidebar() {
   ]
   
   const secondaryNavItems = [
+    { href: "/settings", icon: Settings, label: t("settings") },
     { href: "/backlog", icon: Archive, label: t("backlog") },
   ]
 
@@ -32,6 +33,9 @@ export function AppSidebar() {
     // Special case for actions and its sub-pages
     if (href === "/actions") {
       return pathname.includes("/actions");
+    }
+    if (href === "/settings") {
+      return pathname.includes("/settings");
     }
     return pathname === href || pathname.startsWith(`${href}/`);
   }

@@ -1,3 +1,4 @@
+
 {
   "Header": {
     "title": "Acciones de Mejora",
@@ -13,7 +14,8 @@
     "dashboard": "Panel de Control",
     "actions": "Acciones",
     "backlog": "Tareas Pendientes",
-    "myGroups": "Mis Grupos"
+    "myGroups": "Mis Grupos",
+    "settings": "Configuración"
   },
   "ActionsPage": {
     "title": "Acciones de Mejora",
@@ -134,5 +136,9 @@
       "description": "Descripción",
       "priority": "Prioridad"
     }
+  },
+  "SettingsPage": {
+    "title": "Configuración",
+    "description": "Aquí podrás gestionar las tablas maestras de la aplicación, como categorías, tipos de acción, etc."
   }
 }
