@@ -11,46 +11,46 @@ import { CheckCircle2 } from "lucide-react"
 
 const timeline = [
   {
-    phase: "planning.phases.setup.title",
+    phaseKey: "setup",
     tasks: [
-      { id: 1, name: "planning.phases.setup.tasks.task1" },
-      { id: 2, name: "planning.phases.setup.tasks.task2" },
-      { id: 3, name: "planning.phases.setup.tasks.task3" },
+      { id: 1, taskKey: "task1" },
+      { id: 2, taskKey: "task2" },
+      { id: 3, taskKey: "task3" },
     ],
-    duration: "planning.durations.short",
+    duration: "short",
   },
   {
-    phase: "planning.phases.auth.title",
+    phaseKey: "auth",
     tasks: [
-      { id: 1, name: "planning.phases.auth.tasks.task1" },
-      { id: 2, name: "planning.phases.auth.tasks.task2" },
+      { id: 1, taskKey: "task1" },
+      { id: 2, taskKey: "task2" },
     ],
-    duration: "planning.durations.medium",
+    duration: "medium",
   },
   {
-    phase: "planning.phases.core.title",
+    phaseKey: "core",
     tasks: [
-      { id: 1, name: "planning.phases.core.tasks.task1" },
-      { id: 2, name: "planning.phases.core.tasks.task2" },
-      { id: 3, name: "planning.phases.core.tasks.task3" },
+      { id: 1, taskKey: "task1" },
+      { id: 2, taskKey: "task2" },
+      { id: 3, taskKey: "task3" },
     ],
-    duration: "planning.durations.long",
+    duration: "long",
   },
   {
-    phase: "planning.phases.ai.title",
+    phaseKey: "ai",
     tasks: [
-      { id: 1, name: "planning.phases.ai.tasks.task1" },
-      { id: 2, name: "planning.phases.ai.tasks.task2" },
+      { id: 1, taskKey: "task1" },
+      { id: 2, taskKey: "task2" },
     ],
-    duration: "planning.durations.medium",
+    duration: "medium",
   },
   {
-    phase: "planning.phases.data.title",
+    phaseKey: "data",
     tasks: [
-        { id: 1, name: "planning.phases.data.tasks.task1" },
-        { id: 2, name: "planning.phases.data.tasks.task2" },
+        { id: 1, taskKey: "task1" },
+        { id: 2, taskKey: "task2" },
     ],
-    duration: "planning.durations.short",
+    duration: "short",
   }
 ];
 
@@ -66,15 +66,15 @@ export default async function PlanningPage() {
         {timeline.map((phase, index) => (
           <Card key={index}>
             <CardHeader>
-              <CardTitle>{t(phase.phase as any)}</CardTitle>
-              <CardDescription>{t("durationLabel")}: {t(phase.duration as any)}</CardDescription>
+              <CardTitle>{t(`phases.${phase.phaseKey}.title` as any)}</CardTitle>
+              <CardDescription>{t("durationLabel")}: {t(`durations.${phase.duration}` as any)}</CardDescription>
             </CardHeader>
             <CardContent>
               <ul className="space-y-3">
                 {phase.tasks.map((task) => (
                   <li key={task.id} className="flex items-center gap-3">
                     <CheckCircle2 className="h-5 w-5 text-green-500" />
-                    <span className="text-sm">{t(task.name as any)}</span>
+                    <span className="text-sm">{t(`phases.${phase.phaseKey}.tasks.${task.taskKey}` as any)}</span>
                   </li>
                 ))}
               </ul>
