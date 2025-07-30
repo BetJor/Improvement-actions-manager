@@ -37,8 +37,12 @@ const actionTypes: ImprovementActionType[] = [
 ]
 
 const formSchema = z.object({
-  title: z.string().min(10, "El títol ha de tenir almenys 10 caràcters."),
-  description: z.string().min(20, "La descripció ha de tenir almenys 20 caràcters."),
+  title: z.string().min(1, "El títol és requerit."), // Asunto
+  category: z.string().min(1, "La categoria és requerida."),
+  subcategory: z.string().min(1, "La subcategoria és requerida."),
+  affectedAreas: z.string().min(1, "Les àrees implicades són requerides."),
+  assignedTo: z.string().min(1, "El camp 'assignat a' és requerit."),
+  description: z.string().min(1, "Les observacions són requerides."), // Observaciones
   type: z.enum(actionTypes, { required_error: "Has de seleccionar un tipus."}),
   responsibleGroupId: z.string({ required_error: "Has de seleccionar un grup responsable." }),
 })
@@ -54,6 +58,10 @@ export default function NewActionPage() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       title: "",
+      category: "",
+      subcategory: "",
+      affectedAreas: "",
+      assignedTo: "",
       description: "",
     },
   })
@@ -87,7 +95,6 @@ export default function NewActionPage() {
         description: t("form.toast.description"),
       })
       router.push("/actions")
-      // Force a refresh of the actions page to show the new one
       router.refresh(); 
 
     } catch (error) {
@@ -110,45 +117,99 @@ export default function NewActionPage() {
       </CardHeader>
       <CardContent>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <FormField
               control={form.control}
               name="title"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>{t("form.title.label")}</FormLabel>
+                  <FormLabel>Assumpte</FormLabel>
                   <FormControl>
-                    <Input placeholder={t("form.title.placeholder")} {...field} disabled={isSubmitting} />
+                    <Input placeholder="p. ex., Gestió de l'assistència sanitària" {...field} disabled={isSubmitting} />
                   </FormControl>
-                  <FormDescription>
-                    {t("form.title.description")}
-                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
             />
+            
+            <div className="grid md:grid-cols-2 gap-6">
+              <FormField
+                control={form.control}
+                name="category"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Categoria</FormLabel>
+                    <FormControl>
+                      <Input placeholder="p. ex., Sistema de Gestió de Qualitat" {...field} disabled={isSubmitting} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="subcategory"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Subcategoria</FormLabel>
+                    <FormControl>
+                      <Input placeholder="p. ex., Producció i prestació del servei" {...field} disabled={isSubmitting} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+            
+            <div className="grid md:grid-cols-2 gap-6">
+               <FormField
+                control={form.control}
+                name="affectedAreas"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>AA.FF. Implicades</FormLabel>
+                    <FormControl>
+                      <Input placeholder="p. ex., Direcció Assistència Sanitària" {...field} disabled={isSubmitting} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="assignedTo"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Assignat A</FormLabel>
+                    <FormControl>
+                      <Input placeholder="p. ex., Direcció del Centre" {...field} disabled={isSubmitting} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
             <FormField
               control={form.control}
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>{t("form.description.label")}</FormLabel>
+                  <FormLabel>Observacions</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder={t("form.description.placeholder")}
-                      className="resize-none"
+                      placeholder="Descriu la no conformitat, les evidències, referències documentals, etc."
+                      className="resize-y min-h-[120px]"
                       {...field}
                       disabled={isSubmitting}
                     />
                   </FormControl>
-                  <FormDescription>
-                    {t("form.description.description")}
-                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            <div className="grid md:grid-cols-2 gap-8">
+            
+            <div className="grid md:grid-cols-2 gap-6">
               <FormField
                 control={form.control}
                 name="type"
@@ -200,6 +261,7 @@ export default function NewActionPage() {
                 )}
               />
             </div>
+            
             <Button type="submit" disabled={isSubmitting}>
               {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {isSubmitting ? 'Creant...' : t("form.submit")}

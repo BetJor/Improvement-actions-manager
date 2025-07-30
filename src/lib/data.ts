@@ -59,6 +59,10 @@ export const getActionById = async (id: string): Promise<ImprovementAction | nul
 
 interface CreateActionData {
     title: string;
+    category: string;
+    subcategory: string;
+    affectedAreas: string;
+    assignedTo: string;
     description: string;
     type: ImprovementActionType;
     responsibleGroupId: string;
@@ -89,9 +93,13 @@ export async function createAction(data: CreateActionData): Promise<string> {
     const newAction: Omit<ImprovementAction, 'id'> = {
       actionId: newActionId,
       title: data.title,
+      category: data.category,
+      subcategory: data.subcategory,
       description: data.description,
       type: data.type,
       status: 'Borrador',
+      affectedAreas: data.affectedAreas,
+      assignedTo: data.assignedTo,
       creator: data.creator,
       responsibleGroupId: data.responsibleGroupId,
       creationDate: format(today, 'dd/MM/yyyy'),

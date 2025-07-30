@@ -39,10 +39,14 @@ export interface ActionUserInfo {
 export interface ImprovementAction {
   id: string; // Firestore document ID
   actionId: string; // User-facing ID like AM-24001
-  title: string;
+  title: string; // ASUNTO
+  category: string; // CATEGORÍA
+  subcategory: string; // SUBCATEGORÍA
   type: ImprovementActionType;
   status: ImprovementActionStatus;
-  description: string;
+  description: string; // OBSERVACIONES
+  affectedAreas: string; // AA.FF. IMPLICADAS
+  assignedTo: string; // ASIGNADO A
   creator: ActionUserInfo;
   responsibleGroupId: string; // ID del grup responsable
   responsibleUser?: ActionUserInfo; // Opcional, si una persona específica s'assigna dins del grup
