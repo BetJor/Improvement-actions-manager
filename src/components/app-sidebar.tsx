@@ -3,7 +3,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Home, ListChecks, Archive, GanttChartSquare, Settings, Clock } from "lucide-react"
+import { Home, ListChecks, Settings, Route } from "lucide-react"
 import { useTranslations } from "next-intl"
 import {
   Sidebar,
@@ -14,6 +14,7 @@ import {
   SidebarMenuButton,
   SidebarSeparator,
 } from "@/components/ui/sidebar"
+import { GanttChartSquare } from "lucide-react"
 
 export function AppSidebar() {
   const pathname = usePathname()
@@ -26,8 +27,7 @@ export function AppSidebar() {
   
   const secondaryNavItems = [
     { href: "/settings", icon: Settings, label: t("settings") },
-    { href: "/backlog", icon: Archive, label: t("backlog") },
-    { href: "/planning", icon: Clock, label: t("planning") },
+    { href: "/roadmap", icon: Route, label: t("roadmap") },
   ]
 
   const isActive = (href: string) => {

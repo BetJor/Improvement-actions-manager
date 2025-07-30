@@ -13,10 +13,9 @@
     "toggleNotifications": "Activar/desactivar notificaciones",
     "dashboard": "Panel de Control",
     "actions": "Acciones",
-    "backlog": "Tareas Pendientes",
     "myGroups": "Mis Grupos",
     "settings": "Configuración",
-    "planning": "Planificación"
+    "roadmap": "Roadmap"
   },
   "ActionsPage": {
     "title": "Acciones de Mejora",
@@ -132,14 +131,22 @@
     },
     "noGroups": "No perteneces a ningún grupo."
   },
-  "BacklogPage": {
-    "title": "Tareas Pendientes",
-    "description": "Esta es una lista de tareas de desarrollo pendientes para mejorar la aplicación.",
-    "col": {
-      "id": "ID Tarea",
-      "title": "Título",
-      "description": "Descripción",
-      "priority": "Prioridad"
+  "RoadmapPage": {
+    "title": "Roadmap del Proyecto",
+    "description": "Una visión general de las fases completadas y las tareas pendientes.",
+    "completed": {
+      "title": "Fases Completadas",
+      "description": "Los grandes hitos de desarrollo que ya se han alcanzado."
+    },
+    "backlog": {
+      "title": "Tareas Pendientes (Backlog)",
+      "description": "Esta es una lista de tareas de desarrollo pendientes para mejorar la aplicación.",
+      "col": {
+        "id": "ID Tarea",
+        "title": "Título",
+        "description": "Descripción",
+        "priority": "Prioridad"
+      }
     }
   },
   "SettingsPage": {

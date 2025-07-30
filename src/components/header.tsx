@@ -1,6 +1,6 @@
 
 "use client"
-import { CircleUser, Menu, Users, Bell, Home, ListChecks, Archive, GanttChartSquare, Settings, Clock } from "lucide-react"
+import { CircleUser, Menu, Users, Bell, Home, ListChecks, GanttChartSquare, Settings, Route } from "lucide-react"
 import Link from "next/link"
 import {
   DropdownMenu,
@@ -34,10 +34,9 @@ const pageConfig: { [key: string]: { icon: React.ElementType, titleKey: string }
   '/actions': { icon: ListChecks, titleKey: 'actions' },
   '/actions/new': { icon: ListChecks, titleKey: 'actions' },
   '/actions/[id]': { icon: ListChecks, titleKey: 'actions' },
-  '/backlog': { icon: Archive, titleKey: 'backlog' },
   '/my-groups': { icon: Users, titleKey: 'myGroups' },
   '/settings': { icon: Settings, titleKey: 'settings' },
-  '/planning': { icon: Clock, titleKey: 'planning' },
+  '/roadmap': { icon: Route, titleKey: 'roadmap' },
 };
 
 
@@ -54,10 +53,14 @@ export function Header() {
     
     // This logic handles nested routes like /actions/[id] or /settings/general
     if (segments.length > 1) {
-        if (segments[1] === 'actions' && segments.length > 2) {
-            effectivePath = `/${segments[1]}/[id]`;
-        } else if (pageConfig[`/${segments[1]}`]) {
-            effectivePath = `/${segments[1]}`;
+        if (segments[0] === 'ca' || segments[0] === 'es') {
+            const pageSegment = segments[1] || '';
+            const potentialPath = `/${pageSegment}`;
+            if (pageConfig[potentialPath]) {
+                effectivePath = potentialPath;
+            } else if (pageSegment === 'actions' && segments.length > 2) {
+                effectivePath = `/actions/[id]`;
+            }
         }
     }
   

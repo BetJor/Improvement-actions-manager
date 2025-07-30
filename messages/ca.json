@@ -13,10 +13,9 @@
     "toggleNotifications": "Activar/desactivar notificacions",
     "dashboard": "Panell de Control",
     "actions": "Accions",
-    "backlog": "Tasques Pendents",
     "myGroups": "Els Meus Grups",
     "settings": "Configuració",
-    "planning": "Planificació"
+    "roadmap": "Roadmap"
   },
   "ActionsPage": {
     "title": "Accions de Millora",
@@ -132,14 +131,22 @@
     },
     "noGroups": "No pertanys a cap grup."
   },
-  "BacklogPage": {
-    "title": "Tasques Pendents",
-    "description": "Aquesta és una llista de tasques de desenvolupament pendents per a millorar l'aplicació.",
-    "col": {
-      "id": "ID Tasca",
-      "title": "Títol",
-      "description": "Descripció",
-      "priority": "Prioritat"
+  "RoadmapPage": {
+    "title": "Roadmap del Projecte",
+    "description": "Una visió general de les fases completades i les tasques pendents.",
+    "completed": {
+      "title": "Fases Completades",
+      "description": "Les grans fites de desenvolupament que ja s'han assolit."
+    },
+    "backlog": {
+      "title": "Tasques Pendents (Backlog)",
+      "description": "Aquesta és una llista de tasques de desenvolupament pendents per a millorar l'aplicació.",
+      "col": {
+        "id": "ID Tasca",
+        "title": "Títol",
+        "description": "Descripció",
+        "priority": "Prioritat"
+      }
     }
   },
   "SettingsPage": {
