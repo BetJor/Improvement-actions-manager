@@ -1,3 +1,4 @@
+
 "use client"
 
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -31,7 +32,6 @@ import { useRouter } from "next/navigation"
 import { useAuth } from "@/hooks/use-auth"
 import { useState, useMemo, useEffect, useRef } from "react"
 import { Loader2, Mic, MicOff } from "lucide-react"
-import { Trigger } from "@radix-ui/react-dialog"
 import { cn } from "@/lib/utils"
 
 
@@ -61,6 +61,7 @@ export default function NewActionPage() {
 
   const [isRecording, setIsRecording] = useState(false);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const finalTranscriptRef = useRef<string>("");
 
 
   useEffect(() => {
@@ -126,17 +127,15 @@ export default function NewActionPage() {
       recognition.lang = 'ca-ES';
 
       recognition.onresult = (event) => {
-        let finalTranscript = '';
         let interimTranscript = '';
         for (let i = event.resultIndex; i < event.results.length; ++i) {
           if (event.results[i].isFinal) {
-            finalTranscript += event.results[i][0].transcript;
+            finalTranscriptRef.current += event.results[i][0].transcript + ' ';
           } else {
             interimTranscript += event.results[i][0].transcript;
           }
         }
-        const currentDescription = form.getValues('description');
-        form.setValue('description', currentDescription + finalTranscript + interimTranscript);
+        form.setValue('description', finalTranscriptRef.current + interimTranscript);
       };
 
       recognition.onend = () => {
@@ -177,9 +176,7 @@ export default function NewActionPage() {
       recognitionRef.current.stop();
     } else {
       const currentDescription = form.getValues('description');
-      if (currentDescription.trim().length > 0 && !currentDescription.endsWith(' ')) {
-        form.setValue('description', currentDescription + ' ');
-      }
+      finalTranscriptRef.current = currentDescription.trim().length > 0 ? currentDescription + ' ' : '';
       recognitionRef.current.start();
     }
     setIsRecording(!isRecording);
@@ -269,7 +266,7 @@ export default function NewActionPage() {
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Selecciona una categoria" />
-                        </SelectTrigger>
+                        </Trigger>
                       </FormControl>
                       <SelectContent>
                         {categories.map(cat => (
@@ -291,7 +288,7 @@ export default function NewActionPage() {
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Selecciona una subcategoria" />
-                        </SelectTrigger>
+                        </Trigger>
                       </FormControl>
                       <SelectContent>
                         {filteredSubcategories.map(sub => (
@@ -316,7 +313,7 @@ export default function NewActionPage() {
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Selecciona una àrea implicada" />
-                        </SelectTrigger>
+                        </Trigger>
                       </FormControl>
                       <SelectContent>
                         {affectedAreas.map(area => (
@@ -386,7 +383,7 @@ export default function NewActionPage() {
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder={t("form.type.placeholder")} />
-                        </SelectTrigger>
+                        </Trigger>
                       </FormControl>
                       <SelectContent>
                         {actionTypes.map(type => (
@@ -411,7 +408,7 @@ export default function NewActionPage() {
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder={t("form.responsible.placeholder")} />
-                        </SelectTrigger>
+                        </Trigger>
                       </FormControl>
                       <SelectContent>
                         {groups.map(group => (
