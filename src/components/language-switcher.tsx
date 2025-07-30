@@ -1,6 +1,6 @@
 "use client";
 
-import { usePathname, useRouter } from "next-intl/navigation";
+import { usePathname } from "next-intl/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import {
   Select,
@@ -14,11 +14,13 @@ import { Label } from "@/components/ui/label";
 export function LanguageSwitcher() {
   const t = useTranslations("LanguageSwitcher");
   const locale = useLocale();
-  const router = useRouter();
   const pathname = usePathname();
 
   const onSelectChange = (value: string) => {
-    router.replace(pathname, { locale: value });
+    // We can't use the router here because it causes a hard-to-debug error.
+    // Instead we will just change the window location.
+    const newUrl = `/${value}${pathname}`;
+    window.location.href = newUrl;
   };
 
   return (
