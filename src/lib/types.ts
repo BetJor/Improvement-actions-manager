@@ -15,9 +15,17 @@ export type ImprovementActionStatus = 'Borrador' | 'Pendiente Análisis' | 'Pend
 export interface User {
   id: string;
   name: string;
-  role: 'Creator' | 'Responsible' | 'Director' | 'Committee' | 'Admin';
+  // El rol es determinarà pels grups de Google, el camp es pot eliminar o mantenir per a info addicional.
+  role?: 'Creator' | 'Responsible' | 'Director' | 'Committee' | 'Admin';
   avatar: string;
+  email: string;
 };
+
+// Nou tipus per a representar els grups
+export interface UserGroup {
+  id: string; // p.ex., l'email del Google Group
+  name: string;
+}
 
 export interface ImprovementAction {
   id: string;
@@ -26,7 +34,8 @@ export interface ImprovementAction {
   status: ImprovementActionStatus;
   description: string;
   creator: User;
-  responsible: User;
+  responsibleGroupId: string; // ID del grup responsable
+  responsibleUser?: User; // Opcional, si una persona específica s'assigna dins del grup
   creationDate: string;
   analysisDueDate: string;
   implementationDueDate: string;

@@ -39,6 +39,14 @@ const UserField = ({ label, user }: { label: string; user: { name: string; avata
   </div>
 )
 
+const GroupField = ({ label, groupId }: { label: string; groupId: string }) => (
+    <div className="grid grid-cols-2 gap-2 items-center">
+      <dt className="text-sm font-medium text-muted-foreground">{label}</dt>
+      <dd className="text-sm">{groupId}</dd>
+    </div>
+  )
+
+
 export default async function ActionDetailPage({ params }: DetailPageProps) {
   const t = await getTranslations("ActionDetailPage");
   const action = await getActionById(params.id)
@@ -135,7 +143,8 @@ export default async function ActionDetailPage({ params }: DetailPageProps) {
                 <InfoField label={t("type")} value={action.type} />
                 <Separator />
                 <UserField label={t("creator")} user={action.creator} />
-                <UserField label={t("responsible")} user={action.responsible} />
+                <GroupField label={t("responsible")} groupId={action.responsibleGroupId} />
+                {action.responsibleUser && <UserField label="Responsable assignat" user={action.responsibleUser} />}
                 <Separator />
                 <InfoField label={t("creationDate")} value={action.creationDate} />
                 <InfoField label={t("analysisDue")} value={action.analysisDueDate} />

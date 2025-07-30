@@ -44,8 +44,9 @@ export function ActionsTable({ actions }: ActionsTableProps) {
       const searchMatch =
         action.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         action.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        action.responsible.name.toLowerCase().includes(searchTerm.toLowerCase())
-      
+        (action.responsibleUser && action.responsibleUser.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        action.responsibleGroupId.toLowerCase().includes(searchTerm.toLowerCase())
+
       const statusMatch = statusFilter.size === 0 || statusFilter.has(action.status)
       const typeMatch = typeFilter.size === 0 || typeFilter.has(action.type)
 
@@ -56,11 +57,11 @@ export function ActionsTable({ actions }: ActionsTableProps) {
       filtered.sort((a, b) => {
         let aValue, bValue;
         if (sortConfig.key === 'responsible') {
-            aValue = a.responsible.name;
-            bValue = b.responsible.name;
+            aValue = a.responsibleUser?.name || a.responsibleGroupId;
+            bValue = b.responsibleUser?.name || b.responsibleGroupId;
         } else {
-            aValue = a[sortConfig.key];
-            bValue = b[sortConfig.key];
+            aValue = a[sortConfig.key as keyof ImprovementAction];
+            bValue = b[sortConfig.key as keyof ImprovementAction];
         }
 
         if (aValue < bValue) {
@@ -178,7 +179,7 @@ export function ActionsTable({ actions }: ActionsTableProps) {
                     <ActionStatusBadge status={action.status} />
                   </TableCell>
                   <TableCell>{action.type}</TableCell>
-                  <TableCell>{action.responsible.name}</TableCell>
+                  <TableCell>{action.responsibleUser?.name || action.responsibleGroupId}</TableCell>
                   <TableCell>{action.implementationDueDate}</TableCell>
                 </TableRow>
               ))
