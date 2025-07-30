@@ -123,32 +123,24 @@ export const getActions = async (): Promise<ImprovementAction[]> => {
     // Si no hi ha documents, carreguem les dades de mostra a Firestore
     if (actionsSnapshot.empty) {
       console.log('No actions found in Firestore. Loading mock data...');
+      const batch: Promise<any>[] = [];
       for (const action of mockActions) {
         // Firestore no pot emmagatzemar 'undefined', així que ens assegurem que no hi hagi camps undefined
         const cleanAction = JSON.parse(JSON.stringify(action));
-        await addDoc(actionsCol, cleanAction);
+        batch.push(addDoc(actionsCol, cleanAction));
       }
-       const newSnapshot = await getDocs(actionsCol);
-       const actionsList = newSnapshot.docs.map(doc => {
+      await Promise.all(batch);
+      const newSnapshot = await getDocs(actionsCol);
+      return newSnapshot.docs.map(doc => {
         const data = doc.data();
-        return { 
-          id: doc.id, 
-          actionId: data.actionId || doc.id, // Fallback to doc.id if actionId is missing
-          ...data 
-        } as ImprovementAction;
+        return { ...data, id: doc.id } as ImprovementAction;
       });
-      return actionsList;
     }
 
-    const actionsList = actionsSnapshot.docs.map(doc => {
-      const data = doc.data();
-      return { 
-        id: doc.id,
-        actionId: data.actionId || doc.id, // Fallback to doc.id if actionId is missing
-        ...data 
-      } as ImprovementAction;
+    return actionsSnapshot.docs.map(doc => {
+        const data = doc.data();
+        return { ...data, id: doc.id } as ImprovementAction;
     });
-    return actionsList;
 }
 
 export const getActionById = async (id: string): Promise<ImprovementAction | null> => {
@@ -158,11 +150,7 @@ export const getActionById = async (id: string): Promise<ImprovementAction | nul
     
         if (actionDocSnap.exists()) {
             const data = actionDocSnap.data();
-            return { 
-                id: actionDocSnap.id,
-                actionId: data.actionId || actionDocSnap.id,
-                ...data 
-            } as ImprovementAction;
+            return { ...data, id: actionDocSnap.id } as ImprovementAction;
         } else {
             console.warn(`Action with Firestore ID ${id} not found.`);
             return null;

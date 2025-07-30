@@ -59,7 +59,7 @@ export function ActionsTable({ actions }: ActionsTableProps) {
         if (sortConfig.key === 'responsible') {
             aValue = a.responsibleUser?.name || a.responsibleGroupId;
             bValue = b.responsibleUser?.name || b.responsibleGroupId;
-        } else if (sortConfig.key === 'id') {
+        } else if (sortConfig.key === 'actionId') { // Change from 'id' to 'actionId'
             aValue = a['actionId'];
             bValue = b['actionId'];
         } else {
@@ -162,7 +162,7 @@ export function ActionsTable({ actions }: ActionsTableProps) {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead><Button variant="ghost" onClick={() => requestSort('id')}>{t("col.id")} {getSortIcon('id')}</Button></TableHead>
+              <TableHead><Button variant="ghost" onClick={() => requestSort('actionId')}>{t("col.id")} {getSortIcon('actionId')}</Button></TableHead>
               <TableHead><Button variant="ghost" onClick={() => requestSort('title')}>{t("col.title")} {getSortIcon('title')}</Button></TableHead>
               <TableHead><Button variant="ghost" onClick={() => requestSort('status')}>{t("col.status")} {getSortIcon('status')}</Button></TableHead>
               <TableHead><Button variant="ghost" onClick={() => requestSort('type')}>{t("col.type")} {getSortIcon('type')}</Button></TableHead>
