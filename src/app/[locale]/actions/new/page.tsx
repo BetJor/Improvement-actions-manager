@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { users } from "@/lib/data"
+import { groups } from "@/lib/data"
 import type { ImprovementActionType } from "@/lib/types"
 import { useToast } from "@/hooks/use-toast"
 import { useRouter } from "next/navigation"
@@ -37,7 +37,7 @@ const formSchema = z.object({
   title: z.string().min(10, "Title must be at least 10 characters."),
   description: z.string().min(20, "Description must be at least 20 characters."),
   type: z.enum(actionTypes),
-  responsibleId: z.string({ required_error: "Please select a responsible person." }),
+  responsibleGroupId: z.string({ required_error: "Please select a responsible group." }),
 })
 
 export default function NewActionPage() {
@@ -135,7 +135,7 @@ export default function NewActionPage() {
               />
               <FormField
                 control={form.control}
-                name="responsibleId"
+                name="responsibleGroupId"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>{t("form.responsible.label")}</FormLabel>
@@ -146,8 +146,8 @@ export default function NewActionPage() {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {users.map(user => (
-                          <SelectItem key={user.id} value={user.id}>{user.name}</SelectItem>
+                        {groups.map(group => (
+                          <SelectItem key={group.id} value={group.id}>{group.name}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
