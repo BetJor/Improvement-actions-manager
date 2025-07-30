@@ -144,7 +144,6 @@ export default function NewActionPage() {
       
       router.push("/actions");
       router.refresh();
-
     } catch (error) {
       console.error("Error creating action:", error);
       toast({
@@ -323,7 +322,7 @@ export default function NewActionPage() {
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder={t("form.responsible.placeholder")} />
-                        </SelectTrigger>
+                        </Trigger>
                       </FormControl>
                       <SelectContent>
                         {groups.map(group => (
