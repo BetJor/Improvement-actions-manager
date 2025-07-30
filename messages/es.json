@@ -161,7 +161,8 @@
           "task1": "Crear la página para ver, filtrar y ordenar las acciones de mejora.",
           "task2": "Desarrollar el formulario para crear nuevas acciones de mejora.",
           "task3": "Implementar la página de detalle para cada acción de mejora.",
-          "pending_task2": "Pendiente: Implementar formularios de Análisis y Verificación para interactuar con el workflow."
+          "pending_task2": "Pendiente: Implementar formularios de Análisis y Verificación para interactuar con el workflow.",
+          "pending_task3": "Pendiente: Implementar un sistema de notificaciones para los usuarios."
         }
       },
       "phase4": {
@@ -170,7 +171,8 @@
         "tasks": {
           "task1": "Crear un flujo de Genkit para obtener los grupos de un usuario (con datos de muestra).",
           "task2": "Implementar el planificador de workflows inteligente para generar planes de trabajo dinámicos.",
-          "pending_task1": "Pendiente: Conectar el flujo de Genkit a la API real de Google Groups."
+          "pending_task1": "Pendiente: Conectar el flujo de Genkit a la API real de Google Groups.",
+          "pending_task3": "Pendiente: Crear un asistente de IA para el análisis de causas."
         }
       },
       "phase5": {
