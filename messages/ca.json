@@ -19,7 +19,7 @@
   },
   "NewActionPage": {
     "title": "Crear Nova Acció de Millora",
-    "description": "Omple el formulari següent per crear una nova acció. Començarà en estat 'Esborrany'.",
+    "description": "Omple el formulari següent per crear una nova acció. Començarà en estat 'Esorrany'.",
     "form": {
       "title": {
         "label": "Títol",
@@ -103,5 +103,14 @@
   "RootLayout": {
     "title": "Gestor d'Accions de Millora",
     "description": "Gestiona i segueix les accions de millora a tota la teva organització."
+  },
+  "SettingsDialog": {
+    "title": "Configuració",
+    "description": "Gestiona la configuració del teu compte i les preferències de l'aplicació."
+  },
+  "LanguageSwitcher": {
+    "selectLanguage": "Selecciona un idioma",
+    "catalan": "Català",
+    "spanish": "Espanyol"
   }
 }

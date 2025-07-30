@@ -103,5 +103,14 @@
   "RootLayout": {
     "title": "Gestor de Acciones de Mejora",
     "description": "Gestiona y sigue las acciones de mejora en toda tu organización."
+  },
+  "SettingsDialog": {
+    "title": "Configuración",
+    "description": "Gestiona la configuración de tu cuenta y las preferencias de la aplicación."
+  },
+  "LanguageSwitcher": {
+    "selectLanguage": "Selecciona un idioma",
+    "catalan": "Catalán",
+    "spanish": "Español"
   }
 }
