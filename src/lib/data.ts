@@ -1,7 +1,7 @@
 import type { ImprovementAction, User, UserGroup } from './types';
 import { subDays, format } from 'date-fns';
 import { db } from './firebase';
-import { collection, getDocs, doc, getDoc } from 'firebase/firestore';
+import { collection, getDocs, doc, getDoc, addDoc, query, where } from 'firebase/firestore';
 
 export const users: User[] = [
   { id: 'user-1', name: 'Ana García', role: 'Director', avatar: 'https://i.pravatar.cc/150?u=a042581f4e29026024d', email: 'ana.garcia@example.com' },
@@ -116,36 +116,61 @@ const mockActions: ImprovementAction[] = [
 
 // Funció per obtenir les dades de Firestore
 export const getActions = async (): Promise<ImprovementAction[]> => {
-    // TEMPORAL: Retornem mock data mentre s'activa l'API de Firestore.
-    return mockActions;
-    /*
+    
     const actionsCol = collection(db, 'actions');
     const actionsSnapshot = await getDocs(actionsCol);
+    
+    // Si no hi ha documents, carreguem les dades de mostra a Firestore
+    if (actionsSnapshot.empty) {
+      console.log('No actions found in Firestore. Loading mock data...');
+      for (const action of mockActions) {
+        // Firestore no pot emmagatzemar 'undefined', així que ens assegurem que no hi hagi camps undefined
+        const cleanAction = JSON.parse(JSON.stringify(action));
+        await addDoc(actionsCol, cleanAction);
+      }
+       const newSnapshot = await getDocs(actionsCol);
+       const actionsList = newSnapshot.docs.map(doc => {
+        const data = doc.data();
+        return { id: doc.id, ...data } as ImprovementAction;
+      });
+      return actionsList;
+    }
+
     const actionsList = actionsSnapshot.docs.map(doc => {
       const data = doc.data();
-      // Important: Firestore no emmagatzema objectes complexos com 'creator' o 'responsibleUser' directament.
-      // Aquí estem simplificant i assumint que les dades recuperades coincideixen amb la nostra interfície.
-      // En un cas real, hauríem de fer cerques addicionals per a poblar aquests camps.
       return { id: doc.id, ...data } as ImprovementAction;
     });
     return actionsList;
-    */
 }
 
 export const getActionById = async (id: string): Promise<ImprovementAction | null> => {
-    // TEMPORAL: Retornem mock data mentre s'activa l'API de Firestore.
-    const action = mockActions.find(a => a.id === id) || null;
-    return action;
-    /*
-    const actionDocRef = doc(db, 'actions', id);
-    const actionDocSnap = await getDoc(actionDocRef);
+    // A Firestore, els IDs són els que genera automàticament, no "AM-24001", etc.
+    // Per a trobar-lo, hem de fer una consulta. Això suposa que el camp `id` dins del document
+    // és el nostre identificador llegible.
+    const actionsCol = collection(db, 'actions');
+    const q = query(actionsCol, where("id", "==", id));
+    const querySnapshot = await getDocs(q);
 
-    if (actionDocSnap.exists()) {
-        const data = actionDocSnap.data();
-        // Mateixa simplificació que a getActions
-        return { id: actionDocSnap.id, ...data } as ImprovementAction;
-    } else {
+    if (!querySnapshot.empty) {
+        const doc = querySnapshot.docs[0];
+        const data = doc.data();
+         // Retornem l'ID del document de Firestore, no el camp 'id' de dins
+        return { id: doc.id, ...data } as ImprovementAction;
+    }
+
+    // Si no es troba per l'ID personalitzat, intentem buscar-lo per l'ID del document
+    try {
+        const actionDocRef = doc(db, 'actions', id);
+        const actionDocSnap = await getDoc(actionDocRef);
+    
+        if (actionDocSnap.exists()) {
+            const data = actionDocSnap.data();
+            return { id: actionDocSnap.id, ...data } as ImprovementAction;
+        } else {
+            return null;
+        }
+    } catch(error) {
+        console.error("Error fetching document by ID:", error);
         return null;
     }
-    */
 }
