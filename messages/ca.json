@@ -148,7 +148,8 @@
     },
     "col": {
       "name": "Nom",
-      "category": "Categoria"
+      "category": "Categoria",
+      "actions": "Accions"
     },
     "addNew": "Afegeix Nou",
     "edit": "Editar",

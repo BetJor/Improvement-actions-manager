@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import { Pencil, PlusCircle, Trash2 } from "lucide-react"
-import type { MasterDataItem, ActionCategory } from "@/lib/types"
+import type { MasterDataItem } from "@/lib/types"
 import {
   Dialog,
   DialogContent,
@@ -39,6 +39,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useToast } from "@/hooks/use-toast"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select"
+import { useTranslations } from "next-intl"
 
 interface MasterDataFormDialogProps {
   isOpen: boolean
@@ -125,9 +126,10 @@ interface MasterDataTableProps {
   columns: { key: string; label: string }[];
   onEdit: (item: MasterDataItem) => void;
   onDelete: (item: MasterDataItem) => void;
+  t: (key: string) => string;
 }
 
-function MasterDataTable({ data, columns, onEdit, onDelete }: MasterDataTableProps) {
+function MasterDataTable({ data, columns, onEdit, onDelete, t }: MasterDataTableProps) {
   return (
     <div className="rounded-md border">
       <Table>
@@ -135,7 +137,7 @@ function MasterDataTable({ data, columns, onEdit, onDelete }: MasterDataTablePro
           <TableRow>
             <TableHead className="w-[100px]">ID</TableHead>
             {columns.map(col => <TableHead key={col.key}>{col.label}</TableHead>)}
-            <TableHead className="text-right">Accions</TableHead>
+            <TableHead className="text-right">{t("col.actions")}</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -145,10 +147,7 @@ function MasterDataTable({ data, columns, onEdit, onDelete }: MasterDataTablePro
                 <TableCell className="font-medium">{item.id}</TableCell>
                 {columns.map(col => (
                     <TableCell key={`${item.id}-${col.key}`}>
-                        {col.key === 'categoryId'
-                            ? (columns.find(c => c.key === 'categoryOptions') as any)?.options.find((opt: any) => opt.id === item[col.key])?.name || item[col.key]
-                            : item[col.key]
-                        }
+                       {item[col.key]}
                     </TableCell>
                 ))}
                 <TableCell className="text-right">
@@ -163,14 +162,14 @@ function MasterDataTable({ data, columns, onEdit, onDelete }: MasterDataTablePro
                     </AlertDialogTrigger>
                     <AlertDialogContent>
                       <AlertDialogHeader>
-                        <AlertDialogTitle>Estàs segur?</AlertDialogTitle>
+                        <AlertDialogTitle>{t("deleteConfirmation")}</AlertDialogTitle>
                         <AlertDialogDescription>
-                          Aquesta acció no es pot desfer. Això eliminarà permanentment l'element.
+                          {t("deleteConfirmationMessage")}
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel·lar</AlertDialogCancel>
-                        <AlertDialogAction onClick={() => onDelete(item)}>Continuar</AlertDialogAction>
+                        <AlertDialogCancel>{t("cancel")}</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => onDelete(item)}>{t("continue")}</AlertDialogAction>
                       </AlertDialogFooter>
                     </AlertDialogContent>
                   </AlertDialog>
@@ -191,7 +190,7 @@ function MasterDataTable({ data, columns, onEdit, onDelete }: MasterDataTablePro
 }
 
 interface MasterDataManagerProps {
-  initialData: {
+  data: {
     [key: string]: {
       title: string;
       data: MasterDataItem[];
@@ -200,12 +199,11 @@ interface MasterDataManagerProps {
   };
   onSave: (collectionName: string, item: MasterDataItem) => Promise<void>;
   onDelete: (collectionName: string, itemId: string) => Promise<void>;
-  refreshData: () => Promise<void>;
 }
 
-export function MasterDataManager({ initialData, onSave, onDelete, refreshData }: MasterDataManagerProps) {
-  const [data, setData] = useState(initialData);
-  const [activeTab, setActiveTab] = useState(Object.keys(initialData)[0]);
+export function MasterDataManager({ data, onSave, onDelete }: MasterDataManagerProps) {
+  const t = useTranslations("SettingsPage");
+  const [activeTab, setActiveTab] = useState(Object.keys(data)[0]);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [currentItem, setCurrentItem] = useState<MasterDataItem | null>(null);
 
@@ -222,20 +220,18 @@ export function MasterDataManager({ initialData, onSave, onDelete, refreshData }
   const handleDelete = async (item: MasterDataItem) => {
     if (item.id) {
         await onDelete(activeTab, item.id);
-        await refreshData();
     }
   };
 
   const handleSave = async (collectionName: string, item: MasterDataItem) => {
     await onSave(collectionName, item);
-    await refreshData();
   };
   
   const getExtraColumnsForTab = (tabKey: string) => {
     if (tabKey === 'subcategories') {
       return [{
         key: 'categoryId',
-        label: 'Categoria',
+        label: t('col.category'),
         type: 'select',
         options: data.categories.data
       }];
@@ -255,17 +251,15 @@ export function MasterDataManager({ initialData, onSave, onDelete, refreshData }
           <TabsContent key={key} value={key}>
             <div className="flex justify-end mb-4">
               <Button onClick={handleAddNew}>
-                <PlusCircle className="mr-2 h-4 w-4" /> Afegeix Nou
+                <PlusCircle className="mr-2 h-4 w-4" /> {t("addNew")}
               </Button>
             </div>
             <MasterDataTable
               data={data[key].data}
-              columns={data[key].columns.map(col => col.key === 'categoryId' 
-                ? { ...col, options: data.categories.data }
-                : col
-              )}
+              columns={data[key].columns}
               onEdit={handleEdit}
               onDelete={handleDelete}
+              t={t}
             />
           </TabsContent>
         ))}

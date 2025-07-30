@@ -23,6 +23,7 @@ export default function SettingsPage() {
     const [isLoading, setIsLoading] = useState(true);
 
     const loadData = async () => {
+        setIsLoading(true);
         try {
             const [actionTypes, categories, subcategories, affectedAreas] = await Promise.all([
                 getActionTypes(),
@@ -36,7 +37,7 @@ export default function SettingsPage() {
                 categories: { title: t("tabs.categories"), data: categories, columns: [{ key: 'name', label: t('col.name') }] },
                 subcategories: { 
                     title: t("tabs.subcategories"), 
-                    data: subcategories.map(s => ({...s, categoryName: categories.find(c => c.id === s.categoryId)?.name})), 
+                    data: subcategories.map(s => ({...s, categoryName: categories.find(c => c.id === s.categoryId)?.name || ''})), 
                     columns: [{ key: 'name', label: t('col.name') }, { key: 'categoryName', label: t('col.category') }] 
                 },
                 affectedAreas: { title: t("tabs.affectedAreas"), data: affectedAreas, columns: [{ key: 'name', label: t('col.name') }] },
@@ -60,6 +61,11 @@ export default function SettingsPage() {
     const handleSave = async (collectionName: string, item: MasterDataItem) => {
         try {
             const { id, ...dataToSave } = item;
+            // Neteja categoryName abans de guardar
+            if ('categoryName' in dataToSave) {
+                delete dataToSave.categoryName;
+            }
+
             if (id) {
                 await updateMasterDataItem(collectionName, id, dataToSave);
                 toast({ title: "Element actualitzat", description: "L'element s'ha actualitzat correctament." });
@@ -67,6 +73,7 @@ export default function SettingsPage() {
                 await addMasterDataItem(collectionName, dataToSave);
                 toast({ title: "Element creat", description: "L'element s'ha creat correctament." });
             }
+            await loadData(); // Refresh data
         } catch (error) {
             console.error(`Error saving item in ${collectionName}:`, error);
             toast({ variant: "destructive", title: "Error en desar", description: "No s'ha pogut desar l'element." });
@@ -77,6 +84,7 @@ export default function SettingsPage() {
         try {
             await deleteMasterDataItem(collectionName, itemId);
             toast({ title: "Element eliminat", description: "L'element s'ha eliminat correctament." });
+            await loadData(); // Refresh data
         } catch (error) {
             console.error(`Error deleting item from ${collectionName}:`, error);
             toast({ variant: "destructive", title: "Error en eliminar", description: "No s'ha pogut eliminar l'element." });
@@ -94,10 +102,9 @@ export default function SettingsPage() {
                 <p>Carregant dades mestres...</p>
             ) : masterData ? (
                 <MasterDataManager 
-                    initialData={masterData}
+                    data={masterData}
                     onSave={handleSave}
                     onDelete={handleDelete}
-                    refreshData={loadData}
                 />
             ) : (
                 <p>No s'han pogut carregar les dades.</p>
