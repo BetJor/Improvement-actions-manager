@@ -49,12 +49,13 @@ export function Header() {
   const getCurrentPageConfig = () => {
     const segments = pathname.split('/').filter(Boolean);
     let effectivePath = '';
+    // This logic handles nested routes like /actions/[id]
     if (segments.length > 1) {
-      if (segments[1] === 'actions' && segments.length > 2) {
-        effectivePath = '/actions/[id]';
-      } else {
-        effectivePath = `/${segments[1]}`;
-      }
+        if (segments[1] === 'actions' && segments.length > 2) {
+            effectivePath = `/${segments[1]}/[id]`;
+        } else {
+            effectivePath = `/${segments[1]}`;
+        }
     }
   
     const config = pageConfig[effectivePath];
@@ -64,13 +65,14 @@ export function Header() {
       return { Icon: PageIcon, title };
     }
   
+    // Default fallback
     return { Icon: GanttChartSquare, title: t('title') };
   };
 
   const { Icon, title } = getCurrentPageConfig();
 
   return (
-    <header className="sticky top-0 z-10 flex h-14 items-center gap-4 border-b bg-background/60 px-4 backdrop-blur-sm sm:h-16 sm:px-6">
+    <header className="sticky top-0 z-10 flex h-14 items-center gap-4 border-b bg-sidebar px-4 sm:h-16 sm:px-6">
       <Dialog>
         <SidebarTrigger className="hidden md:flex" />
         
