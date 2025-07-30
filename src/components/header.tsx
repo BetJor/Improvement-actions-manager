@@ -23,6 +23,7 @@ import { AppSidebar } from "./app-sidebar"
 import { useTranslations } from "next-intl"
 import { LanguageSwitcher } from "./language-switcher"
 import { useAuth } from "@/hooks/use-auth"
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 
 export function Header() {
   const t = useTranslations('Header');
@@ -59,11 +60,16 @@ export function Header() {
               <Bell className="h-5 w-5" />
               <span className="sr-only">{tSidebar("toggleNotifications")}</span>
             </Button>
+            {user && <span className="text-sm font-medium hidden md:inline-block">{user.displayName}</span>}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                  <Button variant="secondary" size="icon" className="rounded-full">
-                  <CircleUser className="h-5 w-5" />
-                  <span className="sr-only">Toggle user menu</span>
+                  <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                    <Avatar className="h-8 w-8">
+                      {user?.photoURL && <AvatarImage src={user.photoURL} alt={user.displayName || 'User'} />}
+                      <AvatarFallback>
+                        {user?.displayName ? user.displayName.charAt(0).toUpperCase() : <CircleUser className="h-5 w-5" />}
+                      </AvatarFallback>
+                    </Avatar>
                   </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
@@ -83,7 +89,6 @@ export function Header() {
                   <DropdownMenuItem onClick={logout}>{t("logout")}</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-            {user && <span className="text-sm font-medium hidden md:inline-block">{user.displayName}</span>}
         </div>
 
         <DialogContent>
