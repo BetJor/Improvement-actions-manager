@@ -1,5 +1,6 @@
 
 
+
 export interface MasterDataItem {
   id?: string;
   name: string;
@@ -42,6 +43,24 @@ export interface ActionUserInfo {
   avatar?: string;
 }
 
+// Represents a single step in a dynamic workflow
+export interface WorkflowStep {
+  stepName: string;
+  responsibleParty: string;
+  dueDate: string;
+  status: 'Pendiente' | 'En Proceso' | 'Completado' | 'Omitido';
+  completedDate?: string;
+  notes?: string;
+}
+
+// Represents the entire plan for an action
+export interface WorkflowPlan {
+  workflowId: string;
+  actionId: string;
+  steps: WorkflowStep[];
+}
+
+
 export interface ImprovementAction {
   id: string; // Firestore document ID
   actionId: string; // User-facing ID like AM-24001
@@ -76,4 +95,7 @@ export interface ImprovementAction {
     isCompliant: boolean;
     date: string;
   };
+  // The dynamic workflow plan will be stored here
+  workflowPlan?: WorkflowPlan;
 };
+

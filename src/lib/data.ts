@@ -1,8 +1,10 @@
 
-import type { ImprovementAction, User, UserGroup, ImprovementActionType, ActionUserInfo, ActionCategory, ActionSubcategory, AffectedArea, MasterDataItem } from './types';
+
+import type { ImprovementAction, User, UserGroup, ImprovementActionType, ActionUserInfo, ActionCategory, ActionSubcategory, AffectedArea, MasterDataItem, WorkflowPlan } from './types';
 import { subDays, format, addDays } from 'date-fns';
 import { db } from './firebase';
 import { collection, getDocs, doc, getDoc, addDoc, query, orderBy, limit, writeBatch, updateDoc, deleteDoc, setDoc } from 'firebase/firestore';
+import { planActionWorkflow } from '@/ai/flows/planActionWorkflow';
 
 export const users: User[] = [
   { id: 'user-1', name: 'Ana García', role: 'Director', avatar: 'https://i.pravatar.cc/150?u=a042581f4e29026024d', email: 'ana.garcia@example.com' },
@@ -183,6 +185,7 @@ export async function createAction(data: CreateActionData): Promise<string> {
   
     // 2. Prepare the new action object
     const today = new Date();
+    const creationDate = format(today, 'dd/MM/yyyy');
 
     // Find names from IDs
     const categoryName = data.allCategories.find(c => c.id === data.category)?.name || data.category;
@@ -202,14 +205,42 @@ export async function createAction(data: CreateActionData): Promise<string> {
       assignedTo: data.assignedTo,
       creator: data.creator,
       responsibleGroupId: data.responsibleGroupId,
-      creationDate: format(today, 'dd/MM/yyyy'),
-      analysisDueDate: format(addDays(today, 30), 'dd/MM/yyyy'),
-      implementationDueDate: format(addDays(today, 60), 'dd/MM/yyyy'),
-      closureDueDate: format(addDays(today, 90), 'dd/MM/yyyy'),
+      creationDate: creationDate,
+      // These will be replaced by the dynamic workflow plan
+      analysisDueDate: '', 
+      implementationDueDate: '',
+      closureDueDate: '',
     };
   
     // 3. Add the new document to Firestore
     const docRef = await addDoc(actionsCol, newAction);
+
+    // 4. Plan the workflow using the new Genkit flow
+    try {
+        const workflowPlan = await planActionWorkflow({
+            actionId: newActionId,
+            actionType: typeName,
+            category: categoryName,
+            responsibleGroupId: data.responsibleGroupId,
+            creationDate: creationDate,
+        });
+
+        // 5. Save the workflow plan back to the action document
+        await updateDoc(docRef, { 
+            workflowPlan: workflowPlan,
+            // Optionally update top-level dates from the plan
+            analysisDueDate: workflowPlan.steps.find(s => s.stepName.includes('Análisis'))?.dueDate || '',
+            implementationDueDate: workflowPlan.steps.find(s => s.stepName.includes('Implantación'))?.dueDate || '',
+            closureDueDate: workflowPlan.steps.find(s => s.stepName.includes('Cierre'))?.dueDate || '',
+        });
+        
+    } catch (error) {
+        console.error("Error planning workflow for action:", newActionId, error);
+        // If the flow fails, the action is still created, but without a plan.
+        // This could be handled with a retry mechanism or manual intervention.
+    }
+
+
     return docRef.id;
 }
 
@@ -230,3 +261,4 @@ export async function deleteMasterDataItem(collectionName: string, itemId: strin
     const docRef = doc(db, collectionName, itemId);
     await deleteDoc(docRef);
 }
+
