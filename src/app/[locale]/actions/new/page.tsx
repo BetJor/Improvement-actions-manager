@@ -29,9 +29,11 @@ import type { ImprovementActionType, ActionCategory, ActionSubcategory, Affected
 import { useToast } from "@/hooks/use-toast"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/hooks/use-auth"
-import { useState, useMemo, useEffect } from "react"
-import { Loader2 } from "lucide-react"
+import { useState, useMemo, useEffect, useRef } from "react"
+import { Loader2, Mic, MicOff } from "lucide-react"
 import { Trigger } from "@radix-ui/react-dialog"
+import { cn } from "@/lib/utils"
+
 
 const formSchema = z.object({
   title: z.string().min(1, "El títol és requerit."),
@@ -56,6 +58,10 @@ export default function NewActionPage() {
   const [subcategories, setSubcategories] = useState<ActionSubcategory[]>([]);
   const [affectedAreas, setAffectedAreas] = useState<AffectedArea[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(true);
+
+  const [isRecording, setIsRecording] = useState(false);
+  const recognitionRef = useRef<SpeechRecognition | null>(null);
+
 
   useEffect(() => {
     async function loadMasterData() {
@@ -109,6 +115,75 @@ export default function NewActionPage() {
   useEffect(() => {
     form.resetField("subcategory", { defaultValue: "" });
   }, [selectedCategoryId, form]);
+
+
+  useEffect(() => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (SpeechRecognition) {
+      const recognition = new SpeechRecognition();
+      recognition.continuous = true;
+      recognition.interimResults = true;
+      recognition.lang = 'ca-ES';
+
+      recognition.onresult = (event) => {
+        let finalTranscript = '';
+        let interimTranscript = '';
+        for (let i = event.resultIndex; i < event.results.length; ++i) {
+          if (event.results[i].isFinal) {
+            finalTranscript += event.results[i][0].transcript;
+          } else {
+            interimTranscript += event.results[i][0].transcript;
+          }
+        }
+        const currentDescription = form.getValues('description');
+        form.setValue('description', currentDescription + finalTranscript + interimTranscript);
+      };
+
+      recognition.onend = () => {
+        setIsRecording(false);
+      };
+      
+      recognition.onerror = (event) => {
+        console.error("Speech recognition error", event.error);
+        toast({
+            variant: "destructive",
+            title: "Error de reconeixement de veu",
+            description: "No s'ha pogut accedir al micròfon o ha ocorregut un error.",
+        })
+        setIsRecording(false);
+      };
+
+      recognitionRef.current = recognition;
+    } else {
+       console.warn("Speech Recognition not supported in this browser.");
+    }
+    
+    return () => {
+        recognitionRef.current?.stop();
+    }
+  }, [form, toast]);
+
+  const toggleRecording = () => {
+    if (!recognitionRef.current) {
+        toast({
+            variant: "destructive",
+            title: "Navegador no compatible",
+            description: "El teu navegador no suporta el reconeixement de veu.",
+        })
+        return;
+    }
+
+    if (isRecording) {
+      recognitionRef.current.stop();
+    } else {
+      const currentDescription = form.getValues('description');
+      if (currentDescription.trim().length > 0 && !currentDescription.endsWith(' ')) {
+        form.setValue('description', currentDescription + ' ');
+      }
+      recognitionRef.current.start();
+    }
+    setIsRecording(!isRecording);
+  };
 
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
@@ -274,14 +349,27 @@ export default function NewActionPage() {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Observacions</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="Descriu la no conformitat, les evidències, referències documentals, etc."
-                      className="resize-y min-h-[120px]"
-                      {...field}
-                      disabled={disableForm}
-                    />
-                  </FormControl>
+                   <div className="relative">
+                    <FormControl>
+                        <Textarea
+                        placeholder="Descriu la no conformitat, les evidències, referències documentals, etc."
+                        className="resize-y min-h-[120px] pr-12"
+                        {...field}
+                        disabled={disableForm}
+                        />
+                    </FormControl>
+                    <Button 
+                        type="button" 
+                        size="icon" 
+                        variant="ghost" 
+                        onClick={toggleRecording}
+                        disabled={disableForm}
+                        className={cn("absolute right-2 top-2 h-8 w-8", isRecording && "bg-red-500/20 text-red-500 hover:bg-red-500/30 hover:text-red-500")}
+                    >
+                        {isRecording ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+                        <span className="sr-only">{isRecording ? "Aturar enregistrament" : "Iniciar enregistrament"}</span>
+                    </Button>
+                   </div>
                   <FormMessage />
                 </FormItem>
               )}
