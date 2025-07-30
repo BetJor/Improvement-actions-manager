@@ -1,3 +1,4 @@
+import "./globals.css"
 import { AppSidebar } from "@/components/app-sidebar"
 import { Header } from "@/components/header"
 import { Toaster } from "@/components/ui/toaster";
