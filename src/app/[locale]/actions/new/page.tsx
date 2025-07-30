@@ -24,17 +24,15 @@ import {
 } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { groups, createAction } from "@/lib/data"
-import type { ImprovementActionType } from "@/lib/types"
+import { groups, createAction, actionTypes, categories, subcategories } from "@/lib/data"
+import type { ImprovementActionType, ActionSubcategory } from "@/lib/types"
 import { useToast } from "@/hooks/use-toast"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/hooks/use-auth"
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import { Loader2 } from "lucide-react"
 
-const actionTypes: ImprovementActionType[] = [
-  'Correctiva', 'IV DAS-DP', 'IV', 'ACM', 'AMSGP', 'SAU', 'AC', 'ACSGSI', 'ACPSI', 'ACRSC'
-]
+const typeEnum = z.enum(actionTypes);
 
 const formSchema = z.object({
   title: z.string().min(1, "El títol és requerit."), // Asunto
@@ -43,7 +41,7 @@ const formSchema = z.object({
   affectedAreas: z.string().min(1, "Les àrees implicades són requerides."),
   assignedTo: z.string().min(1, "El camp 'assignat a' és requerit."),
   description: z.string().min(1, "Les observacions són requerides."), // Observaciones
-  type: z.enum(actionTypes, { required_error: "Has de seleccionar un tipus."}),
+  type: typeEnum,
   responsibleGroupId: z.string({ required_error: "Has de seleccionar un grup responsable." }),
 })
 
@@ -66,6 +64,13 @@ export default function NewActionPage() {
     },
   })
 
+  const selectedCategoryId = form.watch("category");
+
+  const filteredSubcategories = useMemo(() => {
+    if (!selectedCategoryId) return [];
+    return subcategories.filter(sc => sc.categoryId === selectedCategoryId);
+  }, [selectedCategoryId]);
+
   async function onSubmit(values: z.infer<typeof formSchema>) {
     if (!user) {
       toast({
@@ -79,8 +84,14 @@ export default function NewActionPage() {
     setIsSubmitting(true)
 
     try {
+      // Find the name of the category, subcategory and type to store in the DB
+      const categoryName = categories.find(c => c.id === values.category)?.name || values.category;
+      const subcategoryName = subcategories.find(s => s.id === values.subcategory)?.name || values.subcategory;
+
       const actionData = {
         ...values,
+        category: categoryName,
+        subcategory: subcategoryName,
         creator: {
           id: user.uid,
           name: user.displayName || "Usuari desconegut",
@@ -139,9 +150,18 @@ export default function NewActionPage() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Categoria</FormLabel>
-                    <FormControl>
-                      <Input placeholder="p. ex., Sistema de Gestió de Qualitat" {...field} disabled={isSubmitting} />
-                    </FormControl>
+                    <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isSubmitting}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecciona una categoria" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {categories.map(cat => (
+                          <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -152,9 +172,18 @@ export default function NewActionPage() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Subcategoria</FormLabel>
-                    <FormControl>
-                      <Input placeholder="p. ex., Producció i prestació del servei" {...field} disabled={isSubmitting} />
-                    </FormControl>
+                    <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isSubmitting || !selectedCategoryId}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecciona una subcategoria" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {filteredSubcategories.map(sub => (
+                           <SelectItem key={sub.id} value={sub.id}>{sub.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}

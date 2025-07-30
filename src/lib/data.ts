@@ -1,4 +1,4 @@
-import type { ImprovementAction, User, UserGroup, ImprovementActionType, ActionUserInfo } from './types';
+import type { ImprovementAction, User, UserGroup, ImprovementActionType, ActionUserInfo, ActionCategory, ActionSubcategory } from './types';
 import { subDays, format, addDays } from 'date-fns';
 import { db } from './firebase';
 import { collection, getDocs, doc, getDoc, addDoc, query, orderBy, limit } from 'firebase/firestore';
@@ -20,6 +20,26 @@ export const groups: UserGroup[] = [
   { id: 'it-legacy-systems@example.com', name: 'Sistemes Legacy', userIds: ['user-5'] },
   { id: 'rsc-committee@example.com', name: 'Comitè RSC', userIds: ['user-3', 'user-4'] },
 ];
+
+export const actionTypes: ImprovementActionType[] = [
+  'Correctiva', 'IV DAS-DP', 'IV', 'ACM', 'AMSGP', 'SAU', 'AC', 'ACSGSI', 'ACPSI', 'ACRSC'
+];
+
+export const categories: ActionCategory[] = [
+    { id: 'cat-1', name: 'Sistema de Gestió de Qualitat' },
+    { id: 'cat-2', name: 'Sistema de Gestió Ambiental' },
+    { id: 'cat-3', name: 'Seguretat i Salut Laboral' },
+]
+
+export const subcategories: ActionSubcategory[] = [
+    { id: 'sub-1', categoryId: 'cat-1', name: 'Producció i prestació del servei' },
+    { id: 'sub-2', categoryId: 'cat-1', name: 'Compres i avaluació de proveïdors' },
+    { id: 'sub-3', categoryId: 'cat-1', name: 'Gestió de la informació documentada' },
+    { id: 'sub-4', categoryId: 'cat-2', name: 'Gestió de residus' },
+    { id: 'sub-5', categoryId: 'cat-2', name: 'Consum de recursos' },
+    { id: 'sub-6', categoryId: 'cat-3', name: 'Avaluació de riscos' },
+    { id: 'sub-7', categoryId: 'cat-3', name: 'Formació i sensibilització del personal' },
+]
 
 // Funció per obtenir les dades de Firestore
 export const getActions = async (): Promise<ImprovementAction[]> => {

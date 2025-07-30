@@ -28,6 +28,17 @@ export interface UserGroup {
   userIds: string[];
 }
 
+export interface ActionCategory {
+  id: string;
+  name: string;
+}
+
+export interface ActionSubcategory {
+  id: string;
+  categoryId: string;
+  name: string;
+}
+
 // Representa la informació de l'usuari emmagatzemada dins d'una acció.
 // És més lleuger que l'objecte User complet.
 export interface ActionUserInfo {
