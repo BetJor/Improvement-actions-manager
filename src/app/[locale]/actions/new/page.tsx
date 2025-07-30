@@ -104,6 +104,11 @@ export default function NewActionPage() {
     if (!selectedCategoryId) return [];
     return subcategories.filter(sc => sc.categoryId === selectedCategoryId);
   }, [selectedCategoryId, subcategories]);
+  
+  useEffect(() => {
+    form.resetField("subcategory", { defaultValue: "" });
+  }, [selectedCategoryId, form]);
+
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     if (!user) {
@@ -111,7 +116,7 @@ export default function NewActionPage() {
         variant: "destructive",
         title: "Error d'autenticació",
         description: "Has d'haver iniciat sessió per a crear una acció.",
-      })
+      });
       return;
     }
 
@@ -125,21 +130,21 @@ export default function NewActionPage() {
           name: user.displayName || "Usuari desconegut",
           avatar: user.photoURL || undefined,
         },
-        // Pass master data to the creation function so it can resolve names from IDs
         allCategories: categories,
         allSubcategories: subcategories,
         allAffectedAreas: affectedAreas,
         allActionTypes: actionTypes,
       };
       const newActionId = await createAction(actionData);
-      console.log(`New action created with Firestore ID: ${newActionId}`);
       
       toast({
         title: t("form.toast.title"),
         description: t("form.toast.description"),
       });
+      
       router.push("/actions");
-      router.refresh(); 
+      router.refresh();
+
     } catch (error) {
       console.error("Error creating action:", error);
       toast({
@@ -185,7 +190,7 @@ export default function NewActionPage() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Categoria</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value} disabled={disableForm}>
+                    <Select onValueChange={field.onChange} value={field.value} disabled={disableForm}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Selecciona una categoria" />
@@ -207,7 +212,7 @@ export default function NewActionPage() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Subcategoria</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value} disabled={disableForm || !selectedCategoryId}>
+                    <Select onValueChange={field.onChange} value={field.value} disabled={disableForm || !selectedCategoryId}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Selecciona una subcategoria" />
@@ -232,7 +237,7 @@ export default function NewActionPage() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>AA.FF. Implicades</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value} disabled={disableForm}>
+                    <Select onValueChange={field.onChange} value={field.value} disabled={disableForm}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Selecciona una àrea implicada" />
@@ -289,7 +294,7 @@ export default function NewActionPage() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>{t("form.type.label")}</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value} disabled={disableForm}>
+                    <Select onValueChange={field.onChange} value={field.value} disabled={disableForm}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder={t("form.type.placeholder")} />
@@ -314,7 +319,7 @@ export default function NewActionPage() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>{t("form.responsible.label")}</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value} disabled={disableForm}>
+                    <Select onValueChange={field.onChange} value={field.value} disabled={disableForm}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder={t("form.responsible.placeholder")} />
