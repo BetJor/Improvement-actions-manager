@@ -43,7 +43,7 @@ export function ActionsTable({ actions }: ActionsTableProps) {
     let filtered = actions.filter(action => {
       const searchMatch =
         action.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        action.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        action.actionId.toLowerCase().includes(searchTerm.toLowerCase()) ||
         (action.responsibleUser && action.responsibleUser.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
         action.responsibleGroupId.toLowerCase().includes(searchTerm.toLowerCase())
 
@@ -59,6 +59,9 @@ export function ActionsTable({ actions }: ActionsTableProps) {
         if (sortConfig.key === 'responsible') {
             aValue = a.responsibleUser?.name || a.responsibleGroupId;
             bValue = b.responsibleUser?.name || b.responsibleGroupId;
+        } else if (sortConfig.key === 'id') {
+            aValue = a['actionId'];
+            bValue = b['actionId'];
         } else {
             aValue = a[sortConfig.key as keyof ImprovementAction];
             bValue = b[sortConfig.key as keyof ImprovementAction];
@@ -172,7 +175,7 @@ export function ActionsTable({ actions }: ActionsTableProps) {
               filteredAndSortedActions.map(action => (
                 <TableRow key={action.id}>
                   <TableCell className="font-medium">
-                    <Link href={`/actions/${action.id}`} className="text-primary hover:underline">{action.id}</Link>
+                    <Link href={`/actions/${action.id}`} className="text-primary hover:underline">{action.actionId}</Link>
                   </TableCell>
                   <TableCell>{action.title}</TableCell>
                   <TableCell>

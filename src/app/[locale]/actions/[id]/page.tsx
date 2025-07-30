@@ -74,7 +74,7 @@ export default async function ActionDetailPage({ params }: DetailPageProps) {
     <div className="flex flex-col gap-6">
       <header className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">{action.id}: {action.title}</h1>
+          <h1 className="text-3xl font-bold tracking-tight">{action.actionId}: {action.title}</h1>
           <p className="text-muted-foreground mt-1">{action.description}</p>
         </div>
         <div className="flex-shrink-0">

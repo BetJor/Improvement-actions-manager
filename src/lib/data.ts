@@ -23,9 +23,9 @@ export const groups: UserGroup[] = [
 
 const today = new Date();
 
-const mockActions: ImprovementAction[] = [
+const mockActions: Omit<ImprovementAction, 'id'>[] = [
     {
-      id: "AM-24001",
+      actionId: "AM-24001",
       title: "Optimització del procés de facturació",
       type: "Correctiva",
       status: "Pendiente Análisis",
@@ -45,7 +45,7 @@ const mockActions: ImprovementAction[] = [
       }
     },
     {
-      id: "AM-24002",
+      actionId: "AM-24002",
       title: "Actualització de la política de seguretat",
       type: "ACSGSI",
       status: "Pendiente Comprobación",
@@ -58,7 +58,7 @@ const mockActions: ImprovementAction[] = [
       closureDueDate: format(subDays(today, -35), 'dd/MM/yyyy')
     },
     {
-        id: "AM-24003",
+        actionId: "AM-24003",
         title: "Millora del temps de resposta a tiquets de suport",
         type: "SAU",
         status: "Finalizada",
@@ -87,7 +87,7 @@ const mockActions: ImprovementAction[] = [
         }
       },
       {
-        id: "AM-24004",
+        actionId: "AM-24004",
         title: "No conformitat en l'auditoria interna",
         type: "IV",
         status: "Pendiente de Cierre",
@@ -100,7 +100,7 @@ const mockActions: ImprovementAction[] = [
         closureDueDate: format(subDays(today, -10), 'dd/MM/yyyy')
       },
       {
-        id: "AM-24005",
+        actionId: "AM-24005",
         title: "Pla de formació en gestió de riscos",
         type: "ACRSC",
         status: "Borrador",
@@ -131,42 +131,40 @@ export const getActions = async (): Promise<ImprovementAction[]> => {
        const newSnapshot = await getDocs(actionsCol);
        const actionsList = newSnapshot.docs.map(doc => {
         const data = doc.data();
-        return { id: doc.id, ...data } as ImprovementAction;
+        return { 
+          id: doc.id, 
+          actionId: data.actionId || doc.id, // Fallback to doc.id if actionId is missing
+          ...data 
+        } as ImprovementAction;
       });
       return actionsList;
     }
 
     const actionsList = actionsSnapshot.docs.map(doc => {
       const data = doc.data();
-      return { id: doc.id, ...data } as ImprovementAction;
+      return { 
+        id: doc.id,
+        actionId: data.actionId || doc.id, // Fallback to doc.id if actionId is missing
+        ...data 
+      } as ImprovementAction;
     });
     return actionsList;
 }
 
 export const getActionById = async (id: string): Promise<ImprovementAction | null> => {
-    // A Firestore, els IDs són els que genera automàticament, no "AM-24001", etc.
-    // Per a trobar-lo, hem de fer una consulta. Això suposa que el camp `id` dins del document
-    // és el nostre identificador llegible.
-    const actionsCol = collection(db, 'actions');
-    const q = query(actionsCol, where("id", "==", id));
-    const querySnapshot = await getDocs(q);
-
-    if (!querySnapshot.empty) {
-        const doc = querySnapshot.docs[0];
-        const data = doc.data();
-         // Retornem l'ID del document de Firestore, no el camp 'id' de dins
-        return { id: doc.id, ...data } as ImprovementAction;
-    }
-
-    // Si no es troba per l'ID personalitzat, intentem buscar-lo per l'ID del document
     try {
         const actionDocRef = doc(db, 'actions', id);
         const actionDocSnap = await getDoc(actionDocRef);
     
         if (actionDocSnap.exists()) {
             const data = actionDocSnap.data();
-            return { id: actionDocSnap.id, ...data } as ImprovementAction;
+            return { 
+                id: actionDocSnap.id,
+                actionId: data.actionId || actionDocSnap.id,
+                ...data 
+            } as ImprovementAction;
         } else {
+            console.warn(`Action with Firestore ID ${id} not found.`);
             return null;
         }
     } catch(error) {

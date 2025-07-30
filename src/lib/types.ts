@@ -29,7 +29,8 @@ export interface UserGroup {
 }
 
 export interface ImprovementAction {
-  id: string;
+  id: string; // Firestore document ID
+  actionId: string; // User-facing ID like AM-24001
   title: string;
   type: ImprovementActionType;
   status: ImprovementActionStatus;
