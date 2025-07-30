@@ -31,8 +31,9 @@ import { useToast } from "@/hooks/use-toast"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/hooks/use-auth"
 import { useState, useMemo, useEffect, useRef } from "react"
-import { Loader2, Mic, MicOff } from "lucide-react"
+import { Loader2, Mic, MicOff, Wand2 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { improveWriting } from "@/ai/flows/improveWriting"
 
 
 const formSchema = z.object({
@@ -62,6 +63,8 @@ export default function NewActionPage() {
   const [isRecording, setIsRecording] = useState(false);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const finalTranscriptRef = useRef<string>("");
+
+  const [isImprovingText, setIsImprovingText] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -127,14 +130,15 @@ export default function NewActionPage() {
 
       recognition.onresult = (event) => {
         let interimTranscript = '';
+        finalTranscriptRef.current = form.getValues('description');
         for (let i = event.resultIndex; i < event.results.length; ++i) {
           if (event.results[i].isFinal) {
-            finalTranscriptRef.current += event.results[i][0].transcript + ' ';
+            finalTranscriptRef.current = finalTranscriptRef.current.replace(interimTranscript, event.results[i][0].transcript);
           } else {
             interimTranscript += event.results[i][0].transcript;
           }
         }
-        form.setValue('description', finalTranscriptRef.current + interimTranscript);
+         form.setValue('description', finalTranscriptRef.current);
       };
 
       recognition.onend = () => {
@@ -174,12 +178,43 @@ export default function NewActionPage() {
     if (isRecording) {
       recognitionRef.current.stop();
     } else {
-      const currentDescription = form.getValues('description');
-      finalTranscriptRef.current = currentDescription.trim().length > 0 ? currentDescription + ' ' : '';
+      finalTranscriptRef.current = form.getValues('description');
       recognitionRef.current.start();
     }
     setIsRecording(!isRecording);
   };
+
+  const handleImproveText = async () => {
+    const currentDescription = form.getValues('description');
+    if (!currentDescription.trim()) {
+        toast({
+            variant: "destructive",
+            title: "Camp buit",
+            description: "No hi ha text per a millorar.",
+        });
+        return;
+    }
+
+    setIsImprovingText(true);
+    try {
+        const improvedText = await improveWriting(currentDescription);
+        form.setValue('description', improvedText);
+        toast({
+            title: "Text millorat",
+            description: "La redacció ha estat millorada per la IA.",
+        });
+    } catch (error) {
+        console.error("Error improving text:", error);
+        toast({
+            variant: "destructive",
+            title: "Error de l'IA",
+            description: "No s'ha pogut millorar el text.",
+        });
+    } finally {
+        setIsImprovingText(false);
+    }
+  };
+
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     if (!user) {
@@ -348,22 +383,37 @@ export default function NewActionPage() {
                     <FormControl>
                         <Textarea
                         placeholder="Descriu la no conformitat, les evidències, referències documentals, etc."
-                        className="resize-y min-h-[120px] pr-12"
+                        className="resize-y min-h-[120px] pr-24"
                         {...field}
                         disabled={disableForm}
                         />
                     </FormControl>
-                    <Button 
-                        type="button" 
-                        size="icon" 
-                        variant="ghost" 
-                        onClick={toggleRecording}
-                        disabled={disableForm}
-                        className={cn("absolute right-2 top-2 h-8 w-8", isRecording && "bg-red-500/20 text-red-500 hover:bg-red-500/30 hover:text-red-500")}
-                    >
-                        {isRecording ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
-                        <span className="sr-only">{isRecording ? "Aturar enregistrament" : "Iniciar enregistrament"}</span>
-                    </Button>
+                    <div className="absolute right-2 top-2 flex flex-col gap-2">
+                        <Button 
+                            type="button" 
+                            size="icon" 
+                            variant="ghost" 
+                            onClick={toggleRecording}
+                            disabled={disableForm}
+                            className={cn("h-8 w-8", isRecording && "bg-red-500/20 text-red-500 hover:bg-red-500/30 hover:text-red-500")}
+                            title={t("form.mic.toggle")}
+                        >
+                            {isRecording ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+                            <span className="sr-only">{isRecording ? "Aturar enregistrament" : "Iniciar enregistrament"}</span>
+                        </Button>
+                        <Button 
+                            type="button" 
+                            size="icon" 
+                            variant="ghost" 
+                            onClick={handleImproveText}
+                            disabled={disableForm || isImprovingText}
+                            className="h-8 w-8"
+                            title={t("form.improve.button")}
+                        >
+                            {isImprovingText ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}
+                            <span className="sr-only">{t("form.improve.button")}</span>
+                        </Button>
+                    </div>
                    </div>
                   <FormMessage />
                 </FormItem>

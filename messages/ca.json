@@ -50,6 +50,12 @@
       "toast": {
         "title": "Acció Creada",
         "description": "La nova acció de millora s'ha creat correctament."
+      },
+      "mic": {
+        "toggle": "Activar/desactivar el micròfon"
+      },
+      "improve": {
+        "button": "Millorar text amb IA"
       }
     }
   },
