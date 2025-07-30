@@ -37,6 +37,11 @@ import {
           key: "phase5",
           completed_tasks: ["task1", "task2"],
           pending_tasks: []
+        },
+        {
+          key: "phase6",
+          completed_tasks: [],
+          pending_tasks: ["task1", "task2", "task3"]
         }
     ];
 

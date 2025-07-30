@@ -182,6 +182,15 @@
           "task1": "Desarrollar la página de configuración con pestañas para las tablas de datos maestros.",
           "task2": "Implementar funcionalidades CRUD (Crear, Leer, Actualizar, Borrar) para los datos."
         }
+      },
+      "phase6": {
+        "title": "Fase 6: Roles y Permisos de Usuario",
+        "duration": "Estimado: 3-4 días",
+        "tasks": {
+          "task1": "Pendiente: Definir una estructura de datos en Firestore para roles y permisos.",
+          "task2": "Pendiente: Crear un mecanismo para asignar roles a los usuarios (p. ej., en un panel de administración).",
+          "task3": "Pendiente: Proteger rutas y componentes de la interfaz según el rol del usuario."
+        }
       }
     }
   },

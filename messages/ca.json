@@ -182,6 +182,15 @@
           "task1": "Desenvolupar la pàgina de configuració amb pestanyes per a les taules de dades mestres.",
           "task2": "Implementar funcionalitats CRUD (Crear, Llegir, Actualitzar, Esborrar) per a les dades."
         }
+      },
+       "phase6": {
+        "title": "Fase 6: Rols i Permisos d'Usuari",
+        "duration": "Estimat: 3-4 dies",
+        "tasks": {
+          "task1": "Pendent: Definir una estructura de dades a Firestore per a rols i permisos.",
+          "task2": "Pendent: Crear un mecanisme per a assignar rols als usuaris (p. ex., en un panell d'administració).",
+          "task3": "Pendent: Protegir rutes i components de la interfície segons el rol de l'usuari."
+        }
       }
     }
   },
