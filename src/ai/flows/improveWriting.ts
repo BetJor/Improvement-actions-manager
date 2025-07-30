@@ -21,7 +21,7 @@ export async function improveWriting(input: ImproveWritingInput): Promise<Improv
 
 const improveWritingPrompt = ai.definePrompt({
     name: 'improveWritingPrompt',
-    input: { schema: z.object({ prompt: ImproveWritingInputSchema }) },
+    input: { schema: ImproveWritingInputSchema },
     output: { schema: ImproveWritingOutputSchema },
     prompt: `
         You are a professional writing assistant. Your task is to improve the following text.
@@ -42,7 +42,9 @@ const improveWritingFlow = ai.defineFlow(
     outputSchema: ImproveWritingOutputSchema,
   },
   async (prompt) => {
-    const { output } = await improveWritingPrompt({ prompt });
+    // Pass the raw string prompt directly.
+    // The prompt template will receive it as the `prompt` variable.
+    const { output } = await improveWritingPrompt(prompt);
     return output!;
   }
 );
