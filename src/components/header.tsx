@@ -1,5 +1,5 @@
 "use client"
-import { CircleUser, Menu, Users } from "lucide-react"
+import { CircleUser, Menu, Users, Bell } from "lucide-react"
 import Link from "next/link"
 import {
   DropdownMenu,
@@ -26,6 +26,7 @@ import { useAuth } from "@/hooks/use-auth"
 
 export function Header() {
   const t = useTranslations('Header');
+  const tSidebar = useTranslations('AppSidebar');
   const tDialog = useTranslations('SettingsDialog');
   const { user, logout } = useAuth();
 
@@ -53,30 +54,34 @@ export function Header() {
               {t("title")}
           </h1>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-4">
+            <Button variant="ghost" size="icon" className="rounded-full">
+              <Bell className="h-5 w-5" />
+              <span className="sr-only">{tSidebar("toggleNotifications")}</span>
+            </Button>
             <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-                <Button variant="secondary" size="icon" className="rounded-full">
-                <CircleUser className="h-5 w-5" />
-                <span className="sr-only">Toggle user menu</span>
-                </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-                <DropdownMenuLabel>{user ? user.displayName : t("myAccount")}</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                  <Link href="/my-groups">
-                    <Users className="mr-2 h-4 w-4" />
-                    <span>{t("myGroups")}</span>
-                  </Link>
-                </DropdownMenuItem>
-                <DialogTrigger asChild>
-                  <DropdownMenuItem>{t("settings")}</DropdownMenuItem>
-                </DialogTrigger>
-                <DropdownMenuItem>{t("support")}</DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={logout}>{t("logout")}</DropdownMenuItem>
-            </DropdownMenuContent>
+              <DropdownMenuTrigger asChild>
+                  <Button variant="secondary" size="icon" className="rounded-full">
+                  <CircleUser className="h-5 w-5" />
+                  <span className="sr-only">Toggle user menu</span>
+                  </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                  <DropdownMenuLabel>{user ? user.displayName : t("myAccount")}</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link href="/my-groups">
+                      <Users className="mr-2 h-4 w-4" />
+                      <span>{t("myGroups")}</span>
+                    </Link>
+                  </DropdownMenuItem>
+                  <DialogTrigger asChild>
+                    <DropdownMenuItem>{t("settings")}</DropdownMenuItem>
+                  </DialogTrigger>
+                  <DropdownMenuItem>{t("support")}</DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={logout}>{t("logout")}</DropdownMenuItem>
+              </DropdownMenuContent>
             </DropdownMenu>
             {user && <span className="text-sm font-medium hidden md:inline-block">{user.displayName}</span>}
         </div>

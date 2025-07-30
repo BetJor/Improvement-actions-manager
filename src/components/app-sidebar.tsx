@@ -2,9 +2,8 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Bell, Home, ListChecks, GanttChartSquare, Archive } from "lucide-react"
+import { Home, ListChecks, GanttChartSquare, Archive } from "lucide-react"
 import { Separator } from "@/components/ui/separator"
-import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { useTranslations } from "next-intl"
 
@@ -29,10 +28,6 @@ export function AppSidebar() {
             <GanttChartSquare className="h-6 w-6 text-primary" />
             <span className="">{t("title")}</span>
           </Link>
-          <Button variant="outline" size="icon" className="ml-auto h-8 w-8">
-            <Bell className="h-4 w-4" />
-            <span className="sr-only">{t("toggleNotifications")}</span>
-          </Button>
         </div>
         <div className="flex-1">
           <nav className="grid items-start px-2 text-sm font-medium lg:px-4">
