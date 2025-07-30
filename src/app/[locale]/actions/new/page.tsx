@@ -62,7 +62,7 @@ export default function NewActionPage() {
 
   const [isRecording, setIsRecording] = useState(false);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
-  const finalTranscriptRef = useRef<string>("");
+  let finalTranscript = '';
 
   const [isImprovingText, setIsImprovingText] = useState(false);
 
@@ -130,15 +130,14 @@ export default function NewActionPage() {
 
       recognition.onresult = (event) => {
         let interimTranscript = '';
-        finalTranscriptRef.current = form.getValues('description');
         for (let i = event.resultIndex; i < event.results.length; ++i) {
           if (event.results[i].isFinal) {
-            finalTranscriptRef.current = finalTranscriptRef.current.replace(interimTranscript, event.results[i][0].transcript);
+            finalTranscript += event.results[i][0].transcript;
           } else {
             interimTranscript += event.results[i][0].transcript;
           }
         }
-         form.setValue('description', finalTranscriptRef.current);
+        form.setValue('description', finalTranscript + interimTranscript);
       };
 
       recognition.onend = () => {
@@ -163,7 +162,7 @@ export default function NewActionPage() {
     return () => {
         recognitionRef.current?.stop();
     }
-  }, [form, toast]);
+  }, [form, toast, finalTranscript]);
 
   const toggleRecording = () => {
     if (!recognitionRef.current) {
@@ -178,7 +177,7 @@ export default function NewActionPage() {
     if (isRecording) {
       recognitionRef.current.stop();
     } else {
-      finalTranscriptRef.current = form.getValues('description');
+      finalTranscript = form.getValues('description');
       recognitionRef.current.start();
     }
     setIsRecording(!isRecording);
@@ -197,8 +196,8 @@ export default function NewActionPage() {
 
     setIsImprovingText(true);
     try {
-        const improvedText = await improveWriting(currentDescription);
-        form.setValue('description', improvedText);
+        const response = await improveWriting({ text: currentDescription });
+        form.setValue('description', response.improvedText);
         toast({
             title: "Text millorat",
             description: "La redacció ha estat millorada per la IA.",

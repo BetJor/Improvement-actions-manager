@@ -9,10 +9,14 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 
-const ImproveWritingInputSchema = z.string().describe("The text to be improved.");
+const ImproveWritingInputSchema = z.object({
+  text: z.string().describe("The text to be improved."),
+});
 export type ImproveWritingInput = z.infer<typeof ImproveWritingInputSchema>;
 
-const ImproveWritingOutputSchema = z.string().describe("The improved text.");
+const ImproveWritingOutputSchema = z.object({
+  improvedText: z.string().describe("The improved text."),
+});
 export type ImproveWritingOutput = z.infer<typeof ImproveWritingOutputSchema>;
 
 export async function improveWriting(input: ImproveWritingInput): Promise<ImproveWritingOutput> {
@@ -27,10 +31,10 @@ const improveWritingPrompt = ai.definePrompt({
         You are a professional writing assistant. Your task is to improve the following text.
         Correct any grammatical errors, improve clarity, and ensure a professional tone.
         Maintain the original meaning of the text.
-        Respond ONLY with the improved text, without any additional comments or introductions.
+        Respond ONLY with the improved text in the 'improvedText' field of the JSON output.
 
         Text to improve:
-        "{{prompt}}"
+        "{{text}}"
     `,
 });
 
@@ -41,10 +45,8 @@ const improveWritingFlow = ai.defineFlow(
     inputSchema: ImproveWritingInputSchema,
     outputSchema: ImproveWritingOutputSchema,
   },
-  async (prompt) => {
-    // Pass the raw string prompt directly.
-    // The prompt template will receive it as the `prompt` variable.
-    const { output } = await improveWritingPrompt(prompt);
+  async (input) => {
+    const { output } = await improveWritingPrompt(input);
     return output!;
   }
 );
