@@ -53,7 +53,7 @@ export const getActionTypes = async (): Promise<ImprovementActionType[]> => {
 
   const typesCol = collection(db, 'actionTypes');
   const snapshot = await getDocs(query(typesCol, orderBy("name")));
-  return snapshot.docs.map(doc => doc.data() as ImprovementActionType);
+  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ImprovementActionType));
 };
 
 export const getCategories = async (): Promise<ActionCategory[]> => {

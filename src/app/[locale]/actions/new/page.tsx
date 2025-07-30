@@ -306,7 +306,7 @@ export default function NewActionPage() {
                       </FormControl>
                       <SelectContent>
                         {actionTypes.map(type => (
-                          <SelectItem key={type.name} value={type.name}>{type.name}</SelectItem>
+                          <SelectItem key={type.id} value={type.name}>{type.name}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>

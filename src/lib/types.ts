@@ -1,5 +1,5 @@
 export interface ImprovementActionType {
-  // Assuming the doc in Firestore has a 'name' field
+  id: string;
   name: string;
 }
 
