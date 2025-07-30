@@ -6,7 +6,7 @@ import {
     CardTitle,
   } from "@/components/ui/card"
   import { getTranslations } from "next-intl/server"
-  import { CheckCircle2, CircleDashed } from "lucide-react"
+  import { CheckCircle2, CircleDot } from "lucide-react"
 
   
   export default async function RoadmapPage() {
@@ -75,7 +75,7 @@ import {
                             ))}
                             {phase.pending_tasks.map((task, taskIndex) => (
                                 <div key={taskIndex} className="flex items-start gap-3">
-                                    <CircleDashed className="h-5 w-5 text-yellow-500 mt-0.5 shrink-0 animate-spin" />
+                                    <CircleDot className="h-5 w-5 text-yellow-500 mt-0.5 shrink-0" />
                                     <span className="font-semibold">{t(`phases.${phase.key}.tasks.${task}`)}</span>
                                 </div>
                             ))}
