@@ -63,6 +63,20 @@ export default function NewActionPage() {
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const finalTranscriptRef = useRef<string>("");
 
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      title: "",
+      category: "",
+      subcategory: "",
+      affectedAreas: "",
+      assignedTo: "",
+      description: "",
+      type: "",
+      responsibleGroupId: "",
+    },
+  })
+
   useEffect(() => {
     async function loadMasterData() {
       try {
@@ -91,19 +105,6 @@ export default function NewActionPage() {
     loadMasterData();
   }, [toast]);
 
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      title: "",
-      category: "",
-      subcategory: "",
-      affectedAreas: "",
-      assignedTo: "",
-      description: "",
-      type: "",
-      responsibleGroupId: "",
-    },
-  })
 
   const selectedCategoryId = form.watch("category");
 
@@ -205,7 +206,7 @@ export default function NewActionPage() {
         allAffectedAreas: affectedAreas,
         allActionTypes: actionTypes,
       };
-      const newActionId = await createAction(actionData);
+      await createAction(actionData);
       
       toast({
         title: t("form.toast.title"),
@@ -263,7 +264,7 @@ export default function NewActionPage() {
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Selecciona una categoria" />
-                        </Trigger>
+                        </SelectTrigger>
                       </FormControl>
                       <SelectContent>
                         {categories.map(cat => (
@@ -285,7 +286,7 @@ export default function NewActionPage() {
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Selecciona una subcategoria" />
-                        </Trigger>
+                        </SelectTrigger>
                       </FormControl>
                       <SelectContent>
                         {filteredSubcategories.map(sub => (
@@ -310,7 +311,7 @@ export default function NewActionPage() {
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Selecciona una àrea implicada" />
-                        </Trigger>
+                        </SelectTrigger>
                       </FormControl>
                       <SelectContent>
                         {affectedAreas.map(area => (
@@ -380,7 +381,7 @@ export default function NewActionPage() {
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder={t("form.type.placeholder")} />
-                        </Trigger>
+                        </SelectTrigger>
                       </FormControl>
                       <SelectContent>
                         {actionTypes.map(type => (
@@ -405,7 +406,7 @@ export default function NewActionPage() {
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder={t("form.responsible.placeholder")} />
-                        </Trigger>
+                        </SelectTrigger>
                       </FormControl>
                       <SelectContent>
                         {groups.map(group => (
