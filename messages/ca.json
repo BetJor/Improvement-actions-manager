@@ -149,6 +149,13 @@
     "col": {
       "name": "Nom",
       "category": "Categoria"
-    }
+    },
+    "addNew": "Afegeix Nou",
+    "edit": "Editar",
+    "delete": "Esborrar",
+    "deleteConfirmation": "Estàs segur?",
+    "deleteConfirmationMessage": "Aquesta acció no es pot desfer. Això eliminarà permanentment l'element.",
+    "cancel": "Cancel·lar",
+    "continue": "Continuar"
   }
 }

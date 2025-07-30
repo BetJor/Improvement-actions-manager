@@ -1,31 +1,88 @@
 
+"use client";
+
+import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
+import { MasterDataManager } from "@/components/master-data-manager";
 import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardHeader,
-    CardTitle,
-} from "@/components/ui/card"
-import { getTranslations } from "next-intl/server"
-import { MasterDataManager } from "@/components/master-data-manager"
-import { getActionTypes, getCategories, getSubcategories, getAffectedAreas } from "@/lib/data"
+    getActionTypes,
+    getCategories,
+    getSubcategories,
+    getAffectedAreas,
+    addMasterDataItem,
+    updateMasterDataItem,
+    deleteMasterDataItem,
+} from "@/lib/data";
+import { useToast } from "@/hooks/use-toast";
+import type { MasterDataItem } from "@/lib/types";
 
-export default async function SettingsPage() {
-    const t = await getTranslations("SettingsPage")
+export default function SettingsPage() {
+    const t = useTranslations("SettingsPage");
+    const { toast } = useToast();
+    const [masterData, setMasterData] = useState<any>(null);
+    const [isLoading, setIsLoading] = useState(true);
 
-    const [actionTypes, categories, subcategories, affectedAreas] = await Promise.all([
-        getActionTypes(),
-        getCategories(),
-        getSubcategories(),
-        getAffectedAreas(),
-    ]);
+    const loadData = async () => {
+        try {
+            const [actionTypes, categories, subcategories, affectedAreas] = await Promise.all([
+                getActionTypes(),
+                getCategories(),
+                getSubcategories(),
+                getAffectedAreas(),
+            ]);
 
-    const masterData = {
-        actionTypes: { title: t("tabs.actionTypes"), data: actionTypes, columns: [{key: 'name', label: t('col.name')}] },
-        categories: { title: t("tabs.categories"), data: categories, columns: [{key: 'name', label: t('col.name')}] },
-        subcategories: { title: t("tabs.subcategories"), data: subcategories, columns: [{key: 'name', label: t('col.name')}, {key: 'categoryId', label: t('col.category')}] },
-        affectedAreas: { title: t("tabs.affectedAreas"), data: affectedAreas, columns: [{key: 'name', label: t('col.name')}] },
-    }
+            setMasterData({
+                actionTypes: { title: t("tabs.actionTypes"), data: actionTypes, columns: [{ key: 'name', label: t('col.name') }] },
+                categories: { title: t("tabs.categories"), data: categories, columns: [{ key: 'name', label: t('col.name') }] },
+                subcategories: { 
+                    title: t("tabs.subcategories"), 
+                    data: subcategories.map(s => ({...s, categoryName: categories.find(c => c.id === s.categoryId)?.name})), 
+                    columns: [{ key: 'name', label: t('col.name') }, { key: 'categoryName', label: t('col.category') }] 
+                },
+                affectedAreas: { title: t("tabs.affectedAreas"), data: affectedAreas, columns: [{ key: 'name', label: t('col.name') }] },
+            });
+        } catch (error) {
+            console.error("Failed to load master data:", error);
+            toast({
+                variant: "destructive",
+                title: "Error de càrrega",
+                description: "No s'han pogut carregar les dades mestres.",
+            });
+        } finally {
+            setIsLoading(false);
+        }
+    };
+    
+    useEffect(() => {
+        loadData();
+    }, []);
+
+    const handleSave = async (collectionName: string, item: MasterDataItem) => {
+        try {
+            const { id, ...dataToSave } = item;
+            if (id) {
+                await updateMasterDataItem(collectionName, id, dataToSave);
+                toast({ title: "Element actualitzat", description: "L'element s'ha actualitzat correctament." });
+            } else {
+                await addMasterDataItem(collectionName, dataToSave);
+                toast({ title: "Element creat", description: "L'element s'ha creat correctament." });
+            }
+        } catch (error) {
+            console.error(`Error saving item in ${collectionName}:`, error);
+            toast({ variant: "destructive", title: "Error en desar", description: "No s'ha pogut desar l'element." });
+        }
+    };
+
+    const handleDelete = async (collectionName: string, itemId: string) => {
+        try {
+            await deleteMasterDataItem(collectionName, itemId);
+            toast({ title: "Element eliminat", description: "L'element s'ha eliminat correctament." });
+        } catch (error) {
+            console.error(`Error deleting item from ${collectionName}:`, error);
+            toast({ variant: "destructive", title: "Error en eliminar", description: "No s'ha pogut eliminar l'element." });
+        }
+    };
+
 
     return (
         <div className="flex flex-col gap-4">
@@ -33,7 +90,18 @@ export default async function SettingsPage() {
             <p className="text-muted-foreground">
                 {t("description")}
             </p>
-            <MasterDataManager data={masterData} />
+            {isLoading ? (
+                <p>Carregant dades mestres...</p>
+            ) : masterData ? (
+                <MasterDataManager 
+                    initialData={masterData}
+                    onSave={handleSave}
+                    onDelete={handleDelete}
+                    refreshData={loadData}
+                />
+            ) : (
+                <p>No s'han pogut carregar les dades.</p>
+            )}
         </div>
-    )
+    );
 }

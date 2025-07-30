@@ -149,6 +149,13 @@
     "col": {
       "name": "Nombre",
       "category": "Categoría"
-    }
+    },
+    "addNew": "Añadir Nuevo",
+    "edit": "Editar",
+    "delete": "Eliminar",
+    "deleteConfirmation": "¿Estás seguro?",
+    "deleteConfirmationMessage": "Esta acción no se puede deshacer. Esto eliminará permanentemente el elemento.",
+    "cancel": "Cancelar",
+    "continue": "Continuar"
   }
 }

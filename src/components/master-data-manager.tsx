@@ -1,6 +1,7 @@
 
 "use client"
 
+import { useState } from "react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
   Table,
@@ -10,14 +11,123 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import type { MasterDataItem } from "@/lib/types"
+import { Button } from "@/components/ui/button"
+import { Pencil, PlusCircle, Trash2 } from "lucide-react"
+import type { MasterDataItem, ActionCategory } from "@/lib/types"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+  DialogClose,
+} from "@/components/ui/dialog"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
+
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { useToast } from "@/hooks/use-toast"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select"
+
+interface MasterDataFormDialogProps {
+  isOpen: boolean
+  setIsOpen: (isOpen: boolean) => void
+  item: MasterDataItem | null
+  collectionName: string
+  title: string
+  onSave: (collection: string, item: MasterDataItem) => Promise<void>
+  extraColumns?: { key: string; label: string, type: 'select', options: any[] }[]
+}
+
+function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, title, onSave, extraColumns = [] }: MasterDataFormDialogProps) {
+  const [formData, setFormData] = useState<MasterDataItem>(item || { name: "" })
+  const { toast } = useToast()
+
+  const handleSave = async () => {
+    if (!formData.name) {
+      toast({
+        variant: "destructive",
+        title: "Error de validació",
+        description: "El camp 'Nom' és obligatori.",
+      })
+      return
+    }
+    await onSave(collectionName, formData)
+    setIsOpen(false)
+  }
+
+  return (
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{item ? "Editar" : "Crear"} {title}</DialogTitle>
+          <DialogDescription>
+            Omple els detalls a continuació.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="grid gap-4 py-4">
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="name" className="text-right">
+              Nom
+            </Label>
+            <Input
+              id="name"
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              className="col-span-3"
+            />
+          </div>
+          {extraColumns.map(col => (
+             <div key={col.key} className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor={col.key} className="text-right">
+                {col.label}
+              </Label>
+              <Select
+                value={formData[col.key]}
+                onValueChange={(value) => setFormData({ ...formData, [col.key]: value })}
+              >
+                <SelectTrigger className="col-span-3">
+                  <SelectValue placeholder={`Selecciona ${col.label.toLowerCase()}`} />
+                </SelectTrigger>
+                <SelectContent>
+                  {col.options.map(option => (
+                    <SelectItem key={option.id} value={option.id}>{option.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          ))}
+        </div>
+        <DialogFooter>
+          <DialogClose asChild>
+            <Button variant="outline">Cancel·lar</Button>
+          </DialogClose>
+          <Button onClick={handleSave}>Guardar</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
 
 interface MasterDataTableProps {
   data: MasterDataItem[];
   columns: { key: string; label: string }[];
+  onEdit: (item: MasterDataItem) => void;
+  onDelete: (item: MasterDataItem) => void;
 }
 
-function MasterDataTable({ data, columns }: MasterDataTableProps) {
+function MasterDataTable({ data, columns, onEdit, onDelete }: MasterDataTableProps) {
   return (
     <div className="rounded-md border">
       <Table>
@@ -25,6 +135,7 @@ function MasterDataTable({ data, columns }: MasterDataTableProps) {
           <TableRow>
             <TableHead className="w-[100px]">ID</TableHead>
             {columns.map(col => <TableHead key={col.key}>{col.label}</TableHead>)}
+            <TableHead className="text-right">Accions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -32,12 +143,43 @@ function MasterDataTable({ data, columns }: MasterDataTableProps) {
             data.map((item) => (
               <TableRow key={item.id}>
                 <TableCell className="font-medium">{item.id}</TableCell>
-                {columns.map(col => <TableCell key={`${item.id}-${col.key}`}>{item[col.key]}</TableCell>)}
+                {columns.map(col => (
+                    <TableCell key={`${item.id}-${col.key}`}>
+                        {col.key === 'categoryId'
+                            ? (columns.find(c => c.key === 'categoryOptions') as any)?.options.find((opt: any) => opt.id === item[col.key])?.name || item[col.key]
+                            : item[col.key]
+                        }
+                    </TableCell>
+                ))}
+                <TableCell className="text-right">
+                  <Button variant="ghost" size="icon" onClick={() => onEdit(item)}>
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="ghost" size="icon">
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Estàs segur?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Aquesta acció no es pot desfer. Això eliminarà permanentment l'element.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel·lar</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => onDelete(item)}>Continuar</AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </TableCell>
               </TableRow>
             ))
           ) : (
             <TableRow>
-              <TableCell colSpan={columns.length + 1} className="h-24 text-center">
+              <TableCell colSpan={columns.length + 2} className="h-24 text-center">
                 No hi ha dades per mostrar.
               </TableCell>
             </TableRow>
@@ -49,30 +191,96 @@ function MasterDataTable({ data, columns }: MasterDataTableProps) {
 }
 
 interface MasterDataManagerProps {
-  data: {
+  initialData: {
     [key: string]: {
       title: string;
       data: MasterDataItem[];
-      columns: { key: string; label: string }[];
+      columns: { key: string; label: string; type?: 'select', options?: any[] }[];
     };
   };
+  onSave: (collectionName: string, item: MasterDataItem) => Promise<void>;
+  onDelete: (collectionName: string, itemId: string) => Promise<void>;
+  refreshData: () => Promise<void>;
 }
 
-export function MasterDataManager({ data }: MasterDataManagerProps) {
-  const dataKeys = Object.keys(data);
+export function MasterDataManager({ initialData, onSave, onDelete, refreshData }: MasterDataManagerProps) {
+  const [data, setData] = useState(initialData);
+  const [activeTab, setActiveTab] = useState(Object.keys(initialData)[0]);
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [currentItem, setCurrentItem] = useState<MasterDataItem | null>(null);
+
+  const handleAddNew = () => {
+    setCurrentItem(null);
+    setIsFormOpen(true);
+  };
+
+  const handleEdit = (item: MasterDataItem) => {
+    setCurrentItem(item);
+    setIsFormOpen(true);
+  };
+
+  const handleDelete = async (item: MasterDataItem) => {
+    if (item.id) {
+        await onDelete(activeTab, item.id);
+        await refreshData();
+    }
+  };
+
+  const handleSave = async (collectionName: string, item: MasterDataItem) => {
+    await onSave(collectionName, item);
+    await refreshData();
+  };
   
+  const getExtraColumnsForTab = (tabKey: string) => {
+    if (tabKey === 'subcategories') {
+      return [{
+        key: 'categoryId',
+        label: 'Categoria',
+        type: 'select',
+        options: data.categories.data
+      }];
+    }
+    return [];
+  };
+
   return (
-    <Tabs defaultValue={dataKeys[0]} className="w-full">
-      <TabsList>
-        {dataKeys.map(key => (
-          <TabsTrigger key={key} value={key}>{data[key].title}</TabsTrigger>
+    <>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList>
+          {Object.keys(data).map(key => (
+            <TabsTrigger key={key} value={key}>{data[key].title}</TabsTrigger>
+          ))}
+        </TabsList>
+        {Object.keys(data).map(key => (
+          <TabsContent key={key} value={key}>
+            <div className="flex justify-end mb-4">
+              <Button onClick={handleAddNew}>
+                <PlusCircle className="mr-2 h-4 w-4" /> Afegeix Nou
+              </Button>
+            </div>
+            <MasterDataTable
+              data={data[key].data}
+              columns={data[key].columns.map(col => col.key === 'categoryId' 
+                ? { ...col, options: data.categories.data }
+                : col
+              )}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+            />
+          </TabsContent>
         ))}
-      </TabsList>
-      {dataKeys.map(key => (
-        <TabsContent key={key} value={key}>
-          <MasterDataTable data={data[key].data} columns={data[key].columns} />
-        </TabsContent>
-      ))}
-    </Tabs>
+      </Tabs>
+      {isFormOpen && (
+        <MasterDataFormDialog
+          isOpen={isFormOpen}
+          setIsOpen={setIsFormOpen}
+          item={currentItem}
+          collectionName={activeTab}
+          title={data[activeTab].title.slice(0, -1)}
+          onSave={handleSave}
+          extraColumns={getExtraColumnsForTab(activeTab)}
+        />
+      )}
+    </>
   )
 }

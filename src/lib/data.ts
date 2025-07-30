@@ -1,8 +1,8 @@
 
-import type { ImprovementAction, User, UserGroup, ImprovementActionType, ActionUserInfo, ActionCategory, ActionSubcategory, AffectedArea } from './types';
+import type { ImprovementAction, User, UserGroup, ImprovementActionType, ActionUserInfo, ActionCategory, ActionSubcategory, AffectedArea, MasterDataItem } from './types';
 import { subDays, format, addDays } from 'date-fns';
 import { db } from './firebase';
-import { collection, getDocs, doc, getDoc, addDoc, query, orderBy, limit, writeBatch } from 'firebase/firestore';
+import { collection, getDocs, doc, getDoc, addDoc, query, orderBy, limit, writeBatch, updateDoc, deleteDoc, setDoc } from 'firebase/firestore';
 
 export const users: User[] = [
   { id: 'user-1', name: 'Ana García', role: 'Director', avatar: 'https://i.pravatar.cc/150?u=a042581f4e29026024d', email: 'ana.garcia@example.com' },
@@ -211,4 +211,22 @@ export async function createAction(data: CreateActionData): Promise<string> {
     // 3. Add the new document to Firestore
     const docRef = await addDoc(actionsCol, newAction);
     return docRef.id;
+}
+
+
+// --- CRUD for Master Data ---
+export async function addMasterDataItem(collectionName: string, item: Omit<MasterDataItem, 'id'>): Promise<string> {
+    const collectionRef = collection(db, collectionName);
+    const docRef = await addDoc(collectionRef, item);
+    return docRef.id;
+}
+
+export async function updateMasterDataItem(collectionName: string, itemId: string, item: Omit<MasterDataItem, 'id'>): Promise<void> {
+    const docRef = doc(db, collectionName, itemId);
+    await updateDoc(docRef, item);
+}
+
+export async function deleteMasterDataItem(collectionName: string, itemId: string): Promise<void> {
+    const docRef = doc(db, collectionName, itemId);
+    await deleteDoc(docRef);
 }

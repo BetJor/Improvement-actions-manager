@@ -1,6 +1,7 @@
 
+
 export interface MasterDataItem {
-  id: string;
+  id?: string;
   name: string;
   [key: string]: any; // Permet altres propietats
 }
