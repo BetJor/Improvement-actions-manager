@@ -1,8 +1,10 @@
 
-export default function LocaleLayout({ 
+export default function LocaleLayout({
   children,
-}: { 
-  children: React.ReactNode,
+  params: {locale}
+}: {
+  children: React.ReactNode;
+  params: {locale: string};
 }) {
   return children;
 }

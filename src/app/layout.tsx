@@ -1,19 +1,21 @@
 import { AppSidebar } from "@/components/app-sidebar"
 import { Header } from "@/components/header"
 import { Toaster } from "@/components/ui/toaster";
-import {NextIntlClientProvider, useMessages} from 'next-intl';
+import {NextIntlClientProvider} from 'next-intl';
 import { Inter } from 'next/font/google'
-import { getLocale } from "next-intl/server";
+import { getLocale, getMessages } from "next-intl/server";
 
 const inter = Inter({ subsets: ['latin'] })
 
-export default function RootLayout({ 
+export default async function RootLayout({ 
   children,
+  params,
 }: { 
   children: React.ReactNode,
+  params: { locale: string };
 }) {
-  const messages = useMessages();
-  const locale = getLocale();
+  const messages = await getMessages();
+  const locale = await getLocale();
 
   return (
     <html lang={locale}>
