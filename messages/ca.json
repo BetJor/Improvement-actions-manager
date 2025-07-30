@@ -231,6 +231,14 @@
         "label": "Prompt de Millora d'Observacions",
         "placeholder": "Introdueix aquí el prompt que utilitzarà l'IA per a millorar les observacions..."
       },
+      "analysisPrompt": {
+        "label": "Prompt d'Anàlisi de Causes",
+        "placeholder": "Introdueix el prompt per a l'assistent d'anàlisi de causes..."
+      },
+      "correctiveActionsPrompt": {
+        "label": "Prompt d'Accions Correctives",
+        "placeholder": "Introdueix el prompt per a l'assistent de propostes d'accions..."
+      },
       "save": "Desar Canvis"
     }
   }

@@ -264,25 +264,51 @@ export async function deleteMasterDataItem(collectionName: string, itemId: strin
 
 
 // --- CRUD for AI Prompts ---
-const DEFAULT_IMPROVE_WRITING_PROMPT = `
-You are an expert in quality management systems. Your task is to convert the following text into a formal non-conformity description suitable for a formal report.
+type PromptId = "improveWriting" | "analysis" | "correctiveActions";
 
+const DEFAULT_PROMPTS: Record<PromptId, string> = {
+    improveWriting: `
+You are an expert in quality management systems. Your task is to convert the following text into a formal non-conformity description suitable for a formal report.
 The response should be structured, detailed, and professional. It must include:
 1.  A concise and descriptive title for the non-conformity.
-2.  A clear description of the finding.
-3.  An analysis of the potential risks and consequences (e.g., safety, compliance, etc.).
+2.  A clear description of the finding, including what was observed and where.
+3.  An analysis of the potential risks and consequences (e.g., safety, compliance, financial).
 4.  A mention of the immediate corrective action required or suggested.
-
 The response MUST be in the same language as the original text.
-
 Respond ONLY with the generated title in the 'title' field and the full detailed description in the 'description' field of the JSON output.
-
 Original text to convert:
 "{{text}}"
-`;
+`,
+    analysis: `
+You are an expert in root cause analysis (RCA). Based on the non-conformity description provided, perform a root cause analysis.
+Your analysis should:
+1.  Identify the most likely direct causes.
+2.  Use the "5 Whys" technique to explore the underlying root causes.
+3.  Categorize the root causes (e.g., process, human factor, equipment, materials, environment).
+4.  Provide a clear and concise summary of the final root cause(s).
+The response MUST be in the same language as the original text.
+Respond ONLY with the full analysis as a single string.
+Non-conformity description:
+"{{description}}"
+`,
+    correctiveActions: `
+You are an expert in quality management and corrective action planning. Based on the provided non-conformity description and its root cause analysis, propose a set of corrective actions.
+Your proposed plan should:
+1.  Define specific, measurable, achievable, relevant, and time-bound (SMART) corrective actions to address each root cause.
+2.  Assign a suggested responsible department or role for each action.
+3.  Suggest a method for verifying the effectiveness of each action.
+4.  Be realistic and practical for a business environment.
+The response MUST be in the same language as the original text.
+Respond ONLY with the full action plan as a single string.
+Non-conformity description:
+"{{description}}"
+Root Cause Analysis:
+"{{analysis}}"
+`
+};
 
 
-export async function getPrompt(promptId: 'improveWriting'): Promise<string> {
+export async function getPrompt(promptId: PromptId): Promise<string> {
     const docRef = doc(db, 'app_settings', 'prompts');
     const docSnap = await getDoc(docRef);
 
@@ -292,10 +318,10 @@ export async function getPrompt(promptId: 'improveWriting'): Promise<string> {
     
     // If it doesn't exist, return the default and don't write it to the DB
     // It will be written on the first save from the settings page.
-    return DEFAULT_IMPROVE_WRITING_PROMPT;
+    return DEFAULT_PROMPTS[promptId];
 }
 
-export async function updatePrompt(promptId: 'improveWriting', newPrompt: string): Promise<void> {
+export async function updatePrompt(promptId: PromptId, newPrompt: string): Promise<void> {
     const docRef = doc(db, 'app_settings', 'prompts');
     // Use setDoc with merge: true to create the document if it doesn't exist
     // or update the specific field if it does.

@@ -16,7 +16,11 @@ import { Loader2 } from "lucide-react"
 
 const formSchema = z.object({
   improveWritingPrompt: z.string().min(10, "El prompt ha de tenir almenys 10 caràcters."),
+  analysisPrompt: z.string().min(10, "El prompt ha de tenir almenys 10 caràcters."),
+  correctiveActionsPrompt: z.string().min(10, "El prompt ha de tenir almenys 10 caràcters."),
 })
+
+type PromptId = "improveWriting" | "analysis" | "correctiveActions";
 
 export default function AiSettingsPage() {
   const t = useTranslations("AiSettingsPage")
@@ -28,43 +32,55 @@ export default function AiSettingsPage() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       improveWritingPrompt: "",
+      analysisPrompt: "",
+      correctiveActionsPrompt: "",
     },
   })
 
   useEffect(() => {
-    async function loadPrompt() {
+    async function loadPrompts() {
       setIsLoading(true)
       try {
-        const prompt = await getPrompt("improveWriting")
-        form.setValue("improveWritingPrompt", prompt)
+        const [improvePrompt, analysisPrompt, correctiveActionsPrompt] = await Promise.all([
+          getPrompt("improveWriting"),
+          getPrompt("analysis"),
+          getPrompt("correctiveActions"),
+        ]);
+        form.setValue("improveWritingPrompt", improvePrompt);
+        form.setValue("analysisPrompt", analysisPrompt);
+        form.setValue("correctiveActionsPrompt", correctiveActionsPrompt);
       } catch (error) {
-        console.error("Failed to load prompt:", error)
+        console.error("Failed to load prompts:", error)
         toast({
           variant: "destructive",
           title: "Error",
-          description: "No s'ha pogut carregar el prompt.",
+          description: "No s'han pogut carregar els prompts.",
         })
       } finally {
         setIsLoading(false)
       }
     }
-    loadPrompt()
+    loadPrompts()
   }, [form, toast])
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     setIsSaving(true)
     try {
-      await updatePrompt("improveWriting", values.improveWritingPrompt)
+      await Promise.all([
+        updatePrompt("improveWriting", values.improveWritingPrompt),
+        updatePrompt("analysis", values.analysisPrompt),
+        updatePrompt("correctiveActions", values.correctiveActionsPrompt),
+      ]);
       toast({
         title: "Desat!",
-        description: "El prompt s'ha guardat correctament.",
+        description: "Els prompts s'han guardat correctament.",
       })
     } catch (error) {
-      console.error("Failed to save prompt:", error)
+      console.error("Failed to save prompts:", error)
       toast({
         variant: "destructive",
         title: "Error",
-        description: "No s'ha pogut desar el prompt.",
+        description: "No s'han pogut desar els prompts.",
       })
     } finally {
       setIsSaving(false)
@@ -85,7 +101,7 @@ export default function AiSettingsPage() {
           </div>
         ) : (
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
               <FormField
                 control={form.control}
                 name="improveWritingPrompt"
@@ -94,8 +110,44 @@ export default function AiSettingsPage() {
                     <FormLabel>{t("form.improvePrompt.label")}</FormLabel>
                     <FormControl>
                       <Textarea
-                        rows={15}
+                        rows={12}
                         placeholder={t("form.improvePrompt.placeholder")}
+                        className="resize-y"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="analysisPrompt"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t("form.analysisPrompt.label")}</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        rows={12}
+                        placeholder={t("form.analysisPrompt.placeholder")}
+                        className="resize-y"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="correctiveActionsPrompt"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t("form.correctiveActionsPrompt.label")}</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        rows={12}
+                        placeholder={t("form.correctiveActionsPrompt.placeholder")}
                         className="resize-y"
                         {...field}
                       />
