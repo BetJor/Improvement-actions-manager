@@ -27,6 +27,12 @@ const nextConfig: NextConfig = {
       }
     ],
   },
+  experimental: {
+    // This is required for Genkit flows to work.
+    serverActions: {
+      bodySizeLimit: '2mb',
+    },
+  },
 };
 
 export default withIntl(nextConfig);

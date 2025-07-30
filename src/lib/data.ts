@@ -155,7 +155,3 @@ export const getActionById = async (id: string) => {
     // await new Promise(resolve => setTimeout(resolve, 500));
     return actions.find(action => action.id === id) || null;
 }
-
-export const getGroupsForUser = async (userId: string) => {
-  return groups.filter(g => g.userIds.includes(userId));
-}

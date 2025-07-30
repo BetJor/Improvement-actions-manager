@@ -1,5 +1,6 @@
 
-import { getGroupsForUser } from "@/lib/data"
+"use client";
+
 import {
   Card,
   CardContent,
@@ -15,29 +16,38 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { getTranslations } from "next-intl/server"
-import { auth } from "@/lib/firebase"
-import { redirect } from "next/navigation"
+import { useTranslations } from "next-intl"
+import { useAuth } from "@/hooks/use-auth"
+import { useEffect, useState } from "react";
+import type { UserGroup } from "@/lib/types";
+import { getUserGroups } from "@/ai/flows/getUserGroups";
 
-// This is a server component, but we need to get the current user.
-// We can't use the useAuth hook here.
-// A common pattern is to get the session on the server.
-// For now, we'll assume a mock user ID for demonstration.
-// In a real app, you would get this from the session.
-const MOCK_USER_ID = "user-1" // Replace with actual user logic later
+export default function MyGroupsPage() {
+  const t = useTranslations("MyGroupsPage")
+  const { user, loading } = useAuth();
+  const [userGroups, setUserGroups] = useState<UserGroup[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-export default async function MyGroupsPage() {
-  const t = await getTranslations("MyGroupsPage")
-  
-  // In a real app, you would get the user from the session.
-  // For now, we use a mock ID.
-  // const session = await auth.getSession(); -> This would be the ideal way
-  // if (!session.user) {
-  //   redirect("/login")
-  // }
-  // const userGroups = await getGroupsForUser(session.user.id)
-  
-  const userGroups = await getGroupsForUser(MOCK_USER_ID)
+  useEffect(() => {
+    async function fetchGroups() {
+      if (user) {
+        setIsLoading(true);
+        try {
+          const groups = await getUserGroups(user.uid);
+          setUserGroups(groups);
+        } catch (error) {
+          console.error("Failed to fetch user groups:", error);
+          // Handle error appropriately, maybe show a toast
+        } finally {
+          setIsLoading(false);
+        }
+      }
+    }
+    if (!loading) {
+      fetchGroups();
+    }
+  }, [user, loading]);
+
 
   return (
     <Card>
@@ -54,7 +64,13 @@ export default async function MyGroupsPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {userGroups.length > 0 ? (
+            {isLoading ? (
+              <TableRow>
+                <TableCell colSpan={2} className="h-24 text-center">
+                  Carregant grups...
+                </TableCell>
+              </TableRow>
+            ) : userGroups.length > 0 ? (
               userGroups.map((group) => (
                 <TableRow key={group.id}>
                   <TableCell className="font-medium">{group.name}</TableCell>
