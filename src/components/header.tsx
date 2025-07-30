@@ -1,6 +1,6 @@
 
 "use client"
-import { CircleUser, Menu, Users, Bell, Home, ListChecks, Archive, GanttChartSquare, Settings } from "lucide-react"
+import { CircleUser, Menu, Users, Bell, Home, ListChecks, Archive, GanttChartSquare, Settings, Clock } from "lucide-react"
 import Link from "next/link"
 import {
   DropdownMenu,
@@ -37,6 +37,7 @@ const pageConfig: { [key: string]: { icon: React.ElementType, titleKey: string }
   '/backlog': { icon: Archive, titleKey: 'backlog' },
   '/my-groups': { icon: Users, titleKey: 'myGroups' },
   '/settings': { icon: Settings, titleKey: 'settings' },
+  '/planning': { icon: Clock, titleKey: 'planning' },
 };
 
 
