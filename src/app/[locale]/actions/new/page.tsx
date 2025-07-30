@@ -24,26 +24,31 @@ import {
 } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { groups } from "@/lib/data"
+import { groups, createAction } from "@/lib/data"
 import type { ImprovementActionType } from "@/lib/types"
 import { useToast } from "@/hooks/use-toast"
 import { useRouter } from "next/navigation"
+import { useAuth } from "@/hooks/use-auth"
+import { useState } from "react"
+import { Loader2 } from "lucide-react"
 
 const actionTypes: ImprovementActionType[] = [
   'Correctiva', 'IV DAS-DP', 'IV', 'ACM', 'AMSGP', 'SAU', 'AC', 'ACSGSI', 'ACPSI', 'ACRSC'
 ]
 
 const formSchema = z.object({
-  title: z.string().min(10, "Title must be at least 10 characters."),
-  description: z.string().min(20, "Description must be at least 20 characters."),
-  type: z.enum(actionTypes),
-  responsibleGroupId: z.string({ required_error: "Please select a responsible group." }),
+  title: z.string().min(10, "El títol ha de tenir almenys 10 caràcters."),
+  description: z.string().min(20, "La descripció ha de tenir almenys 20 caràcters."),
+  type: z.enum(actionTypes, { required_error: "Has de seleccionar un tipus."}),
+  responsibleGroupId: z.string({ required_error: "Has de seleccionar un grup responsable." }),
 })
 
 export default function NewActionPage() {
   const t = useTranslations("NewActionPage")
   const { toast } = useToast()
   const router = useRouter()
+  const { user } = useAuth()
+  const [isSubmitting, setIsSubmitting] = useState(false)
   
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -53,13 +58,48 @@ export default function NewActionPage() {
     },
   })
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log(values)
-    toast({
-      title: t("form.toast.title"),
-      description: t("form.toast.description"),
-    })
-    router.push("/actions")
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    if (!user) {
+      toast({
+        variant: "destructive",
+        title: "Error d'autenticació",
+        description: "Has d'haver iniciat sessió per a crear una acció.",
+      })
+      return;
+    }
+
+    setIsSubmitting(true)
+
+    try {
+      const actionData = {
+        ...values,
+        creator: {
+          id: user.uid,
+          name: user.displayName || "Usuari desconegut",
+          avatar: user.photoURL || undefined,
+        }
+      }
+      const newActionId = await createAction(actionData);
+      console.log(`New action created with Firestore ID: ${newActionId}`);
+      
+      toast({
+        title: t("form.toast.title"),
+        description: t("form.toast.description"),
+      })
+      router.push("/actions")
+      // Force a refresh of the actions page to show the new one
+      router.refresh(); 
+
+    } catch (error) {
+      console.error("Error creating action:", error);
+      toast({
+        variant: "destructive",
+        title: "Error en crear l'acció",
+        description: "Hi ha hagut un problema en desar l'acció. Si us plau, torna-ho a provar.",
+      })
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -78,7 +118,7 @@ export default function NewActionPage() {
                 <FormItem>
                   <FormLabel>{t("form.title.label")}</FormLabel>
                   <FormControl>
-                    <Input placeholder={t("form.title.placeholder")} {...field} />
+                    <Input placeholder={t("form.title.placeholder")} {...field} disabled={isSubmitting} />
                   </FormControl>
                   <FormDescription>
                     {t("form.title.description")}
@@ -98,6 +138,7 @@ export default function NewActionPage() {
                       placeholder={t("form.description.placeholder")}
                       className="resize-none"
                       {...field}
+                      disabled={isSubmitting}
                     />
                   </FormControl>
                   <FormDescription>
@@ -114,7 +155,7 @@ export default function NewActionPage() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>{t("form.type.label")}</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isSubmitting}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder={t("form.type.placeholder")} />
@@ -139,7 +180,7 @@ export default function NewActionPage() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>{t("form.responsible.label")}</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isSubmitting}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder={t("form.responsible.placeholder")} />
@@ -159,7 +200,10 @@ export default function NewActionPage() {
                 )}
               />
             </div>
-            <Button type="submit">{t("form.submit")}</Button>
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {isSubmitting ? 'Creant...' : t("form.submit")}
+            </Button>
           </form>
         </Form>
       </CardContent>

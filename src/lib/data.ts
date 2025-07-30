@@ -1,7 +1,7 @@
-import type { ImprovementAction, User, UserGroup } from './types';
-import { subDays, format } from 'date-fns';
+import type { ImprovementAction, User, UserGroup, ImprovementActionType, ActionUserInfo } from './types';
+import { subDays, format, addDays } from 'date-fns';
 import { db } from './firebase';
-import { collection, getDocs, doc, getDoc, addDoc, query, where } from 'firebase/firestore';
+import { collection, getDocs, doc, getDoc, addDoc, query, orderBy, limit } from 'firebase/firestore';
 
 export const users: User[] = [
   { id: 'user-1', name: 'Ana García', role: 'Director', avatar: 'https://i.pravatar.cc/150?u=a042581f4e29026024d', email: 'ana.garcia@example.com' },
@@ -21,125 +21,19 @@ export const groups: UserGroup[] = [
   { id: 'rsc-committee@example.com', name: 'Comitè RSC', userIds: ['user-3', 'user-4'] },
 ];
 
-const today = new Date();
-
-const mockActions: Omit<ImprovementAction, 'id'>[] = [
-    {
-      actionId: "AM-24001",
-      title: "Optimització del procés de facturació",
-      type: "Correctiva",
-      status: "Pendiente Análisis",
-      description: "S'ha detectat un retard significatiu en el cicle de facturació que afecta el flux de caixa. Cal analitzar les causes i proposar una solució.",
-      creator: users[2],
-      responsibleGroupId: groups[0].id,
-      responsibleUser: users[1],
-      creationDate: format(subDays(today, 15), 'dd/MM/yyyy'),
-      analysisDueDate: format(subDays(today, -15), 'dd/MM/yyyy'),
-      implementationDueDate: format(subDays(today, -45), 'dd/MM/yyyy'),
-      closureDueDate: format(subDays(today, -60), 'dd/MM/yyyy'),
-      analysis: {
-        causes: "La introducció manual de dades i la manca d'un sistema centralitzat generen colls d'ampolla i errors humans.",
-        proposedAction: "Implementar un programari de facturació automatitzat i integrar-lo amb el CRM actual. Formar el personal sobre el nou sistema.",
-        responsible: users[1],
-        date: format(subDays(today, 10), 'dd/MM/yyyy')
-      }
-    },
-    {
-      actionId: "AM-24002",
-      title: "Actualització de la política de seguretat",
-      type: "ACSGSI",
-      status: "Pendiente Comprobación",
-      description: "Revisar i actualitzar la política de seguretat de la informació per a complir amb la nova normativa ISO 27001.",
-      creator: users[4],
-      responsibleGroupId: groups[1].id,
-      creationDate: format(subDays(today, 40), 'dd/MM/yyyy'),
-      analysisDueDate: format(subDays(today, 25), 'dd/MM/yyyy'),
-      implementationDueDate: format(subDays(today, -20), 'dd/MM/yyyy'),
-      closureDueDate: format(subDays(today, -35), 'dd/MM/yyyy')
-    },
-    {
-        actionId: "AM-24003",
-        title: "Millora del temps de resposta a tiquets de suport",
-        type: "SAU",
-        status: "Finalizada",
-        description: "El temps mitjà de primera resposta a les consultes dels clients excedeix l'objectiu de 4 hores.",
-        creator: users[2],
-        responsibleGroupId: groups[2].id,
-        creationDate: format(subDays(today, 60), 'dd/MM/yyyy'),
-        analysisDueDate: format(subDays(today, 45), 'dd/MM/yyyy'),
-        implementationDueDate: format(subDays(today, 15), 'dd/MM/yyyy'),
-        closureDueDate: format(subDays(today, 0), 'dd/MM/yyyy'),
-        analysis: {
-          causes: "Distribució de càrrega de treball desigual entre els agents i manca de respostes predefinides per a consultes comunes.",
-          proposedAction: "Implementar un sistema d'assignació automàtica de tiquets i crear una base de coneixement amb plantilles de resposta.",
-          responsible: users[0],
-          date: format(subDays(today, 55), 'dd/MM/yyyy')
-        },
-        verification: {
-          notes: "El temps de resposta mitjà s'ha reduït a 2.5 hores.",
-          isCompliant: true,
-          date: format(subDays(today, 10), 'dd/MM/yyyy')
-        },
-        closure: {
-          notes: "L'acció es considera eficaç i es tanca.",
-          isCompliant: true,
-          date: format(subDays(today, 1), 'dd/MM/yyyy')
-        }
-      },
-      {
-        actionId: "AM-24004",
-        title: "No conformitat en l'auditoria interna",
-        type: "IV",
-        status: "Pendiente de Cierre",
-        description: "S'ha detectat una no conformitat menor en el procediment de control de documents durant l'última auditoria interna.",
-        creator: users[3],
-        responsibleGroupId: groups[3].id,
-        creationDate: format(subDays(today, 35), 'dd/MM/yyyy'),
-        analysisDueDate: format(subDays(today, 20), 'dd/MM/yyyy'),
-        implementationDueDate: format(subDays(today, 5), 'dd/MM/yyyy'),
-        closureDueDate: format(subDays(today, -10), 'dd/MM/yyyy')
-      },
-      {
-        actionId: "AM-24005",
-        title: "Pla de formació en gestió de riscos",
-        type: "ACRSC",
-        status: "Borrador",
-        description: "Esborrany per a definir un nou pla de formació anual per a tot el personal sobre la identificació i gestió de riscos operatius.",
-        creator: users[0],
-        responsibleGroupId: groups[4].id,
-        creationDate: format(subDays(today, 2), 'dd/MM/yyyy'),
-        analysisDueDate: format(subDays(today, -28), 'dd/MM/yyyy'),
-        implementationDueDate: format(subDays(today, -58), 'dd/MM/yyyy'),
-        closureDueDate: format(subDays(today, -73), 'dd/MM/yyyy')
-      }
-];
-
 // Funció per obtenir les dades de Firestore
 export const getActions = async (): Promise<ImprovementAction[]> => {
     
     const actionsCol = collection(db, 'actions');
-    const actionsSnapshot = await getDocs(actionsCol);
-    
-    // Si no hi ha documents, carreguem les dades de mostra a Firestore
-    if (actionsSnapshot.empty) {
-      console.log('No actions found in Firestore. Loading mock data...');
-      const batch: Promise<any>[] = [];
-      for (const action of mockActions) {
-        // Firestore no pot emmagatzemar 'undefined', així que ens assegurem que no hi hagi camps undefined
-        const cleanAction = JSON.parse(JSON.stringify(action));
-        batch.push(addDoc(actionsCol, cleanAction));
-      }
-      await Promise.all(batch);
-      const newSnapshot = await getDocs(actionsCol);
-      return newSnapshot.docs.map(doc => {
-        const data = doc.data();
-        return { ...data, id: doc.id } as ImprovementAction;
-      });
-    }
+    // Order by actionId descending to easily get the latest one if needed
+    const actionsSnapshot = await getDocs(query(actionsCol, orderBy("actionId", "desc")));
 
     return actionsSnapshot.docs.map(doc => {
         const data = doc.data();
-        return { ...data, id: doc.id } as ImprovementAction;
+        return { 
+          id: doc.id,
+          ...data,
+        } as ImprovementAction;
     });
 }
 
@@ -150,6 +44,7 @@ export const getActionById = async (id: string): Promise<ImprovementAction | nul
     
         if (actionDocSnap.exists()) {
             const data = actionDocSnap.data();
+            // The user-facing ID is now in actionId, the firestore ID is id
             return { ...data, id: actionDocSnap.id } as ImprovementAction;
         } else {
             console.warn(`Action with Firestore ID ${id} not found.`);
@@ -159,4 +54,53 @@ export const getActionById = async (id: string): Promise<ImprovementAction | nul
         console.error("Error fetching document by ID:", error);
         return null;
     }
+}
+
+
+interface CreateActionData {
+    title: string;
+    description: string;
+    type: ImprovementActionType;
+    responsibleGroupId: string;
+    creator: ActionUserInfo;
+}
+
+// Function to create a new action
+export async function createAction(data: CreateActionData): Promise<string> {
+    const actionsCol = collection(db, 'actions');
+  
+    // 1. Get the last actionId to generate the new one
+    const lastActionQuery = query(actionsCol, orderBy("actionId", "desc"), limit(1));
+    const lastActionSnapshot = await getDocs(lastActionQuery);
+    
+    let newActionIdNumber = 1;
+    if (!lastActionSnapshot.empty) {
+      const lastAction = lastActionSnapshot.docs[0].data();
+      const lastId = lastAction.actionId || "AM-24000";
+      const lastNumber = parseInt(lastId.split('-')[1].substring(2));
+      newActionIdNumber = lastNumber + 1;
+    }
+  
+    const year = new Date().getFullYear().toString().substring(2);
+    const newActionId = `AM-${year}${newActionIdNumber.toString().padStart(3, '0')}`;
+  
+    // 2. Prepare the new action object
+    const today = new Date();
+    const newAction: Omit<ImprovementAction, 'id'> = {
+      actionId: newActionId,
+      title: data.title,
+      description: data.description,
+      type: data.type,
+      status: 'Borrador',
+      creator: data.creator,
+      responsibleGroupId: data.responsibleGroupId,
+      creationDate: format(today, 'dd/MM/yyyy'),
+      analysisDueDate: format(addDays(today, 30), 'dd/MM/yyyy'),
+      implementationDueDate: format(addDays(today, 60), 'dd/MM/yyyy'),
+      closureDueDate: format(addDays(today, 90), 'dd/MM/yyyy'),
+    };
+  
+    // 3. Add the new document to Firestore
+    const docRef = await addDoc(actionsCol, newAction);
+    return docRef.id;
 }

@@ -28,6 +28,14 @@ export interface UserGroup {
   userIds: string[];
 }
 
+// Representa la informació de l'usuari emmagatzemada dins d'una acció.
+// És més lleuger que l'objecte User complet.
+export interface ActionUserInfo {
+  id: string;
+  name: string;
+  avatar?: string;
+}
+
 export interface ImprovementAction {
   id: string; // Firestore document ID
   actionId: string; // User-facing ID like AM-24001
@@ -35,9 +43,9 @@ export interface ImprovementAction {
   type: ImprovementActionType;
   status: ImprovementActionStatus;
   description: string;
-  creator: User;
+  creator: ActionUserInfo;
   responsibleGroupId: string; // ID del grup responsable
-  responsibleUser?: User; // Opcional, si una persona específica s'assigna dins del grup
+  responsibleUser?: ActionUserInfo; // Opcional, si una persona específica s'assigna dins del grup
   creationDate: string;
   analysisDueDate: string;
   implementationDueDate: string;
@@ -45,7 +53,7 @@ export interface ImprovementAction {
   analysis?: {
     causes: string;
     proposedAction: string;
-    responsible: User;
+    responsible: ActionUserInfo;
     date: string;
   };
   verification?: {
