@@ -63,7 +63,6 @@ export default function NewActionPage() {
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const finalTranscriptRef = useRef<string>("");
 
-
   useEffect(() => {
     async function loadMasterData() {
       try {
@@ -116,7 +115,6 @@ export default function NewActionPage() {
   useEffect(() => {
     form.resetField("subcategory", { defaultValue: "" });
   }, [selectedCategoryId, form]);
-
 
   useEffect(() => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -181,7 +179,6 @@ export default function NewActionPage() {
     }
     setIsRecording(!isRecording);
   };
-
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     if (!user) {
