@@ -103,7 +103,11 @@
     "creationDate": "Fecha Creación",
     "analysisDue": "Vencimiento Análisis",
     "implementationDue": "Vencimiento Implantación",
-    "closureDue": "Vencimiento Cierre"
+    "closureDue": "Vencimiento Cierre",
+    "workflowPlan": {
+      "title": "Plan de Trabajo",
+      "description": "Este es el plan de trabajo generado automáticamente para esta acción."
+    }
   },
   "RootLayout": {
     "title": "Gestor de Acciones de Mejora",

@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { ActionStatusBadge } from "@/components/action-status-badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { CheckCircle2, XCircle, FileEdit, Microscope, ShieldCheck, Flag } from "lucide-react"
+import { CheckCircle2, XCircle, FileEdit, Microscope, ShieldCheck, Flag, CalendarClock, UserCheck, Milestone } from "lucide-react"
 import { getTranslations } from "next-intl/server"
 
 interface DetailPageProps {
@@ -84,6 +84,40 @@ export default async function ActionDetailPage({ params }: DetailPageProps) {
 
       <div className="grid md:grid-cols-3 gap-6">
         <div className="md:col-span-2 space-y-6">
+          {action.workflowPlan && (
+            <Card>
+              <CardHeader>
+                <CardTitle>{t("workflowPlan.title")}</CardTitle>
+                <CardDescription>{t("workflowPlan.description")}</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ul className="space-y-4">
+                  {action.workflowPlan.steps.map((step, index) => (
+                    <li key={index} className="flex items-start gap-4">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
+                        <Milestone className="h-5 w-5 text-primary" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="font-semibold">{step.stepName}</p>
+                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                          <div className="flex items-center gap-1.5">
+                            <UserCheck className="h-4 w-4" />
+                            <span>{step.responsibleParty}</span>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                             <CalendarClock className="h-4 w-4" />
+                             <span>{step.dueDate}</span>
+                          </div>
+                        </div>
+                      </div>
+                       <ActionStatusBadge status={step.status as any} />
+                    </li>
+                  ))}
+                </ul>
+              </CardContent>
+            </Card>
+          )}
+
           {action.analysis && (
             <Card>
               <CardHeader>
