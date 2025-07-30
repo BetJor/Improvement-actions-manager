@@ -24,15 +24,13 @@ import {
 } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { groups, createAction, actionTypes, categories, subcategories, affectedAreasData } from "@/lib/data"
-import type { ImprovementActionType, ActionSubcategory } from "@/lib/types"
+import { groups, createAction, getActionTypes, getCategories, getSubcategories, getAffectedAreas } from "@/lib/data"
+import type { ImprovementActionType, ActionCategory, ActionSubcategory, AffectedArea } from "@/lib/types"
 import { useToast } from "@/hooks/use-toast"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/hooks/use-auth"
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { Loader2 } from "lucide-react"
-
-const typeEnum = z.enum(actionTypes);
 
 const formSchema = z.object({
   title: z.string().min(1, "El títol és requerit."), // Asunto
@@ -41,7 +39,7 @@ const formSchema = z.object({
   affectedAreas: z.string().min(1, "Les àrees implicades són requerides."),
   assignedTo: z.string().min(1, "El camp 'assignat a' és requerit."),
   description: z.string().min(1, "Les observacions són requerides."), // Observaciones
-  type: typeEnum,
+  type: z.string().min(1, "El tipus d'acció és requerit."),
   responsibleGroupId: z.string({ required_error: "Has de seleccionar un grup responsable." }),
 })
 
@@ -52,6 +50,43 @@ export default function NewActionPage() {
   const { user } = useAuth()
   const [isSubmitting, setIsSubmitting] = useState(false)
   
+  // State for master data
+  const [actionTypes, setActionTypes] = useState<ImprovementActionType[]>([]);
+  const [categories, setCategories] = useState<ActionCategory[]>([]);
+  const [subcategories, setSubcategories] = useState<ActionSubcategory[]>([]);
+  const [affectedAreas, setAffectedAreas] = useState<AffectedArea[]>([]);
+  const [isLoadingData, setIsLoadingData] = useState(true);
+
+
+  useEffect(() => {
+    async function loadMasterData() {
+      try {
+        setIsLoadingData(true);
+        const [types, cats, subcats, areas] = await Promise.all([
+          getActionTypes(),
+          getCategories(),
+          getSubcategories(),
+          getAffectedAreas(),
+        ]);
+        setActionTypes(types);
+        setCategories(cats);
+        setSubcategories(subcats);
+        setAffectedAreas(areas);
+      } catch (error) {
+        console.error("Failed to load master data", error);
+        toast({
+          variant: "destructive",
+          title: "Error de càrrega",
+          description: "No s'han pogut carregar les dades mestres. Si us plau, recarrega la pàgina.",
+        })
+      } finally {
+        setIsLoadingData(false);
+      }
+    }
+    loadMasterData();
+  }, [toast]);
+
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -61,6 +96,7 @@ export default function NewActionPage() {
       affectedAreas: "",
       assignedTo: "",
       description: "",
+      type: "",
     },
   })
 
@@ -69,7 +105,7 @@ export default function NewActionPage() {
   const filteredSubcategories = useMemo(() => {
     if (!selectedCategoryId) return [];
     return subcategories.filter(sc => sc.categoryId === selectedCategoryId);
-  }, [selectedCategoryId]);
+  }, [selectedCategoryId, subcategories]);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     if (!user) {
@@ -87,13 +123,16 @@ export default function NewActionPage() {
       // Find the name of the category, subcategory and type to store in the DB
       const categoryName = categories.find(c => c.id === values.category)?.name || values.category;
       const subcategoryName = subcategories.find(s => s.id === values.subcategory)?.name || values.subcategory;
-      const affectedAreaName = affectedAreasData.find(a => a.id === values.affectedAreas)?.name || values.affectedAreas;
+      const affectedAreaName = affectedAreas.find(a => a.id === values.affectedAreas)?.name || values.affectedAreas;
+      const typeName = actionTypes.find(t => t.name === values.type)?.name || values.type;
+
 
       const actionData = {
         ...values,
         category: categoryName,
         subcategory: subcategoryName,
         affectedAreas: affectedAreaName,
+        type: typeName,
         creator: {
           id: user.uid,
           name: user.displayName || "Usuari desconegut",
@@ -121,6 +160,8 @@ export default function NewActionPage() {
       setIsSubmitting(false)
     }
   }
+  
+  const disableForm = isSubmitting || isLoadingData;
 
   return (
     <Card>
@@ -129,8 +170,9 @@ export default function NewActionPage() {
         <CardDescription>{t("description")}</CardDescription>
       </CardHeader>
       <CardContent>
+        {isLoadingData && <div className="flex items-center gap-2"> <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Carregant dades...</div>}
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6" style={{ display: isLoadingData ? 'none' : 'block' }}>
             <FormField
               control={form.control}
               name="title"
@@ -138,7 +180,7 @@ export default function NewActionPage() {
                 <FormItem>
                   <FormLabel>Assumpte</FormLabel>
                   <FormControl>
-                    <Input placeholder="p. ex., Gestió de l'assistència sanitària" {...field} disabled={isSubmitting} />
+                    <Input placeholder="p. ex., Gestió de l'assistència sanitària" {...field} disabled={disableForm} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -152,7 +194,7 @@ export default function NewActionPage() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Categoria</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isSubmitting}>
+                    <Select onValueChange={field.onChange} defaultValue={field.value} disabled={disableForm}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Selecciona una categoria" />
@@ -174,7 +216,7 @@ export default function NewActionPage() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Subcategoria</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isSubmitting || !selectedCategoryId}>
+                    <Select onValueChange={field.onChange} defaultValue={field.value} disabled={disableForm || !selectedCategoryId}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Selecciona una subcategoria" />
@@ -199,14 +241,14 @@ export default function NewActionPage() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>AA.FF. Implicades</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isSubmitting}>
+                    <Select onValueChange={field.onChange} defaultValue={field.value} disabled={disableForm}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Selecciona una àrea implicada" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {affectedAreasData.map(area => (
+                        {affectedAreas.map(area => (
                           <SelectItem key={area.id} value={area.id}>{area.name}</SelectItem>
                         ))}
                       </SelectContent>
@@ -222,7 +264,7 @@ export default function NewActionPage() {
                   <FormItem>
                     <FormLabel>Assignat A</FormLabel>
                     <FormControl>
-                      <Input placeholder="p. ex., Direcció del Centre" {...field} disabled={isSubmitting} />
+                      <Input placeholder="p. ex., Direcció del Centre" {...field} disabled={disableForm} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -241,7 +283,7 @@ export default function NewActionPage() {
                       placeholder="Descriu la no conformitat, les evidències, referències documentals, etc."
                       className="resize-y min-h-[120px]"
                       {...field}
-                      disabled={isSubmitting}
+                      disabled={disableForm}
                     />
                   </FormControl>
                   <FormMessage />
@@ -256,7 +298,7 @@ export default function NewActionPage() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>{t("form.type.label")}</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isSubmitting}>
+                    <Select onValueChange={field.onChange} defaultValue={field.value} disabled={disableForm}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder={t("form.type.placeholder")} />
@@ -264,7 +306,7 @@ export default function NewActionPage() {
                       </FormControl>
                       <SelectContent>
                         {actionTypes.map(type => (
-                          <SelectItem key={type} value={type}>{type}</SelectItem>
+                          <SelectItem key={type.name} value={type.name}>{type.name}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
@@ -281,7 +323,7 @@ export default function NewActionPage() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>{t("form.responsible.label")}</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isSubmitting}>
+                    <Select onValueChange={field.onChange} defaultValue={field.value} disabled={disableForm}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder={t("form.responsible.placeholder")} />
@@ -302,7 +344,7 @@ export default function NewActionPage() {
               />
             </div>
             
-            <Button type="submit" disabled={isSubmitting}>
+            <Button type="submit" disabled={disableForm}>
               {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {isSubmitting ? 'Creant...' : t("form.submit")}
             </Button>

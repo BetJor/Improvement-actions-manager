@@ -21,33 +21,32 @@ export const groups: UserGroup[] = [
   { id: 'rsc-committee@example.com', name: 'Comitè RSC', userIds: ['user-3', 'user-4'] },
 ];
 
-export const actionTypes: ImprovementActionType[] = [
-  'Correctiva', 'IV DAS-DP', 'IV', 'ACM', 'AMSGP', 'SAU', 'AC', 'ACSGSI', 'ACPSI', 'ACRSC'
-];
+// --- Master Data from Firestore ---
 
-export const categories: ActionCategory[] = [
-    { id: 'cat-1', name: 'Sistema de Gestió de Qualitat' },
-    { id: 'cat-2', name: 'Sistema de Gestió Ambiental' },
-    { id: 'cat-3', name: 'Seguretat i Salut Laboral' },
-]
+export const getActionTypes = async (): Promise<ImprovementActionType[]> => {
+  const typesCol = collection(db, 'actionTypes');
+  const snapshot = await getDocs(query(typesCol, orderBy("name")));
+  return snapshot.docs.map(doc => doc.data() as ImprovementActionType);
+};
 
-export const subcategories: ActionSubcategory[] = [
-    { id: 'sub-1', categoryId: 'cat-1', name: 'Producció i prestació del servei' },
-    { id: 'sub-2', categoryId: 'cat-1', name: 'Compres i avaluació de proveïdors' },
-    { id: 'sub-3', categoryId: 'cat-1', name: 'Gestió de la informació documentada' },
-    { id: 'sub-4', categoryId: 'cat-2', name: 'Gestió de residus' },
-    { id: 'sub-5', categoryId: 'cat-2', name: 'Consum de recursos' },
-    { id: 'sub-6', categoryId: 'cat-3', name: 'Avaluació de riscos' },
-    { id: 'sub-7', categoryId: 'cat-3', name: 'Formació i sensibilització del personal' },
-]
+export const getCategories = async (): Promise<ActionCategory[]> => {
+  const categoriesCol = collection(db, 'categories');
+  const snapshot = await getDocs(query(categoriesCol, orderBy("name")));
+  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ActionCategory));
+};
 
-export const affectedAreasData: AffectedArea[] = [
-    { id: 'area-1', name: 'Direcció Assistència Sanitària' },
-    { id: 'area-2', name: 'Departament de Compres' },
-    { id: 'area-3', name: 'Recursos Humans' },
-    { id: 'area-4', name: 'Tecnologies de la Informació (TI)' },
-    { id: 'area-5', name: 'Manteniment i Serveis Generals' },
-];
+export const getSubcategories = async (): Promise<ActionSubcategory[]> => {
+  const subcategoriesCol = collection(db, 'subcategories');
+  const snapshot = await getDocs(query(subcategoriesCol, orderBy("name")));
+  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ActionSubcategory));
+};
+
+export const getAffectedAreas = async (): Promise<AffectedArea[]> => {
+  const affectedAreasCol = collection(db, 'affectedAreas');
+  const snapshot = await getDocs(query(affectedAreasCol, orderBy("name")));
+  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as AffectedArea));
+};
+
 
 // Funció per obtenir les dades de Firestore
 export const getActions = async (): Promise<ImprovementAction[]> => {
@@ -92,7 +91,7 @@ interface CreateActionData {
     affectedAreas: string;
     assignedTo: string;
     description: string;
-    type: ImprovementActionType;
+    type: string;
     responsibleGroupId: string;
     creator: ActionUserInfo;
 }

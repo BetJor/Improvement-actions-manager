@@ -1,14 +1,7 @@
-export type ImprovementActionType = 
-  | 'Correctiva' 
-  | 'IV DAS-DP' 
-  | 'IV' 
-  | 'ACM' 
-  | 'AMSGP' 
-  | 'SAU' 
-  | 'AC' 
-  | 'ACSGSI' 
-  | 'ACPSI' 
-  | 'ACRSC';
+export interface ImprovementActionType {
+  // Assuming the doc in Firestore has a 'name' field
+  name: string;
+}
 
 export type ImprovementActionStatus = 'Borrador' | 'Pendiente Análisis' | 'Pendiente Comprobación' | 'Pendiente de Cierre' | 'Finalizada';
 
@@ -58,10 +51,10 @@ export interface ImprovementAction {
   title: string; // ASUNTO
   category: string; // CATEGORÍA
   subcategory: string; // SUBCATEGORÍA
-  type: ImprovementActionType;
+  type: string;
   status: ImprovementActionStatus;
   description: string; // OBSERVACIONES
-  affectedAreas: string; // AA.FF. IMPLICADAS
+  affectedAreas: string; // AA.FF. IMPLICADES
   assignedTo: string; // ASIGNADO A
   creator: ActionUserInfo;
   responsibleGroupId: string; // ID del grup responsable
