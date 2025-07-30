@@ -1,3 +1,4 @@
+
 "use client"
 import { CircleUser, Menu, Users, Bell, Home, ListChecks, Archive, GanttChartSquare } from "lucide-react"
 import Link from "next/link"
@@ -19,13 +20,13 @@ import {
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
-import { AppSidebar } from "./app-sidebar"
 import { useTranslations } from "next-intl"
 import { LanguageSwitcher } from "./language-switcher"
 import { useAuth } from "@/hooks/use-auth"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { usePathname } from "next/navigation"
 import React from "react"
+import { SidebarTrigger } from "@/components/ui/sidebar"
 
 
 const pageConfig: { [key: string]: { icon: React.ElementType, titleKey: string } } = {
@@ -69,8 +70,10 @@ export function Header() {
   const { Icon, title } = getCurrentPageConfig();
 
   return (
-    <header className="flex h-14 items-center gap-4 border-b bg-card px-4 lg:h-[60px] lg:px-6 sticky top-0 z-30">
+    <header className="sticky top-0 z-10 flex h-14 items-center gap-4 border-b bg-background/60 px-4 backdrop-blur-sm sm:h-16 sm:px-6">
       <Dialog>
+        <SidebarTrigger className="hidden md:flex" />
+        
         <Sheet>
             <SheetTrigger asChild>
                 <Button
@@ -82,8 +85,8 @@ export function Header() {
                     <span className="sr-only">Toggle navigation menu</span>
                 </Button>
             </SheetTrigger>
-            <SheetContent side="left" className="flex flex-col p-0">
-                <AppSidebar />
+            <SheetContent side="left" className="w-[240px] p-0">
+                {/* We need a simplified AppSidebar for mobile */}
             </SheetContent>
         </Sheet>
 

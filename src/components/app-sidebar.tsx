@@ -1,11 +1,19 @@
+
 "use client"
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Home, ListChecks, GanttChartSquare, Archive } from "lucide-react"
-import { Separator } from "@/components/ui/separator"
-import { cn } from "@/lib/utils"
+import { Home, ListChecks, Archive, GanttChartSquare, Users } from "lucide-react"
 import { useTranslations } from "next-intl"
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuItem,
+  SidebarMenuButton,
+  SidebarSeparator,
+} from "@/components/ui/sidebar"
 
 export function AppSidebar() {
   const pathname = usePathname()
@@ -20,51 +28,57 @@ export function AppSidebar() {
     { href: "/backlog", icon: Archive, label: t("backlog") },
   ]
 
+  const isActive = (href: string) => {
+    // Special case for actions and its sub-pages
+    if (href === "/actions") {
+      return pathname.includes("/actions");
+    }
+    return pathname === href || pathname.startsWith(`${href}/`);
+  }
+
   return (
-    <div className="hidden border-r bg-card md:block">
-      <div className="flex h-full max-h-screen flex-col gap-2">
-        <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
-          <Link href="/" className="flex items-center gap-2 font-semibold">
-            <GanttChartSquare className="h-6 w-6 text-primary" />
-            <span className="">{t("title")}</span>
-          </Link>
+    <Sidebar>
+      <SidebarHeader>
+        <div className="flex items-center gap-2">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+                <GanttChartSquare className="h-6 w-6 text-primary" />
+            </div>
+            <span className="text-lg font-semibold text-primary">{t("title")}</span>
         </div>
-        <div className="flex-1">
-          <nav className="grid items-start px-2 text-sm font-medium lg:px-4">
-            {navItems.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={cn(
-                  "flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary",
-                  {
-                    "bg-muted text-primary": pathname.endsWith(item.href),
-                  }
-                )}
+      </SidebarHeader>
+      <SidebarContent>
+        <SidebarMenu>
+          {navItems.map((item) => (
+            <SidebarMenuItem key={item.href}>
+              <SidebarMenuButton
+                asChild
+                isActive={isActive(item.href)}
+                tooltip={{ children: item.label }}
               >
-                <item.icon className="h-4 w-4" />
-                {item.label}
-              </Link>
-            ))}
-             <Separator className="my-2" />
-             {secondaryNavItems.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={cn(
-                  "flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary",
-                  {
-                    "bg-muted text-primary": pathname.endsWith(item.href),
-                  }
-                )}
+                <Link href={item.href}>
+                  <item.icon />
+                  <span>{item.label}</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          ))}
+          <SidebarSeparator />
+          {secondaryNavItems.map((item) => (
+            <SidebarMenuItem key={item.href}>
+              <SidebarMenuButton
+                asChild
+                isActive={isActive(item.href)}
+                tooltip={{ children: item.label }}
               >
-                <item.icon className="h-4 w-4" />
-                {item.label}
-              </Link>
-            ))}
-          </nav>
-        </div>
-      </div>
-    </div>
+                <Link href={item.href}>
+                  <item.icon />
+                  <span>{item.label}</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          ))}
+        </SidebarMenu>
+      </SidebarContent>
+    </Sidebar>
   )
 }
