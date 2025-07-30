@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Bell, Home, ListChecks, GanttChartSquare } from "lucide-react"
+import { Bell, Home, ListChecks, GanttChartSquare, Archive } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
@@ -15,6 +15,7 @@ export function AppSidebar() {
   const navItems = [
     { href: "/dashboard", icon: Home, label: t("dashboard") },
     { href: "/actions", icon: ListChecks, label: t("actions") },
+    { href: "/backlog", icon: Archive, label: t("backlog") },
   ]
 
   return (

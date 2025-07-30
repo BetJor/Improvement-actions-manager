@@ -11,7 +11,8 @@
     "title": "IAM",
     "toggleNotifications": "Activar/desactivar notificaciones",
     "dashboard": "Panel de Control",
-    "actions": "Acciones"
+    "actions": "Acciones",
+    "backlog": "Tareas Pendientes"
   },
   "ActionsPage": {
     "title": "Acciones de Mejora",
@@ -122,5 +123,15 @@
       "id": "ID (Email del Grupo)"
     },
     "noGroups": "No perteneces a ningún grupo."
+  },
+  "BacklogPage": {
+    "title": "Tareas Pendientes",
+    "description": "Esta es una lista de tareas de desarrollo pendientes para mejorar la aplicación.",
+    "col": {
+      "id": "ID Tarea",
+      "title": "Título",
+      "description": "Descripción",
+      "priority": "Prioridad"
+    }
   }
 }

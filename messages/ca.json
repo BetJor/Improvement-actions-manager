@@ -11,7 +11,8 @@
     "title": "IAM",
     "toggleNotifications": "Activar/desactivar notificacions",
     "dashboard": "Panell de Control",
-    "actions": "Accions"
+    "actions": "Accions",
+    "backlog": "Tasques Pendents"
   },
   "ActionsPage": {
     "title": "Accions de Millora",
@@ -122,5 +123,15 @@
       "id": "ID (Email del Grup)"
     },
     "noGroups": "No pertanys a cap grup."
+  },
+  "BacklogPage": {
+    "title": "Tasques Pendents",
+    "description": "Aquesta és una llista de tasques de desenvolupament pendents per a millorar l'aplicació.",
+    "col": {
+      "id": "ID Tasca",
+      "title": "Títol",
+      "description": "Descripció",
+      "priority": "Prioritat"
+    }
   }
 }
