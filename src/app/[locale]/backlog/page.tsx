@@ -22,6 +22,12 @@ import {
       description: "Modificar el flow de Genkit 'getUserGroups' per a consultar l'API de Google Admin SDK en lloc de fer servir dades de mostra. Això requerirà configurar les credencials de servei a Google Cloud i donar permisos a l'API.",
       priority: "Alta",
     },
+    {
+      id: "TASK-002",
+      title: "Implementar formularis d'Anàlisi i Verificació",
+      description: "Crear els components de formulari (possiblement en diàlegs modals) que permetin a l'usuari realitzar l'anàlisi de causes i la verificació de la implantació. Aquests formularis haurien de desar les dades a l'acció corresponent a Firestore.",
+      priority: "Molt Alta",
+    },
     // Future tasks will be added here
   ]
   
@@ -59,4 +65,3 @@ import {
       </Card>
     )
   }
-  
