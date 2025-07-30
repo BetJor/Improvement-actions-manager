@@ -28,12 +28,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(user);
       setLoading(false);
       if (user && pathname.includes('/login')) {
-        router.push(`/${locale}/dashboard`);
+        // Redirect using window.location to avoid router issues on login
+        window.location.href = `/${locale}/dashboard`;
       }
     });
 
     return () => unsubscribe();
-  }, [router, locale, pathname]);
+  }, [pathname, locale]);
 
   const signInWithGoogle = async () => {
     const provider = new GoogleAuthProvider();
