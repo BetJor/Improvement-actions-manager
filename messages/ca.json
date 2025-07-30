@@ -139,6 +139,16 @@
   },
   "SettingsPage": {
     "title": "Configuració",
-    "description": "Aquí podràs gestionar les taules mestres de l'aplicació, com ara categories, tipus d'acció, etc."
+    "description": "Aquí podràs gestionar les taules mestres de l'aplicació, com ara categories, tipus d'acció, etc.",
+    "tabs": {
+      "actionTypes": "Tipus d'Acció",
+      "categories": "Categories",
+      "subcategories": "Subcategories",
+      "affectedAreas": "Àrees Afectades"
+    },
+    "col": {
+      "name": "Nom",
+      "category": "Categoria"
+    }
   }
 }

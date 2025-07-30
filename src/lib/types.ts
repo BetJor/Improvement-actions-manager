@@ -1,7 +1,11 @@
-export interface ImprovementActionType {
+
+export interface MasterDataItem {
   id: string;
   name: string;
+  [key: string]: any; // Permet altres propietats
 }
+    
+export interface ImprovementActionType extends MasterDataItem {}
 
 export type ImprovementActionStatus = 'Borrador' | 'Pendiente Análisis' | 'Pendiente Comprobación' | 'Pendiente de Cierre' | 'Finalizada';
 
@@ -21,21 +25,13 @@ export interface UserGroup {
   userIds: string[];
 }
 
-export interface ActionCategory {
-  id: string;
-  name: string;
-}
+export interface ActionCategory extends MasterDataItem {}
 
-export interface ActionSubcategory {
-  id: string;
+export interface ActionSubcategory extends MasterDataItem {
   categoryId: string;
-  name: string;
 }
 
-export interface AffectedArea {
-  id: string;
-  name: string;
-}
+export interface AffectedArea extends MasterDataItem {}
 
 // Representa la informació de l'usuari emmagatzemada dins d'una acció.
 // És més lleuger que l'objecte User complet.

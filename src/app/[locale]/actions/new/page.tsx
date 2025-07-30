@@ -31,6 +31,7 @@ import { useRouter } from "next/navigation"
 import { useAuth } from "@/hooks/use-auth"
 import { useState, useMemo, useEffect } from "react"
 import { Loader2 } from "lucide-react"
+import { Trigger } from "@radix-ui/react-dialog"
 
 const formSchema = z.object({
   title: z.string().min(1, "El títol és requerit."),
@@ -215,7 +216,7 @@ export default function NewActionPage() {
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Selecciona una subcategoria" />
-                        </Trigger>
+                        </SelectTrigger>
                       </FormControl>
                       <SelectContent>
                         {filteredSubcategories.map(sub => (
@@ -322,7 +323,7 @@ export default function NewActionPage() {
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder={t("form.responsible.placeholder")} />
-                        </Trigger>
+                        </SelectTrigger>
                       </FormControl>
                       <SelectContent>
                         {groups.map(group => (
