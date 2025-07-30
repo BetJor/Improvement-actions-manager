@@ -163,54 +163,5 @@
     "deleteConfirmationMessage": "Aquesta acció no es pot desfer. Això eliminarà permanentment l'element.",
     "cancel": "Cancel·lar",
     "continue": "Continuar"
-  },
-   "PlanningPage": {
-    "title": "Planificació del Projecte",
-    "description": "Una cronologia de les fases de desenvolupament i les tasques completades per a crear aquesta aplicació.",
-    "durationLabel": "Durada estimada",
-    "durations": {
-      "short": "Curta (1-2 dies)",
-      "medium": "Mitjana (3-5 dies)",
-      "long": "Llarga (1-2 setmanes)"
-    },
-    "phases": {
-      "setup": {
-        "title": "Fase 1: Configuració Inicial i Estructura",
-        "tasks": {
-          "task1": "Configuració del projecte Next.js amb TypeScript i Tailwind CSS.",
-          "task2": "Estructuració de l'aplicació amb el directori App i internacionalització (i18n).",
-          "task3": "Implementació del layout principal, incloent-hi la barra lateral i la capçalera."
-        }
-      },
-      "auth": {
-        "title": "Fase 2: Autenticació i Gestió d'Usuaris",
-        "tasks": {
-          "task1": "Integració de Firebase Authentication per a l'inici de sessió amb Google.",
-          "task2": "Creació de rutes protegides i gestió de la sessió de l'usuari."
-        }
-      },
-      "core": {
-        "title": "Fase 3: Funcionalitats Principals (Accions de Millora)",
-        "tasks": {
-          "task1": "Creació de la pàgina per a visualitzar, filtrar i ordenar les accions de millora.",
-          "task2": "Desenvolupament del formulari per a crear noves accions de millora.",
-          "task3": "Implementació de la pàgina de detall per a cada acció de millora."
-        }
-      },
-      "ai": {
-        "title": "Fase 4: Integració d'Intel·ligència Artificial amb Genkit",
-        "tasks": {
-          "task1": "Creació d'un flux de Genkit per a obtenir els grups d'un usuari (simulat).",
-          "task2": "Implementació del planificador de workflows intel·ligent per a generar plans de treball dinàmics."
-        }
-      },
-      "data": {
-        "title": "Fase 5: Gestió de Dades Mestres (CRUD)",
-        "tasks": {
-            "task1": "Desenvolupament de la pàgina de configuració amb pestanyes per a les taules mestres.",
-            "task2": "Implementació de les funcionalitats CRUD (Crear, Llegir, Actualitzar, Esborrar) per a les dades."
-        }
-      }
-    }
   }
 }

@@ -6,75 +6,73 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import { getTranslations } from "next-intl/server"
 import { CheckCircle2 } from "lucide-react"
 
 const timeline = [
   {
-    phaseKey: "setup",
+    title: "Phase 1: Initial Setup & Structure",
+    duration: "Estimated: 1-2 days",
     tasks: [
-      { id: 1, taskKey: "task1" },
-      { id: 2, taskKey: "task2" },
-      { id: 3, taskKey: "task3" },
+      "Setup Next.js project with TypeScript and Tailwind CSS.",
+      "Structure the application with the App directory and i18n.",
+      "Implement the main layout, including the sidebar and header."
     ],
-    duration: "short",
   },
   {
-    phaseKey: "auth",
+    title: "Phase 2: Authentication & User Management",
+    duration: "Estimated: 2-3 days",
     tasks: [
-      { id: 1, taskKey: "task1" },
-      { id: 2, taskKey: "task2" },
+      "Integrate Firebase Authentication for Google sign-in.",
+      "Create protected routes and manage user sessions."
     ],
-    duration: "medium",
   },
   {
-    phaseKey: "core",
+    title: "Phase 3: Core Functionality (Improvement Actions)",
+    duration: "Estimated: 3-5 days",
     tasks: [
-      { id: 1, taskKey: "task1" },
-      { id: 2, taskKey: "task2" },
-      { id: 3, taskKey: "task3" },
+      "Create the page to view, filter, and sort improvement actions.",
+      "Develop the form to create new improvement actions.",
+      "Implement the detail page for each improvement action."
     ],
-    duration: "long",
   },
   {
-    phaseKey: "ai",
+    title: "Phase 4: AI Integration with Genkit",
+    duration: "Estimated: 2-3 days",
     tasks: [
-      { id: 1, taskKey: "task1" },
-      { id: 2, taskKey: "task2" },
+      "Create a Genkit flow to get a user's groups (mocked).",
+      "Implement the intelligent workflow planner to generate dynamic work plans."
     ],
-    duration: "medium",
   },
   {
-    phaseKey: "data",
+    title: "Phase 5: Master Data Management (CRUD)",
+    duration: "Estimated: 1-2 days",
     tasks: [
-        { id: 1, taskKey: "task1" },
-        { id: 2, taskKey: "task2" },
+        "Develop the settings page with tabs for master data tables.",
+        "Implement CRUD (Create, Read, Update, Delete) functionalities for the data."
     ],
-    duration: "short",
   }
 ];
 
 export default async function PlanningPage() {
-  const t = await getTranslations("PlanningPage");
 
   return (
     <div className="flex flex-col gap-4">
-      <h1 className="text-3xl font-bold tracking-tight">{t("title")}</h1>
-      <p className="text-muted-foreground">{t("description")}</p>
+      <h1 className="text-3xl font-bold tracking-tight">Project Planning</h1>
+      <p className="text-muted-foreground">A timeline of the development phases and completed tasks to create this application.</p>
       
       <div className="space-y-8">
         {timeline.map((phase, index) => (
           <Card key={index}>
             <CardHeader>
-              <CardTitle>{t(`phases.${phase.phaseKey}.title` as any)}</CardTitle>
-              <CardDescription>{t("durationLabel")}: {t(`durations.${phase.duration}` as any)}</CardDescription>
+              <CardTitle>{phase.title}</CardTitle>
+              <CardDescription>{phase.duration}</CardDescription>
             </CardHeader>
             <CardContent>
               <ul className="space-y-3">
-                {phase.tasks.map((task) => (
-                  <li key={task.id} className="flex items-center gap-3">
+                {phase.tasks.map((task, taskIndex) => (
+                  <li key={taskIndex} className="flex items-center gap-3">
                     <CheckCircle2 className="h-5 w-5 text-green-500" />
-                    <span className="text-sm">{t(`phases.${phase.phaseKey}.tasks.${task.taskKey}` as any)}</span>
+                    <span className="text-sm">{task}</span>
                   </li>
                 ))}
               </ul>

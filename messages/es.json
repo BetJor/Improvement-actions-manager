@@ -163,54 +163,5 @@
     "deleteConfirmationMessage": "Esta acción no se puede deshacer. Esto eliminará permanentemente el elemento.",
     "cancel": "Cancelar",
     "continue": "Continuar"
-  },
-    "PlanningPage": {
-    "title": "Planificación del Proyecto",
-    "description": "Una cronología de las fases de desarrollo y las tareas completadas para crear esta aplicación.",
-    "durationLabel": "Duración estimada",
-    "durations": {
-      "short": "Corta (1-2 días)",
-      "medium": "Media (3-5 días)",
-      "long": "Larga (1-2 semanas)"
-    },
-    "phases": {
-      "setup": {
-        "title": "Fase 1: Configuración Inicial y Estructura",
-        "tasks": {
-          "task1": "Configuración del proyecto Next.js con TypeScript y Tailwind CSS.",
-          "task2": "Estructuración de la aplicación con el directorio App e internacionalización (i18n).",
-          "task3": "Implementación del layout principal, incluyendo la barra lateral y la cabecera."
-        }
-      },
-      "auth": {
-        "title": "Fase 2: Autenticación y Gestión de Usuarios",
-        "tasks": {
-          "task1": "Integración de Firebase Authentication para el inicio de sesión con Google.",
-          "task2": "Creación de rutas protegidas y gestión de la sesión del usuario."
-        }
-      },
-      "core": {
-        "title": "Fase 3: Funcionalidades Principales (Acciones de Mejora)",
-        "tasks": {
-          "task1": "Creación de la página para visualizar, filtrar y ordenar las acciones de mejora.",
-          "task2": "Desarrollo del formulario para crear nuevas acciones de mejora.",
-          "task3": "Implementación de la página de detalle para cada acción de mejora."
-        }
-      },
-      "ai": {
-        "title": "Fase 4: Integración de Inteligencia Artificial con Genkit",
-        "tasks": {
-          "task1": "Creación de un flujo de Genkit para obtener los grupos de un usuario (simulado).",
-          "task2": "Implementación del planificador de flujos de trabajo inteligente para generar planes de trabajo dinámicos."
-        }
-      },
-      "data": {
-        "title": "Fase 5: Gestión de Datos Maestros (CRUD)",
-        "tasks": {
-            "task1": "Desarrollo de la página de configuración con pestañas para las tablas maestras.",
-            "task2": "Implementación de las funcionalidades CRUD (Crear, Leer, Actualizar, Borrar) para los datos."
-        }
-      }
-    }
   }
 }
