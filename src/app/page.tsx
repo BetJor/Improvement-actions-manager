@@ -1,5 +1,5 @@
-import { redirect } from 'next/navigation'
+import { redirect } from 'next-intl/server';
 
 export default function RootPage() {
-  redirect('/dashboard')
+  redirect('/dashboard');
 }

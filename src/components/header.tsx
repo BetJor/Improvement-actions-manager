@@ -13,8 +13,10 @@ import { Input } from "@/components/ui/input"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { AppSidebar } from "./app-sidebar"
 import Link from "next/link"
+import { useTranslations } from "next-intl"
 
 export function Header() {
+  const t = useTranslations('Header');
   return (
     <header className="flex h-14 items-center gap-4 border-b bg-card px-4 lg:h-[60px] lg:px-6 sticky top-0 z-30">
         <Sheet>
@@ -35,7 +37,7 @@ export function Header() {
 
       <div className="w-full flex-1">
         <h1 className="font-semibold text-lg">
-            Improvement Actions
+            {t("title")}
         </h1>
       </div>
       <DropdownMenu>
@@ -46,12 +48,12 @@ export function Header() {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuLabel>My Account</DropdownMenuLabel>
+          <DropdownMenuLabel>{t("myAccount")}</DropdownMenuLabel>
           <DropdownMenuSeparator />
-          <DropdownMenuItem>Settings</DropdownMenuItem>
-          <DropdownMenuItem>Support</DropdownMenuItem>
+          <DropdownMenuItem>{t("settings")}</DropdownMenuItem>
+          <DropdownMenuItem>{t("support")}</DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem>Logout</DropdownMenuItem>
+          <DropdownMenuItem>{t("logout")}</DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
     </header>

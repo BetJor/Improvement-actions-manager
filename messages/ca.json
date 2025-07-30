@@ -1,0 +1,107 @@
+{
+  "Header": {
+    "title": "Accions de Millora",
+    "myAccount": "El Meu Compte",
+    "settings": "Configuració",
+    "support": "Suport",
+    "logout": "Tancar Sessió"
+  },
+  "AppSidebar": {
+    "title": "IAM",
+    "toggleNotifications": "Activar/desactivar notificacions",
+    "dashboard": "Panell de Control",
+    "actions": "Accions"
+  },
+  "ActionsPage": {
+    "title": "Accions de Millora",
+    "description": "Aquí pots trobar totes les accions de millora. Utilitza els filtres per acotar la teva cerca.",
+    "createAction": "Crear Acció"
+  },
+  "NewActionPage": {
+    "title": "Crear Nova Acció de Millora",
+    "description": "Omple el formulari següent per crear una nova acció. Començarà en estat 'Esborrany'.",
+    "form": {
+      "title": {
+        "label": "Títol",
+        "placeholder": "p. ex., Optimització del procés de facturació",
+        "description": "Un títol breu però descriptiu per a l'acció."
+      },
+      "description": {
+        "label": "Descripció",
+        "placeholder": "Descriu la no conformitat o l'àrea de millora...",
+        "description": "Proporciona una descripció detallada del problema."
+      },
+      "type": {
+        "label": "Tipus d'Acció",
+        "placeholder": "Selecciona un tipus d'acció",
+        "description": "Categoritza l'acció de millora."
+      },
+      "responsible": {
+        "label": "Persona Responsable",
+        "placeholder": "Selecciona una persona responsable",
+        "description": "Assigna la persona encarregada de l'anàlisi."
+      },
+      "submit": "Crear Acció",
+      "toast": {
+        "title": "Acció Creada",
+        "description": "La nova acció de millora s'ha creat correctament."
+      }
+    }
+  },
+  "ActionsTable": {
+    "filterPlaceholder": "Filtra per títol, ID o responsable...",
+    "status": "Estat",
+    "type": "Tipus",
+    "noResults": "No s'han trobat resultats.",
+    "col": {
+      "id": "ID",
+      "title": "Títol",
+      "status": "Estat",
+      "type": "Tipus",
+      "responsible": "Responsable",
+      "dueDate": "Data Venciment"
+    }
+  },
+  "DashboardPage": {
+    "title": "Panell de Control",
+    "totalActions": "Accions Totals",
+    "activeActions": "Accions Actives",
+    "finalizedActions": "Accions Finalitzades",
+    "drafts": "Esborranys",
+    "actionsByStatus": {
+      "title": "Accions per Estat",
+      "description": "Distribució d'accions en diferents estats del flux de treball."
+    },
+    "actionsByType": {
+      "title": "Accions per Tipus",
+      "description": "Desglossament d'accions segons el seu tipus designat."
+    },
+    "chartLabel": "Accions"
+  },
+  "ActionDetailPage": {
+    "editDraft": "Editar Esborrany",
+    "performAnalysis": "Fer Anàlisi",
+    "verifyImplementation": "Verificar Implantació",
+    "closeAction": "Tancar Acció",
+    "causesAndProposedAction": "Causes i Acció Proposada",
+    "causesAnalysis": "Anàlisi de les Causes",
+    "proposedAction": "Acció Proposada",
+    "analysisPerformedBy": "Anàlisi realitzat per {name} el {date}",
+    "implementationVerification": "Comprovació de la Implantació",
+    "followUpAndNotes": "Seguiment i Anotacions",
+    "actionClosure": "Tancament de l'Acció",
+    "details": "Detalls",
+    "status": "Estat",
+    "type": "Tipus",
+    "creator": "Creador/a",
+    "responsible": "Responsable",
+    "creationDate": "Data Creació",
+    "analysisDue": "Venciment Anàlisi",
+    "implementationDue": "Venciment Implantació",
+    "closureDue": "Venciment Tancament"
+  },
+  "RootLayout": {
+    "title": "Gestor d'Accions de Millora",
+    "description": "Gestiona i segueix les accions de millora a tota la teva organització."
+  }
+}

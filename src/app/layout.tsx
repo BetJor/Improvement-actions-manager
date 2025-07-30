@@ -1,28 +1,13 @@
-import type { Metadata } from 'next';
-import './globals.css';
-import { Toaster } from "@/components/ui/toaster";
+// This is the root layout component for your Next.js app.
+// It applies to all routes in your application.
+//
+// This file is intentionally left blank. You can add a layout
+// to this file to apply it to all routes in your app, or you can
+// delete it and create layouts on a per-route basis.
+//
+// For more information, see:
+// https://nextjs.org/docs/app/building-your-application/routing/layouts-and-templates
 
-export const metadata: Metadata = {
-  title: 'Improvement Actions Manager',
-  description: 'Manage and track improvement actions across your organization.',
-};
-
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
-  return (
-    <html lang="en" suppressHydrationWarning>
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-      </head>
-      <body className="font-body antialiased">
-        {children}
-        <Toaster />
-      </body>
-    </html>
-  );
+export default function RootLayout({children}: {children: React.ReactNode}) {
+  return children;
 }

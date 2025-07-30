@@ -13,6 +13,7 @@ import { Separator } from "@/components/ui/separator"
 import { ActionStatusBadge } from "@/components/action-status-badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { CheckCircle2, XCircle, FileEdit, Microscope, ShieldCheck, Flag } from "lucide-react"
+import { getTranslations } from "next-intl/server"
 
 interface DetailPageProps {
   params: { id: string }
@@ -39,6 +40,7 @@ const UserField = ({ label, user }: { label: string; user: { name: string; avata
 )
 
 export default async function ActionDetailPage({ params }: DetailPageProps) {
+  const t = await getTranslations("ActionDetailPage");
   const action = await getActionById(params.id)
 
   if (!action) {
@@ -48,13 +50,13 @@ export default async function ActionDetailPage({ params }: DetailPageProps) {
   const getActionButtons = (status: string) => {
     switch (status) {
       case "Borrador":
-        return <Button><FileEdit className="mr-2 h-4 w-4" /> Edit Draft</Button>
+        return <Button><FileEdit className="mr-2 h-4 w-4" /> {t("editDraft")}</Button>
       case "Pendiente Análisis":
-        return <Button><Microscope className="mr-2 h-4 w-4" /> Perform Analysis</Button>
+        return <Button><Microscope className="mr-2 h-4 w-4" /> {t("performAnalysis")}</Button>
       case "Pendiente Comprobación":
-        return <Button><ShieldCheck className="mr-2 h-4 w-4" /> Verify Implementation</Button>
+        return <Button><ShieldCheck className="mr-2 h-4 w-4" /> {t("verifyImplementation")}</Button>
       case "Pendiente de Cierre":
-        return <Button><Flag className="mr-2 h-4 w-4" /> Close Action</Button>
+        return <Button><Flag className="mr-2 h-4 w-4" /> {t("closeAction")}</Button>
       default:
         return null
     }
@@ -77,20 +79,20 @@ export default async function ActionDetailPage({ params }: DetailPageProps) {
           {action.analysis && (
             <Card>
               <CardHeader>
-                <CardTitle>Causas y Acción Propuesta</CardTitle>
+                <CardTitle>{t("causesAndProposedAction")}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
-                  <h3 className="font-semibold mb-2">Análisis de las Causas</h3>
+                  <h3 className="font-semibold mb-2">{t("causesAnalysis")}</h3>
                   <p className="text-sm text-muted-foreground">{action.analysis.causes}</p>
                 </div>
                 <div>
-                  <h3 className="font-semibold mb-2">Acción Propuesta</h3>
+                  <h3 className="font-semibold mb-2">{t("proposedAction")}</h3>
                   <p className="text-sm text-muted-foreground">{action.analysis.proposedAction}</p>
                 </div>
               </CardContent>
               <CardFooter className="text-xs text-muted-foreground">
-                Análisis realizado por {action.analysis.responsible.name} el {action.analysis.date}
+                {t("analysisPerformedBy", {name: action.analysis.responsible.name, date: action.analysis.date})}
               </CardFooter>
             </Card>
           )}
@@ -98,11 +100,11 @@ export default async function ActionDetailPage({ params }: DetailPageProps) {
           {action.verification && (
             <Card>
               <CardHeader>
-                <CardTitle>Comprobación de la Implantación</CardTitle>
+                <CardTitle>{t("implementationVerification")}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
-                  <h3 className="font-semibold mb-2">Seguimiento y Notas</h3>
+                  <h3 className="font-semibold mb-2">{t("followUpAndNotes")}</h3>
                   <p className="text-sm text-muted-foreground">{action.verification.notes}</p>
                 </div>
               </CardContent>
@@ -112,7 +114,7 @@ export default async function ActionDetailPage({ params }: DetailPageProps) {
           {action.closure && (
              <Card>
               <CardHeader>
-                <CardTitle>Cierre de la Acción</CardTitle>
+                <CardTitle>{t("actionClosure")}</CardTitle>
               </CardHeader>
               <CardContent>
                  <p className="text-sm text-muted-foreground">{action.closure.notes}</p>
@@ -125,20 +127,20 @@ export default async function ActionDetailPage({ params }: DetailPageProps) {
         <div className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Details</CardTitle>
+              <CardTitle>{t("details")}</CardTitle>
             </CardHeader>
             <CardContent>
               <dl className="space-y-4">
-                <InfoField label="Status" value={<ActionStatusBadge status={action.status} />} />
-                <InfoField label="Type" value={action.type} />
+                <InfoField label={t("status")} value={<ActionStatusBadge status={action.status} />} />
+                <InfoField label={t("type")} value={action.type} />
                 <Separator />
-                <UserField label="Creator" user={action.creator} />
-                <UserField label="Responsible" user={action.responsible} />
+                <UserField label={t("creator")} user={action.creator} />
+                <UserField label={t("responsible")} user={action.responsible} />
                 <Separator />
-                <InfoField label="Creation Date" value={action.creationDate} />
-                <InfoField label="Analysis Due" value={action.analysisDueDate} />
-                <InfoField label="Implementation Due" value={action.implementationDueDate} />
-                <InfoField label="Closure Due" value={action.closureDueDate} />
+                <InfoField label={t("creationDate")} value={action.creationDate} />
+                <InfoField label={t("analysisDue")} value={action.analysisDueDate} />
+                <InfoField label={t("implementationDue")} value={action.implementationDueDate} />
+                <InfoField label={t("closureDue")} value={action.closureDueDate} />
               </dl>
             </CardContent>
           </Card>

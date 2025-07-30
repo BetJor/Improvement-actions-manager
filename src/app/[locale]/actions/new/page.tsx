@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import * as z from "zod"
-
+import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import {
   Form,
@@ -41,6 +41,7 @@ const formSchema = z.object({
 })
 
 export default function NewActionPage() {
+  const t = useTranslations("NewActionPage")
   const { toast } = useToast()
   const router = useRouter()
   
@@ -55,8 +56,8 @@ export default function NewActionPage() {
   function onSubmit(values: z.infer<typeof formSchema>) {
     console.log(values)
     toast({
-      title: "Action Created",
-      description: "The new improvement action has been successfully created.",
+      title: t("form.toast.title"),
+      description: t("form.toast.description"),
     })
     router.push("/actions")
   }
@@ -64,8 +65,8 @@ export default function NewActionPage() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Create New Improvement Action</CardTitle>
-        <CardDescription>Fill out the form below to create a new action. It will start in 'Draft' status.</CardDescription>
+        <CardTitle>{t("title")}</CardTitle>
+        <CardDescription>{t("description")}</CardDescription>
       </CardHeader>
       <CardContent>
         <Form {...form}>
@@ -75,12 +76,12 @@ export default function NewActionPage() {
               name="title"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Title</FormLabel>
+                  <FormLabel>{t("form.title.label")}</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g., Optimization of billing process" {...field} />
+                    <Input placeholder={t("form.title.placeholder")} {...field} />
                   </FormControl>
                   <FormDescription>
-                    A brief but descriptive title for the action.
+                    {t("form.title.description")}
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -91,16 +92,16 @@ export default function NewActionPage() {
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Description</FormLabel>
+                  <FormLabel>{t("form.description.label")}</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Describe the non-conformity or area for improvement..."
+                      placeholder={t("form.description.placeholder")}
                       className="resize-none"
                       {...field}
                     />
                   </FormControl>
                   <FormDescription>
-                    Provide a detailed description of the issue.
+                    {t("form.description.description")}
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -112,11 +113,11 @@ export default function NewActionPage() {
                 name="type"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Action Type</FormLabel>
+                    <FormLabel>{t("form.type.label")}</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select an action type" />
+                          <SelectValue placeholder={t("form.type.placeholder")} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -126,7 +127,7 @@ export default function NewActionPage() {
                       </SelectContent>
                     </Select>
                     <FormDescription>
-                      Categorize the improvement action.
+                      {t("form.type.description")}
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -137,11 +138,11 @@ export default function NewActionPage() {
                 name="responsibleId"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Responsible Person</FormLabel>
+                    <FormLabel>{t("form.responsible.label")}</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select a responsible person" />
+                          <SelectValue placeholder={t("form.responsible.placeholder")} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -151,14 +152,14 @@ export default function NewActionPage() {
                       </SelectContent>
                     </Select>
                     <FormDescription>
-                      Assign the person in charge of the analysis.
+                      {t("form.responsible.description")}
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
               />
             </div>
-            <Button type="submit">Create Action</Button>
+            <Button type="submit">{t("form.submit")}</Button>
           </form>
         </Form>
       </CardContent>

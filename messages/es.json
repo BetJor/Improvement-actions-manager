@@ -1,0 +1,107 @@
+{
+  "Header": {
+    "title": "Acciones de Mejora",
+    "myAccount": "Mi Cuenta",
+    "settings": "Configuración",
+    "support": "Soporte",
+    "logout": "Cerrar Sesión"
+  },
+  "AppSidebar": {
+    "title": "IAM",
+    "toggleNotifications": "Activar/desactivar notificaciones",
+    "dashboard": "Panel de Control",
+    "actions": "Acciones"
+  },
+  "ActionsPage": {
+    "title": "Acciones de Mejora",
+    "description": "Aquí puedes encontrar todas las acciones de mejora. Usa los filtros para acotar tu búsqueda.",
+    "createAction": "Crear Acción"
+  },
+  "NewActionPage": {
+    "title": "Crear Nueva Acción de Mejora",
+    "description": "Rellena el formulario para crear una nueva acción. Empezará en estado 'Borrador'.",
+    "form": {
+      "title": {
+        "label": "Título",
+        "placeholder": "p. ej., Optimización del proceso de facturación",
+        "description": "Un título breve pero descriptivo para la acción."
+      },
+      "description": {
+        "label": "Descripción",
+        "placeholder": "Describe la no conformidad o el área de mejora...",
+        "description": "Proporciona una descripción detallada del problema."
+      },
+      "type": {
+        "label": "Tipo de Acción",
+        "placeholder": "Selecciona un tipo de acción",
+        "description": "Categoriza la acción de mejora."
+      },
+      "responsible": {
+        "label": "Persona Responsable",
+        "placeholder": "Selecciona una persona responsable",
+        "description": "Asigna a la persona encargada del análisis."
+      },
+      "submit": "Crear Acción",
+      "toast": {
+        "title": "Acción Creada",
+        "description": "La nueva acción de mejora se ha creado correctamente."
+      }
+    }
+  },
+  "ActionsTable": {
+    "filterPlaceholder": "Filtrar por título, ID o responsable...",
+    "status": "Estado",
+    "type": "Tipo",
+    "noResults": "No se encontraron resultados.",
+    "col": {
+      "id": "ID",
+      "title": "Título",
+      "status": "Estado",
+      "type": "Tipo",
+      "responsible": "Responsable",
+      "dueDate": "Fecha Vencimiento"
+    }
+  },
+  "DashboardPage": {
+    "title": "Panel de Control",
+    "totalActions": "Acciones Totales",
+    "activeActions": "Acciones Activas",
+    "finalizedActions": "Acciones Finalizadas",
+    "drafts": "Borradores",
+    "actionsByStatus": {
+      "title": "Acciones por Estado",
+      "description": "Distribución de acciones en diferentes estados del flujo de trabajo."
+    },
+    "actionsByType": {
+      "title": "Acciones por Tipo",
+      "description": "Desglose de acciones según su tipo designado."
+    },
+    "chartLabel": "Acciones"
+  },
+  "ActionDetailPage": {
+    "editDraft": "Editar Borrador",
+    "performAnalysis": "Realizar Análisis",
+    "verifyImplementation": "Verificar Implantación",
+    "closeAction": "Cerrar Acción",
+    "causesAndProposedAction": "Causas y Acción Propuesta",
+    "causesAnalysis": "Análisis de las Causas",
+    "proposedAction": "Acción Propuesta",
+    "analysisPerformedBy": "Análisis realizado por {name} el {date}",
+    "implementationVerification": "Comprobación de la Implantación",
+    "followUpAndNotes": "Seguimiento y Anotaciones",
+    "actionClosure": "Cierre de la Acción",
+    "details": "Detalles",
+    "status": "Estado",
+    "type": "Tipo",
+    "creator": "Creador/a",
+    "responsible": "Responsable",
+    "creationDate": "Fecha Creación",
+    "analysisDue": "Vencimiento Análisis",
+    "implementationDue": "Vencimiento Implantación",
+    "closureDue": "Vencimiento Cierre"
+  },
+  "RootLayout": {
+    "title": "Gestor de Acciones de Mejora",
+    "description": "Gestiona y sigue las acciones de mejora en toda tu organización."
+  }
+}

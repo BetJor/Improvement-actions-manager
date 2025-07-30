@@ -18,6 +18,7 @@ import { Bar, BarChart, XAxis, YAxis, Pie, PieChart, Cell } from "recharts"
 import type { ImprovementAction } from "@/lib/types"
 import { useMemo } from "react"
 import { Activity, CheckCircle, Clock, FileText, ListTodo } from "lucide-react"
+import { useTranslations } from "next-intl"
 
 interface DashboardClientProps {
   actions: ImprovementAction[]
@@ -33,6 +34,8 @@ const COLORS = {
 
 
 export function DashboardClient({ actions }: DashboardClientProps) {
+  const t = useTranslations("DashboardPage")
+
   const stats = useMemo(() => {
     return {
       total: actions.length,
@@ -59,7 +62,7 @@ export function DashboardClient({ actions }: DashboardClientProps) {
   }, [actions])
   
   const chartConfig = {
-    value: { label: "Actions" },
+    value: { label: t("chartLabel") },
     ...Object.keys(COLORS).reduce((acc, key) => {
       acc[key] = { label: key, color: COLORS[key as keyof typeof COLORS] };
       return acc;
@@ -71,7 +74,7 @@ export function DashboardClient({ actions }: DashboardClientProps) {
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Total Actions</CardTitle>
+          <CardTitle className="text-sm font-medium">{t("totalActions")}</CardTitle>
           <ListTodo className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
@@ -80,7 +83,7 @@ export function DashboardClient({ actions }: DashboardClientProps) {
       </Card>
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Active Actions</CardTitle>
+          <CardTitle className="text-sm font-medium">{t("activeActions")}</CardTitle>
           <Activity className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
@@ -89,7 +92,7 @@ export function DashboardClient({ actions }: DashboardClientProps) {
       </Card>
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Finalized Actions</CardTitle>
+          <CardTitle className="text-sm font-medium">{t("finalizedActions")}</CardTitle>
           <CheckCircle className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
@@ -98,7 +101,7 @@ export function DashboardClient({ actions }: DashboardClientProps) {
       </Card>
        <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Drafts</CardTitle>
+          <CardTitle className="text-sm font-medium">{t("drafts")}</CardTitle>
           <FileText className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
@@ -108,8 +111,8 @@ export function DashboardClient({ actions }: DashboardClientProps) {
 
       <Card className="col-span-1 lg:col-span-2">
         <CardHeader>
-          <CardTitle>Actions by Status</CardTitle>
-          <CardDescription>Distribution of actions across different workflow statuses.</CardDescription>
+          <CardTitle>{t("actionsByStatus.title")}</CardTitle>
+          <CardDescription>{t("actionsByStatus.description")}</CardDescription>
         </CardHeader>
         <CardContent>
           <ChartContainer config={chartConfig} className="min-h-[200px] w-full">
@@ -129,8 +132,8 @@ export function DashboardClient({ actions }: DashboardClientProps) {
       
       <Card className="col-span-1 lg:col-span-2">
         <CardHeader>
-          <CardTitle>Actions by Type</CardTitle>
-          <CardDescription>Breakdown of actions by their designated type.</CardDescription>
+          <CardTitle>{t("actionsByType.title")}</CardTitle>
+          <CardDescription>{t("actionsByType.description")}</CardDescription>
         </CardHeader>
         <CardContent>
           <ChartContainer config={chartConfig} className="min-h-[200px] w-full">

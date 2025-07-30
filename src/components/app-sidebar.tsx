@@ -6,13 +6,15 @@ import { Bell, Home, ListChecks, GanttChartSquare } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
+import { useTranslations } from "next-intl"
 
 export function AppSidebar() {
   const pathname = usePathname()
+  const t = useTranslations("AppSidebar")
 
   const navItems = [
-    { href: "/dashboard", icon: Home, label: "Dashboard" },
-    { href: "/actions", icon: ListChecks, label: "Actions" },
+    { href: "/dashboard", icon: Home, label: t("dashboard") },
+    { href: "/actions", icon: ListChecks, label: t("actions") },
   ]
 
   return (
@@ -21,11 +23,11 @@ export function AppSidebar() {
         <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
           <Link href="/" className="flex items-center gap-2 font-semibold">
             <GanttChartSquare className="h-6 w-6 text-primary" />
-            <span className="">IAM</span>
+            <span className="">{t("title")}</span>
           </Link>
           <Button variant="outline" size="icon" className="ml-auto h-8 w-8">
             <Bell className="h-4 w-4" />
-            <span className="sr-only">Toggle notifications</span>
+            <span className="sr-only">{t("toggleNotifications")}</span>
           </Button>
         </div>
         <div className="flex-1">
@@ -37,7 +39,7 @@ export function AppSidebar() {
                 className={cn(
                   "flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary",
                   {
-                    "bg-muted text-primary": pathname === item.href,
+                    "bg-muted text-primary": pathname.endsWith(item.href),
                   }
                 )}
               >
