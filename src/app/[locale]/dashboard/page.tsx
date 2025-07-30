@@ -1,10 +1,10 @@
 import { getActions } from "@/lib/data"
 import { DashboardClient } from "@/components/dashboard-client"
-import { useTranslations } from "next-intl"
+import { getTranslations } from "next-intl/server"
 
 export default async function DashboardPage() {
   const actions = await getActions()
-  const t = useTranslations("DashboardPage")
+  const t = await getTranslations("DashboardPage")
 
   return (
     <div>

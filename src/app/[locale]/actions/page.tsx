@@ -3,11 +3,11 @@ import { ActionsTable } from "@/components/actions-table"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { PlusCircle } from "lucide-react"
-import { useTranslations } from "next-intl"
+import { getTranslations } from "next-intl/server"
 
 export default async function ActionsPage() {
   const actions = await getActions()
-  const t = useTranslations("ActionsPage")
+  const t = await getTranslations("ActionsPage")
 
   return (
     <div className="flex flex-col gap-4">
