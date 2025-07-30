@@ -1,0 +1,195 @@
+"use client"
+
+import { useState, useMemo } from "react"
+import Link from "next/link"
+import {
+  Table,
+  TableHeader,
+  TableRow,
+  TableHead,
+  TableBody,
+  TableCell,
+} from "@/components/ui/table"
+import { Input } from "@/components/ui/input"
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuCheckboxItem,
+} from "@/components/ui/dropdown-menu"
+import { Button } from "@/components/ui/button"
+import { ActionStatusBadge } from "./action-status-badge"
+import type { ImprovementAction, ImprovementActionStatus, ImprovementActionType } from "@/lib/types"
+import { ArrowUpDown, ChevronDown } from "lucide-react"
+
+interface ActionsTableProps {
+  actions: ImprovementAction[]
+}
+
+type SortKey = keyof ImprovementAction | 'responsible'
+
+export function ActionsTable({ actions }: ActionsTableProps) {
+  const [searchTerm, setSearchTerm] = useState("")
+  const [statusFilter, setStatusFilter] = useState<Set<ImprovementActionStatus>>(new Set())
+  const [typeFilter, setTypeFilter] = useState<Set<ImprovementActionType>>(new Set())
+  const [sortConfig, setSortConfig] = useState<{ key: SortKey; direction: 'asc' | 'desc' } | null>(null)
+
+  const allStatuses = useMemo(() => Array.from(new Set(actions.map(a => a.status))), [actions])
+  const allTypes = useMemo(() => Array.from(new Set(actions.map(a => a.type))), [actions])
+
+  const filteredAndSortedActions = useMemo(() => {
+    let filtered = actions.filter(action => {
+      const searchMatch =
+        action.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        action.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        action.responsible.name.toLowerCase().includes(searchTerm.toLowerCase())
+      
+      const statusMatch = statusFilter.size === 0 || statusFilter.has(action.status)
+      const typeMatch = typeFilter.size === 0 || typeFilter.has(action.type)
+
+      return searchMatch && statusMatch && typeMatch
+    })
+
+    if (sortConfig !== null) {
+      filtered.sort((a, b) => {
+        let aValue, bValue;
+        if (sortConfig.key === 'responsible') {
+            aValue = a.responsible.name;
+            bValue = b.responsible.name;
+        } else {
+            aValue = a[sortConfig.key];
+            bValue = b[sortConfig.key];
+        }
+
+        if (aValue < bValue) {
+          return sortConfig.direction === 'asc' ? -1 : 1
+        }
+        if (aValue > bValue) {
+          return sortConfig.direction === 'asc' ? 1 : -1
+        }
+        return 0
+      })
+    }
+
+    return filtered
+  }, [actions, searchTerm, statusFilter, typeFilter, sortConfig])
+
+  const requestSort = (key: SortKey) => {
+    let direction: 'asc' | 'desc' = 'asc'
+    if (sortConfig && sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc'
+    }
+    setSortConfig({ key, direction })
+  }
+
+  const getSortIcon = (key: SortKey) => {
+    if (!sortConfig || sortConfig.key !== key) {
+        return <ArrowUpDown className="ml-2 h-4 w-4" />;
+    }
+    return sortConfig.direction === 'asc' ? 
+        <ArrowUpDown className="ml-2 h-4 w-4" /> : 
+        <ArrowUpDown className="ml-2 h-4 w-4" />; // Could use different icons for asc/desc
+  };
+
+
+  return (
+    <div className="w-full">
+      <div className="flex items-center py-4 gap-2">
+        <Input
+          placeholder="Filter by title, ID, or responsible..."
+          value={searchTerm}
+          onChange={e => setSearchTerm(e.target.value)}
+          className="max-w-sm"
+        />
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" className="ml-auto">
+              Status <ChevronDown className="ml-2 h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            {allStatuses.map(status => (
+              <DropdownMenuCheckboxItem
+                key={status}
+                checked={statusFilter.has(status)}
+                onCheckedChange={checked => {
+                  setStatusFilter(prev => {
+                    const newSet = new Set(prev)
+                    if (checked) newSet.add(status)
+                    else newSet.delete(status)
+                    return newSet
+                  })
+                }}
+              >
+                {status}
+              </DropdownMenuCheckboxItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline">
+              Type <ChevronDown className="ml-2 h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            {allTypes.map(type => (
+              <DropdownMenuCheckboxItem
+                key={type}
+                checked={typeFilter.has(type)}
+                onCheckedChange={checked => {
+                  setTypeFilter(prev => {
+                    const newSet = new Set(prev)
+                    if (checked) newSet.add(type)
+                    else newSet.delete(type)
+                    return newSet
+                  })
+                }}
+              >
+                {type}
+              </DropdownMenuCheckboxItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+      <div className="rounded-md border">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead><Button variant="ghost" onClick={() => requestSort('id')}>ID {getSortIcon('id')}</Button></TableHead>
+              <TableHead><Button variant="ghost" onClick={() => requestSort('title')}>Title {getSortIcon('title')}</Button></TableHead>
+              <TableHead><Button variant="ghost" onClick={() => requestSort('status')}>Status {getSortIcon('status')}</Button></TableHead>
+              <TableHead><Button variant="ghost" onClick={() => requestSort('type')}>Type {getSortIcon('type')}</Button></TableHead>
+              <TableHead><Button variant="ghost" onClick={() => requestSort('responsible')}>Responsible {getSortIcon('responsible')}</Button></TableHead>
+              <TableHead><Button variant="ghost" onClick={() => requestSort('implementationDueDate')}>Due Date {getSortIcon('implementationDueDate')}</Button></TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {filteredAndSortedActions.length > 0 ? (
+              filteredAndSortedActions.map(action => (
+                <TableRow key={action.id}>
+                  <TableCell className="font-medium">
+                    <Link href={`/actions/${action.id}`} className="text-primary hover:underline">{action.id}</Link>
+                  </TableCell>
+                  <TableCell>{action.title}</TableCell>
+                  <TableCell>
+                    <ActionStatusBadge status={action.status} />
+                  </TableCell>
+                  <TableCell>{action.type}</TableCell>
+                  <TableCell>{action.responsible.name}</TableCell>
+                  <TableCell>{action.implementationDueDate}</TableCell>
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={6} className="h-24 text-center">
+                  No results found.
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </div>
+    </div>
+  )
+}
