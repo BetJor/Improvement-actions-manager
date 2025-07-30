@@ -120,24 +120,18 @@ export default function NewActionPage() {
     setIsSubmitting(true)
 
     try {
-      // Find the name of the category, subcategory and type to store in the DB
-      const categoryName = categories.find(c => c.id === values.category)?.name || values.category;
-      const subcategoryName = subcategories.find(s => s.id === values.subcategory)?.name || values.subcategory;
-      const affectedAreaName = affectedAreas.find(a => a.id === values.affectedAreas)?.name || values.affectedAreas;
-      const typeName = actionTypes.find(t => t.name === values.type)?.name || values.type;
-
-
       const actionData = {
         ...values,
-        category: categoryName,
-        subcategory: subcategoryName,
-        affectedAreas: affectedAreaName,
-        type: typeName,
         creator: {
           id: user.uid,
           name: user.displayName || "Usuari desconegut",
           avatar: user.photoURL || undefined,
-        }
+        },
+        // We are passing the full arrays to find the names from the IDs
+        allCategories: categories,
+        allSubcategories: subcategories,
+        allAffectedAreas: affectedAreas,
+        allActionTypes: actionTypes,
       }
       const newActionId = await createAction(actionData);
       console.log(`New action created with Firestore ID: ${newActionId}`);
@@ -306,7 +300,7 @@ export default function NewActionPage() {
                       </FormControl>
                       <SelectContent>
                         {actionTypes.map(type => (
-                          <SelectItem key={type.id} value={type.name}>{type.name}</SelectItem>
+                          <SelectItem key={type.id} value={type.id}>{type.name}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>

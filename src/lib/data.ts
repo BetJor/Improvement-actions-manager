@@ -24,7 +24,7 @@ export const groups: UserGroup[] = [
 
 // --- Master Data from Firestore ---
 
-async function seedCollection<T extends { [key: string]: any }>(collectionName: string, data: T[]) {
+async function seedCollection<T extends { [key: string]: any }>(collectionName: string, data: T[], idField?: string) {
     const collectionRef = collection(db, collectionName);
     const snapshot = await getDocs(query(collectionRef, limit(1)));
     
@@ -32,13 +32,18 @@ async function seedCollection<T extends { [key: string]: any }>(collectionName: 
       console.log(`Seeding '${collectionName}' collection...`);
       const batch = writeBatch(db);
       data.forEach(item => {
-        const docRef = doc(collectionRef); 
-        batch.set(docRef, item);
+        const docRef = idField ? doc(collectionRef, item[idField]) : doc(collectionRef);
+        const dataToSet = { ...item };
+        if (idField) {
+            delete dataToSet[idField];
+        }
+        batch.set(docRef, dataToSet);
       });
       await batch.commit();
       console.log(`'${collectionName}' collection seeded successfully.`);
     }
 }
+
 
 export const getActionTypes = async (): Promise<ImprovementActionType[]> => {
   const mockActionTypes = [
@@ -63,19 +68,8 @@ export const getCategories = async (): Promise<ActionCategory[]> => {
         { id: "C03", name: "Medi Ambient" },
         { id: "C04", name: "Seguretat de la Informació" },
     ];
-    // For categories, we need to add them with specific IDs, so we can't use the generic seed function
-    const collectionRef = collection(db, 'categories');
-    const snapshot = await getDocs(query(collectionRef, limit(1)));
-    if(snapshot.empty) {
-        console.log("Seeding 'categories' collection...");
-        const batch = writeBatch(db);
-        mockCategories.forEach(cat => {
-            const docRef = doc(db, "categories", cat.id);
-            batch.set(docRef, { name: cat.name });
-        });
-        await batch.commit();
-        console.log("'categories' collection seeded successfully.");
-    }
+    await seedCollection('categories', mockCategories, 'id');
+
 
   const categoriesCol = collection(db, 'categories');
   const snapshot_data = await getDocs(query(categoriesCol, orderBy("name")));
@@ -162,6 +156,11 @@ interface CreateActionData {
     type: string;
     responsibleGroupId: string;
     creator: ActionUserInfo;
+    // Pass master data to avoid re-fetching
+    allCategories: ActionCategory[];
+    allSubcategories: ActionSubcategory[];
+    allAffectedAreas: AffectedArea[];
+    allActionTypes: ImprovementActionType[];
 }
 
 // Function to create a new action
@@ -185,15 +184,22 @@ export async function createAction(data: CreateActionData): Promise<string> {
   
     // 2. Prepare the new action object
     const today = new Date();
+
+    // Find names from IDs
+    const categoryName = data.allCategories.find(c => c.id === data.category)?.name || data.category;
+    const subcategoryName = data.allSubcategories.find(s => s.id === data.subcategory)?.name || data.subcategory;
+    const affectedAreaName = data.allAffectedAreas.find(a => a.id === data.affectedAreas)?.name || data.affectedAreas;
+    const typeName = data.allActionTypes.find(t => t.id === data.type)?.name || data.type;
+
     const newAction: Omit<ImprovementAction, 'id'> = {
       actionId: newActionId,
       title: data.title,
-      category: data.category,
-      subcategory: data.subcategory,
+      category: categoryName,
+      subcategory: subcategoryName,
       description: data.description,
-      type: data.type,
+      type: typeName,
       status: 'Borrador',
-      affectedAreas: data.affectedAreas,
+      affectedAreas: affectedAreaName,
       assignedTo: data.assignedTo,
       creator: data.creator,
       responsibleGroupId: data.responsibleGroupId,
