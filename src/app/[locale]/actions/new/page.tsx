@@ -115,7 +115,7 @@ export default function NewActionPage() {
       return;
     }
 
-    setIsSubmitting(true)
+    setIsSubmitting(true);
 
     try {
       const actionData = {
@@ -125,30 +125,30 @@ export default function NewActionPage() {
           name: user.displayName || "Usuari desconegut",
           avatar: user.photoURL || undefined,
         },
+        // Pass master data to the creation function so it can resolve names from IDs
         allCategories: categories,
         allSubcategories: subcategories,
         allAffectedAreas: affectedAreas,
         allActionTypes: actionTypes,
-      }
+      };
       const newActionId = await createAction(actionData);
       console.log(`New action created with Firestore ID: ${newActionId}`);
       
       toast({
         title: t("form.toast.title"),
         description: t("form.toast.description"),
-      })
-      router.push("/actions")
+      });
+      router.push("/actions");
       router.refresh(); 
-
     } catch (error) {
       console.error("Error creating action:", error);
       toast({
         variant: "destructive",
         title: "Error en crear l'acció",
         description: "Hi ha hagut un problema en desar l'acció. Si us plau, torna-ho a provar.",
-      })
+      });
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
   }
   
@@ -345,5 +345,3 @@ export default function NewActionPage() {
     </Card>
   )
 }
-
-    
