@@ -53,7 +53,6 @@ export function Header() {
           </h1>
         </div>
         <div className="flex items-center gap-2">
-            {user && <span className="text-sm font-medium hidden md:inline-block">{user.displayName}</span>}
             <DropdownMenu>
             <DropdownMenuTrigger asChild>
                 <Button variant="secondary" size="icon" className="rounded-full">
@@ -72,6 +71,7 @@ export function Header() {
                 <DropdownMenuItem onClick={logout}>{t("logout")}</DropdownMenuItem>
             </DropdownMenuContent>
             </DropdownMenu>
+            {user && <span className="text-sm font-medium hidden md:inline-block">{user.displayName}</span>}
         </div>
 
         <DialogContent>
