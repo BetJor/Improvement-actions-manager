@@ -24,29 +24,12 @@ interface TabsContextType {
 
 const TabsContext = createContext<TabsContextType | undefined>(undefined);
 
-const initialTabs: Omit<Tab, 'id' | 'content'>[] = [
-    { title: 'Dashboard', path: '/dashboard', icon: Home, isClosable: false },
-    { title: 'Actions', path: '/actions', icon: ListChecks, isClosable: false },
-    { title: 'Settings', path: '/settings', icon: Settings, isClosable: false },
-    { title: 'AI Settings', path: '/ai-settings', icon: Sparkles, isClosable: false },
-    { title: 'Prompt Gallery', path: '/prompt-gallery', icon: Library, isClosable: false },
-    { title: 'Roadmap', path: '/roadmap', icon: Route, isClosable: false },
-];
 
 export function TabsProvider({ children, initialContent, initialPath }: { children: ReactNode, initialContent: ReactNode, initialPath: string }) {
     
-    const initialTabId = initialPath.substring(1); // e.g. 'dashboard'
-    const initialTabDetails = initialTabs.find(t => t.path === initialPath) || { title: 'Dashboard', path: '/dashboard', icon: Home, isClosable: false};
-
-    const [tabs, setTabs] = useState<Tab[]>([
-        { 
-            id: initialTabId, 
-            ...initialTabDetails,
-            content: initialContent
-        }
-    ]);
-
-    const [activeTab, setActiveTabState] = useState<string | null>(initialTabId);
+    const initialTabId = initialPath.startsWith('/') ? initialPath.substring(1) : initialPath;
+    const [tabs, setTabs] = useState<Tab[]>([]);
+    const [activeTab, setActiveTabState] = useState<string | null>(null);
     const router = useRouter();
 
     const setActiveTab = (tabId: string) => {
@@ -59,20 +42,22 @@ export function TabsProvider({ children, initialContent, initialPath }: { childr
 
     const openTab = (tabData: Omit<Tab, 'id'>) => {
         const tabId = tabData.path.startsWith('/') ? tabData.path.substring(1) : tabData.path;
-        const existingTab = tabs.find(t => t.id === tabId);
-
-        if (existingTab) {
-            setActiveTab(existingTab.id);
-        } else {
+        
+        setTabs(prevTabs => {
+            const existingTab = prevTabs.find(t => t.id === tabId);
+            if (existingTab) {
+                return prevTabs; // No changes if tab already exists
+            }
             const newTab: Tab = { ...tabData, id: tabId };
-            setTabs(prevTabs => [...prevTabs, newTab]);
-            setActiveTab(newTab.id);
-        }
+            return [...prevTabs, newTab];
+        });
+
+        setActiveTabState(tabId);
     };
 
     const closeTab = (tabId: string) => {
         const tabToCloseIndex = tabs.findIndex(t => t.id === tabId);
-        if (tabToCloseIndex === -1) return;
+        if (tabToCloseIndex === -1 || !tabs[tabToCloseIndex].isClosable) return;
         
         const newTabs = tabs.filter(t => t.id !== tabId);
         
@@ -82,7 +67,6 @@ export function TabsProvider({ children, initialContent, initialPath }: { childr
                 setActiveTab(newActiveTab.id);
             } else {
                 setActiveTabState(null);
-                // Optionally, navigate to a default route like '/'
                  router.push('/');
             }
         }
