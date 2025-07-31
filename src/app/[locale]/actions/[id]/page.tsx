@@ -13,6 +13,12 @@ import { AnalysisSection } from "@/components/analysis-section"
 import { Button } from "@/components/ui/button"
 import { FileEdit, Loader2, Microscope, ShieldCheck, Flag } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Separator } from "@/components/ui/separator"
+import { Textarea } from "@/components/ui/textarea"
+import { format } from "date-fns"
+import { es } from "date-fns/locale"
+
 
 export default function ActionDetailPage() {
   const t = useTranslations("ActionDetailPage")
@@ -153,6 +159,8 @@ export default function ActionDetailPage() {
         return null
     }
   }
+  
+  const isAnalysisTabDisabled = action?.status === 'Borrador';
 
   if (isLoading) {
     return <div className="flex items-center justify-center h-full"><Loader2 className="mr-2 h-8 w-8 animate-spin" /> Carregant...</div>
@@ -174,25 +182,76 @@ export default function ActionDetailPage() {
             </div>
         </header>
 
-        <ActionForm 
-            mode={isEditing ? 'edit' : 'view'}
-            initialData={action}
-            masterData={masterData}
-            isLoadingMasterData={!masterData}
-            isSubmitting={isSubmitting}
-            onSubmit={handleEdit}
-            onCancel={() => setIsEditing(false)}
-            t={tForm}
-        />
+        <Tabs defaultValue="details" className="w-full">
+            <TabsList>
+                <TabsTrigger value="details">{t('tabs.details')}</TabsTrigger>
+                <TabsTrigger value="analysis" disabled={isAnalysisTabDisabled}>{t('tabs.causesAndProposedAction')}</TabsTrigger>
+                <TabsTrigger value="verification" disabled>{t('tabs.implementationVerification')}</TabsTrigger>
+                <TabsTrigger value="closure" disabled>{t('tabs.actionClosure')}</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="details" className="mt-4">
+                <ActionForm 
+                    mode={isEditing ? 'edit' : 'view'}
+                    initialData={action}
+                    masterData={masterData}
+                    isLoadingMasterData={!masterData}
+                    isSubmitting={isSubmitting}
+                    onSubmit={handleEdit}
+                    onCancel={() => setIsEditing(false)}
+                    t={tForm}
+                />
+            </TabsContent>
 
-        {action.status === 'Pendiente Análisis' && user && (
-            <AnalysisSection
-              action={action}
-              user={user}
-              isSubmitting={isSubmitting}
-              onSave={handleSaveAnalysis}
-            />
-        )}
+            <TabsContent value="analysis" className="mt-4">
+                {action.status === 'Pendiente Análisis' && user ? (
+                    <AnalysisSection
+                      action={action}
+                      user={user}
+                      isSubmitting={isSubmitting}
+                      onSave={handleSaveAnalysis}
+                    />
+                ) : action.analysis ? (
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>{t('causesAndProposedAction')}</CardTitle>
+                            <CardDescription>
+                                {t('analysisPerformedBy', { 
+                                    name: action.analysis.analysisResponsible.name, 
+                                    date: format(new Date(action.analysis.analysisDate), "PPP", { locale: es }) 
+                                })}
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-6">
+                            <div>
+                                <h3 className="font-semibold text-lg mb-2">{t('causesAnalysis')}</h3>
+                                <p className="text-muted-foreground whitespace-pre-wrap">{action.analysis.causes}</p>
+                            </div>
+                            <Separator />
+                             <div>
+                                <h3 className="font-semibold text-lg mb-4">{t('proposedAction')}</h3>
+                                <div className="space-y-4">
+                                    {action.analysis.proposedActions.map((pa, index) => (
+                                        <div key={index} className="p-4 border rounded-lg">
+                                            <p className="font-medium">{pa.description}</p>
+                                            <p className="text-sm text-muted-foreground mt-1">
+                                                Responsable: {pa.responsibleUserId} | Data Venciment: {format(new Date(pa.dueDate), "dd/MM/yyyy")}
+                                            </p>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+                ) : (
+                  <div className="text-center text-muted-foreground py-10">
+                    <p>L'anàlisi es podrà realitzar un cop l'acció estigui en estat 'Pendent d'Anàlisi'.</p>
+                  </div>
+                )}
+            </TabsContent>
+        </Tabs>
     </div>
   )
 }
+
+    

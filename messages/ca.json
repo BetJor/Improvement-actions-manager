@@ -165,6 +165,12 @@
         "accept": "Acceptar i Omplir Formulari",
         "cancel": "Cancel·lar"
       }
+    },
+    "tabs": {
+        "details": "Detalls",
+        "causesAndProposedAction": "Causes i Acció Proposada",
+        "implementationVerification": "Verificació d'Implantació",
+        "actionClosure": "Tancament de l'Acció"
     }
   },
   "RootLayout": {
@@ -304,3 +310,5 @@
     }
   }
 }
+
+    
