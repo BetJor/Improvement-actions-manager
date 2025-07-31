@@ -55,52 +55,56 @@ export function TabsProvider({ children }: { children: ReactNode }) {
     };
 
     const openTab = (tabData: Omit<Tab, 'id'>) => {
-        setTabs(prevTabs => {
-            const existingTab = prevTabs.find(t => t.path === tabData.path);
-            if (existingTab) {
-                if (activeTab !== existingTab.id) {
-                    setActiveTabState(existingTab.id);
-                }
-                return prevTabs;
+        const existingTab = tabs.find(t => t.path === tabData.path);
+        if (existingTab) {
+            if (activeTab !== existingTab.id) {
+                setActiveTab(existingTab.id);
             }
-            const newTab: Tab = { ...tabData, id: tabData.path };
-            return [...prevTabs, newTab];
-        });
-        setActiveTabState(tabData.path);
+            return;
+        }
+        
+        const newTab: Tab = { ...tabData, id: tabData.path };
+        setTabs(prevTabs => [...prevTabs, newTab]);
+        setActiveTab(newTab.id);
     };
 
     const closeTab = (tabId: string) => {
+        console.log(`[useTabs] Funció closeTab reb el ID: ${tabId}`);
+        console.log('[useTabs] Estat actual de les pestanyes:', tabs.map(t => t.id));
+
         const tabToCloseIndex = tabs.findIndex(tab => tab.id === tabId);
-        if (tabToCloseIndex === -1) return;
+        if (tabToCloseIndex === -1) {
+            console.error(`[useTabs] ERROR: No s'ha trobat la pestanya amb ID ${tabId} per a tancar.`);
+            return;
+        }
+        console.log(`[useTabs] La pestanya a tancar es troba a l'índex: ${tabToCloseIndex}`);
 
-        let newActiveTabId: string | null = null;
+
+        // Filtra la pestanya a tancar
+        const newTabs = tabs.filter(tab => tab.id !== tabId);
+        console.log(`[useTabs] Nou array de pestanyes després de filtrar:`, newTabs.map(t => t.id));
         
-        // Determine the next active tab *before* closing the current one
+        // Comprova si la pestanya que es tanca és l'activa
         if (activeTab === tabId) {
-            // If there's a tab to the right, make it active
-            if (tabToCloseIndex < tabs.length - 1) {
-                newActiveTabId = tabs[tabToCloseIndex + 1].id;
-            } 
-            // Otherwise, if there's a tab to the left, make it active
-            else if (tabToCloseIndex > 0) {
-                newActiveTabId = tabs[tabToCloseIndex - 1].id;
+            let nextActiveTabId: string | null = null;
+            if (newTabs.length > 0) {
+                // Si hi ha pestanyes, activa la que està a la mateixa posició (que era la següent) o l'anterior
+                const newActiveIndex = Math.max(0, tabToCloseIndex - 1);
+                nextActiveTabId = newTabs[newActiveIndex].id;
+            } else {
+                // Si no en queden, torna al dashboard
+                nextActiveTabId = '/dashboard';
+            }
+            
+            console.log(`[useTabs] La pestanya tancada era l'activa. Nova pestanya activa serà: ${nextActiveTabId}`);
+            if (nextActiveTabId) {
+                router.push(nextActiveTabId);
             }
         }
-
-        // Remove the tab from the list
-        setTabs(prevTabs => prevTabs.filter(tab => tab.id !== tabId));
-
-        // Navigate if the active tab was closed
-        if (newActiveTabId) {
-            setActiveTabState(newActiveTabId);
-            const newActiveTab = tabs.find(t => t.id === newActiveTabId);
-            if(newActiveTab) {
-                 router.push(newActiveTab.path);
-            }
-        } else if (tabs.length === 1 && activeTab === tabId) {
-             // If it was the last tab, navigate to dashboard
-            router.push('/dashboard');
-        }
+        
+        // Finalment, actualitza l'estat amb les noves pestanyes
+        setTabs(newTabs);
+        console.log(`[useTabs] Estat final de pestanyes establert.`);
     };
     
     // Effect to set active tab from pathname
