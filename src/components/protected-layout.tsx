@@ -38,15 +38,15 @@ export function ProtectedLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <SidebarProvider>
-      <div className="flex h-full w-full">
-        <AppSidebar />
-        <div className="flex flex-1 flex-col overflow-y-auto">
-          <Header />
-          <TabsProvider>
+      <TabsProvider>
+        <div className="flex h-full w-full">
+          <AppSidebar />
+          <div className="flex flex-1 flex-col overflow-y-auto">
+            <Header />
             <DynamicTabs initialContent={children}/>
-          </TabsProvider>
+          </div>
         </div>
-      </div>
+      </TabsProvider>
     </SidebarProvider>
   );
 }
