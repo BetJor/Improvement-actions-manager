@@ -74,7 +74,6 @@ export function TabsProvider({ children }: { children: ReactNode }) {
         }
     }, [user, lastUser, router]);
 
-
     const setActiveTab = (tabId: string) => {
         const tab = tabs.find(t => t.id === tabId);
         if (tab) {
@@ -84,7 +83,7 @@ export function TabsProvider({ children }: { children: ReactNode }) {
             }
         }
     };
-
+    
     const openTab = (tabData: Omit<Tab, 'id'>) => {
         const existingTab = tabs.find(t => t.path === tabData.path);
         if (existingTab) {
@@ -96,7 +95,7 @@ export function TabsProvider({ children }: { children: ReactNode }) {
         
         const newTab: Tab = { ...tabData, id: tabData.path };
         setTabs(prevTabs => [...prevTabs, newTab]);
-        setActiveTab(newTab.id);
+        setActiveTabState(newTab.id);
     };
 
     const closeTab = (tabId: string) => {
@@ -105,37 +104,29 @@ export function TabsProvider({ children }: { children: ReactNode }) {
     
         const newTabs = tabs.filter(t => t.id !== tabId);
         
-        let nextActiveTabId = null;
-        if (activeTab === tabId && newTabs.length > 0) {
-            // Activate the next tab (or the previous one if it was the last)
-            const newActiveIndex = Math.max(0, tabToCloseIndex - 1);
-            nextActiveTabId = newTabs[newActiveIndex].id;
-        } else if (newTabs.length === 0) {
-            nextActiveTabId = "/dashboard";
+        if (activeTab === tabId) {
+            if (newTabs.length > 0) {
+                const newActiveIndex = Math.max(0, tabToCloseIndex - 1);
+                setActiveTabState(newTabs[newActiveIndex].id);
+            } else {
+                 setActiveTabState('/dashboard');
+            }
         }
-    
+        
         setTabs(newTabs);
-        if (nextActiveTabId) {
-            setActiveTabState(nextActiveTabId);
-            router.push(nextActiveTabId);
-        } else if (activeTab === tabId) {
-            // This case might not be hit if we always default to dashboard
-            // but as a fallback
-            setActiveTabState(null);
-        }
     };
-    
-    // This useEffect is now the single source of truth for opening tabs based on URL
+
     useEffect(() => {
         const pathWithoutLocale = pathname.split('/').slice(2).join('/');
         const fullPath = pathWithoutLocale ? `/${pathWithoutLocale}` : '/dashboard';
 
         const existingTab = tabs.find(t => t.id === fullPath);
+        
         if (existingTab) {
             if(activeTab !== existingTab.id) {
                setActiveTabState(existingTab.id);
             }
-            return; // Tab already exists, do nothing
+            return;
         }
 
         let tabData: Omit<Tab, 'id'> | null = null;
@@ -157,7 +148,7 @@ export function TabsProvider({ children }: { children: ReactNode }) {
                     title: 'Nova Acció',
                     icon: FilePlus,
                     isClosable: true,
-                    content: React.createElement(pageComponentMapping['/actions/new'])
+                    content: React.createElement(NewActionPage)
                  };
              } else if (actionIdMatch) {
                  const id = actionIdMatch[1];
@@ -174,7 +165,6 @@ export function TabsProvider({ children }: { children: ReactNode }) {
         if (tabData) {
             const newTab: Tab = { ...tabData, id: tabData.path };
             setTabs(prev => {
-                // Double check to prevent race conditions
                 if (prev.some(t => t.id === newTab.id)) return prev;
                 return [...prev, newTab]
             });
@@ -182,6 +172,11 @@ export function TabsProvider({ children }: { children: ReactNode }) {
         }
     }, [pathname, tabs, activeTab]);
 
+    useEffect(() => {
+        if (activeTab && pathname !== activeTab) {
+          router.push(activeTab);
+        }
+    }, [activeTab, pathname, router]);
 
     const value = useMemo(() => ({
         tabs,
@@ -189,7 +184,7 @@ export function TabsProvider({ children }: { children: ReactNode }) {
         openTab,
         closeTab,
         setActiveTab,
-    }), [tabs, activeTab]);
+    }), [tabs, activeTab, openTab, closeTab, setActiveTab]);
 
     return (
         <TabsContext.Provider value={value}>
