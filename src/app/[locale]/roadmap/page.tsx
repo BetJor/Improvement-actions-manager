@@ -94,6 +94,15 @@ import {
             "Pendent: Implementar un sistema de subscripció a les accions de millora.",
             "Pendent: Configurar l'enviament de notificacions (p. ex., per email) quan hi hagi actualitzacions rellevants (nous comentaris, canvis d'estat)."
           ]
+        },
+        {
+          key: "phase8",
+          title: "Fase 8: Millores d'Experiència d'Usuari (UX)",
+          duration: "Estimat: 2-3 dies",
+          completed_tasks: [],
+          pending_tasks: [
+            "Pendent: Implementar la reordenació de les seccions (Detalls, Comentaris, Adjunts) del panell lateral amb 'drag-and-drop' per a desar la preferència de l'usuari."
+          ]
         }
     ];
 
