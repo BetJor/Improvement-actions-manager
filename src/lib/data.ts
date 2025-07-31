@@ -1,6 +1,6 @@
 
 
-import type { ImprovementAction, User, UserGroup, ImprovementActionType, ActionUserInfo, ActionCategory, ActionSubcategory, AffectedArea, MasterDataItem, WorkflowPlan } from './types';
+import type { ImprovementAction, User, UserGroup, ImprovementActionType, ActionUserInfo, ActionCategory, ActionSubcategory, AffectedArea, MasterDataItem, WorkflowPlan, GalleryPrompt } from './types';
 import { subDays, format, addDays } from 'date-fns';
 import { db } from './firebase';
 import { collection, getDocs, doc, getDoc, addDoc, query, orderBy, limit, writeBatch, updateDoc, deleteDoc, setDoc, Timestamp, arrayUnion } from 'firebase/firestore';
@@ -288,7 +288,7 @@ export async function getPrompt(promptId: PromptId): Promise<string> {
     const docRef = doc(db, 'app_settings', 'prompts');
     const docSnap = await getDoc(docRef);
 
-    if (docSnap.exists() && docSnap.data()?.[promptId]) {
+    if (docSnap.exists()) {
         return docSnap.data()?.[promptId] || '';
     }
     
@@ -300,6 +300,25 @@ export async function updatePrompt(promptId: PromptId, newPrompt: string): Promi
     await setDoc(docRef, { [promptId]: newPrompt }, { merge: true });
 }
 
-    
+// --- CRUD for Prompt Gallery ---
+export async function getGalleryPrompts(): Promise<GalleryPrompt[]> {
+    const promptsCol = collection(db, 'prompt_gallery');
+    const snapshot = await getDocs(query(promptsCol, orderBy("title")));
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as GalleryPrompt));
+}
 
-    
+export async function addGalleryPrompt(prompt: Omit<GalleryPrompt, 'id'>): Promise<string> {
+    const collectionRef = collection(db, 'prompt_gallery');
+    const docRef = await addDoc(collectionRef, prompt);
+    return docRef.id;
+}
+
+export async function updateGalleryPrompt(promptId: string, prompt: Omit<GalleryPrompt, 'id'>): Promise<void> {
+    const docRef = doc(db, 'prompt_gallery', promptId);
+    await updateDoc(docRef, prompt);
+}
+
+export async function deleteGalleryPrompt(promptId: string): Promise<void> {
+    const docRef = doc(db, 'prompt_gallery', promptId);
+    await deleteDoc(docRef);
+}

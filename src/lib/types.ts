@@ -32,6 +32,13 @@ export interface ActionSubcategory extends MasterDataItem {
 
 export interface AffectedArea extends MasterDataItem {}
 
+export interface GalleryPrompt {
+  id: string;
+  title: string;
+  description: string;
+  prompt: string;
+}
+
 export interface ActionUserInfo {
   id: string;
   name: string;

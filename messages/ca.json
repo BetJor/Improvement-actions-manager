@@ -273,10 +273,35 @@
   "PromptGalleryPage": {
     "title": "Galeria de Prompts",
     "description": "Explora una col·lecció de prompts útils que pots copiar i adaptar a la teva configuració d'IA.",
+    "addNew": "Afegir Nou Prompt",
+    "noPrompts": "No s'han trobat prompts. Fes clic a 'Afegir Nou Prompt' per a començar.",
+    "addTitle": "Crear Nou Prompt",
+    "editTitle": "Editar Prompt",
+    "save": "Desar",
+    "cancel": "Cancel·lar",
+    "col": {
+      "title": "Títol",
+      "description": "Descripció",
+      "prompt": "Prompt",
+      "descriptionAndPrompt": "Descripció i Prompt",
+      "actions": "Accions"
+    },
     "copy": {
       "button": "Copiar Prompt",
       "toastTitle": "Prompt Copiat!",
       "toastDescription": "El prompt s'ha copiat al porta-retalls."
+    },
+    "add": {
+      "toastTitle": "Prompt Creat"
+    },
+    "edit": {
+      "toastTitle": "Prompt Actualitzat"
+    },
+    "delete": {
+      "toastTitle": "Prompt Eliminat",
+      "confirmationTitle": "Estàs segur?",
+      "confirmationMessage": "Aquesta acció no es pot desfer. S'eliminarà el prompt permanentment.",
+      "confirm": "Eliminar"
     },
     "prompts": {
       "createRoadmap": {

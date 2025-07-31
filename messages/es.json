@@ -273,10 +273,35 @@
   "PromptGalleryPage": {
     "title": "Galería de Prompts",
     "description": "Explora una colección de prompts útiles que puedes copiar y adaptar a tu configuración de IA.",
+    "addNew": "Añadir Nuevo Prompt",
+    "noPrompts": "No se encontraron prompts. Haz clic en 'Añadir Nuevo Prompt' para empezar.",
+    "addTitle": "Crear Nuevo Prompt",
+    "editTitle": "Editar Prompt",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "col": {
+      "title": "Título",
+      "description": "Descripción",
+      "prompt": "Prompt",
+      "descriptionAndPrompt": "Descripción y Prompt",
+      "actions": "Acciones"
+    },
     "copy": {
       "button": "Copiar Prompt",
       "toastTitle": "¡Prompt Copiado!",
       "toastDescription": "El prompt se ha copiado al portapapeles."
+    },
+    "add": {
+      "toastTitle": "Prompt Creado"
+    },
+    "edit": {
+      "toastTitle": "Prompt Actualizado"
+    },
+    "delete": {
+      "toastTitle": "Prompt Eliminado",
+      "confirmationTitle": "¿Estás seguro?",
+      "confirmationMessage": "Esta acción no se puede deshacer. Se eliminará el prompt permanentemente.",
+      "confirm": "Eliminar"
     },
     "prompts": {
       "createRoadmap": {
