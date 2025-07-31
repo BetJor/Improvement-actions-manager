@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { createContext, useContext, useState, ReactNode, useMemo, ComponentType } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useMemo, ComponentType, useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 
 export interface Tab {
@@ -44,42 +44,38 @@ export function TabsProvider({ children, initialContent, initialPath }: { childr
         setTabs(prevTabs => {
             const existingTab = prevTabs.find(t => t.path === tabData.path);
             if (existingTab) {
+                 if (activeTab !== existingTab.id) {
+                    setActiveTabState(existingTab.id);
+                }
                 return prevTabs;
             }
             const newTab: Tab = { ...tabData, id: tabData.path };
+            setActiveTabState(newTab.id);
             return [...prevTabs, newTab];
         });
     };
 
     const closeTab = (tabId: string) => {
-        const tabToCloseIndex = tabs.findIndex((tab) => tab.id === tabId);
+        const tabToCloseIndex = tabs.findIndex(tab => tab.id === tabId);
         if (tabToCloseIndex === -1 || !tabs[tabToCloseIndex].isClosable) {
-            return; // No es pot tancar o no s'ha trobat
+            return;
         }
     
-        // Si la pestanya que es tanca és l'activa, determina quina serà la propera pestanya activa
-        let nextActiveTabPath: string | null = null;
+        // If the closed tab was the active one, navigate away.
+        // The useEffect below will handle setting the new active tab.
         if (activeTab === tabId) {
             const newActiveTab = tabs[tabToCloseIndex - 1] || tabs[tabToCloseIndex + 1];
             if (newActiveTab) {
-                nextActiveTabPath = newActiveTab.path;
-            } else if (tabs.length > 1) {
-                // fallback a la primera pestanya si alguna cosa va malament
-                nextActiveTabPath = tabs[0].path;
+                router.push(newActiveTab.path);
+            } else {
+                router.push('/'); 
             }
         }
     
-        // Actualitza la llista de pestanyes
-        const newTabs = tabs.filter((tab) => tab.id !== tabId);
-        setTabs(newTabs);
-    
-        // Si hem tancat la pestanya activa i n'hi ha una de nova, navega a ella
-        if (nextActiveTabPath) {
-            router.push(nextActiveTabPath);
-        } else if (newTabs.length === 0) {
-            router.push('/');
-        }
+        // Update the list of tabs, removing the closed one.
+        setTabs(prevTabs => prevTabs.filter(tab => tab.id !== tabId));
     };
+
 
     const value = useMemo(() => ({
         tabs,
