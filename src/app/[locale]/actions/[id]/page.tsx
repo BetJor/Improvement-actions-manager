@@ -5,7 +5,7 @@ import { useEffect, useState } from "react"
 import { getActionById, getActionTypes, getCategories, getSubcategories, getAffectedAreas, updateAction } from "@/lib/data"
 import { notFound, useRouter, useParams } from "next/navigation"
 import { useAuth } from "@/hooks/use-auth"
-import type { ImprovementAction } from "@/lib/types"
+import type { ImprovementAction, ProposedActionStatus } from "@/lib/types"
 import { useToast } from "@/hooks/use-toast"
 import { useTranslations } from "next-intl"
 import { ActionForm } from "@/components/action-form"
@@ -19,6 +19,7 @@ import { Separator } from "@/components/ui/separator"
 import { Textarea } from "@/components/ui/textarea"
 import { format } from "date-fns"
 import { es } from "date-fns/locale"
+import { cn } from "@/lib/utils"
 
 
 export default function ActionDetailPage() {
@@ -196,6 +197,20 @@ export default function ActionDetailPage() {
   const isVerificationTabDisabled = action?.status === 'Borrador' || action?.status === 'Pendiente Análisis';
   const isClosureTabDisabled = action?.status !== 'Finalizada';
 
+  const getStatusColorClass = (status?: ProposedActionStatus) => {
+    if (!status) return "";
+    switch (status) {
+      case "Implementada":
+        return "border-green-500 border-2";
+      case "Implementada Parcialment":
+        return "border-yellow-500 border-2";
+      case "No Implementada":
+        return "border-red-500 border-2";
+      default:
+        return "";
+    }
+  };
+
 
   if (isLoading) {
     return <div className="flex items-center justify-center h-full"><Loader2 className="mr-2 h-8 w-8 animate-spin" /> Carregant...</div>
@@ -314,7 +329,7 @@ export default function ActionDetailPage() {
                                 <h3 className="font-semibold text-lg mb-4">{t('verification.statusOfActions')}</h3>
                                 <div className="space-y-4">
                                     {action.analysis?.proposedActions.map((pa, index) => (
-                                        <div key={`${pa.id}-${index}`} className="p-4 border rounded-lg">
+                                        <div key={`${pa.id}-${index}`} className={cn("p-4 border rounded-lg", getStatusColorClass(action.verification?.proposedActionsStatus[pa.id]))}>
                                             <p className="font-medium">{pa.description}</p>
                                             <p className="text-sm text-muted-foreground mt-1">
                                                 Estat: <span className="font-semibold">{action.verification?.proposedActionsStatus[pa.id]}</span>
@@ -336,3 +351,5 @@ export default function ActionDetailPage() {
     </div>
   )
 }
+
+    
