@@ -237,8 +237,8 @@ export function AnalysisSection({ action, user, isSubmitting, onSave }: Analysis
             <div className="space-y-4">
               <h3 className="text-lg font-semibold">{t("proposedActions.title")}</h3>
               {fields.map((field, index) => (
-                <div key={field.id} className="flex flex-col md:flex-row gap-4 p-4 border rounded-md">
-                   <div className="flex-1 space-y-2">
+                <div key={field.id} className="flex gap-4 p-4 border rounded-md">
+                   <div className="flex-1 flex flex-col gap-4">
                      <FormField
                         control={form.control}
                         name={`proposedActions.${index}.description`}
@@ -252,37 +252,34 @@ export function AnalysisSection({ action, user, isSubmitting, onSave }: Analysis
                             </FormItem>
                         )}
                         />
-                   </div>
-                   <div className="w-full md:w-1/4 space-y-2">
-                    <FormField
-                      control={form.control}
-                      name={`proposedActions.${index}.responsibleUserId`}
-                      render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>{t("proposedActions.responsible")}</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                <FormControl>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder={t("proposedActions.responsiblePlaceholder")} />
-                                    </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                    {users.map((user) => (
-                                        <SelectItem key={user.id} value={user.id}>{user.name}</SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                            <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                   </div>
-                   <div className="w-full md:w-auto space-y-2">
+                    <div className="flex flex-col md:flex-row gap-4">
+                        <FormField
+                        control={form.control}
+                        name={`proposedActions.${index}.responsibleUserId`}
+                        render={({ field }) => (
+                            <FormItem className="flex-1">
+                                <FormLabel>{t("proposedActions.responsible")}</FormLabel>
+                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                    <FormControl>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder={t("proposedActions.responsiblePlaceholder")} />
+                                        </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                        {users.map((user) => (
+                                            <SelectItem key={user.id} value={user.id}>{user.name}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                        />
                         <FormField
                         control={form.control}
                         name={`proposedActions.${index}.dueDate`}
                         render={({ field }) => (
-                            <FormItem className="flex flex-col">
+                            <FormItem className="flex flex-col flex-1">
                                <FormLabel>{t("proposedActions.dueDate")}</FormLabel>
                                <Popover>
                                 <PopoverTrigger asChild>
@@ -290,7 +287,7 @@ export function AnalysisSection({ action, user, isSubmitting, onSave }: Analysis
                                     <Button
                                         variant={"outline"}
                                         className={cn(
-                                        "w-full md:w-[240px] pl-3 text-left font-normal",
+                                        "w-full pl-3 text-left font-normal",
                                         !field.value && "text-muted-foreground"
                                         )}
                                     >
@@ -317,8 +314,9 @@ export function AnalysisSection({ action, user, isSubmitting, onSave }: Analysis
                             </FormItem>
                         )}
                         />
+                    </div>
                    </div>
-                   <div className="flex items-end">
+                   <div className="flex items-center">
                      <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)}>
                         <Trash2 className="h-4 w-4 text-destructive" />
                      </Button>
