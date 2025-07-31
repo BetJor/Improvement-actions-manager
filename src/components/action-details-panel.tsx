@@ -106,12 +106,12 @@ export function ActionDetailsPanel({ action, onActionUpdate }: ActionDetailsPane
     <>
         {/* Details Card */}
         <Card>
-            <Accordion type="single" collapsible defaultValue="item-1" className="w-full">
+            <Accordion type="single" collapsible className="w-full">
                 <AccordionItem value="item-1" className="border-b-0">
-                    <CardHeader>
-                        <AccordionTrigger>
-                            <div className="flex justify-between items-center w-full pr-4">
-                                <CardTitle>{t('details')}</CardTitle>
+                    <CardHeader className="p-4">
+                        <AccordionTrigger className="p-0">
+                            <div className="flex justify-between items-center w-full">
+                                <CardTitle className="text-base">{t('details')}</CardTitle>
                                 <ActionStatusBadge status={action.status} />
                             </div>
                         </AccordionTrigger>
@@ -151,11 +151,11 @@ export function ActionDetailsPanel({ action, onActionUpdate }: ActionDetailsPane
 
         {/* Comments Card */}
         <Card>
-             <Accordion type="single" collapsible defaultValue="item-1" className="w-full">
+             <Accordion type="single" collapsible className="w-full">
                 <AccordionItem value="item-1" className="border-b-0">
-                     <CardHeader>
-                        <AccordionTrigger>
-                            <CardTitle className="flex items-center gap-2">
+                     <CardHeader className="p-4">
+                        <AccordionTrigger className="p-0">
+                            <CardTitle className="flex items-center gap-2 text-base">
                                <MessageSquare className="h-5 w-5" />
                                {t('comments.title')}
                             </CardTitle>
@@ -206,11 +206,11 @@ export function ActionDetailsPanel({ action, onActionUpdate }: ActionDetailsPane
         
         {/* Attachments Card */}
         <Card>
-            <Accordion type="single" collapsible defaultValue="item-1" className="w-full">
+            <Accordion type="single" collapsible className="w-full">
                 <AccordionItem value="item-1" className="border-b-0">
-                     <CardHeader>
-                        <AccordionTrigger>
-                            <CardTitle className="flex items-center gap-2">
+                     <CardHeader className="p-4">
+                        <AccordionTrigger className="p-0">
+                            <CardTitle className="flex items-center gap-2 text-base">
                                 <Paperclip className="h-5 w-5" />
                                 {t('attachments.title')}
                             </CardTitle>
@@ -255,5 +255,3 @@ export function ActionDetailsPanel({ action, onActionUpdate }: ActionDetailsPane
     </>
   )
 }
-
-    
