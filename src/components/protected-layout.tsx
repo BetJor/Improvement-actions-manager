@@ -18,7 +18,6 @@ function LayoutWithTabs({ children }: { children: React.ReactNode }) {
     const tSidebar = useTranslations("AppSidebar");
     const { activeTab, tabs } = useTabs();
     
-    // This hook will now handle the logic of opening/activating tabs on route change
     useTabNavigation();
 
     const activeTabContent = tabs.find(tab => tab.id === activeTab)?.content;
@@ -67,7 +66,7 @@ export function ProtectedLayout({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <TabsProvider initialContent={children} initialPath={pathname}>
+    <TabsProvider>
         <LayoutWithTabs>
             {children}
         </LayoutWithTabs>
