@@ -11,10 +11,15 @@ import { useLocale, useTranslations } from "next-intl";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { TabsProvider, useTabs } from "@/hooks/use-tabs";
 import { DynamicTabs } from "./dynamic-tabs";
+import { useTabNavigation } from "@/hooks/use-tab-navigation";
+
 
 function LayoutWithTabs({ children }: { children: React.ReactNode }) {
     const tSidebar = useTranslations("AppSidebar");
     const { activeTab, tabs } = useTabs();
+    
+    // This hook will now handle the logic of opening/activating tabs on route change
+    useTabNavigation();
 
     const activeTabContent = tabs.find(tab => tab.id === activeTab)?.content;
 
@@ -25,6 +30,7 @@ function LayoutWithTabs({ children }: { children: React.ReactNode }) {
                 <div className="flex flex-1 flex-col overflow-y-auto">
                     <Header />
                     <main className="flex-1 flex flex-col bg-background/60 overflow-y-auto">
+                        <DynamicTabs />
                         <div className="p-4 lg:p-6 flex-grow">
                            {activeTabContent || children}
                         </div>
@@ -34,6 +40,7 @@ function LayoutWithTabs({ children }: { children: React.ReactNode }) {
         </SidebarProvider>
     );
 }
+
 
 export function ProtectedLayout({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
