@@ -14,37 +14,21 @@ export function DynamicTabs({ initialContent }: { initialContent: React.ReactNod
     const { tabs, activeTab, addTab, removeTab, setActiveTab } = useTabs();
     const pathname = usePathname();
     const router = useRouter();
-    const t = useTranslations("AppSidebar");
-
-    useEffect(() => {
-        // This effect ensures that the initial page (e.g., dashboard) is added as the first tab
-        if (tabs.length === 0 && pathname) {
-            const initialTabId = pathname.split('/').pop() || 'dashboard';
-            const pageTitle = t('dashboard');
-            
-            // Avoid adding duplicate dashboard tabs
-            if (!tabs.some(tab => tab.id === 'dashboard')) {
-                addTab({
-                    id: 'dashboard', 
-                    title: pageTitle,
-                    href: `/${pathname.split('/')[1]}/dashboard`, // ensure correct locale
-                    isClosable: false
-                });
-            }
-        }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [pathname, t, tabs.length]);
-
 
     const handleTabClick = (tabId: string, href: string) => {
         setActiveTab(tabId);
         window.history.replaceState({}, '', href);
     };
 
+    const handleCloseTab = (e: React.MouseEvent, tabId: string) => {
+        e.stopPropagation();
+        removeTab(tabId);
+    }
+
     const renderContent = () => {
-        if (!activeTab) return initialContent;
-        if (activeTab.id === 'dashboard') return initialContent;
-        return activeTab.content;
+        // If there's an active tab, render its content.
+        // Otherwise, render the initial page content (e.g., the dashboard before any action is clicked).
+        return activeTab ? activeTab.content : initialContent;
     }
 
     return (
@@ -69,10 +53,7 @@ export function DynamicTabs({ initialContent }: { initialContent: React.ReactNod
                                     variant="ghost"
                                     size="icon"
                                     className="h-5 w-5 rounded-full"
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        removeTab(tab.id);
-                                    }}
+                                    onClick={(e) => handleCloseTab(e, tab.id)}
                                 >
                                     <X className="h-3 w-3" />
                                 </Button>

@@ -6,6 +6,7 @@ import type { Tab as TabType } from '@/lib/types';
 import ActionDetailPage from '@/app/[locale]/actions/[id]/page';
 import { useParams, usePathname, useRouter } from 'next/navigation';
 import { AppRouterContext, LayoutRouterContext, GlobalLayoutRouterContext } from 'next/dist/shared/lib/app-router-context.shared-runtime';
+import { useTranslations } from 'next-intl';
 
 interface Tab extends TabType {
     content?: ReactNode;
@@ -21,19 +22,15 @@ interface TabsContextType {
 
 const TabsContext = createContext<TabsContextType | undefined>(undefined);
 
-// This is a workaround to provide router context to components rendered in tabs
 function MockRouterProvider({ children, params }: { children: React.ReactNode, params: any }) {
     const router = useContext(AppRouterContext);
     const layoutRouter = useContext(LayoutRouterContext);
     const globalLayoutRouter = useContext(GlobalLayoutRouterContext);
 
-    // If any of the essential contexts are null, we can't render
     if (!router || !layoutRouter || !globalLayoutRouter) {
-        // This can happen on initial load, return null or a loader
         return null;
     }
     
-    // Create a mock layout router context that includes the new params
     const mockLayoutRouter = {
         ...layoutRouter,
         childNodes: new Map(layoutRouter.childNodes),
@@ -41,7 +38,6 @@ function MockRouterProvider({ children, params }: { children: React.ReactNode, p
         url: `/actions/${params.id}`,
     };
 
-    // The key is to provide a mock LayoutRouterContext with the correct params
     return (
         <AppRouterContext.Provider value={router}>
             <GlobalLayoutRouterContext.Provider value={globalLayoutRouter}>
@@ -55,35 +51,50 @@ function MockRouterProvider({ children, params }: { children: React.ReactNode, p
 
 
 export function TabsProvider({ children }: { children: React.ReactNode }) {
-  const [tabs, setTabs] = useState<Tab[]>([]);
-  const [activeTab, setActiveTabState] = useState<Tab | null>(null);
+  const t = useTranslations("AppSidebar");
   const currentParams = useParams();
   const pathname = usePathname();
 
+  const getInitialTabs = () => {
+    const dashboardTab: Tab = {
+      id: 'dashboard',
+      title: t('dashboard'),
+      href: `/${currentParams.locale}/dashboard`,
+      isClosable: false,
+      // The initial content is passed via the children prop to DynamicTabs
+      content: undefined 
+    };
+    return [dashboardTab];
+  };
+
+  const [tabs, setTabs] = useState<Tab[]>(getInitialTabs);
+  const [activeTab, setActiveTabState] = useState<Tab | null>(tabs[0]);
+
   useEffect(() => {
-    // Sync URL with active tab
     if (activeTab && activeTab.href !== pathname) {
       window.history.pushState({}, '', activeTab.href);
     }
   }, [activeTab, pathname]);
   
   const addTab = (newTab: Omit<Tab, 'content'>) => {
-    const existingTab = tabs.find((tab) => tab.id === newTab.id);
-    if (existingTab) {
-        setActiveTabState(existingTab);
-        return;
-    }
+    setTabs(prevTabs => {
+        const existingTab = prevTabs.find((tab) => tab.id === newTab.id);
+        if (existingTab) {
+            setActiveTabState(existingTab);
+            return prevTabs;
+        }
 
-    const actionId = newTab.id;
-    const content = (
-        <MockRouterProvider params={{ locale: currentParams.locale, id: actionId }}>
-            <ActionDetailPage />
-        </MockRouterProvider>
-    );
+        const actionId = newTab.id;
+        const content = (
+            <MockRouterProvider params={{ locale: currentParams.locale, id: actionId }}>
+                <ActionDetailPage />
+            </MockRouterProvider>
+        );
 
-    const tabWithContent: Tab = { ...newTab, content };
-    setTabs((prevTabs) => [...prevTabs, tabWithContent]);
-    setActiveTabState(tabWithContent);
+        const tabWithContent: Tab = { ...newTab, content };
+        setActiveTabState(tabWithContent);
+        return [...prevTabs, tabWithContent];
+    });
   };
 
   const removeTab = (tabId: string) => {
@@ -98,6 +109,7 @@ export function TabsProvider({ children }: { children: React.ReactNode }) {
           const newActiveIndex = Math.max(0, tabToRemoveIndex - 1);
           setActiveTabState(newTabs[newActiveIndex]);
         } else {
+            // This case should not happen as dashboard is not closable
             setActiveTabState(null);
             window.history.pushState({}, '', `/${currentParams.locale}/dashboard`);
         }
