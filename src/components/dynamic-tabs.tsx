@@ -19,29 +19,32 @@ export function DynamicTabs({ initialContent }: { initialContent: React.ReactNod
     useEffect(() => {
         // This effect ensures that the initial page (e.g., dashboard) is added as the first tab
         if (tabs.length === 0 && pathname) {
-            addTab({
-                id: 'dashboard', // Use a fixed ID for the main tab
-                title: t('dashboard'),
-                href: pathname,
-                isClosable: false
-            });
+            const initialTabId = pathname.split('/').pop() || 'dashboard';
+            const pageTitle = t('dashboard');
+            
+            // Avoid adding duplicate dashboard tabs
+            if (!tabs.some(tab => tab.id === 'dashboard')) {
+                addTab({
+                    id: 'dashboard', 
+                    title: pageTitle,
+                    href: `/${pathname.split('/')[1]}/dashboard`, // ensure correct locale
+                    isClosable: false
+                });
+            }
         }
-    }, [pathname, addTab, t, tabs.length]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [pathname, t, tabs.length]);
 
 
     const handleTabClick = (tabId: string, href: string) => {
         setActiveTab(tabId);
-        // We don't use router.push(href) because the content is already loaded in the tab.
-        // We only update the URL for consistency, but might want to disable this if it causes re-renders.
-        // window.history.replaceState({}, '', href);
+        window.history.replaceState({}, '', href);
     };
 
-    if (tabs.length === 0) {
-        return (
-            <main className="flex-1 space-y-4 p-4 lg:p-6 bg-background/60">
-                {initialContent}
-            </main>
-        )
+    const renderContent = () => {
+        if (!activeTab) return initialContent;
+        if (activeTab.id === 'dashboard') return initialContent;
+        return activeTab.content;
     }
 
     return (
@@ -79,11 +82,7 @@ export function DynamicTabs({ initialContent }: { initialContent: React.ReactNod
                 </div>
             </div>
             <main className="flex-1 space-y-4 p-4 lg:p-6 bg-background/60 overflow-y-auto">
-                {tabs.map(tab => (
-                    <div key={tab.id} style={{ display: activeTab?.id === tab.id ? 'block' : 'none' }}>
-                        {tab.id === 'dashboard' ? initialContent : activeTab?.content}
-                    </div>
-                ))}
+               {renderContent()}
             </main>
         </>
     );
