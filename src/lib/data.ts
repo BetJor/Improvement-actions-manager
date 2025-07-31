@@ -297,7 +297,7 @@ export async function updateAction(actionId: string, data: any, masterData?: any
                 }
                 const bisActionData: CreateActionData = {
                     title: `${originalAction.title} BIS`,
-                    description: data.closure.notes, // Description is the closure notes
+                    description: `${originalAction.description}\n\n--- \nObservacions de tancament no conforme:\n${data.closure.notes}`,
                     category: originalAction.categoryId,
                     subcategory: originalAction.subcategoryId,
                     affectedAreas: originalAction.affectedAreasId,
