@@ -194,6 +194,17 @@
         "causesAndProposedAction": "Causes i Acció Proposada",
         "implementationVerification": "Verificació d'Implantació",
         "actionClosure": "Tancament de l'Acció"
+    },
+    "comments": {
+      "title": "Comentaris",
+      "addCommentPlaceholder": "Afegeix un comentari...",
+      "noComments": "Encara no hi ha comentaris."
+    },
+    "attachments": {
+      "title": "Adjunts",
+      "clickToUpload": "Fes clic per a pujar",
+      "dragAndDrop": "o arrossega i deixa anar",
+      "noAttachments": "Encara no hi ha fitxers adjunts."
     }
   },
   "RootLayout": {

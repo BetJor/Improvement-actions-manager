@@ -63,6 +63,21 @@ export interface ProposedAction {
   status?: ProposedActionStatus;
 }
 
+export interface ActionComment {
+    id: string;
+    author: ActionUserInfo;
+    date: string; // ISO string
+    text: string;
+}
+
+export interface ActionAttachment {
+    id: string;
+    fileName: string;
+    fileUrl: string;
+    uploadedBy: ActionUserInfo;
+    uploadedAt: string; // ISO string
+}
+
 export interface ImprovementAction {
   id: string; // Firestore document ID
   actionId: string; // User-facing ID like AM-24001
@@ -113,6 +128,6 @@ export interface ImprovementAction {
     closureResponsible: ActionUserInfo;
   };
   workflowPlan?: WorkflowPlan;
+  comments?: ActionComment[];
+  attachments?: ActionAttachment[];
 };
-
-

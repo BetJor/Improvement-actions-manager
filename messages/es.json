@@ -194,6 +194,17 @@
         "causesAndProposedAction": "Causas y Acción Propuesta",
         "implementationVerification": "Verificación de Implantación",
         "actionClosure": "Cierre de la Acción"
+    },
+    "comments": {
+      "title": "Comentarios",
+      "addCommentPlaceholder": "Añade un comentario...",
+      "noComments": "Aún no hay comentarios."
+    },
+    "attachments": {
+      "title": "Adjuntos",
+      "clickToUpload": "Haz clic para subir",
+      "dragAndDrop": "o arrastra y suelta",
+      "noAttachments": "Aún no hay archivos adjuntos."
     }
   },
   "RootLayout": {
