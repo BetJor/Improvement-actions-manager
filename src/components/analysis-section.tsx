@@ -252,12 +252,12 @@ export function AnalysisSection({ action, user, isSubmitting, onSave }: Analysis
                             </FormItem>
                         )}
                         />
-                    <div className="flex flex-col md:flex-row gap-4">
+                    <div className="grid md:grid-cols-2 gap-4">
                         <FormField
                         control={form.control}
                         name={`proposedActions.${index}.responsibleUserId`}
                         render={({ field }) => (
-                            <FormItem className="flex-1">
+                            <FormItem>
                                 <FormLabel>{t("proposedActions.responsible")}</FormLabel>
                                 <Select onValueChange={field.onChange} defaultValue={field.value}>
                                     <FormControl>
@@ -279,7 +279,7 @@ export function AnalysisSection({ action, user, isSubmitting, onSave }: Analysis
                         control={form.control}
                         name={`proposedActions.${index}.dueDate`}
                         render={({ field }) => (
-                            <FormItem className="flex flex-col flex-1">
+                            <FormItem>
                                <FormLabel>{t("proposedActions.dueDate")}</FormLabel>
                                <Popover>
                                 <PopoverTrigger asChild>
@@ -396,5 +396,3 @@ export function AnalysisSection({ action, user, isSubmitting, onSave }: Analysis
     </>
   )
 }
-
-    
