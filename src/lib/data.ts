@@ -236,7 +236,7 @@ export async function updateAction(actionId: string, data: any, masterData?: any
         if (data.closure && !data.closure.isCompliant) {
             const originalActionSnap = await getDoc(actionDocRef);
             if(originalActionSnap.exists()) {
-                const originalAction = originalActionSnap.data() as ImprovementAction;
+                const originalAction = { id: originalActionSnap.id, ...originalActionSnap.data() } as ImprovementAction;
                 const allMasterData = {
                     categories: await getCategories(),
                     subcategories: await getSubcategories(),
