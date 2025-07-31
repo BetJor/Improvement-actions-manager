@@ -145,19 +145,17 @@ export function ActionDetailsPanel({ action, onActionUpdate }: ActionDetailsPane
   
   return (
     <Card>
-        <Accordion type="single" collapsible className="w-full" defaultValue="item-1">
-            <AccordionItem value="item-1" className="border-b-0">
-                <CardHeader className="p-0">
-                    <AccordionTrigger className="p-4">
-                        <div className="flex justify-between items-center w-full">
-                            <CardTitle className="text-base flex items-center gap-2">
-                                <Info className="h-5 w-5" />
-                                {t('details')}
-                            </CardTitle>
-                            <ActionStatusBadge status={action.status} />
-                        </div>
-                    </AccordionTrigger>
-                </CardHeader>
+        <Accordion type="multiple" defaultValue={['details']} className="w-full">
+            <AccordionItem value="details" className="border-b">
+                <AccordionTrigger className="p-4">
+                    <div className="flex justify-between items-center w-full">
+                        <CardTitle className="text-base flex items-center gap-2">
+                            <Info className="h-5 w-5" />
+                            {t('details')}
+                        </CardTitle>
+                        <ActionStatusBadge status={action.status} />
+                    </div>
+                </AccordionTrigger>
                 <AccordionContent>
                     <CardContent className="space-y-4 pt-4">
                         <DetailRow icon={Tag} label={t("type")} value={action.type} />
@@ -186,20 +184,21 @@ export function ActionDetailsPanel({ action, onActionUpdate }: ActionDetailsPane
                         <DetailRow icon={CalendarClock} label={t("implementationDue")} value={action.implementationDueDate} />
                         <DetailRow icon={CalendarClock} label={t("closureDue")} value={action.closureDueDate} />
                     </CardContent>
-                    
-                    <Separator />
-
-                    {/* Comments Section */}
-                    <CardHeader className="p-4">
-                        <div className="flex justify-between items-center w-full">
-                            <CardTitle className="flex items-center gap-2 text-base">
-                                <MessageSquare className="h-5 w-5" />
-                                {t('comments.title')}
-                            </CardTitle>
-                            <Badge variant="secondary">{(action.comments || []).length}</Badge>
-                        </div>
-                    </CardHeader>
-                    <CardContent className="space-y-4 pt-0">
+                </AccordionContent>
+            </AccordionItem>
+            
+            <AccordionItem value="comments" className="border-b">
+                <AccordionTrigger className="p-4">
+                     <div className="flex justify-between items-center w-full">
+                        <CardTitle className="flex items-center gap-2 text-base">
+                            <MessageSquare className="h-5 w-5" />
+                            {t('comments.title')}
+                        </CardTitle>
+                        <Badge variant="secondary">{(action.comments || []).length}</Badge>
+                    </div>
+                </AccordionTrigger>
+                <AccordionContent>
+                    <CardContent className="space-y-4 pt-4">
                         <div className="space-y-4 max-h-60 overflow-y-auto pr-2">
                             {(action.comments || []).length > 0 ? (
                                 action.comments.map(comment => (
@@ -236,20 +235,21 @@ export function ActionDetailsPanel({ action, onActionUpdate }: ActionDetailsPane
                             </Button>
                         </form>
                     </CardContent>
+                </AccordionContent>
+            </AccordionItem>
 
-                    <Separator />
-
-                    {/* Attachments Section */}
-                     <CardHeader className="p-4">
-                        <div className="flex justify-between items-center w-full">
-                            <CardTitle className="flex items-center gap-2 text-base">
-                                <Paperclip className="h-5 w-5" />
-                                {t('attachments.title')}
-                            </CardTitle>
-                            <Badge variant="secondary">{(action.attachments || []).length}</Badge>
-                        </div>
-                    </CardHeader>
-                     <CardContent className="space-y-4 pt-0">
+             <AccordionItem value="attachments" className="border-b-0">
+                <AccordionTrigger className="p-4">
+                    <div className="flex justify-between items-center w-full">
+                        <CardTitle className="flex items-center gap-2 text-base">
+                            <Paperclip className="h-5 w-5" />
+                            {t('attachments.title')}
+                        </CardTitle>
+                        <Badge variant="secondary">{(action.attachments || []).length}</Badge>
+                    </div>
+                </AccordionTrigger>
+                <AccordionContent>
+                    <CardContent className="space-y-4 pt-4">
                         <div className="flex items-center justify-center w-full">
                             <label htmlFor="dropzone-file" className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-muted/50 hover:bg-muted/80">
                                 <div className="flex flex-col items-center justify-center pt-5 pb-6 text-center">
@@ -296,9 +296,9 @@ export function ActionDetailsPanel({ action, onActionUpdate }: ActionDetailsPane
                              )}
                         </div>
                     </CardContent>
-
                 </AccordionContent>
             </AccordionItem>
+
         </Accordion>
     </Card>
   )
