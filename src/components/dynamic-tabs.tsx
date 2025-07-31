@@ -9,8 +9,7 @@ export function DynamicTabs() {
   const { tabs, activeTab, setActiveTab, closeTab } = useTabs()
 
   const handleCloseTab = (e: React.MouseEvent, tabId: string) => {
-    e.stopPropagation() // Evita que en tancar s'activi la pestanya
-    console.log(`[DynamicTabs] Intentant tancar la pestanya amb ID: ${tabId}`);
+    e.stopPropagation() 
     closeTab(tabId)
   }
 

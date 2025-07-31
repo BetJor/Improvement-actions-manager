@@ -11,15 +11,12 @@ import { useLocale, useTranslations } from "next-intl";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { TabsProvider, useTabs } from "@/hooks/use-tabs";
 import { DynamicTabs } from "./dynamic-tabs";
-import { useTabNavigation } from "@/hooks/use-tab-navigation";
 
 
 function LayoutWithTabs({ children }: { children: React.ReactNode }) {
     const tSidebar = useTranslations("AppSidebar");
     const { activeTab, tabs } = useTabs();
     
-    useTabNavigation();
-
     const activeTabContent = tabs.find(tab => tab.id === activeTab)?.content;
 
     return (
@@ -73,4 +70,3 @@ export function ProtectedLayout({ children }: { children: React.ReactNode }) {
     </TabsProvider>
   );
 }
-

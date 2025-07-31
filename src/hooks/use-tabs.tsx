@@ -5,6 +5,38 @@ import React, { createContext, useContext, useState, ReactNode, useMemo, Compone
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from './use-auth';
 
+// Importa els components de pàgina que vols renderitzar
+import DashboardPage from '@/app/[locale]/dashboard/page';
+import ActionsPage from '@/app/[locale]/actions/page';
+import NewActionPage from '@/app/[locale]/actions/new/page';
+import ActionDetailPage from '@/app/[locale]/actions/[id]/page';
+import SettingsPage from '@/app/[locale]/settings/page';
+import AiSettingsPage from '@/app/[locale]/ai-settings/page';
+import PromptGalleryPage from '@/app/[locale]/prompt-gallery/page';
+import RoadmapPage from '@/app/[locale]/roadmap/page';
+
+import { Home, ListChecks, Settings, Sparkles, Library, Route, FilePlus, GanttChartSquare } from 'lucide-react';
+
+const pageComponentMapping: { [key: string]: ComponentType<any> } = {
+    '/dashboard': DashboardPage,
+    '/actions': ActionsPage,
+    '/actions/new': NewActionPage,
+    '/settings': SettingsPage,
+    '/ai-settings': AiSettingsPage,
+    '/prompt-gallery': PromptGalleryPage,
+    '/roadmap': RoadmapPage,
+};
+
+const staticTabsConfig = [
+    { path: '/dashboard', title: 'Dashboard', icon: Home, isClosable: false },
+    { path: '/actions', title: 'Accions', icon: ListChecks, isClosable: false },
+    { path: '/settings', title: 'Configuració', icon: Settings, isClosable: false },
+    { path: '/ai-settings', title: 'Configuració IA', icon: Sparkles, isClosable: false },
+    { path: '/prompt-gallery', title: 'Galeria de Prompts', icon: Library, isClosable: false },
+    { path: '/roadmap', title: 'Roadmap', icon: Route, isClosable: false },
+];
+
+
 export interface Tab {
     id: string; // Should be the same as the path
     title: string;
@@ -34,7 +66,6 @@ export function TabsProvider({ children }: { children: ReactNode }) {
 
 
     useEffect(() => {
-        // Clear tabs if user changes
         if (user?.uid !== lastUser) {
             setTabs([]);
             setActiveTabState(null);
@@ -69,51 +100,87 @@ export function TabsProvider({ children }: { children: ReactNode }) {
     };
 
     const closeTab = (tabId: string) => {
-        console.log(`[useTabs] Funció closeTab reb el ID: ${tabId}`);
-        console.log('[useTabs] Estat actual de les pestanyes:', tabs.map(t => t.id));
-
         const tabToCloseIndex = tabs.findIndex(tab => tab.id === tabId);
-        if (tabToCloseIndex === -1) {
-            console.error(`[useTabs] ERROR: No s'ha trobat la pestanya amb ID ${tabId} per a tancar.`);
-            return;
-        }
-        console.log(`[useTabs] La pestanya a tancar es troba a l'índex: ${tabToCloseIndex}`);
-
-
-        // Filtra la pestanya a tancar
-        const newTabs = tabs.filter(tab => tab.id !== tabId);
-        console.log(`[useTabs] Nou array de pestanyes després de filtrar:`, newTabs.map(t => t.id));
+        if (tabToCloseIndex === -1) return;
+    
+        const newTabs = tabs.filter(t => t.id !== tabId);
         
-        // Comprova si la pestanya que es tanca és l'activa
-        if (activeTab === tabId) {
-            let nextActiveTabId: string | null = null;
-            if (newTabs.length > 0) {
-                // Si hi ha pestanyes, activa la que està a la mateixa posició (que era la següent) o l'anterior
-                const newActiveIndex = Math.max(0, tabToCloseIndex - 1);
-                nextActiveTabId = newTabs[newActiveIndex].id;
-            } else {
-                // Si no en queden, torna al dashboard
-                nextActiveTabId = '/dashboard';
-            }
-            
-            console.log(`[useTabs] La pestanya tancada era l'activa. Nova pestanya activa serà: ${nextActiveTabId}`);
-            if (nextActiveTabId) {
-                router.push(nextActiveTabId);
-            }
+        let nextActiveTabId = null;
+        if (activeTab === tabId && newTabs.length > 0) {
+            // Activate the next tab (or the previous one if it was the last)
+            const newActiveIndex = Math.max(0, tabToCloseIndex - 1);
+            nextActiveTabId = newTabs[newActiveIndex].id;
+        } else if (newTabs.length === 0) {
+            nextActiveTabId = "/dashboard";
         }
-        
-        // Finalment, actualitza l'estat amb les noves pestanyes
+    
         setTabs(newTabs);
-        console.log(`[useTabs] Estat final de pestanyes establert.`);
+        if (nextActiveTabId) {
+            setActiveTabState(nextActiveTabId);
+            router.push(nextActiveTabId);
+        } else if (activeTab === tabId) {
+            // This case might not be hit if we always default to dashboard
+            // but as a fallback
+            setActiveTabState(null);
+        }
     };
     
-    // Effect to set active tab from pathname
+    // This useEffect is now the single source of truth for opening tabs based on URL
     useEffect(() => {
-        const currentTab = tabs.find(t => t.path === pathname);
-        if (currentTab) {
-            setActiveTabState(currentTab.id);
+        const pathWithoutLocale = pathname.split('/').slice(2).join('/');
+        const fullPath = pathWithoutLocale ? `/${pathWithoutLocale}` : '/dashboard';
+
+        const existingTab = tabs.find(t => t.id === fullPath);
+        if (existingTab) {
+            if(activeTab !== existingTab.id) {
+               setActiveTabState(existingTab.id);
+            }
+            return; // Tab already exists, do nothing
         }
-    }, [pathname, tabs]);
+
+        let tabData: Omit<Tab, 'id'> | null = null;
+        
+        const staticTab = staticTabsConfig.find(t => t.path === fullPath);
+        if (staticTab) {
+            tabData = {
+                path: staticTab.path,
+                title: staticTab.title,
+                icon: staticTab.icon,
+                isClosable: staticTab.isClosable,
+                content: React.createElement(pageComponentMapping[staticTab.path])
+            };
+        } else {
+             const actionIdMatch = fullPath.match(/\/actions\/(.+)/);
+             if (fullPath === '/actions/new') {
+                 tabData = {
+                    path: '/actions/new',
+                    title: 'Nova Acció',
+                    icon: FilePlus,
+                    isClosable: true,
+                    content: React.createElement(pageComponentMapping['/actions/new'])
+                 };
+             } else if (actionIdMatch) {
+                 const id = actionIdMatch[1];
+                 tabData = {
+                    path: `/actions/${id}`,
+                    title: `Acció ${id.substring(0, 6)}...`,
+                    icon: GanttChartSquare,
+                    isClosable: true,
+                    content: React.createElement(ActionDetailPage)
+                 }
+             }
+        }
+        
+        if (tabData) {
+            const newTab: Tab = { ...tabData, id: tabData.path };
+            setTabs(prev => {
+                // Double check to prevent race conditions
+                if (prev.some(t => t.id === newTab.id)) return prev;
+                return [...prev, newTab]
+            });
+            setActiveTabState(newTab.id);
+        }
+    }, [pathname, tabs, activeTab]);
 
 
     const value = useMemo(() => ({
