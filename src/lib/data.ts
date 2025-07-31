@@ -1,9 +1,10 @@
 
 
-import type { ImprovementAction, User, UserGroup, ImprovementActionType, ActionUserInfo, ActionCategory, ActionSubcategory, AffectedArea, MasterDataItem, WorkflowPlan, GalleryPrompt } from './types';
+import type { ImprovementAction, User, UserGroup, ImprovementActionType, ActionUserInfo, ActionCategory, ActionSubcategory, AffectedArea, MasterDataItem, WorkflowPlan, GalleryPrompt, ActionAttachment } from './types';
 import { subDays, format, addDays } from 'date-fns';
-import { db } from './firebase';
+import { db, storage } from './firebase';
 import { collection, getDocs, doc, getDoc, addDoc, query, orderBy, limit, writeBatch, updateDoc, deleteDoc, setDoc, Timestamp, arrayUnion, where } from 'firebase/firestore';
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { planActionWorkflow } from '@/ai/flows/planActionWorkflow';
 import { users } from './static-data';
 import { a } from 'next-intl/dist/config-a681d451';
@@ -321,4 +322,36 @@ export async function updateGalleryPrompt(promptId: string, prompt: Omit<Gallery
 export async function deleteGalleryPrompt(promptId: string): Promise<void> {
     const docRef = doc(db, 'prompt_gallery', promptId);
     await deleteDoc(docRef);
+}
+
+
+// --- File Uploads ---
+
+export async function uploadFileAndUpdateAction(actionId: string, file: File, user: ActionUserInfo): Promise<void> {
+  if (!file) throw new Error("No file provided");
+
+  // 1. Create a storage reference
+  const filePath = `actions/${actionId}/${Date.now()}-${file.name}`;
+  const storageRef = ref(storage, filePath);
+
+  // 2. Upload the file
+  await uploadBytes(storageRef, file);
+
+  // 3. Get the download URL
+  const downloadURL = await getDownloadURL(storageRef);
+
+  // 4. Create the attachment object
+  const newAttachment: ActionAttachment = {
+    id: crypto.randomUUID(),
+    fileName: file.name,
+    fileUrl: downloadURL,
+    uploadedBy: user,
+    uploadedAt: new Date().toISOString(),
+  };
+
+  // 5. Update the action document in Firestore
+  const actionDocRef = doc(db, 'actions', actionId);
+  await updateDoc(actionDocRef, {
+    attachments: arrayUnion(newAttachment),
+  });
 }

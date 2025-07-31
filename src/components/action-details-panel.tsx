@@ -1,3 +1,4 @@
+
 "use client"
 
 import type { ImprovementAction, User } from "@/lib/types"
@@ -5,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { ActionStatusBadge } from "./action-status-badge"
 import { Separator } from "./ui/separator"
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar"
-import { CircleUser, Calendar, Flag, User as UserIcon, Users, Tag, CalendarClock, MessageSquare, Paperclip, Upload, Download, Send, Loader2 } from "lucide-react"
+import { CircleUser, Calendar, Flag, User as UserIcon, Users, Tag, CalendarClock, MessageSquare, Paperclip, Upload, Download, Send, Loader2, Trash2 } from "lucide-react"
 import { useTranslations } from "next-intl"
 import {
   Accordion,
@@ -19,9 +20,9 @@ import { Input } from "./ui/input"
 import { formatDistanceToNow } from "date-fns"
 import { es } from "date-fns/locale"
 import { useAuth } from "@/hooks/use-auth"
-import { updateAction, getActionById } from "@/lib/data"
+import { updateAction, getActionById, uploadFileAndUpdateAction } from "@/lib/data"
 import { useToast } from "@/hooks/use-toast"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import type { ActionComment } from "@/lib/types"
 import { Badge } from "@/components/ui/badge"
 
@@ -60,6 +61,9 @@ export function ActionDetailsPanel({ action, onActionUpdate }: ActionDetailsPane
   
   const [newComment, setNewComment] = useState("");
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
+  const [isUploadingFile, setIsUploadingFile] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
 
   const handleCommentSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -101,6 +105,43 @@ export function ActionDetailsPanel({ action, onActionUpdate }: ActionDetailsPane
       setIsSubmittingComment(false);
     }
   }
+
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !user) return;
+
+    setIsUploadingFile(true);
+    try {
+      await uploadFileAndUpdateAction(action.id, file, {
+        id: user.uid,
+        name: user.displayName || 'Unknown User',
+        avatar: user.photoURL || undefined,
+      });
+
+      toast({
+        title: "Fitxer pujat",
+        description: `${file.name} s'ha pujat i adjuntat correctament.`,
+      });
+
+      const updatedAction = await getActionById(action.id);
+      if (updatedAction) {
+        onActionUpdate(updatedAction);
+      }
+    } catch (error) {
+      console.error("Error uploading file:", error);
+      toast({
+        variant: "destructive",
+        title: "Error de pujada",
+        description: "No s'ha pogut pujar el fitxer.",
+      });
+    } finally {
+      setIsUploadingFile(false);
+       if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    }
+  };
+
   
   return (
     <>
@@ -209,7 +250,7 @@ export function ActionDetailsPanel({ action, onActionUpdate }: ActionDetailsPane
         
         {/* Attachments Card */}
         <Card>
-            <Accordion type="single" collapsible className="w-full">
+            <Accordion type="single" collapsible className="w-full" defaultValue="item-1">
                 <AccordionItem value="item-1" className="border-b-0">
                      <CardHeader className="p-4">
                         <AccordionTrigger className="p-0">
@@ -227,11 +268,27 @@ export function ActionDetailsPanel({ action, onActionUpdate }: ActionDetailsPane
                             <div className="flex items-center justify-center w-full">
                                 <label htmlFor="dropzone-file" className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-muted/50 hover:bg-muted/80">
                                     <div className="flex flex-col items-center justify-center pt-5 pb-6 text-center">
-                                        <Upload className="w-8 h-8 mb-4 text-muted-foreground" />
-                                        <p className="mb-2 text-sm text-muted-foreground"><span className="font-semibold">{t('attachments.clickToUpload')}</span> {t('attachments.dragAndDrop')}</p>
-                                        <p className="text-xs text-muted-foreground">PDF, PNG, JPG, DOCX...</p>
+                                        {isUploadingFile ? (
+                                            <>
+                                                <Loader2 className="w-8 h-8 mb-4 text-muted-foreground animate-spin" />
+                                                <p className="text-sm text-muted-foreground">Pujant fitxer...</p>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Upload className="w-8 h-8 mb-4 text-muted-foreground" />
+                                                <p className="mb-2 text-sm text-muted-foreground"><span className="font-semibold">{t('attachments.clickToUpload')}</span> {t('attachments.dragAndDrop')}</p>
+                                                <p className="text-xs text-muted-foreground">PDF, PNG, JPG, DOCX...</p>
+                                            </>
+                                        )}
                                     </div>
-                                    <Input id="dropzone-file" type="file" className="hidden" />
+                                    <Input 
+                                      id="dropzone-file" 
+                                      type="file" 
+                                      className="hidden" 
+                                      onChange={handleFileChange}
+                                      ref={fileInputRef}
+                                      disabled={isUploadingFile}
+                                    />
                                 </label>
                             </div> 
                             <div className="space-y-2">
@@ -240,10 +297,10 @@ export function ActionDetailsPanel({ action, onActionUpdate }: ActionDetailsPane
                                       <div key={file.id} className="flex items-center justify-between p-2 border rounded-md">
                                           <div className="flex items-center gap-2 overflow-hidden">
                                               <Paperclip className="h-4 w-4 shrink-0" />
-                                              <span className="text-sm font-medium truncate">{file.fileName}</span>
+                                              <span className="text-sm font-medium truncate" title={file.fileName}>{file.fileName}</span>
                                           </div>
                                           <Button variant="ghost" size="icon" asChild>
-                                              <a href={file.fileUrl} download>
+                                              <a href={file.fileUrl} target="_blank" rel="noopener noreferrer" download={file.fileName}>
                                                   <Download className="h-4 w-4" />
                                               </a>
                                           </Button>
