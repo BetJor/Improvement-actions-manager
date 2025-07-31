@@ -184,7 +184,7 @@ export function ActionsTable({ actions }: ActionsTableProps) {
               <TableHead><Button variant="ghost" onClick={() => requestSort('actionId')}>{t("col.id")} {getSortIcon('actionId')}</Button></TableHead>
               <TableHead><Button variant="ghost" onClick={() => requestSort('title')}>{t("col.title")} {getSortIcon('title')}</Button></TableHead>
               <TableHead><Button variant="ghost" onClick={() => requestSort('status')}>{t("col.status")} {getSortIcon('status')}</Button></TableHead>
-              <TableHead><Button variant="ghost" onClick={() => requestSort('type')}>{t("col.col.type")} {getSortIcon('type')}</Button></TableHead>
+              <TableHead><Button variant="ghost" onClick={() => requestSort('type')}>{t("col.type")} {getSortIcon('type')}</Button></TableHead>
               <TableHead><Button variant="ghost" onClick={() => requestSort('responsible')}>{t("col.responsible")} {getSortIcon('responsible')}</Button></TableHead>
               <TableHead><Button variant="ghost" onClick={() => requestSort('implementationDueDate')}>{t("col.dueDate")} {getSortIcon('implementationDueDate')}</Button></TableHead>
             </TableRow>
