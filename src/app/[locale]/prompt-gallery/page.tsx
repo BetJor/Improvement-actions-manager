@@ -29,6 +29,11 @@ export default function PromptGalleryPage() {
             description: t("prompts.createDashboard.description"),
             prompt: `Crea una pàgina de Dashboard a la ruta \`/dashboard\`. La pàgina ha de mostrar un conjunt de targetes (Card) amb mètriques clau (KPIs) rellevants per a l'aplicació. Analitza les dades disponibles a \`src/lib/data.ts\` per a extreure estadístiques significatives i mostra-les amb un títol, un valor i una icona a cada targeta. A més, genera un gràfic de barres o circular que representi alguna distribució important de les dades.`
         },
+        {
+            title: t("prompts.integrateGoogleLogin.title"),
+            description: t("prompts.integrateGoogleLogin.description"),
+            prompt: `Integra l'autenticació d'usuaris amb Google Sign-In utilitzant Firebase. Necessito que creïs tota l'estructura necessària: un fitxer de configuració de Firebase (\`src/lib/firebase.ts\`), un hook d'autenticació (\`src/hooks/use-auth.tsx\`) per gestionar la sessió de l'usuari, una pàgina de login a \`/login\` i un layout protegit (\`src/components/protected-layout.tsx\`) que redirigeixi els usuaris no autenticats a la pàgina de login.`
+        }
     ];
 
     const handleCopy = (text: string) => {
@@ -46,7 +51,7 @@ export default function PromptGalleryPage() {
                 <p className="text-muted-foreground mt-1">{t("description")}</p>
             </div>
             
-            <div className="grid gap-6 md:grid-cols-2">
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                 {prompts.map((p, index) => (
                     <Card key={index} className="flex flex-col">
                         <CardHeader>

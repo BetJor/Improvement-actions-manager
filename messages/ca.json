@@ -286,6 +286,10 @@
       "createDashboard": {
         "title": "Crear un Dashboard de mètriques clau",
         "description": "Analitza les dades disponibles per a generar un dashboard amb targetes de KPI i gràfics rellevants."
+      },
+      "integrateGoogleLogin": {
+        "title": "Integrar Login amb Google",
+        "description": "Genera tota la funcionalitat d'autenticació d'usuaris amb Firebase, incloent-hi rutes protegides i la pàgina de login."
       }
     }
   }
