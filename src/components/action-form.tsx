@@ -23,7 +23,8 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
-import { groups, getPrompt } from "@/lib/data"
+import { getPrompt } from "@/lib/data"
+import { groups } from "@/lib/static-data"
 import { useToast } from "@/hooks/use-toast"
 import { useState, useMemo, useEffect, useRef } from "react"
 import { Loader2, Mic, MicOff, Wand2, Save, Send, Ban } from "lucide-react"

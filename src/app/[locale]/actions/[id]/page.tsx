@@ -3,6 +3,7 @@
 
 import { useEffect, useState } from "react"
 import { getActionById, getActionTypes, getCategories, getSubcategories, getAffectedAreas, updateAction } from "@/lib/data"
+import { users } from "@/lib/static-data"
 import { notFound, useRouter, useParams } from "next/navigation"
 import { useAuth } from "@/hooks/use-auth"
 import type { ImprovementAction, ProposedActionStatus } from "@/lib/types"
