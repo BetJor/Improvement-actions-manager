@@ -323,8 +323,8 @@ export default function ActionDetailPage() {
                              <div>
                                 <h3 className="font-semibold text-lg mb-4">{t('proposedAction')}</h3>
                                 <div className="space-y-4">
-                                    {action.analysis.proposedActions.map((pa, index) => (
-                                        <div key={index} className="p-4 border rounded-lg">
+                                    {action.analysis.proposedActions.map((pa) => (
+                                        <div key={pa.id} className="p-4 border rounded-lg">
                                             <p className="font-medium">{pa.description}</p>
                                             <p className="text-sm text-muted-foreground mt-1">
                                                 Responsable: {pa.responsibleUserId} | Data Venciment: {format(new Date(pa.dueDate), "dd/MM/yyyy")}
@@ -427,3 +427,5 @@ export default function ActionDetailPage() {
     </div>
   )
 }
+
+    

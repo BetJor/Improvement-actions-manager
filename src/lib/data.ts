@@ -3,7 +3,7 @@
 import type { ImprovementAction, User, UserGroup, ImprovementActionType, ActionUserInfo, ActionCategory, ActionSubcategory, AffectedArea, MasterDataItem, WorkflowPlan } from './types';
 import { subDays, format, addDays } from 'date-fns';
 import { db } from './firebase';
-import { collection, getDocs, doc, getDoc, addDoc, query, orderBy, limit, writeBatch, updateDoc, deleteDoc, setDoc } from 'firebase/firestore';
+import { collection, getDocs, doc, getDoc, addDoc, query, orderBy, limit, writeBatch, updateDoc, deleteDoc, setDoc, Timestamp } from 'firebase/firestore';
 import { planActionWorkflow } from '@/ai/flows/planActionWorkflow';
 
 export const users: User[] = [
@@ -113,13 +113,22 @@ export const getAffectedAreas = async (): Promise<AffectedArea[]> => {
 
 // Funció per obtenir les dades de Firestore
 export const getActions = async (): Promise<ImprovementAction[]> => {
-    
     const actionsCol = collection(db, 'actions');
-    // Order by actionId descending to easily get the latest one if needed
     const actionsSnapshot = await getDocs(query(actionsCol, orderBy("actionId", "desc")));
 
     return actionsSnapshot.docs.map(doc => {
         const data = doc.data();
+
+        // Convert any Timestamps to serializable strings
+        if (data.analysis && data.analysis.proposedActions) {
+            data.analysis.proposedActions = data.analysis.proposedActions.map((pa: any) => {
+                if (pa.dueDate instanceof Timestamp) {
+                    return { ...pa, dueDate: pa.dueDate.toDate().toISOString() };
+                }
+                return pa;
+            });
+        }
+        
         return { 
           id: doc.id,
           ...data,
@@ -135,11 +144,12 @@ export const getActionById = async (id: string): Promise<ImprovementAction | nul
         if (actionDocSnap.exists()) {
             const data = actionDocSnap.data();
 
-            // Convertir Timestamps de Firestore a Date per al camp analysis
+            // Convert Timestamps to Date for client-side usage
             if (data.analysis && data.analysis.proposedActions) {
                 data.analysis.proposedActions = data.analysis.proposedActions.map((pa: any) => ({
                     ...pa,
-                    dueDate: pa.dueDate.toDate(), // Converteix Timestamp a Date
+                    // Firestore Timestamps need to be converted to Date objects
+                    dueDate: pa.dueDate instanceof Timestamp ? pa.dueDate.toDate() : new Date(pa.dueDate),
                 }));
             }
 
@@ -367,3 +377,6 @@ export async function updatePrompt(promptId: PromptId, newPrompt: string): Promi
     const docRef = doc(db, 'app_settings', 'prompts');
     await setDoc(docRef, { [promptId]: newPrompt }, { merge: true });
 }
+
+
+    
