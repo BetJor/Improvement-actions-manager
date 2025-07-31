@@ -15,9 +15,9 @@ import { Button } from "@/components/ui/button"
 import { Loader2 } from "lucide-react"
 
 const formSchema = z.object({
-  improveWritingPrompt: z.string().min(10, "El prompt ha de tenir almenys 10 caràcters."),
-  analysisPrompt: z.string().min(10, "El prompt ha de tenir almenys 10 caràcters."),
-  correctiveActionsPrompt: z.string().min(10, "El prompt ha de tenir almenys 10 caràcters."),
+  improveWritingPrompt: z.string(),
+  analysisPrompt: z.string(),
+  correctiveActionsPrompt: z.string(),
 })
 
 type PromptId = "improveWriting" | "analysis" | "correctiveActions";
