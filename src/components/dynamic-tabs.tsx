@@ -1,5 +1,3 @@
-
-
 "use client"
 
 import { useTabs } from "@/hooks/use-tabs"
@@ -11,13 +9,14 @@ export function DynamicTabs() {
   const { tabs, activeTab, setActiveTab, closeTab } = useTabs()
 
   const handleCloseTab = (e: React.MouseEvent, tabId: string) => {
-    e.preventDefault();
-    e.stopPropagation();
-    closeTab(tabId);
+    // Aturem la propagació per a evitar que el clic arribi al contenidor principal de la pestanya.
+    e.stopPropagation()
+    e.preventDefault()
+    closeTab(tabId)
   }
 
   if (tabs.length === 0) {
-    return null;
+    return null
   }
 
   return (
@@ -26,23 +25,27 @@ export function DynamicTabs() {
         {tabs.map((tab) => (
           <div
             key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
             className={cn(
-              "group inline-flex items-center py-2 px-3 border-b-2 font-medium text-sm cursor-pointer",
+              "group inline-flex items-center border-b-2 font-medium text-sm",
               activeTab === tab.id
                 ? "border-primary text-primary"
                 : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
             )}
           >
-            {tab.icon && <tab.icon className="mr-2 h-4 w-4" />}
-            <span>{tab.title}</span>
+            <div
+              onClick={() => setActiveTab(tab.id)}
+              className="flex items-center py-2 px-3 cursor-pointer"
+            >
+              {tab.icon && <tab.icon className="mr-2 h-4 w-4" />}
+              <span>{tab.title}</span>
+            </div>
             
             {tab.isClosable && (
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={(e) => handleCloseTab(e, tab.id)}
-                className="ml-2 p-0.5 rounded-full opacity-50 hover:opacity-100 hover:bg-muted-foreground/20 h-4 w-4"
+                className="ml-0 mr-1 p-0.5 rounded-full opacity-50 hover:opacity-100 hover:bg-muted-foreground/20 h-4 w-4"
               >
                 <X className="h-3 w-3" />
                 <span className="sr-only">Tancar pestanya</span>
