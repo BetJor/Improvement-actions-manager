@@ -23,6 +23,7 @@ import { ActionStatusBadge } from "./action-status-badge"
 import type { ImprovementAction, ImprovementActionStatus, ImprovementActionType } from "@/lib/types"
 import { ArrowUpDown, ChevronDown } from "lucide-react"
 import { useTranslations } from "next-intl"
+import { useTabs } from "@/hooks/use-tabs"
 
 interface ActionsTableProps {
   actions: ImprovementAction[]
@@ -32,6 +33,8 @@ type SortKey = keyof ImprovementAction | 'responsible'
 
 export function ActionsTable({ actions }: ActionsTableProps) {
   const t = useTranslations("ActionsTable")
+  const { addTab } = useTabs();
+
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState<Set<ImprovementActionStatus>>(new Set())
   const [typeFilter, setTypeFilter] = useState<Set<ImprovementActionType>>(new Set())
@@ -98,6 +101,15 @@ export function ActionsTable({ actions }: ActionsTableProps) {
         <ArrowUpDown className="ml-2 h-4 w-4" />; // Could use different icons for asc/desc
   };
 
+  const handleOpenAction = (e: React.MouseEvent, action: ImprovementAction) => {
+    e.preventDefault();
+    addTab({
+      id: action.id,
+      title: action.actionId,
+      href: `/actions/${action.id}`,
+      isClosable: true,
+    });
+  };
 
   return (
     <div className="w-full">
@@ -176,7 +188,7 @@ export function ActionsTable({ actions }: ActionsTableProps) {
               filteredAndSortedActions.map(action => (
                 <TableRow key={action.id}>
                   <TableCell className="font-medium">
-                    <Link href={`/actions/${action.id}`} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">{action.actionId}</Link>
+                    <a href={`/actions/${action.id}`} onClick={(e) => handleOpenAction(e, action)} className="text-primary hover:underline">{action.actionId}</a>
                   </TableCell>
                   <TableCell>{action.title}</TableCell>
                   <TableCell>

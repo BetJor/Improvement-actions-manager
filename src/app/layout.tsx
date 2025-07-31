@@ -1,3 +1,4 @@
+
 import "./globals.css"
 import { Inter } from 'next/font/google'
 import { getMessages, getLocale } from "next-intl/server"
@@ -23,10 +24,10 @@ export default async function RootLayout({
       <body className={inter.className}>
         <NextIntlClientProvider locale={locale} messages={messages}>
           <AuthProvider>
-            <ProtectedLayout>
-              {children}
-            </ProtectedLayout>
-            <Toaster />
+              <ProtectedLayout>
+                {children}
+              </ProtectedLayout>
+              <Toaster />
           </AuthProvider>
         </NextIntlClientProvider>
       </body>

@@ -9,6 +9,8 @@ import { AppSidebar } from "@/components/app-sidebar";
 import { Header } from "@/components/header";
 import { useLocale } from "next-intl";
 import { SidebarProvider } from "@/components/ui/sidebar";
+import { TabsProvider } from "@/hooks/use-tabs";
+import { DynamicTabs } from "./dynamic-tabs";
 
 export function ProtectedLayout({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -40,12 +42,11 @@ export function ProtectedLayout({ children }: { children: React.ReactNode }) {
         <AppSidebar />
         <div className="flex flex-1 flex-col overflow-y-auto">
           <Header />
-          <main className="flex-1 space-y-4 p-4 lg:p-6 bg-background/60">
-            {children}
-          </main>
+          <TabsProvider>
+            <DynamicTabs initialContent={children}/>
+          </TabsProvider>
         </div>
       </div>
     </SidebarProvider>
   );
 }
-

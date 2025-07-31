@@ -85,6 +85,13 @@ export interface ActionAttachment {
     uploadedAt: string; // ISO string
 }
 
+export interface Tab {
+  id: string;
+  title: string;
+  href: string;
+  isClosable: boolean;
+}
+
 export interface ImprovementAction {
   id: string; // Firestore document ID
   actionId: string; // User-facing ID like AM-24001

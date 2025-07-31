@@ -26,6 +26,7 @@ import { useState, useEffect, useRef } from "react"
 import type { ActionComment, ActionAttachment } from "@/lib/types"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
+import { useTabs } from "@/hooks/use-tabs"
 
 
 interface DetailRowProps {
@@ -59,6 +60,7 @@ export function ActionDetailsPanel({ action, onActionUpdate }: ActionDetailsPane
   const t = useTranslations("ActionDetailPage")
   const { user } = useAuth()
   const { toast } = useToast()
+  const { addTab } = useTabs();
   
   const [newComment, setNewComment] = useState("");
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
@@ -142,7 +144,18 @@ export function ActionDetailsPanel({ action, onActionUpdate }: ActionDetailsPane
       }
     }
   };
-
+  
+  const handleOpenOriginalAction = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (action.originalActionId && action.originalActionTitle) {
+      addTab({
+        id: action.originalActionId,
+        title: action.originalActionTitle,
+        href: `/actions/${action.originalActionId}`,
+        isClosable: true,
+      });
+    }
+  };
   
   return (
     <div className="flex flex-col gap-6">
@@ -159,10 +172,10 @@ export function ActionDetailsPanel({ action, onActionUpdate }: ActionDetailsPane
               <p className="text-sm text-muted-foreground">Aquesta acció es va crear a partir del tancament no conforme de l'acció:</p>
               <p className="font-semibold">{action.originalActionTitle}</p>
               <Button asChild variant="outline" size="sm" className="w-full">
-                <Link href={`/actions/${action.originalActionId}`} target="_blank" rel="noopener noreferrer">
+                <a href={`/actions/${action.originalActionId}`} onClick={handleOpenOriginalAction}>
                   <ExternalLink className="mr-2 h-4 w-4" />
                   Veure Acció Original
-                </Link>
+                </a>
               </Button>
             </CardContent>
           </Card>
