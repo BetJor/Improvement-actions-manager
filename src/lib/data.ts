@@ -301,49 +301,7 @@ export async function updatePrompt(promptId: PromptId, newPrompt: string): Promi
 }
 
 // --- CRUD for Prompt Gallery ---
-const initialGalleryPrompts = [
-    {
-      title: "Crear una Pàgina de Roadmap",
-      description: "Genera una pàgina de Roadmap que analitza l'estat actual de l'aplicació per a determinar les fases completades i pendents.",
-      prompt: "Crea una pàgina de Roadmap del projecte a la ruta `/roadmap`. Vull que analitzis l'estat actual de l'aplicació per a determinar les fases de desenvolupament que ja estan completades i les que queden pendents. Mostra aquesta informació de manera visual, utilitzant targetes (`Card`) i icones per a diferenciar les tasques finalitzades (`CheckCircle2`) de les pendents (`CircleDot`). Afegeix també un enllaç a aquesta nova pàgina al menú lateral."
-    },
-    {
-      title: "Crear un Dashboard de mètriques clau",
-      description: "Analitza les dades disponibles per a generar un dashboard amb targetes de KPI i gràfics rellevants.",
-      prompt: "Crea una pàgina de Dashboard a la ruta `/dashboard`. Analitza les dades i models de dades disponibles a l'aplicació (com ara `ImprovementAction`) per a identificar mètriques clau. Genera un dashboard que mostri aquestes mètriques en forma de targetes de KPI (components `Card`) i com a mínim dos gràfics (components `BarChart` o `PieChart` de `recharts`). Afegeix un enllaç a aquesta nova pàgina al menú lateral amb la icona `Home`."
-    },
-    {
-      title: "Integrar Login amb Google",
-      description: "Genera tota la funcionalitat d'autenticació d'usuaris amb Firebase, incloent-hi rutes protegides i la pàgina de login.",
-      prompt: "Integra l'autenticació d'usuaris amb Google a través de Firebase. Has de fer el següent: \n1. Crear una pàgina de login a `/login`.\n2. Implementar la lògica per a iniciar sessió amb Google al hook `useAuth`.\n3. Crear un layout protegit (`protected-layout.tsx`) que redirigeixi els usuaris no autenticats a la pàgina de login, excepte per a la pròpia pàgina de login.\n4. Assegurar-te que, un cop l'usuari inicia sessió, és redirigit a la pàgina principal (`/dashboard`).\n5. Afegir el botó de logout al menú de l'usuari a la capçalera."
-    },
-    {
-      title: "Replicar el Layout de l'Aplicació",
-      description: "Genera l'estructura bàsica del layout, incloent-hi la barra lateral, la capçalera i la disposició general del contingut.",
-      prompt: "Replica l'estructura bàsica del layout d'aquesta aplicació. Has de crear els següents components i configurar-los per a funcionar junts:\n1. Un component `AppSidebar` amb enllaços de navegació.\n2. Un component `Header` que mostri el títol de la pàgina actual i un menú d'usuari.\n3. Un component `ProtectedLayout` que embolcalli les pàgines i integri la `AppSidebar` i el `Header`.\n4. Assegura't que el layout sigui responsive i que la barra lateral es col·lapsi correctament en dispositius mòbils."
-    }
-]
-
-async function seedGalleryPrompts() {
-    const promptsCol = collection(db, 'prompt_gallery');
-    const existingPromptsSnapshot = await getDocs(promptsCol);
-    const existingTitles = new Set(existingPromptsSnapshot.docs.map(doc => doc.data().title));
-    
-    const batch = writeBatch(db);
-    
-    initialGalleryPrompts.forEach(promptData => {
-        if (!existingTitles.has(promptData.title)) {
-            const newDocRef = doc(collection(db, 'prompt_gallery'));
-            batch.set(newDocRef, promptData);
-        }
-    });
-
-    await batch.commit();
-}
-
-
 export async function getGalleryPrompts(): Promise<GalleryPrompt[]> {
-    await seedGalleryPrompts();
     const promptsCol = collection(db, 'prompt_gallery');
     const snapshot = await getDocs(query(promptsCol, orderBy("title")));
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as GalleryPrompt));
@@ -364,4 +322,3 @@ export async function deleteGalleryPrompt(promptId: string): Promise<void> {
     const docRef = doc(db, 'prompt_gallery', promptId);
     await deleteDoc(docRef);
 }
-
