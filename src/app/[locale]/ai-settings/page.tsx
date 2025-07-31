@@ -16,11 +16,11 @@ import { Loader2 } from "lucide-react"
 
 const formSchema = z.object({
   improveWritingPrompt: z.string(),
-  analysisPrompt: z.string(),
+  analysisSuggestionPrompt: z.string(),
   correctiveActionsPrompt: z.string(),
 })
 
-type PromptId = "improveWriting" | "analysis" | "correctiveActions";
+type PromptId = "improveWriting" | "analysisSuggestion" | "correctiveActions";
 
 export default function AiSettingsPage() {
   const t = useTranslations("AiSettingsPage")
@@ -32,7 +32,7 @@ export default function AiSettingsPage() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       improveWritingPrompt: "",
-      analysisPrompt: "",
+      analysisSuggestionPrompt: "",
       correctiveActionsPrompt: "",
     },
   })
@@ -43,11 +43,11 @@ export default function AiSettingsPage() {
       try {
         const [improvePrompt, analysisPrompt, correctiveActionsPrompt] = await Promise.all([
           getPrompt("improveWriting"),
-          getPrompt("analysis"),
+          getPrompt("analysisSuggestion"),
           getPrompt("correctiveActions"),
         ]);
         form.setValue("improveWritingPrompt", improvePrompt);
-        form.setValue("analysisPrompt", analysisPrompt);
+        form.setValue("analysisSuggestionPrompt", analysisPrompt);
         form.setValue("correctiveActionsPrompt", correctiveActionsPrompt);
       } catch (error) {
         console.error("Failed to load prompts:", error)
@@ -68,7 +68,7 @@ export default function AiSettingsPage() {
     try {
       await Promise.all([
         updatePrompt("improveWriting", values.improveWritingPrompt),
-        updatePrompt("analysis", values.analysisPrompt),
+        updatePrompt("analysisSuggestion", values.analysisSuggestionPrompt),
         updatePrompt("correctiveActions", values.correctiveActionsPrompt),
       ]);
       toast({
@@ -122,7 +122,7 @@ export default function AiSettingsPage() {
               />
               <FormField
                 control={form.control}
-                name="analysisPrompt"
+                name="analysisSuggestionPrompt"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>{t("form.analysisPrompt.label")}</FormLabel>

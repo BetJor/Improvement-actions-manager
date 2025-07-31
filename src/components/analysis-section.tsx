@@ -21,7 +21,7 @@ import { cn } from "@/lib/utils"
 import { format } from "date-fns"
 import { es } from "date-fns/locale"
 import { useToast } from "@/hooks/use-toast"
-import { improveAnalysis } from "@/ai/flows/improveAnalysis"
+import { suggestAnalysisAndActions, type SuggestAnalysisOutput } from "@/ai/flows/improveAnalysis"
 import {
   Dialog,
   DialogContent,
@@ -31,6 +31,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
+import { Separator } from "./ui/separator"
 
 
 const analysisSchema = z.object({
@@ -62,8 +63,8 @@ export function AnalysisSection({ action, user, isSubmitting, onSave }: Analysis
   const [isRecording, setIsRecording] = useState(false);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   let finalTranscript = '';
-  const [isImprovingText, setIsImprovingText] = useState(false);
-  const [aiSuggestion, setAiSuggestion] = useState<string | null>(null);
+  const [isGeneratingSuggestion, setIsGeneratingSuggestion] = useState(false);
+  const [aiSuggestion, setAiSuggestion] = useState<SuggestAnalysisOutput | null>(null);
   const [isSuggestionDialogOpen, setIsSuggestionDialogOpen] = useState(false);
   const [hasAnalysisPrompt, setHasAnalysisPrompt] = useState(false);
 
@@ -71,19 +72,19 @@ export function AnalysisSection({ action, user, isSubmitting, onSave }: Analysis
     resolver: zodResolver(analysisSchema),
     defaultValues: {
       causes: action.analysis?.causes || "",
-      proposedActions: action.analysis?.proposedActions || [{ description: "", responsibleUserId: "", dueDate: new Date() }],
+      proposedActions: action.analysis?.proposedActions || [],
       verificationResponsibleUserId: action.analysis?.verificationResponsibleUserId || "",
     },
   })
 
-  const { fields, append, remove } = useFieldArray({
+  const { fields, append, remove, replace } = useFieldArray({
     control: form.control,
     name: "proposedActions",
   })
 
   useEffect(() => {
     async function checkPrompts() {
-      const analysisPrompt = await getPrompt("analysis");
+      const analysisPrompt = await getPrompt("analysisSuggestion");
       setHasAnalysisPrompt(!!analysisPrompt);
     }
     checkPrompts();
@@ -131,28 +132,30 @@ export function AnalysisSection({ action, user, isSubmitting, onSave }: Analysis
     setIsRecording(!isRecording);
   };
 
-  const handleImproveText = async () => {
-    const currentCauses = form.getValues('causes');
-    if (!currentCauses.trim()) {
-      toast({ variant: "destructive", title: "Camp buit", description: "No hi ha text per a millorar." });
-      return;
-    }
-    setIsImprovingText(true);
+  const handleGenerateSuggestion = async () => {
+    setIsGeneratingSuggestion(true);
     try {
-      const response = await improveAnalysis({ text: currentCauses });
+      const response = await suggestAnalysisAndActions({ observations: action.description });
       setAiSuggestion(response);
       setIsSuggestionDialogOpen(true);
     } catch (error) {
-      console.error("Error improving analysis text:", error);
-      toast({ variant: "destructive", title: "Error de l'IA", description: "No s'ha pogut millorar el text." });
+      console.error("Error generating analysis suggestion:", error);
+      toast({ variant: "destructive", title: "Error de l'IA", description: "No s'ha pogut generar el suggeriment." });
     } finally {
-      setIsImprovingText(false);
+      setIsGeneratingSuggestion(false);
     }
   };
 
   const handleAcceptSuggestion = () => {
     if (aiSuggestion) {
-      form.setValue('causes', aiSuggestion, { shouldValidate: true });
+      form.setValue('causes', aiSuggestion.causesAnalysis, { shouldValidate: true });
+      
+      const newActions = aiSuggestion.proposedActions.map(action => ({
+        description: action.description,
+        responsibleUserId: '', // User must select this
+        dueDate: new Date(), // Defaults to today, user must change
+      }));
+      replace(newActions);
     }
     setIsSuggestionDialogOpen(false);
     setAiSuggestion(null);
@@ -176,8 +179,24 @@ export function AnalysisSection({ action, user, isSubmitting, onSave }: Analysis
     <>
     <Card>
       <CardHeader>
-        <CardTitle>{t("title")}</CardTitle>
-        <CardDescription>{t("description")}</CardDescription>
+        <div className="flex justify-between items-start">
+          <div>
+            <CardTitle>{t("title")}</CardTitle>
+            <CardDescription>{t("description")}</CardDescription>
+          </div>
+          {hasAnalysisPrompt && (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleGenerateSuggestion}
+              disabled={isGeneratingSuggestion}
+              title={t("improve.button")}
+            >
+              {isGeneratingSuggestion ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}
+              <span className="ml-2 hidden sm:inline">{t("improve.button")}</span>
+            </Button>
+          )}
+        </div>
       </CardHeader>
       <CardContent>
         <Form {...form}>
@@ -193,7 +212,7 @@ export function AnalysisSection({ action, user, isSubmitting, onSave }: Analysis
                       <Textarea
                         rows={6}
                         placeholder={t("causes.placeholder")}
-                        className="resize-y pr-24"
+                        className="resize-y pr-12"
                         {...field}
                       />
                     </FormControl>
@@ -208,19 +227,6 @@ export function AnalysisSection({ action, user, isSubmitting, onSave }: Analysis
                       >
                         {isRecording ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
                       </Button>
-                      {hasAnalysisPrompt && (
-                        <Button
-                          type="button"
-                          size="icon"
-                          variant="ghost"
-                          onClick={handleImproveText}
-                          disabled={isImprovingText}
-                          className="h-8 w-8"
-                          title={t("improve.button")}
-                        >
-                          {isImprovingText ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}
-                        </Button>
-                      )}
                     </div>
                   </div>
                   <FormMessage />
@@ -368,10 +374,19 @@ export function AnalysisSection({ action, user, isSubmitting, onSave }: Analysis
             <DialogTitle>{t("suggestion.title")}</DialogTitle>
             <DialogDescription>{t("suggestion.description")}</DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
+          <div className="grid gap-4 py-4 max-h-[60vh] overflow-y-auto pr-6">
             <div className="space-y-2">
-              <Label htmlFor="suggestion-description">{t("suggestion.improvedDescription")}</Label>
-              <Textarea id="suggestion-description" readOnly value={aiSuggestion || ''} rows={10} className="resize-y" />
+              <Label htmlFor="suggestion-causes" className="font-semibold text-base">{t("suggestion.suggestedAnalysis")}</Label>
+              <Textarea id="suggestion-causes" readOnly value={aiSuggestion?.causesAnalysis || ''} rows={8} className="resize-y bg-muted/50" />
+            </div>
+            <Separator />
+            <div className="space-y-4">
+               <h4 className="font-semibold text-base">{t("suggestion.suggestedActions")}</h4>
+               <ul className="space-y-2 list-disc pl-5">
+                {aiSuggestion?.proposedActions.map((action, index) => (
+                    <li key={index}>{action.description}</li>
+                ))}
+               </ul>
             </div>
           </div>
           <DialogFooter>

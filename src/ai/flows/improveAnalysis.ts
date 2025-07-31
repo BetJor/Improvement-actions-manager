@@ -1,50 +1,58 @@
 
 'use server';
 /**
- * @fileOverview A flow to improve the writing of the causes analysis.
+ * @fileOverview A flow to suggest a cause analysis and formative actions
+ * based on the initial observations of an improvement action.
  * 
- * - improveAnalysis - The main function to call to get the improved text.
+ * - suggestAnalysisAndActions - The main function to call to get the suggestion.
  */
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import { getPrompt } from '@/lib/data';
 
-const ImproveAnalysisInputSchema = z.object({
-  text: z.string().describe("The analysis text to be improved."),
+const SuggestAnalysisInputSchema = z.object({
+  observations: z.string().describe("The initial observations of the improvement action."),
 });
-export type ImproveAnalysisInput = z.infer<typeof ImproveAnalysisInputSchema>;
+export type SuggestAnalysisInput = z.infer<typeof SuggestAnalysisInputSchema>;
 
-const ImproveAnalysisOutputSchema = z.string().describe("The improved and detailed analysis text.");
-export type ImproveAnalysisOutput = z.infer<typeof ImproveAnalysisOutputSchema>;
+const SuggestAnalysisOutputSchema = z.object({
+  causesAnalysis: z.string().describe("The detailed analysis of the root causes of the problem."),
+  proposedActions: z.array(
+    z.object({
+      description: z.string().describe("A specific, actionable training or formative action to address the causes."),
+    })
+  ).describe("A list of proposed formative actions."),
+});
+export type SuggestAnalysisOutput = z.infer<typeof SuggestAnalysisOutputSchema>;
 
-export async function improveAnalysis(input: ImproveAnalysisInput): Promise<ImproveAnalysisOutput> {
-  const improvedText = await improveAnalysisFlow(input);
-  return improvedText;
+
+export async function suggestAnalysisAndActions(input: SuggestAnalysisInput): Promise<SuggestAnalysisOutput> {
+  const suggestion = await suggestAnalysisAndActionsFlow(input);
+  return suggestion;
 }
 
-const improveAnalysisFlow = ai.defineFlow(
+const suggestAnalysisAndActionsFlow = ai.defineFlow(
   {
-    name: 'improveAnalysisFlow',
-    inputSchema: ImproveAnalysisInputSchema,
-    outputSchema: ImproveAnalysisOutputSchema,
+    name: 'suggestAnalysisAndActionsFlow',
+    inputSchema: SuggestAnalysisInputSchema,
+    outputSchema: SuggestAnalysisOutputSchema,
   },
   async (input) => {
-    // Get the dynamic prompt from Firestore
-    const promptText = await getPrompt('analysis');
+    const promptText = await getPrompt('analysisSuggestion');
 
     if (!promptText) {
-      throw new Error("The 'analysis' prompt is not configured in the settings.");
+      throw new Error("The 'analysisSuggestion' prompt is not configured in the settings.");
     }
 
-    // Define the prompt dynamically
-    const improveAnalysisPrompt = ai.definePrompt({
-        name: 'improveAnalysisPrompt',
-        input: { schema: ImproveAnalysisInputSchema },
-        prompt: `${promptText}\n\nText a millorar:\n{{{text}}}`,
+    const analysisPrompt = ai.definePrompt({
+        name: 'analysisSuggestionPrompt',
+        input: { schema: SuggestAnalysisInputSchema },
+        output: { schema: SuggestAnalysisOutputSchema },
+        prompt: `${promptText}\n\nObservacions del problema a analitzar:\n{{{observations}}}`,
     });
     
-    const { output } = await improveAnalysisPrompt(input);
+    const { output } = await analysisPrompt(input);
     return output!;
   }
 );

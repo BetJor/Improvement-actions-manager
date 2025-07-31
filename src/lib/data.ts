@@ -302,7 +302,7 @@ export async function deleteMasterDataItem(collectionName: string, itemId: strin
 
 
 // --- CRUD for AI Prompts ---
-type PromptId = "improveWriting" | "analysis" | "correctiveActions";
+type PromptId = "improveWriting" | "analysisSuggestion" | "correctiveActions";
 
 export async function getPrompt(promptId: PromptId): Promise<string> {
     const docRef = doc(db, 'app_settings', 'prompts');
@@ -319,4 +319,3 @@ export async function updatePrompt(promptId: PromptId, newPrompt: string): Promi
     const docRef = doc(db, 'app_settings', 'prompts');
     await setDoc(docRef, { [promptId]: newPrompt }, { merge: true });
 }
-

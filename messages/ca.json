@@ -155,13 +155,14 @@
         "toggle": "Activar/desactivar el micròfon"
       },
       "improve": {
-        "button": "Millorar text amb IA"
+        "button": "Generar Anàlisi amb IA"
       },
       "suggestion": {
         "title": "Suggeriment de l'IA",
-        "description": "L'assistent ha generat el següent text. Vols acceptar aquests canvis?",
-        "improvedDescription": "Anàlisi millorat",
-        "accept": "Acceptar Suggeriment",
+        "description": "L'assistent ha generat el següent anàlisi i pla d'acció. Vols acceptar aquests canvis?",
+        "suggestedAnalysis": "Anàlisi de Causes Suggerit",
+        "suggestedActions": "Accions Formatives Suggerides",
+        "accept": "Acceptar i Omplir Formulari",
         "cancel": "Cancel·lar"
       }
     }
@@ -229,7 +230,7 @@
           "task1": "Crear un flux de Genkit per a obtenir els grups d'un usuari (amb dades de mostra).",
           "task2": "Implementar el planificador de workflows intel·ligent per a generar planes de treball dinàmics.",
           "task4": "Implementar un assistent per a millorar la redacció d'observacions.",
-          "task5": "Implementar un assistent d'IA per a l'anàlisi de causes.",
+          "task5": "Implementar un assistent d'IA per a la proposta d'anàlisi de causes i accions correctives.",
           "pending_task1": "Pendent: Connectar el flux de Genkit a l'API real de Google Groups.",
           "pending_task3": "Pendent: Crear un assistent d'IA per a la proposta d'accions correctives."
         }
@@ -292,8 +293,8 @@
         "placeholder": "Introdueix aquí el prompt que utilitzarà l'IA per a millorar les observacions..."
       },
       "analysisPrompt": {
-        "label": "Prompt d'Anàlisi de Causes",
-        "placeholder": "Introdueix el prompt per a l'assistent d'anàlisi de causes..."
+        "label": "Prompt de Suggeriment d'Anàlisi i Accions",
+        "placeholder": "Introdueix el prompt per a l'assistent que suggereix anàlisis de causes i accions formatives..."
       },
       "correctiveActionsPrompt": {
         "label": "Prompt d'Accions Correctives",
