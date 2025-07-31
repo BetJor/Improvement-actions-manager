@@ -23,6 +23,7 @@ export default function ActionDetailPage({ params }: DetailPageProps) {
   const router = useRouter()
   const { toast } = useToast()
   const { user } = useAuth()
+  const { id: actionId } = params;
 
   const [action, setAction] = useState<ImprovementAction | null>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -42,7 +43,7 @@ export default function ActionDetailPage({ params }: DetailPageProps) {
           subcats, 
           areas
         ] = await Promise.all([
-          getActionById(params.id),
+          getActionById(actionId),
           getActionTypes(),
           getCategories(),
           getSubcategories(),
@@ -73,7 +74,7 @@ export default function ActionDetailPage({ params }: DetailPageProps) {
       }
     }
     loadData()
-  }, [params.id, toast])
+  }, [actionId, toast])
 
   const handleEdit = async (formData: any) => {
     if (!action) return;
@@ -118,7 +119,7 @@ export default function ActionDetailPage({ params }: DetailPageProps) {
   }
 
   if (isLoading) {
-    return <div className="flex items-center justify-center"><Loader2 className="mr-2 h-8 w-8 animate-spin" /> Carregant...</div>
+    return <div className="flex items-center justify-center h-full"><Loader2 className="mr-2 h-8 w-8 animate-spin" /> Carregant...</div>
   }
 
   if (!action) {
