@@ -305,7 +305,7 @@ export async function updateAction(actionId: string, data: any, masterData?: any
                     type: originalAction.typeId,
                     responsibleGroupId: originalAction.responsibleGroupId,
                     creator: data.closure.closureResponsible, // The closer is the creator of the new action
-                    status: 'Pendiente Análisis' // New BIS action starts ready for analysis
+                    status: 'Borrador' // New BIS action starts as a draft
                 };
                 await createAction(bisActionData, allMasterData);
             }
