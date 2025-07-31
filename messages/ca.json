@@ -260,7 +260,8 @@
           "task2": "Desenvolupar el formulari per a crear noves accions de millora.",
           "task3": "Implementar la pàgina de detall per a cada acció de millora.",
           "task4": "Implementar formularis d'Anàlisi i Verificació per interactuar amb el workflow.",
-          "pending_task3": "Pendent: Implementar un sistema de notificacions per als usuaris."
+          "pending_task3": "Pendent: Implementar un sistema de notificacions per als usuaris.",
+          "pending_task4": "Pendent: Implementar la pujada de fitxers adjunts (integració amb Firebase Storage)."
         }
       },
       "phase4": {

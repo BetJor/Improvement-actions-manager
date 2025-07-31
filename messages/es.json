@@ -260,7 +260,8 @@
           "task2": "Desarrollar el formulario para crear nuevas acciones de mejora.",
           "task3": "Implementar la página de detalle para cada acción de mejora.",
           "task4": "Implementar formularios de Análisis y Verificación para interactuar con el workflow.",
-          "pending_task3": "Pendiente: Implementar un sistema de notificaciones para los usuarios."
+          "pending_task3": "Pendiente: Implementar un sistema de notificaciones para los usuarios.",
+          "pending_task4": "Pendiente: Implementar la subida de archivos adjuntos (integración con Firebase Storage)."
         }
       },
       "phase4": {

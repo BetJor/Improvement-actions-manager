@@ -1,3 +1,4 @@
+
 import {
     Card,
     CardContent,
@@ -26,7 +27,7 @@ import {
         {
           key: "phase3",
           completed_tasks: ["task1", "task2", "task3", "task4"],
-          pending_tasks: ["pending_task3"]
+          pending_tasks: ["pending_task3", "pending_task4"]
         },
         {
           key: "phase4",
