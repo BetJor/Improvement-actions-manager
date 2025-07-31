@@ -76,11 +76,11 @@ export default function ActionDetailPage({ params }: DetailPageProps) {
     loadData()
   }, [actionId, toast])
 
-  const handleEdit = async (formData: any) => {
+  const handleEdit = async (formData: any, status?: 'Borrador' | 'Pendiente Análisis') => {
     if (!action) return;
     setIsSubmitting(true);
     try {
-        await updateAction(action.id, formData, masterData);
+        await updateAction(action.id, formData, masterData, status);
         toast({
             title: "Acció actualitzada",
             description: "L'acció s'ha desat correctament.",

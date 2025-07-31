@@ -234,12 +234,12 @@ export function ActionForm({
     setAiSuggestion(null);
   };
 
-  const handleFormSubmit = (status: 'Borrador' | 'Pendiente Análisis') => {
+  const handleCreateFormSubmit = (status: 'Borrador' | 'Pendiente Análisis') => {
       form.handleSubmit((values) => onSubmit(values, status))();
   };
 
-  const handleEditSubmit = () => {
-    form.handleSubmit((values) => onSubmit(values))();
+  const handleEditFormSubmit = (status?: 'Borrador' | 'Pendiente Análisis') => {
+    form.handleSubmit((values) => onSubmit(values, status))();
   }
   
   const disableForm = isSubmitting || isLoadingMasterData || mode === 'view';
@@ -457,11 +457,11 @@ export function ActionForm({
           
           {mode === 'create' && (
             <div className="flex gap-2">
-                <Button type="button" variant="outline" onClick={() => handleFormSubmit('Borrador')} disabled={disableForm}>
+                <Button type="button" variant="outline" onClick={() => handleCreateFormSubmit('Borrador')} disabled={disableForm}>
                     {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                     {t("form.saveAsDraft")}
                 </Button>
-                <Button type="button" onClick={() => handleFormSubmit('Pendiente Análisis')} disabled={disableForm}>
+                <Button type="button" onClick={() => handleCreateFormSubmit('Pendiente Análisis')} disabled={disableForm}>
                     {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
                     {t("form.sendForAnalysis")}
                 </Button>
@@ -472,11 +472,15 @@ export function ActionForm({
             <div className="flex gap-2">
                 <Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting}>
                     <Ban className="mr-2 h-4 w-4" />
-                    Cancel·lar
+                    {t("form.cancel")}
                 </Button>
-                <Button type="button" onClick={handleEditSubmit} disabled={isSubmitting}>
+                <Button type="button" onClick={() => handleEditFormSubmit('Borrador')} disabled={isSubmitting}>
                     {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                    Desar Canvis
+                    {t("form.saveAsDraft")}
+                </Button>
+                 <Button type="button" onClick={() => handleEditFormSubmit('Pendiente Análisis')} disabled={isSubmitting}>
+                    {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
+                    {t("form.sendForAnalysis")}
                 </Button>
             </div>
           )}

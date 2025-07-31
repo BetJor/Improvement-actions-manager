@@ -48,7 +48,7 @@
         "description": "Asigna a la persona encargada del análisis."
       },
       "submit": "Crear Acción",
-      "saveAsDraft": "Guardar como Borrador",
+      "saveAsDraft": "Guardar Borrador",
       "sendForAnalysis": "Enviar para Análisis",
       "toast": {
         "title": "Acción Creada",
@@ -67,7 +67,8 @@
         "improvedDescription": "Descripción mejorada",
         "accept": "Aceptar Sugerencia",
         "cancel": "Cancelar"
-      }
+      },
+      "cancel": "Cancelar"
     }
   },
   "ActionsTable": {

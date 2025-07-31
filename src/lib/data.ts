@@ -240,7 +240,7 @@ export async function createAction(data: CreateActionData, masterData: any): Pro
 
 
 // Function to update an existing action
-export async function updateAction(actionId: string, data: any, masterData: any): Promise<void> {
+export async function updateAction(actionId: string, data: any, masterData: any, status?: 'Borrador' | 'Pendiente Análisis'): Promise<void> {
     const actionDocRef = doc(db, 'actions', actionId);
     
     // Find names from IDs
@@ -249,7 +249,7 @@ export async function updateAction(actionId: string, data: any, masterData: any)
     const affectedAreaName = masterData.affectedAreas.find((a: any) => a.id === data.affectedAreas)?.name || data.affectedAreas;
     const typeName = masterData.actionTypes.find((t: any) => t.id === data.type)?.name || data.type;
 
-    const dataToUpdate = {
+    const dataToUpdate: any = {
         title: data.title,
         description: data.description,
         assignedTo: data.assignedTo,
@@ -263,6 +263,10 @@ export async function updateAction(actionId: string, data: any, masterData: any)
         type: typeName,
         typeId: data.type,
     };
+
+    if (status) {
+        dataToUpdate.status = status;
+    }
 
     await updateDoc(actionDocRef, dataToUpdate);
 }

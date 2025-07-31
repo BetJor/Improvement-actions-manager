@@ -48,7 +48,7 @@
         "description": "Assigna la persona encarregada de l'anàlisi."
       },
       "submit": "Crear Acció",
-      "saveAsDraft": "Desar com a Esborrany",
+      "saveAsDraft": "Desar Esborrany",
       "sendForAnalysis": "Enviar per a Anàlisi",
       "toast": {
         "title": "Acció Creada",
@@ -67,7 +67,8 @@
         "improvedDescription": "Descripció millorada",
         "accept": "Acceptar Suggeriment",
         "cancel": "Cancel·lar"
-      }
+      },
+      "cancel": "Cancel·lar"
     }
   },
   "ActionsTable": {
