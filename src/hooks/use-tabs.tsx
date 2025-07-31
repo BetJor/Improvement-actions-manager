@@ -31,6 +31,9 @@ export function MockRouterProvider({ children, params }: { children: React.React
         return null;
     }
     
+    // We create a mock layout router context that provides the correct `params`
+    // to the child components. This is what makes the dynamic pages like
+    // `/actions/[id]` work correctly inside a tab.
     const mockLayoutRouter = {
         ...layoutRouter,
         params: params,
@@ -53,30 +56,27 @@ export function TabsProvider({ children }: { children: React.ReactNode }) {
   const currentParams = useParams();
   const pathname = usePathname();
 
-  const getInitialTabs = (initialContent: React.ReactNode) => {
+  const getInitialTabs = () => {
     const dashboardTab: Tab = {
       id: 'dashboard',
       title: t('dashboard'),
       href: `/${currentParams.locale}/dashboard`,
       isClosable: false,
-      content: initialContent,
+      content: children,
     };
     return [dashboardTab];
   };
 
-  const [tabs, setTabs] = useState<Tab[]>(() => getInitialTabs(children));
+  const [tabs, setTabs] = useState<Tab[]>(getInitialTabs);
   const [activeTab, setActiveTabState] = useState<Tab | null>(tabs[0]);
 
   useEffect(() => {
-    if (activeTab && activeTab.href !== pathname) {
-        // Prevent URL change if the active tab is for a static page that was just opened
-        if(activeTab.id.startsWith('/')) {
-             window.history.pushState({}, '', activeTab.href);
-        } else {
-             window.history.pushState({}, '', activeTab.href);
-        }
+    // This effect ensures the URL in the browser's address bar
+    // stays in sync with the active tab.
+    if (activeTab && activeTab.href !== window.location.pathname) {
+        window.history.pushState({}, '', activeTab.href);
     }
-  }, [activeTab, pathname]);
+  }, [activeTab]);
   
   const addTab = (newTab: Tab) => {
     setTabs(prevTabs => {
@@ -86,8 +86,9 @@ export function TabsProvider({ children }: { children: React.ReactNode }) {
             return prevTabs;
         }
 
+        const newTabs = [...prevTabs, newTab];
         setActiveTabState(newTab);
-        return [...prevTabs, newTab];
+        return newTabs;
     });
   };
 
@@ -103,8 +104,8 @@ export function TabsProvider({ children }: { children: React.ReactNode }) {
           const newActiveIndex = Math.max(0, tabToRemoveIndex - 1);
           setActiveTabState(newTabs[newActiveIndex]);
         } else {
-            // This case should not happen as dashboard is not closable
             setActiveTabState(null);
+            // Fallback to dashboard if all tabs are closed
             window.history.pushState({}, '', `/${currentParams.locale}/dashboard`);
         }
       }
