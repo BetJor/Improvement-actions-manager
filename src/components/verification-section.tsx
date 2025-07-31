@@ -98,7 +98,7 @@ export function VerificationSection({ action, user, isSubmitting, onSave }: Veri
                       <FormControl>
                         <RadioGroup
                           onValueChange={field.onChange}
-                          defaultValue={field.value}
+                          value={field.value}
                           className="flex flex-col sm:flex-row gap-4 pt-2"
                         >
                           <FormItem className="flex items-center space-x-2">
