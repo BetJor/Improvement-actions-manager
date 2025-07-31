@@ -234,4 +234,3 @@ export function AnalysisSection({ action, user, isSubmitting, onSave }: Analysis
     </Card>
   )
 }
-

@@ -1,5 +1,4 @@
 
-
 "use client"
 
 import { useEffect, useState } from "react"
@@ -75,7 +74,7 @@ export default function ActionDetailPage() {
       }
     }
     loadData()
-  }, [params.id, toast, notFound])
+  }, [params.id, toast])
 
   const handleEdit = async (formData: any, status?: 'Borrador' | 'Pendiente Análisis') => {
     if (!action) return;
