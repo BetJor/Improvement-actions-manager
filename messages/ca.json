@@ -150,7 +150,20 @@
         "label": "Responsable de la Verificació",
         "placeholder": "Selecciona l'usuari que verificarà l'eficàcia"
       },
-      "saveButton": "Desar Anàlisi i Avançar"
+      "saveButton": "Desar Anàlisi i Avançar",
+      "mic": {
+        "toggle": "Activar/desactivar el micròfon"
+      },
+      "improve": {
+        "button": "Millorar text amb IA"
+      },
+      "suggestion": {
+        "title": "Suggeriment de l'IA",
+        "description": "L'assistent ha generat el següent text. Vols acceptar aquests canvis?",
+        "improvedDescription": "Anàlisi millorat",
+        "accept": "Acceptar Suggeriment",
+        "cancel": "Cancel·lar"
+      }
     }
   },
   "RootLayout": {
@@ -205,7 +218,7 @@
           "task1": "Crear la pàgina per a veure, filtrar i ordenar les accions de millora.",
           "task2": "Desenvolupar el formulari per a crear noves accions de millora.",
           "task3": "Implementar la pàgina de detall per a cada acció de millora.",
-          "pending_task2": "Pendent: Implementar formularis d'Anàlisi i Verificació per interactuar amb el workflow.",
+          "task4": "Implementar formularis d'Anàlisi i Verificació per interactuar amb el workflow.",
           "pending_task3": "Pendent: Implementar un sistema de notificacions per als usuaris."
         }
       },
@@ -216,8 +229,9 @@
           "task1": "Crear un flux de Genkit per a obtenir els grups d'un usuari (amb dades de mostra).",
           "task2": "Implementar el planificador de workflows intel·ligent per a generar planes de treball dinàmics.",
           "task4": "Implementar un assistent per a millorar la redacció d'observacions.",
+          "task5": "Implementar un assistent d'IA per a l'anàlisi de causes.",
           "pending_task1": "Pendent: Connectar el flux de Genkit a l'API real de Google Groups.",
-          "pending_task3": "Pendent: Crear un assistent d'IA per a l'anàlisi de causes."
+          "pending_task3": "Pendent: Crear un assistent d'IA per a la proposta d'accions correctives."
         }
       },
       "phase5": {

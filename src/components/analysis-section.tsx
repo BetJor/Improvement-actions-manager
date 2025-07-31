@@ -1,12 +1,12 @@
 
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useForm, useFieldArray, Controller } from "react-hook-form"
 import * as z from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useTranslations } from "next-intl"
-import { users } from "@/lib/data"
+import { users, getPrompt } from "@/lib/data"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Input } from "@/components/ui/input"
@@ -15,11 +15,23 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { Loader2, PlusCircle, Trash2, CalendarIcon, Save } from "lucide-react"
+import { Loader2, PlusCircle, Trash2, CalendarIcon, Save, Mic, MicOff, Wand2 } from "lucide-react"
 import type { ImprovementAction, User } from "@/lib/types"
 import { cn } from "@/lib/utils"
 import { format } from "date-fns"
 import { es } from "date-fns/locale"
+import { useToast } from "@/hooks/use-toast"
+import { improveAnalysis } from "@/ai/flows/improveAnalysis"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog"
+import { Label } from "@/components/ui/label"
+
 
 const analysisSchema = z.object({
   causes: z.string().min(1, "L'anàlisi de causes és requerit."),
@@ -44,6 +56,16 @@ interface AnalysisSectionProps {
 
 export function AnalysisSection({ action, user, isSubmitting, onSave }: AnalysisSectionProps) {
   const t = useTranslations("ActionDetailPage.analysis")
+  const { toast } = useToast()
+
+  // States for AI and Mic functionality
+  const [isRecording, setIsRecording] = useState(false);
+  const recognitionRef = useRef<SpeechRecognition | null>(null);
+  let finalTranscript = '';
+  const [isImprovingText, setIsImprovingText] = useState(false);
+  const [aiSuggestion, setAiSuggestion] = useState<string | null>(null);
+  const [isSuggestionDialogOpen, setIsSuggestionDialogOpen] = useState(false);
+  const [hasAnalysisPrompt, setHasAnalysisPrompt] = useState(false);
 
   const form = useForm<AnalysisFormValues>({
     resolver: zodResolver(analysisSchema),
@@ -59,6 +81,84 @@ export function AnalysisSection({ action, user, isSubmitting, onSave }: Analysis
     name: "proposedActions",
   })
 
+  useEffect(() => {
+    async function checkPrompts() {
+      const analysisPrompt = await getPrompt("analysis");
+      setHasAnalysisPrompt(!!analysisPrompt);
+    }
+    checkPrompts();
+  }, []);
+
+  useEffect(() => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (SpeechRecognition) {
+      const recognition = new SpeechRecognition();
+      recognition.continuous = true;
+      recognition.interimResults = true;
+      recognition.lang = 'ca-ES';
+
+      recognition.onresult = (event) => {
+        let interimTranscript = '';
+        for (let i = event.resultIndex; i < event.results.length; ++i) {
+          if (event.results[i].isFinal) {
+            finalTranscript += event.results[i][0].transcript;
+          } else {
+            interimTranscript += event.results[i][0].transcript;
+          }
+        }
+        form.setValue('causes', finalTranscript + interimTranscript);
+      };
+
+      recognition.onend = () => setIsRecording(false);
+      recognition.onerror = (event) => {
+        console.error("Speech recognition error", event.error);
+        toast({ variant: "destructive", title: "Error de reconeixement de veu" });
+        setIsRecording(false);
+      };
+      recognitionRef.current = recognition;
+    }
+    return () => recognitionRef.current?.stop();
+  }, [form, toast, finalTranscript]);
+
+  const toggleRecording = () => {
+    if (!recognitionRef.current) return;
+    if (isRecording) {
+      recognitionRef.current.stop();
+    } else {
+      finalTranscript = form.getValues('causes');
+      recognitionRef.current.start();
+    }
+    setIsRecording(!isRecording);
+  };
+
+  const handleImproveText = async () => {
+    const currentCauses = form.getValues('causes');
+    if (!currentCauses.trim()) {
+      toast({ variant: "destructive", title: "Camp buit", description: "No hi ha text per a millorar." });
+      return;
+    }
+    setIsImprovingText(true);
+    try {
+      const response = await improveAnalysis({ text: currentCauses });
+      setAiSuggestion(response);
+      setIsSuggestionDialogOpen(true);
+    } catch (error) {
+      console.error("Error improving analysis text:", error);
+      toast({ variant: "destructive", title: "Error de l'IA", description: "No s'ha pogut millorar el text." });
+    } finally {
+      setIsImprovingText(false);
+    }
+  };
+
+  const handleAcceptSuggestion = () => {
+    if (aiSuggestion) {
+      form.setValue('causes', aiSuggestion, { shouldValidate: true });
+    }
+    setIsSuggestionDialogOpen(false);
+    setAiSuggestion(null);
+  };
+
+
   const onSubmit = (values: AnalysisFormValues) => {
     const analysisData = {
         ...values,
@@ -73,6 +173,7 @@ export function AnalysisSection({ action, user, isSubmitting, onSave }: Analysis
   }
 
   return (
+    <>
     <Card>
       <CardHeader>
         <CardTitle>{t("title")}</CardTitle>
@@ -87,13 +188,41 @@ export function AnalysisSection({ action, user, isSubmitting, onSave }: Analysis
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="text-lg font-semibold">{t("causes.label")}</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      rows={6}
-                      placeholder={t("causes.placeholder")}
-                      {...field}
-                    />
-                  </FormControl>
+                  <div className="relative">
+                    <FormControl>
+                      <Textarea
+                        rows={6}
+                        placeholder={t("causes.placeholder")}
+                        className="resize-y pr-24"
+                        {...field}
+                      />
+                    </FormControl>
+                    <div className="absolute right-2 top-2 flex flex-col gap-2">
+                      <Button
+                        type="button"
+                        size="icon"
+                        variant="ghost"
+                        onClick={toggleRecording}
+                        className={cn("h-8 w-8", isRecording && "bg-red-500/20 text-red-500 hover:bg-red-500/30 hover:text-red-500")}
+                        title={t("mic.toggle")}
+                      >
+                        {isRecording ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+                      </Button>
+                      {hasAnalysisPrompt && (
+                        <Button
+                          type="button"
+                          size="icon"
+                          variant="ghost"
+                          onClick={handleImproveText}
+                          disabled={isImprovingText}
+                          className="h-8 w-8"
+                          title={t("improve.button")}
+                        >
+                          {isImprovingText ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}
+                        </Button>
+                      )}
+                    </div>
+                  </div>
                   <FormMessage />
                 </FormItem>
               )}
@@ -232,5 +361,25 @@ export function AnalysisSection({ action, user, isSubmitting, onSave }: Analysis
         </Form>
       </CardContent>
     </Card>
+
+    <Dialog open={isSuggestionDialogOpen} onOpenChange={setIsSuggestionDialogOpen}>
+        <DialogContent className="sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>{t("suggestion.title")}</DialogTitle>
+            <DialogDescription>{t("suggestion.description")}</DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="suggestion-description">{t("suggestion.improvedDescription")}</Label>
+              <Textarea id="suggestion-description" readOnly value={aiSuggestion || ''} rows={10} className="resize-y" />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsSuggestionDialogOpen(false)}>{t("suggestion.cancel")}</Button>
+            <Button onClick={handleAcceptSuggestion}>{t("suggestion.accept")}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   )
 }

@@ -2,3 +2,4 @@
 import './flows/getUserGroups';
 import './flows/planActionWorkflow';
 import './flows/improveWriting';
+import './flows/improveAnalysis';
