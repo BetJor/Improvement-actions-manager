@@ -110,7 +110,9 @@ export interface ImprovementAction {
     notes: string;
     isCompliant: boolean;
     date: string;
+    closureResponsible: ActionUserInfo;
   };
   workflowPlan?: WorkflowPlan;
 };
+
 

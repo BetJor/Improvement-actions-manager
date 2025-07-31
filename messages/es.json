@@ -180,6 +180,15 @@
         "notImplemented": "No Implementada"
       }
     },
+    "closure": {
+      "title": "Cierre de la Acción",
+      "description": "Finaliza la acción de mejora registrando las conclusiones finales.",
+      "notesLabel": "Observaciones del Cierre",
+      "notesPlaceholder": "Describe el resultado final, lecciones aprendidas, etc.",
+      "isCompliantLabel": "¿El resultado final es conforme?",
+      "isCompliantDescription": "Si se marca como 'No Conforme', se generará automáticamente una nueva acción (BIS) para continuar el seguimiento.",
+      "saveButton": "Guardar y Cerrar Acción"
+    },
     "tabs": {
         "details": "Detalles",
         "causesAndProposedAction": "Causas y Acción Propuesta",

@@ -180,6 +180,15 @@
         "notImplemented": "No Implementada"
       }
     },
+    "closure": {
+      "title": "Tancament de l'Acció",
+      "description": "Finalitza l'acció de millora registrant les conclusions finals.",
+      "notesLabel": "Observacions del Tancament",
+      "notesPlaceholder": "Descriu el resultat final, lliçons apreses, etc.",
+      "isCompliantLabel": "El resultat final és conforme?",
+      "isCompliantDescription": "Si es marca com a 'No Conforme', es generarà automàticament una nova acció (BIS) per a continuar el seguiment.",
+      "saveButton": "Guardar i Tancar Acció"
+    },
     "tabs": {
         "details": "Detalls",
         "causesAndProposedAction": "Causes i Acció Proposada",

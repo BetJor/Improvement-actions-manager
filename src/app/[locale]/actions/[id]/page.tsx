@@ -11,6 +11,7 @@ import { useTranslations } from "next-intl"
 import { ActionForm } from "@/components/action-form"
 import { AnalysisSection } from "@/components/analysis-section"
 import { VerificationSection } from "@/components/verification-section"
+import { ClosureSection } from "@/components/closure-section"
 import { Button } from "@/components/ui/button"
 import { FileEdit, Loader2, Microscope, ShieldCheck, Flag } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -174,6 +175,46 @@ export default function ActionDetailPage() {
     }
   };
 
+  const handleSaveClosure = async (closureData: any) => {
+    if (!action || !user) return;
+    setIsSubmitting(true);
+    try {
+        await updateAction(action.id, {
+            closure: {
+                ...closureData,
+                closureResponsible: {
+                    id: user.uid,
+                    name: user.displayName || 'Unknown User',
+                    avatar: user.photoURL || undefined,
+                },
+                date: new Date().toISOString(),
+            },
+            status: 'Finalizada',
+        });
+        
+        toast({
+            title: 'Acció Tancada',
+            description: closureData.isCompliant 
+                ? "L'acció s'ha tancat correctament." 
+                : "S'ha tancat l'acció i s'ha generat una nova acció BIS.",
+        });
+
+        // Redirect or refresh
+        router.push('/actions');
+        router.refresh();
+
+    } catch (error) {
+        console.error("Error saving closure:", error);
+        toast({
+            variant: "destructive",
+            title: "Error en tancar",
+            description: "No s'ha pogut tancar l'acció.",
+        });
+    } finally {
+        setIsSubmitting(false);
+    }
+  };
+
   const getActionButtons = (status: string) => {
     if (isEditing) return null; // No show buttons in edit mode
 
@@ -187,7 +228,8 @@ export default function ActionDetailPage() {
         // The button is inside the VerificationSection component now
         return null;
       case "Pendiente de Cierre":
-        return <Button><Flag className="mr-2 h-4 w-4" /> {t("closeAction")}</Button>
+         // The button is inside the ClosureSection component now
+        return null;
       default:
         return null
     }
@@ -195,7 +237,7 @@ export default function ActionDetailPage() {
   
   const isAnalysisTabDisabled = action?.status === 'Borrador';
   const isVerificationTabDisabled = action?.status === 'Borrador' || action?.status === 'Pendiente Análisis';
-  const isClosureTabDisabled = action?.status !== 'Finalizada';
+  const isClosureTabDisabled = action?.status === 'Borrador' || action?.status === 'Pendiente Análisis' || action?.status === 'Pendiente Comprobación';
 
   const getStatusColorClass = (status?: ProposedActionStatus) => {
     if (!status) return "";
@@ -347,9 +389,41 @@ export default function ActionDetailPage() {
                 )}
             </TabsContent>
 
+            <TabsContent value="closure" className="mt-4">
+                {action.status === 'Pendiente de Cierre' && user ? (
+                  <ClosureSection
+                    isSubmitting={isSubmitting}
+                    onSave={handleSaveClosure}
+                  />
+                ) : action.closure ? (
+                  <Card>
+                    <CardHeader>
+                        <CardTitle>{t('actionClosure')}</CardTitle>
+                         <CardDescription>
+                            Tancada per {action.closure.closureResponsible.name} el {format(new Date(action.closure.date), "PPP", { locale: es })}
+                        </CardDescription>
+                    </CardHeader>
+                     <CardContent className="space-y-4">
+                        <div>
+                            <h3 className="font-semibold text-base mb-2">Resultat del Tancament</h3>
+                            <p className={cn("font-medium", action.closure.isCompliant ? "text-green-600" : "text-red-600")}>
+                                {action.closure.isCompliant ? "Conforme" : "No Conforme"}
+                            </p>
+                        </div>
+                        <div>
+                            <h3 className="font-semibold text-base mb-2">Observacions Finals</h3>
+                            <p className="text-muted-foreground whitespace-pre-wrap">{action.closure.notes}</p>
+                        </div>
+                    </CardContent>
+                  </Card>
+                ) : (
+                    <div className="text-center text-muted-foreground py-10">
+                        <p>El tancament es podrà realitzar un cop s'hagi completat la verificació.</p>
+                    </div>
+                )}
+            </TabsContent>
+
         </Tabs>
     </div>
   )
 }
-
-    

@@ -155,7 +155,7 @@ export const getActionById = async (id: string): Promise<ImprovementAction | nul
 }
 
 
-interface CreateActionData {
+export interface CreateActionData {
     title: string;
     category: string;
     subcategory: string;
@@ -271,8 +271,35 @@ export async function updateAction(actionId: string, data: any, masterData?: any
             typeId: data.type,
         };
     } else {
-        // If no masterData, we are likely updating other fields like analysis
+        // If no masterData, we are likely updating other fields like analysis, verification or closure
         dataToUpdate = { ...data };
+
+        // Handle closure logic
+        if (data.closure && !data.closure.isCompliant) {
+            const originalActionSnap = await getDoc(actionDocRef);
+            if(originalActionSnap.exists()) {
+                const originalAction = originalActionSnap.data() as ImprovementAction;
+                const allMasterData = {
+                    categories: await getCategories(),
+                    subcategories: await getSubcategories(),
+                    affectedAreas: await getAffectedAreas(),
+                    actionTypes: await getActionTypes(),
+                }
+                const bisActionData: CreateActionData = {
+                    title: `${originalAction.title} BIS`,
+                    description: data.closure.notes, // Description is the closure notes
+                    category: originalAction.categoryId,
+                    subcategory: originalAction.subcategoryId,
+                    affectedAreas: originalAction.affectedAreasId,
+                    assignedTo: originalAction.assignedTo,
+                    type: originalAction.typeId,
+                    responsibleGroupId: originalAction.responsibleGroupId,
+                    creator: data.closure.closureResponsible, // The closer is the creator of the new action
+                    status: 'Pendiente Análisis' // New BIS action starts ready for analysis
+                };
+                await createAction(bisActionData, allMasterData);
+            }
+        }
     }
 
     if (status) {
