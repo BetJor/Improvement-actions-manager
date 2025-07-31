@@ -3,7 +3,7 @@
 
 import { useEffect, useState } from "react"
 import { getActionById, getActionTypes, getCategories, getSubcategories, getAffectedAreas, updateAction } from "@/lib/data"
-import { notFound, useRouter } from "next/navigation"
+import { notFound, useRouter, useParams } from "next/navigation"
 import { useAuth } from "@/hooks/use-auth"
 import type { ImprovementAction } from "@/lib/types"
 import { useToast } from "@/hooks/use-toast"
@@ -13,14 +13,11 @@ import { Button } from "@/components/ui/button"
 import { FileEdit, Loader2, Microscope, ShieldCheck, Flag } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 
-interface DetailPageProps {
-  params: { id: string }
-}
-
-export default function ActionDetailPage({ params }: DetailPageProps) {
+export default function ActionDetailPage() {
   const t = useTranslations("ActionDetailPage")
   const tForm = useTranslations("NewActionPage")
   const router = useRouter()
+  const params = useParams()
   const { toast } = useToast()
   const { user } = useAuth()
   
@@ -32,8 +29,7 @@ export default function ActionDetailPage({ params }: DetailPageProps) {
 
 
   useEffect(() => {
-    // Correct way to get actionId from params in a Client Component
-    const actionId = params.id;
+    const actionId = params.id as string;
     if (!actionId) return;
 
     async function loadData() {
@@ -77,7 +73,7 @@ export default function ActionDetailPage({ params }: DetailPageProps) {
       }
     }
     loadData()
-  }, [params, toast])
+  }, [params, toast, notFound])
 
   const handleEdit = async (formData: any, status?: 'Borrador' | 'Pendiente Análisis') => {
     if (!action) return;
