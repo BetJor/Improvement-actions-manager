@@ -20,38 +20,14 @@ export default function PromptGalleryPage() {
 
     const prompts = [
         {
-            title: t("prompts.improveWriting.title"),
-            description: t("prompts.improveWriting.description"),
-            prompt: `Ets un expert en la redacció de documentació per a sistemes de gestió de qualitat (SGC). La teva tasca és millorar la claredat, precisió i professionalitat del text que et proporcionen, que descriu una no-conformitat o una àrea de millora.
-
-            Regles:
-            1.  Mantén el significat original del text. No inventis fets ni detalls que no hi siguin presents.
-            2.  Utilitza un llenguatge formal, objectiu i tècnic, propi d'un informe de SGC.
-            3.  Estructura la descripció de manera lògica: identifica clarament el problema, la seva ubicació o context, i l'evidència observada.
-            4.  Elimina ambigüitats, argot o expressions col·loquials.
-            5.  La resposta ha de ser únicament el text millorat, sense incloure cap títol, capçalera ni introducció prèvia. Ha de ser una cadena de text pla.
-            
-            Text a millorar:
-            {{{text}}}`
+            title: t("prompts.createRoadmap.title"),
+            description: t("prompts.createRoadmap.description"),
+            prompt: `Crea una pàgina de Roadmap del projecte a la ruta \`/roadmap\`. Vull que analitzis l'estat actual de l'aplicació per a determinar les fases de desenvolupament que ja estan completades i les que queden pendents. Mostra aquesta informació de manera visual, utilitzant targetes (Card) i icones per a diferenciar les tasques finalitzades (CheckCircle2) de les pendents (CircleDot). Afegeix també un enllaç a aquesta nova pàgina al menú lateral.`
         },
         {
-            title: t("prompts.analysisSuggestion.title"),
-            description: t("prompts.analysisSuggestion.description"),
-            prompt: `Ets un consultor expert en sistemes de gestió de qualitat, especialitzat en l'anàlisi de causes arrel (metodologia 5 Whys, Ishikawa, etc.) i la definició de plans d'acció eficaços.
-
-            A partir de la descripció d'una no-conformitat, has de generar una proposta estructurada en format JSON.
-            
-            El JSON ha de contenir:
-            1.  'causesAnalysis': Un text detallat que explori les possibles causes arrel del problema. Has de considerar factors com processos, persones, materials, maquinària i entorn.
-            2.  'proposedActions': Un array d'objectes, on cada objecte representa una acció correctiva específica i accionable. Cada objecte ha de tenir una única clau 'description'.
-            
-            Regles:
-            - Basa't exclusivament en la informació proporcionada a les observacions.
-            - Les accions proposades han de ser concretes, realistes i directament relacionades amb les causes identificades.
-            - El resultat ha de ser un objecte JSON vàlid, sense cap text addicional ni explicacions.
-            
-            Observacions del problema a analitzar:
-            {{{observations}}}`
+            title: t("prompts.createDashboard.title"),
+            description: t("prompts.createDashboard.description"),
+            prompt: `Crea una pàgina de Dashboard a la ruta \`/dashboard\`. La pàgina ha de mostrar un conjunt de targetes (Card) amb mètriques clau (KPIs) rellevants per a l'aplicació. Analitza les dades disponibles a \`src/lib/data.ts\` per a extreure estadístiques significatives i mostra-les amb un títol, un valor i una icona a cada targeta. A més, genera un gràfic de barres o circular que representi alguna distribució important de les dades.`
         },
     ];
 

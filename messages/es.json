@@ -279,13 +279,13 @@
       "toastDescription": "El prompt se ha copiado al portapapeles."
     },
     "prompts": {
-      "improveWriting": {
-        "title": "Mejorar la Redacción de Observaciones",
-        "description": "Este prompt refina un texto para hacerlo más formal, claro y adecuado para un sistema de gestión de calidad."
+      "createRoadmap": {
+        "title": "Crear una Página de Roadmap",
+        "description": "Genera una página de Roadmap que analiza el estado actual de la aplicación para determinar las fases completadas y pendientes."
       },
-      "analysisSuggestion": {
-        "title": "Sugerir Análisis de Causas y Acciones",
-        "description": "Dadas unas observaciones, este prompt genera un análisis de causas raíz y propone un plan de acción en formato JSON."
+      "createDashboard": {
+        "title": "Crear un Dashboard de métricas clave",
+        "description": "Analiza los datos disponibles para generar un dashboard con tarjetas de KPI y gráficos relevantes."
       }
     }
   }

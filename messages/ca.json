@@ -279,13 +279,13 @@
       "toastDescription": "El prompt s'ha copiat al porta-retalls."
     },
     "prompts": {
-      "improveWriting": {
-        "title": "Millorar la Redacció d'Observacions",
-        "description": "Aquest prompt refina un text per a fer-lo més formal, clar i adequat per a un sistema de gestió de qualitat."
+      "createRoadmap": {
+        "title": "Crear una Pàgina de Roadmap",
+        "description": "Genera una pàgina de Roadmap que analitza l'estat actual de l'aplicació per a determinar les fases completades i pendents."
       },
-      "analysisSuggestion": {
-        "title": "Suggerir Anàlisi de Causes i Accions",
-        "description": "Donades unes observacions, aquest prompt genera una anàlisi de causes arrel i proposa un pla d'acció en format JSON."
+      "createDashboard": {
+        "title": "Crear un Dashboard de mètriques clau",
+        "description": "Analitza les dades disponibles per a generar un dashboard amb targetes de KPI i gràfics rellevants."
       }
     }
   }
