@@ -1,4 +1,5 @@
 
+
 "use client"
 
 import { useEffect, useState } from "react"
@@ -9,6 +10,7 @@ import type { ImprovementAction } from "@/lib/types"
 import { useToast } from "@/hooks/use-toast"
 import { useTranslations } from "next-intl"
 import { ActionForm } from "@/components/action-form"
+import { AnalysisSection } from "@/components/analysis-section"
 import { Button } from "@/components/ui/button"
 import { FileEdit, Loader2, Microscope, ShieldCheck, Flag } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -73,7 +75,7 @@ export default function ActionDetailPage() {
       }
     }
     loadData()
-  }, [params, toast, notFound])
+  }, [params.id, toast, notFound])
 
   const handleEdit = async (formData: any, status?: 'Borrador' | 'Pendiente Análisis') => {
     if (!action) return;
@@ -105,6 +107,36 @@ export default function ActionDetailPage() {
     }
   }
 
+  const handleSaveAnalysis = async (analysisData: any) => {
+    if (!action) return;
+    setIsSubmitting(true);
+    try {
+      await updateAction(action.id, {
+        analysis: analysisData,
+        status: "Pendiente Comprobación", // Move to next state
+      });
+
+      toast({
+        title: "Anàlisi desada",
+        description: "El pla d'acció s'ha desat correctament.",
+      });
+
+      // Refresh data
+      const updatedAction = await getActionById(action.id);
+      setAction(updatedAction);
+
+    } catch (error) {
+      console.error("Error saving analysis:", error);
+      toast({
+          variant: "destructive",
+          title: "Error en desar",
+          description: "No s'ha pogut desar l'anàlisi.",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
   const getActionButtons = (status: string) => {
     if (isEditing) return null; // No show buttons in edit mode
 
@@ -112,7 +144,8 @@ export default function ActionDetailPage() {
       case "Borrador":
         return <Button onClick={() => setIsEditing(true)}><FileEdit className="mr-2 h-4 w-4" /> {t("editDraft")}</Button>
       case "Pendiente Análisis":
-        return <Button><Microscope className="mr-2 h-4 w-4" /> {t("performAnalysis")}</Button>
+        // The button is inside the AnalysisSection component now
+        return null; 
       case "Pendiente Comprobación":
         return <Button><ShieldCheck className="mr-2 h-4 w-4" /> {t("verifyImplementation")}</Button>
       case "Pendiente de Cierre":
@@ -153,7 +186,14 @@ export default function ActionDetailPage() {
             t={tForm}
         />
 
-        {/* TODO: We can add other info cards here later, like workflow, analysis, etc. */}
+        {action.status === 'Pendiente Análisis' && user && (
+            <AnalysisSection
+              action={action}
+              user={user}
+              isSubmitting={isSubmitting}
+              onSave={handleSaveAnalysis}
+            />
+        )}
     </div>
   )
 }

@@ -1,4 +1,5 @@
 
+
 import type { ImprovementAction, User, UserGroup, ImprovementActionType, ActionUserInfo, ActionCategory, ActionSubcategory, AffectedArea, MasterDataItem, WorkflowPlan } from './types';
 import { subDays, format, addDays } from 'date-fns';
 import { db } from './firebase';
@@ -133,7 +134,15 @@ export const getActionById = async (id: string): Promise<ImprovementAction | nul
     
         if (actionDocSnap.exists()) {
             const data = actionDocSnap.data();
-            // The user-facing ID is now in actionId, the firestore ID is id
+
+            // Convertir Timestamps de Firestore a Date per al camp analysis
+            if (data.analysis && data.analysis.proposedActions) {
+                data.analysis.proposedActions = data.analysis.proposedActions.map((pa: any) => ({
+                    ...pa,
+                    dueDate: pa.dueDate.toDate(), // Converteix Timestamp a Date
+                }));
+            }
+
             return { ...data, id: actionDocSnap.id } as ImprovementAction;
         } else {
             console.warn(`Action with Firestore ID ${id} not found.`);
@@ -240,29 +249,31 @@ export async function createAction(data: CreateActionData, masterData: any): Pro
 
 
 // Function to update an existing action
-export async function updateAction(actionId: string, data: any, masterData: any, status?: 'Borrador' | 'Pendiente Análisis'): Promise<void> {
+export async function updateAction(actionId: string, data: any, masterData?: any, status?: 'Borrador' | 'Pendiente Análisis'): Promise<void> {
     const actionDocRef = doc(db, 'actions', actionId);
     
-    // Find names from IDs
-    const categoryName = masterData.categories.find((c: any) => c.id === data.category)?.name || data.category;
-    const subcategoryName = masterData.subcategories.find((s: any) => s.id === data.subcategory)?.name || data.subcategory;
-    const affectedAreaName = masterData.affectedAreas.find((a: any) => a.id === data.affectedAreas)?.name || data.affectedAreas;
-    const typeName = masterData.actionTypes.find((t: any) => t.id === data.type)?.name || data.type;
+    let dataToUpdate: any = {};
 
-    const dataToUpdate: any = {
-        title: data.title,
-        description: data.description,
-        assignedTo: data.assignedTo,
-        responsibleGroupId: data.responsibleGroupId,
-        category: categoryName,
-        categoryId: data.category,
-        subcategory: subcategoryName,
-        subcategoryId: data.subcategory,
-        affectedAreas: affectedAreaName,
-        affectedAreasId: data.affectedAreas,
-        type: typeName,
-        typeId: data.type,
-    };
+    if (masterData) {
+        // Find names from IDs if masterData is provided (for draft editing)
+        dataToUpdate = {
+            title: data.title,
+            description: data.description,
+            assignedTo: data.assignedTo,
+            responsibleGroupId: data.responsibleGroupId,
+            category: masterData.categories.find((c: any) => c.id === data.category)?.name || data.category,
+            categoryId: data.category,
+            subcategory: masterData.subcategories.find((s: any) => s.id === data.subcategory)?.name || data.subcategory,
+            subcategoryId: data.subcategory,
+            affectedAreas: masterData.affectedAreas.find((a: any) => a.id === data.affectedAreas)?.name || data.affectedAreas,
+            affectedAreasId: data.affectedAreas,
+            type: masterData.actionTypes.find((t: any) => t.id === data.type)?.name || data.type,
+            typeId: data.type,
+        };
+    } else {
+        // If no masterData, we are likely updating other fields like analysis
+        dataToUpdate = { ...data };
+    }
 
     if (status) {
         dataToUpdate.status = status;
@@ -308,3 +319,4 @@ export async function updatePrompt(promptId: PromptId, newPrompt: string): Promi
     const docRef = doc(db, 'app_settings', 'prompts');
     await setDoc(docRef, { [promptId]: newPrompt }, { merge: true });
 }
+

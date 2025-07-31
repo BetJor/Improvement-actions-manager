@@ -53,6 +53,12 @@ export interface WorkflowPlan {
   steps: WorkflowStep[];
 }
 
+export interface ProposedAction {
+  id: string;
+  description: string;
+  responsibleUserId: string;
+  dueDate: Date | string; // Acceptem string per a la inicialització des de Firestore
+}
 
 export interface ImprovementAction {
   id: string; // Firestore document ID
@@ -85,9 +91,10 @@ export interface ImprovementAction {
   // Optional detailed sections
   analysis?: {
     causes: string;
-    proposedAction: string;
-    responsible: ActionUserInfo;
-    date: string;
+    proposedActions: ProposedAction[];
+    verificationResponsibleUserId: string;
+    analysisResponsible: ActionUserInfo;
+    analysisDate: string;
   };
   verification?: {
     notes: string;
@@ -101,3 +108,4 @@ export interface ImprovementAction {
   };
   workflowPlan?: WorkflowPlan;
 };
+

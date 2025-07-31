@@ -1,4 +1,5 @@
 
+
 {
   "Header": {
     "title": "Accions de Millora",
@@ -128,7 +129,30 @@
     },
     "editingTitle": "Editant Acció de Millora",
     "editingDescription": "Estàs modificant els detalls d'aquesta acció. Desa els canvis quan hagis acabat.",
-    "viewingDescription": "Visualitzant els detalls de l'acció. Per a modificar, fes clic a 'Editar'."
+    "viewingDescription": "Visualitzant els detalls de l'acció. Per a modificar, fes clic a 'Editar'.",
+    "analysis": {
+      "title": "Anàlisi de Causes i Pla d'Acció",
+      "description": "Realitza l'anàlisi de les causes arrel i defineix les accions a emprendre.",
+      "causes": {
+        "label": "Anàlisi de les Causes",
+        "placeholder": "Descriu l'anàlisi realitzat per a identificar les causes arrel del problema..."
+      },
+      "proposedActions": {
+        "title": "Accions Proposades",
+        "description": "Descripció de l'acció",
+        "descriptionPlaceholder": "p. ex., Revisar i actualitzar el procediment P-01",
+        "responsible": "Responsable",
+        "responsiblePlaceholder": "Selecciona un usuari",
+        "dueDate": "Data Venciment",
+        "dueDatePlaceholder": "Selecciona una data",
+        "add": "Afegir Acció"
+      },
+      "verificationResponsible": {
+        "label": "Responsable de la Verificació",
+        "placeholder": "Selecciona l'usuari que verificarà l'eficàcia"
+      },
+      "saveButton": "Desar Anàlisi i Avançar"
+    }
   },
   "RootLayout": {
     "title": "Gestor d'Accions de Millora",
@@ -266,3 +290,4 @@
     }
   }
 }
+
