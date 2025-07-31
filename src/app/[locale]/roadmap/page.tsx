@@ -41,7 +41,8 @@ import {
             "Crear la pàgina per a veure, filtrar i ordenar les accions de millora.",
             "Desenvolupar el formulari per a crear noves accions de millora.",
             "Implementar la pàgina de detall per a cada acció de millora.",
-            "Implementar formularis d'Anàlisi i Verificació per interactuar amb el workflow."
+            "Implementar formularis d'Anàlisi i Verificació per interactuar amb el workflow.",
+            "Implementar sistema de comentaris en les accions."
           ],
           pending_tasks: [
             "Pendent: Implementar la pujada de fitxers adjunts (integració amb Firebase Storage)."
@@ -86,22 +87,13 @@ import {
         },
         {
           key: "phase7",
-          title: "Fase 7: Internacionalització",
-          duration: "Estimat: 1 dia",
+          title: "Fase 7: Subscripcions i Notificacions",
+          duration: "Estimat: 3-4 dies",
           completed_tasks: [],
           pending_tasks: [
-            "Pendent: Traduir totes les cadenes de text de l'aplicació al castellà (`messages/es.json`)."
+            "Pendent: Implementar un sistema de subscripció a les accions de millora.",
+            "Pendent: Configurar l'enviament de notificacions (p. ex., per email) quan hi hagi actualitzacions rellevants (nous comentaris, canvis d'estat)."
           ]
-        },
-        {
-            key: "phase8",
-            title: "Fase 8: Subscripcions i Notificacions",
-            duration: "Estimat: 3-4 dies",
-            completed_tasks: [],
-            pending_tasks: [
-              "Pendent: Implementar un sistema de subscripció a les accions de millora.",
-              "Pendent: Configurar l'enviament de notificacions (p. ex., per email) quan hi hagi actualitzacions rellevants (nous comentaris, canvis d'estat)."
-            ]
         }
     ];
 
