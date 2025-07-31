@@ -271,8 +271,8 @@ export default function PromptGalleryPage() {
                                 </TableRow>
                             ) : prompts.length > 0 ? (
                                 prompts.map((p) => (
-                                    <Collapsible asChild key={p.id}>
-                                        <>
+                                    <Collapsible key={p.id} asChild>
+                                        <Fragment>
                                             <TableRow>
                                                 <TableCell>
                                                      <CollapsibleTrigger asChild>
@@ -329,7 +329,7 @@ export default function PromptGalleryPage() {
                                                     </TableCell>
                                                 </TableRow>
                                             </CollapsibleContent>
-                                        </>
+                                        </Fragment>
                                     </Collapsible>
                                 ))
                             ) : (
