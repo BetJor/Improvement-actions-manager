@@ -22,10 +22,10 @@ export default async function RootLayout({
       <body className={inter.className}>
         <NextIntlClientProvider locale={locale} messages={messages}>
           <AuthProvider>
-            <ProtectedLayout>
-              {children}
-            </ProtectedLayout>
-            <Toaster />
+              <ProtectedLayout>
+                {children}
+              </ProtectedLayout>
+              <Toaster />
           </AuthProvider>
         </NextIntlClientProvider>
       </body>

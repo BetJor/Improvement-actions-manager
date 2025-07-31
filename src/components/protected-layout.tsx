@@ -9,8 +9,7 @@ import { AppSidebar } from "@/components/app-sidebar";
 import { Header } from "@/components/header";
 import { useLocale, useTranslations } from "next-intl";
 import { SidebarProvider } from "@/components/ui/sidebar";
-import { DynamicTabs } from "./dynamic-tabs";
-import { TabsProvider } from "@/hooks/use-tabs";
+
 
 export function ProtectedLayout({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -39,15 +38,15 @@ export function ProtectedLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <SidebarProvider>
-        <TabsProvider>
-            <div className="flex h-full w-full">
-                <AppSidebar t={tSidebar} />
-                <div className="flex flex-1 flex-col overflow-y-auto">
-                    <Header />
-                    <DynamicTabs initialContent={children}/>
-                </div>
+        <div className="flex h-full w-full">
+            <AppSidebar t={tSidebar} />
+            <div className="flex flex-1 flex-col overflow-y-auto">
+                <Header />
+                 <main className="flex-1 space-y-4 p-4 lg:p-6 bg-background/60 overflow-y-auto">
+                    {children}
+                </main>
             </div>
-        </TabsProvider>
+        </div>
     </SidebarProvider>
   );
 }

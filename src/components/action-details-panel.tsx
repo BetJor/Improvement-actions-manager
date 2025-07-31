@@ -26,8 +26,6 @@ import { useState, useEffect, useRef } from "react"
 import type { ActionComment, ActionAttachment } from "@/lib/types"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
-import { useTabs, MockRouterProvider } from "@/hooks/use-tabs"
-import ActionDetailPage from "@/app/[locale]/actions/[id]/page"
 import { useParams } from "next/navigation"
 
 
@@ -62,8 +60,7 @@ export function ActionDetailsPanel({ action, onActionUpdate }: ActionDetailsPane
   const t = useTranslations("ActionDetailPage")
   const { user } = useAuth()
   const { toast } = useToast()
-  const { addTab } = useTabs();
-  const currentParams = useParams();
+  const params = useParams();
   
   const [newComment, setNewComment] = useState("");
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
@@ -148,23 +145,6 @@ export function ActionDetailsPanel({ action, onActionUpdate }: ActionDetailsPane
     }
   };
   
-  const handleOpenOriginalAction = (e: React.MouseEvent) => {
-    e.preventDefault();
-    if (action.originalActionId && action.originalActionTitle) {
-      addTab({
-        id: action.originalActionId,
-        title: action.originalActionTitle,
-        href: `/actions/${action.originalActionId}`,
-        isClosable: true,
-        content: (
-            <MockRouterProvider params={{ locale: currentParams.locale, id: action.originalActionId }}>
-                <ActionDetailPage />
-            </MockRouterProvider>
-        ),
-      });
-    }
-  };
-  
   return (
     <div className="flex flex-col gap-6">
         
@@ -180,10 +160,10 @@ export function ActionDetailsPanel({ action, onActionUpdate }: ActionDetailsPane
               <p className="text-sm text-muted-foreground">Aquesta acció es va crear a partir del tancament no conforme de l'acció:</p>
               <p className="font-semibold">{action.originalActionTitle}</p>
               <Button asChild variant="outline" size="sm" className="w-full">
-                <a href={`/actions/${action.originalActionId}`} onClick={handleOpenOriginalAction}>
+                <Link href={`/${params.locale}/actions/${action.originalActionId}`}>
                   <ExternalLink className="mr-2 h-4 w-4" />
                   Veure Acció Original
-                </a>
+                </Link>
               </Button>
             </CardContent>
           </Card>

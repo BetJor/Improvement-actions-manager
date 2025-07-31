@@ -22,8 +22,7 @@ import { ActionStatusBadge } from "./action-status-badge"
 import type { ImprovementAction, ImprovementActionStatus, ImprovementActionType } from "@/lib/types"
 import { ArrowUpDown, ChevronDown } from "lucide-react"
 import { useTranslations } from "next-intl"
-import { useTabs, MockRouterProvider } from "@/hooks/use-tabs"
-import ActionDetailPage from "@/app/[locale]/actions/[id]/page"
+import Link from "next/link"
 import { useParams } from "next/navigation"
 
 interface ActionsTableProps {
@@ -34,8 +33,8 @@ type SortKey = keyof ImprovementAction | 'responsible'
 
 export function ActionsTable({ actions }: ActionsTableProps) {
   const t = useTranslations("ActionsTable")
-  const { addTab } = useTabs();
-  const currentParams = useParams();
+  const params = useParams()
+  const locale = params.locale
 
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState<Set<ImprovementActionStatus>>(new Set())
@@ -101,20 +100,6 @@ export function ActionsTable({ actions }: ActionsTableProps) {
     return sortConfig.direction === 'asc' ? 
         <ArrowUpDown className="ml-2 h-4 w-4" /> : 
         <ArrowUpDown className="ml-2 h-4 w-4" />; // Could use different icons for asc/desc
-  };
-
-  const handleOpenAction = (action: ImprovementAction) => {
-    addTab({
-      id: action.id,
-      title: action.actionId,
-      href: `/${currentParams.locale}/actions/${action.id}`,
-      isClosable: true,
-      content: (
-        <MockRouterProvider params={{ locale: currentParams.locale, id: action.id }}>
-          <ActionDetailPage />
-        </MockRouterProvider>
-      ),
-    });
   };
 
   return (
@@ -194,8 +179,8 @@ export function ActionsTable({ actions }: ActionsTableProps) {
               filteredAndSortedActions.map(action => (
                 <TableRow key={action.id}>
                   <TableCell className="font-medium">
-                    <Button variant="link" onClick={() => handleOpenAction(action)} className="p-0 h-auto">
-                        {action.actionId}
+                     <Button variant="link" asChild className="p-0 h-auto">
+                        <Link href={`/${locale}/actions/${action.id}`}>{action.actionId}</Link>
                     </Button>
                   </TableCell>
                   <TableCell>{action.title}</TableCell>

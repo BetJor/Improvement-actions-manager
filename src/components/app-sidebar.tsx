@@ -14,71 +14,24 @@ import {
   SidebarSeparator,
 } from "@/components/ui/sidebar"
 import { GanttChartSquare } from "lucide-react"
-import { useTabs, MockRouterProvider } from "@/hooks/use-tabs"
-import ActionsPage from "@/app/[locale]/actions/page"
-import SettingsPage from "@/app/[locale]/settings/page"
-import AiSettingsPage from "@/app/[locale]/ai-settings/page"
-import PromptGalleryPage from "@/app/[locale]/prompt-gallery/page"
-import RoadmapPage from "@/app/[locale]/roadmap/page"
 import { useAuth } from "@/hooks/use-auth"
 
 
-const pageComponents: { [key: string]: React.ComponentType | { component: React.ComponentType, params?: any } } = {
-    '/actions': ActionsPage,
-    '/settings': SettingsPage,
-    '/ai-settings': AiSettingsPage,
-    '/prompt-gallery': PromptGalleryPage,
-    '/roadmap': RoadmapPage,
-};
-
-
 function SidebarNavLink({ href, icon: Icon, label }: { href: string; icon: React.ElementType; label: string }) {
-  const { addTab, activeTab, setActiveTab } = useTabs();
-  const currentParams = useParams();
-
-  const isActive = () => {
-    return activeTab?.id === href;
-  };
-  
-  const handleClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    
-    if (href.endsWith('/dashboard')) {
-        setActiveTab("dashboard");
-        return;
-    }
-    
-    const pageKey = href.replace(`/${currentParams.locale}`, '');
-    const pageInfo = pageComponents[pageKey];
-
-    if (pageInfo) {
-      const PageComponent = 'component' in pageInfo ? pageInfo.component : pageInfo;
-      const params = 'component' in pageInfo ? pageInfo.params : {};
-      
-      addTab({
-        id: href, 
-        title: label,
-        href: href,
-        isClosable: true,
-        content: (
-          <MockRouterProvider params={{ locale: currentParams.locale, ...params }}>
-            <PageComponent />
-          </MockRouterProvider>
-        ),
-      });
-    }
-  };
+  const pathname = usePathname();
+  const isActive = pathname === href;
 
   return (
     <SidebarMenuItem>
-      <SidebarMenuButton
-        isActive={isActive()}
-        tooltip={{ children: label }}
-        onClick={handleClick}
-      >
-        <Icon />
-        <span>{label}</span>
-      </SidebarMenuButton>
+        <Link href={href} legacyBehavior passHref>
+            <SidebarMenuButton
+                isActive={isActive}
+                tooltip={{ children: label }}
+            >
+                <Icon />
+                <span>{label}</span>
+            </SidebarMenuButton>
+        </Link>
     </SidebarMenuItem>
   );
 }
@@ -86,9 +39,9 @@ function SidebarNavLink({ href, icon: Icon, label }: { href: string; icon: React
 
 export function AppSidebar({ t }: { t: any }) {
   const locale = useParams().locale;
-  const { user } = useAuth(); // Ensure user context is available if needed for links
+  const { user } = useAuth(); 
 
-  if (!user) return null; // Or a loading state
+  if (!user) return null;
 
   const navItems = [
     { href: `/${locale}/dashboard`, icon: Home, label: t("dashboard") },
