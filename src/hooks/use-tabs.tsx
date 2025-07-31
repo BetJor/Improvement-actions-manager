@@ -52,28 +52,34 @@ export function TabsProvider({ children, initialContent, initialPath }: { childr
     };
 
     const closeTab = (tabId: string) => {
-        const tabToCloseIndex = tabs.findIndex(t => t.id === tabId);
-        if (tabToCloseIndex === -1 || !tabs[tabToCloseIndex].isClosable) return;
-        
-        let newActiveTabId: string | null = null;
-        if (activeTab === tabId) {
-            const newActiveTab = tabs[tabToCloseIndex - 1] || tabs[tabToCloseIndex + 1] || null;
-            newActiveTabId = newActiveTab ? newActiveTab.id : null;
+        const tabToCloseIndex = tabs.findIndex((tab) => tab.id === tabId);
+        if (tabToCloseIndex === -1 || !tabs[tabToCloseIndex].isClosable) {
+            return; // No es pot tancar o no s'ha trobat
         }
-
-        const newTabs = tabs.filter(t => t.id !== tabId);
+    
+        // Si la pestanya que es tanca és l'activa, determina quina serà la propera pestanya activa
+        let nextActiveTabPath: string | null = null;
+        if (activeTab === tabId) {
+            const newActiveTab = tabs[tabToCloseIndex - 1] || tabs[tabToCloseIndex + 1];
+            if (newActiveTab) {
+                nextActiveTabPath = newActiveTab.path;
+            } else if (tabs.length > 1) {
+                // fallback a la primera pestanya si alguna cosa va malament
+                nextActiveTabPath = tabs[0].path;
+            }
+        }
+    
+        // Actualitza la llista de pestanyes
+        const newTabs = tabs.filter((tab) => tab.id !== tabId);
         setTabs(newTabs);
-
-        if (newActiveTabId) {
-            setActiveTab(newActiveTabId);
-        } else if (newTabs.length > 0 && !newTabs.find(t => t.id === activeTab)) {
-            // If the active tab was closed and there's no new active tab logic, default to the last one
-            setActiveTab(newTabs[newTabs.length - 1].id);
+    
+        // Si hem tancat la pestanya activa i n'hi ha una de nova, navega a ella
+        if (nextActiveTabPath) {
+            router.push(nextActiveTabPath);
         } else if (newTabs.length === 0) {
             router.push('/');
         }
     };
-
 
     const value = useMemo(() => ({
         tabs,
