@@ -31,17 +31,16 @@ function MockRouterProvider({ children, params }: { children: React.ReactNode, p
         return null;
     }
     
+    // We only need to override the `params` from the LayoutRouterContext
     const mockLayoutRouter = {
         ...layoutRouter,
-        childNodes: new Map(layoutRouter.childNodes),
-        tree: [...layoutRouter.tree],
-        url: `/actions/${params.id}`,
+        params: params,
     };
 
     return (
         <AppRouterContext.Provider value={router}>
             <GlobalLayoutRouterContext.Provider value={globalLayoutRouter}>
-                 <LayoutRouterContext.Provider value={{...mockLayoutRouter, params: params}}>
+                 <LayoutRouterContext.Provider value={mockLayoutRouter}>
                     {children}
                 </LayoutRouterContext.Provider>
             </GlobalLayoutRouterContext.Provider>
