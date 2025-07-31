@@ -15,13 +15,12 @@ import {
   SidebarSeparator,
 } from "@/components/ui/sidebar"
 import { GanttChartSquare } from "lucide-react"
-import { useTabs } from "@/hooks/use-tabs"
+import { useTabs, MockRouterProvider } from "@/hooks/use-tabs"
 import ActionsPage from "@/app/[locale]/actions/page"
 import SettingsPage from "@/app/[locale]/settings/page"
 import AiSettingsPage from "@/app/[locale]/ai-settings/page"
 import PromptGalleryPage from "@/app/[locale]/prompt-gallery/page"
 import RoadmapPage from "@/app/[locale]/roadmap/page"
-import { MockRouterProvider } from "@/hooks/use-tabs"
 
 const pageComponents: { [key: string]: React.ComponentType } = {
   '/actions': ActionsPage,
@@ -31,23 +30,20 @@ const pageComponents: { [key: string]: React.ComponentType } = {
   '/roadmap': RoadmapPage,
 };
 
-
-function SidebarNavLink({ href, icon: Icon, label, t }: { href: string; icon: React.ElementType; label: string, t: any }) {
+function SidebarNavLink({ href, icon: Icon, label }: { href: string; icon: React.ElementType; label: string }) {
   const { addTab, activeTab, setActiveTab } = useTabs();
   const pathname = usePathname();
 
-  const isActive = (href: string) => {
-    const baseHref = href.split('/').slice(2).join('/'); // Remove locale
-    const activeHref = activeTab?.href.split('/').slice(2).join('/');
-    
-    if (baseHref === 'dashboard') return activeHref === 'dashboard';
-    
-    // For nested routes like /actions/[id]
-    return activeHref?.startsWith(baseHref);
+  const isActive = () => {
+    if (href.endsWith("/dashboard")) {
+        return activeTab?.id === 'dashboard';
+    }
+    return activeTab?.id === href;
   };
 
   const handleClick = (e: React.MouseEvent) => {
     e.preventDefault();
+    
     if (href.endsWith("/dashboard")) {
         setActiveTab("dashboard");
         return;
@@ -56,7 +52,7 @@ function SidebarNavLink({ href, icon: Icon, label, t }: { href: string; icon: Re
     const PageComponent = pageComponents[href.substring(3)]; // remove locale
     if (PageComponent) {
       addTab({
-        id: href, // Use href as a unique ID for these static pages
+        id: href, 
         title: label,
         href: href,
         isClosable: true,
@@ -71,17 +67,16 @@ function SidebarNavLink({ href, icon: Icon, label, t }: { href: string; icon: Re
 
   return (
     <SidebarMenuItem>
-      <SidebarMenuButton
-        asChild
-        isActive={isActive(href)}
-        tooltip={{ children: label }}
-        onClick={handleClick}
-      >
-        <Link href={href}>
-          <Icon />
-          <span>{label}</span>
+        <Link href={href} passHref legacyBehavior>
+            <SidebarMenuButton
+                isActive={isActive()}
+                tooltip={{ children: label }}
+                onClick={handleClick}
+            >
+                <Icon />
+                <span>{label}</span>
+            </SidebarMenuButton>
         </Link>
-      </SidebarMenuButton>
     </SidebarMenuItem>
   );
 }
@@ -121,15 +116,15 @@ export function AppSidebar() {
         <SidebarContent>
             <SidebarMenu>
             {navItems.map((item) => (
-                <SidebarNavLink key={item.href} {...item} t={t} />
+                <SidebarNavLink key={item.href} {...item} />
             ))}
             <SidebarSeparator />
             {settingsNavItems.map((item) => (
-                <SidebarNavLink key={item.href} {...item} t={t} />
+                <SidebarNavLink key={item.href} {...item} />
             ))}
             <SidebarSeparator />
             {galleryNavItems.map((item) => (
-                <SidebarNavLink key={item.href} {...item} t={t} />
+                <SidebarNavLink key={item.href} {...item} />
             ))}
             </SidebarMenu>
         </SidebarContent>
