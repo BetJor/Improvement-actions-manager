@@ -319,6 +319,30 @@
         "title": "Replicar el Layout de la Aplicación",
         "description": "Genera la estructura básica del layout, incluyendo la barra lateral, la cabecera y la disposición general del contenido."
       }
+    },
+    "executionOrder": {
+        "title": "Orden de Ejecución Recomendado",
+        "description": "Para construir una aplicación de forma eficiente, te recomendamos ejecutar los prompts en la siguiente secuencia:",
+        "steps": {
+            "layout": {
+                "title": "1. Replicar el Layout de la Aplicación",
+                "description": "Establece el esqueleto visual y la estructura base (menú lateral, cabecera). Es el prerrequisito para todo lo demás."
+            },
+            "i18n": {
+                "title": "2. Integrar Soporte Multilenguaje",
+                "description": "Configura las rutas y traducciones al principio para evitar tener que refactorizar todos los enlaces más adelante."
+            },
+            "auth": {
+                "title": "3. Integrar Login con Google",
+                "description": "Añade la gestión de usuarios y protege las rutas para asegurar que solo los usuarios autenticados accedan a la aplicación."
+            },
+            "roadmap": {
+                "title": "4. Crear Página de Roadmap",
+                "description": "Una vez la estructura y la seguridad están listas, puedes empezar a añadir las páginas de contenido."
+            }
+        }
     }
   }
 }
+
+    

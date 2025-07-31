@@ -4,7 +4,9 @@
 import {
   Card,
   CardContent,
+  CardDescription,
   CardHeader,
+  CardTitle,
 } from "@/components/ui/card"
 import {
     Table,
@@ -16,7 +18,7 @@ import {
   } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import { useTranslations } from "next-intl"
-import { Copy, Loader2, Pencil, PlusCircle, Trash2, ChevronDown } from "lucide-react"
+import { Copy, Loader2, Pencil, PlusCircle, Trash2, ChevronDown, CheckCircle2 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { Fragment, useEffect, useState } from "react"
 import { getGalleryPrompts, addGalleryPrompt, updateGalleryPrompt, deleteGalleryPrompt } from "@/lib/data"
@@ -202,6 +204,45 @@ export default function PromptGalleryPage() {
                 <h1 className="text-3xl font-bold tracking-tight">{t("title")}</h1>
                 <p className="text-muted-foreground mt-1">{t("description")}</p>
             </div>
+
+            <Card>
+                <CardHeader>
+                    <CardTitle>{t("executionOrder.title")}</CardTitle>
+                    <CardDescription>{t("executionOrder.description")}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <ol className="space-y-4">
+                        <li className="flex items-start gap-4">
+                           <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground font-bold shrink-0">1</div>
+                           <div>
+                                <h4 className="font-semibold">{t("executionOrder.steps.layout.title")}</h4>
+                                <p className="text-sm text-muted-foreground">{t("executionOrder.steps.layout.description")}</p>
+                           </div>
+                        </li>
+                         <li className="flex items-start gap-4">
+                           <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground font-bold shrink-0">2</div>
+                           <div>
+                                <h4 className="font-semibold">{t("executionOrder.steps.i18n.title")}</h4>
+                                <p className="text-sm text-muted-foreground">{t("executionOrder.steps.i18n.description")}</p>
+                           </div>
+                        </li>
+                        <li className="flex items-start gap-4">
+                           <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground font-bold shrink-0">3</div>
+                           <div>
+                                <h4 className="font-semibold">{t("executionOrder.steps.auth.title")}</h4>
+                                <p className="text-sm text-muted-foreground">{t("executionOrder.steps.auth.description")}</p>
+                           </div>
+                        </li>
+                        <li className="flex items-start gap-4">
+                           <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground font-bold shrink-0">4</div>
+                           <div>
+                                <h4 className="font-semibold">{t("executionOrder.steps.roadmap.title")}</h4>
+                                <p className="text-sm text-muted-foreground">{t("executionOrder.steps.roadmap.description")}</p>
+                           </div>
+                        </li>
+                    </ol>
+                </CardContent>
+            </Card>
             
             <Card>
                 <CardHeader>
@@ -315,3 +356,5 @@ export default function PromptGalleryPage() {
         </div>
     )
 }
+
+    

@@ -319,6 +319,30 @@
         "title": "Replicar el Layout de l'Aplicació",
         "description": "Genera l'estructura bàsica del layout, incloent-hi la barra lateral, la capçalera i la disposició general del contingut."
       }
+    },
+    "executionOrder": {
+        "title": "Ordre d'Execució Recomanat",
+        "description": "Per a construir una aplicació de manera eficient, et recomanem executar els prompts en la següent seqüència:",
+        "steps": {
+            "layout": {
+                "title": "1. Replicar el Layout de l'Aplicació",
+                "description": "Estableix l'esquelet visual i l'estructura base (menú lateral, capçalera). És el prerequisit per a tota la resta."
+            },
+            "i18n": {
+                "title": "2. Integrar Suport Multillenguatge",
+                "description": "Configura les rutes i traduccions al principi per a evitar haver de refactoritzar tots els enllaços més endavant."
+            },
+            "auth": {
+                "title": "3. Integrar Login amb Google",
+                "description": "Afegeix la gestió d'usuaris i protegeix les rutes per a assegurar que només els usuaris autenticats accedeixin a l'aplicació."
+            },
+            "roadmap": {
+                "title": "4. Crear Pàgina de Roadmap",
+                "description": "Un cop l'estructura i la seguretat estan llestes, pots començar a afegir les pàgines de contingut."
+            }
+        }
     }
   }
 }
+
+    
