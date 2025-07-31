@@ -1,4 +1,3 @@
-
 "use client"
 
 import type { ImprovementAction, User } from "@/lib/types"
@@ -24,6 +23,7 @@ import { updateAction, getActionById } from "@/lib/data"
 import { useToast } from "@/hooks/use-toast"
 import { useState, useEffect } from "react"
 import type { ActionComment } from "@/lib/types"
+import { Badge } from "@/components/ui/badge"
 
 
 interface DetailRowProps {
@@ -155,10 +155,13 @@ export function ActionDetailsPanel({ action, onActionUpdate }: ActionDetailsPane
                 <AccordionItem value="item-1" className="border-b-0">
                      <CardHeader className="p-4">
                         <AccordionTrigger className="p-0">
-                            <CardTitle className="flex items-center gap-2 text-base">
-                               <MessageSquare className="h-5 w-5" />
-                               {t('comments.title')}
-                            </CardTitle>
+                            <div className="flex justify-between items-center w-full">
+                               <CardTitle className="flex items-center gap-2 text-base">
+                                   <MessageSquare className="h-5 w-5" />
+                                   {t('comments.title')}
+                               </CardTitle>
+                               <Badge variant="secondary">{(action.comments || []).length}</Badge>
+                           </div>
                         </AccordionTrigger>
                     </CardHeader>
                     <AccordionContent>
@@ -210,10 +213,13 @@ export function ActionDetailsPanel({ action, onActionUpdate }: ActionDetailsPane
                 <AccordionItem value="item-1" className="border-b-0">
                      <CardHeader className="p-4">
                         <AccordionTrigger className="p-0">
-                            <CardTitle className="flex items-center gap-2 text-base">
-                                <Paperclip className="h-5 w-5" />
-                                {t('attachments.title')}
-                            </CardTitle>
+                            <div className="flex justify-between items-center w-full">
+                                <CardTitle className="flex items-center gap-2 text-base">
+                                    <Paperclip className="h-5 w-5" />
+                                    {t('attachments.title')}
+                                </CardTitle>
+                                <Badge variant="secondary">{(action.attachments || []).length}</Badge>
+                            </div>
                         </AccordionTrigger>
                     </CardHeader>
                      <AccordionContent>
