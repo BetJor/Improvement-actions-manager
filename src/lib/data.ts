@@ -301,47 +301,9 @@ export async function updatePrompt(promptId: PromptId, newPrompt: string): Promi
 }
 
 // --- CRUD for Prompt Gallery ---
-const initialGalleryPrompts: Omit<GalleryPrompt, "id">[] = [
-    {
-      title: "Crear una Pàgina de Roadmap",
-      description: "Genera una pàgina de Roadmap que analitza l'estat actual de l'aplicació per a determinar les fases completades i pendents.",
-      prompt: "Crea una pàgina de Roadmap del projecte a la ruta `/roadmap`. Vull que analitzis l'estat actual de l'aplicació per a determinar les fases de desenvolupament que ja estan completades i les que queden pendents. Mostra aquesta informació de manera visual, utilitzant targetes (`Card`) i icones per a diferenciar les tasques finalitzades (`CheckCircle2`) de les pendents (`CircleDot`). Afegeix també un enllaç a aquesta nova pàgina al menú lateral."
-    },
-    {
-      title: "Crear un Dashboard de mètriques clau",
-      description: "Analitza les dades disponibles per a generar un dashboard amb targetes de KPI i gràfics rellevants.",
-      prompt: "Crea un Dashboard a la ruta `/dashboard`. Analitza les dades i els models de dades disponibles en aquest projecte per a identificar les mètriques clau. Genera un dashboard que mostri aquestes mètriques en targetes de KPI a la part superior. A sota, inclou com a mínim dos gràfics (de barres, circulars o de línia) que visualitzin distribucions o tendències rellevants de les dades. Assegura't que la pàgina sigui visualment atractiva i fàcil d'entendre."
-    },
-    {
-      title: "Integrar Login amb Google",
-      description: "Genera tota la funcionalitat d'autenticació d'usuaris amb Firebase, incloent-hi rutes protegides i la pàgina de login.",
-      prompt: "Integra l'autenticació d'usuaris amb Firebase utilitzant el proveïdor de Google. Has de crear la pàgina de login a la ruta `/login`, que ha de contenir un únic botó per a iniciar sessió amb Google. Totes les rutes de l'aplicació, excepte la de login, han de ser protegides, redirigint els usuaris no autenticats a la pàgina de login. Un cop l'usuari inicia sessió correctament, ha de ser redirigit a la pàgina principal (`/dashboard`). També has d'implementar la funcionalitat de logout al menú d'usuari de la capçalera."
-    }
-];
-
-async function seedGalleryPrompts() {
-    const collectionRef = collection(db, 'prompt_gallery');
-    const batch = writeBatch(db);
-    initialGalleryPrompts.forEach(prompt => {
-        const docRef = doc(collectionRef); // Create a new doc with a random ID
-        batch.set(docRef, prompt);
-    });
-    await batch.commit();
-}
-
-
 export async function getGalleryPrompts(): Promise<GalleryPrompt[]> {
     const promptsCol = collection(db, 'prompt_gallery');
     const snapshot = await getDocs(query(promptsCol, orderBy("title")));
-
-    if (snapshot.empty) {
-        console.log("Prompt gallery is empty, seeding with initial prompts...");
-        await seedGalleryPrompts();
-        // Re-fetch after seeding
-        const newSnapshot = await getDocs(query(promptsCol, orderBy("title")));
-        return newSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as GalleryPrompt));
-    }
-    
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as GalleryPrompt));
 }
 
@@ -360,3 +322,4 @@ export async function deleteGalleryPrompt(promptId: string): Promise<void> {
     const docRef = doc(db, 'prompt_gallery', promptId);
     await deleteDoc(docRef);
 }
+
