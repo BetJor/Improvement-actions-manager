@@ -15,11 +15,8 @@ const ImproveWritingInputSchema = z.object({
 });
 export type ImproveWritingInput = z.infer<typeof ImproveWritingInputSchema>;
 
-// The output is now an object with a title and a description.
-const ImproveWritingOutputSchema = z.object({
-    title: z.string().describe("A short, descriptive title for the action based on the description."),
-    description: z.string().describe("The improved and detailed description of the non-conformity."),
-});
+// The output is now a simple string with the improved description.
+const ImproveWritingOutputSchema = z.string().describe("The improved and detailed description of the non-conformity.");
 export type ImproveWritingOutput = z.infer<typeof ImproveWritingOutputSchema>;
 
 export async function improveWriting(input: ImproveWritingInput): Promise<ImproveWritingOutput> {
