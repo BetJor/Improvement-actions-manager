@@ -315,9 +315,9 @@
         "title": "Integrar Login amb Google",
         "description": "Genera tota la funcionalitat d'autenticació d'usuaris amb Firebase, incloent-hi rutes protegides i la pàgina de login."
       },
-      "replicateLayout": {
-        "title": "Replicar el Layout de l'Aplicació",
-        "description": "Genera l'estructura bàsica del layout, incloent-hi la barra lateral, la capçalera i la disposició general del contingut."
+      "createDynamicTabLayout": {
+        "title": "Crear un Layout Dinàmic amb Pestanyes",
+        "description": "Genera l'estructura completa del layout de l'aplicació, incloent una barra lateral, una capçalera i un sistema de pestanyes dinàmiques per a la navegació entre pàgines."
       }
     },
     "executionOrder": {
@@ -325,8 +325,8 @@
         "description": "Per a construir una aplicació de manera eficient, et recomanem executar els prompts en la següent seqüència:",
         "steps": {
             "layout": {
-                "title": "1. Replicar el Layout de l'Aplicació",
-                "description": "Estableix l'esquelet visual i l'estructura base (menú lateral, capçalera). És el prerequisit per a tota la resta."
+                "title": "1. Crear un Layout Dinàmic amb Pestanyes",
+                "description": "Estableix l'esquelet visual i l'estructura base (menú lateral, capçalera i sistema de pestanyes). És el prerequisit per a tota la resta."
             },
             "i18n": {
                 "title": "2. Integrar Suport Multillenguatge",
