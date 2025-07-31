@@ -1,10 +1,10 @@
 
 "use client";
 
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import type { Tab as TabType } from '@/lib/types';
 import ActionDetailPage from '@/app/[locale]/actions/[id]/page';
-import { useParams } from 'next/navigation';
+import { useParams, usePathname, useRouter } from 'next/navigation';
 import { AppRouterContext, LayoutRouterContext, GlobalLayoutRouterContext } from 'next/dist/shared/lib/app-router-context.shared-runtime';
 
 interface Tab extends TabType {
@@ -58,31 +58,32 @@ export function TabsProvider({ children }: { children: React.ReactNode }) {
   const [tabs, setTabs] = useState<Tab[]>([]);
   const [activeTab, setActiveTabState] = useState<Tab | null>(null);
   const currentParams = useParams();
+  const pathname = usePathname();
+
+  useEffect(() => {
+    // Sync URL with active tab
+    if (activeTab && activeTab.href !== pathname) {
+      window.history.pushState({}, '', activeTab.href);
+    }
+  }, [activeTab, pathname]);
   
   const addTab = (newTab: Omit<Tab, 'content'>) => {
-    setTabs((prevTabs) => {
-        // Check if tab already exists
-        if (prevTabs.find((tab) => tab.id === newTab.id)) {
-             const existingTab = prevTabs.find((tab) => tab.id === newTab.id) || null
-             setActiveTabState(existingTab);
-             // Also update URL for consistency
-             window.history.pushState({}, '', existingTab?.href);
-             return prevTabs;
-        }
+    const existingTab = tabs.find((tab) => tab.id === newTab.id);
+    if (existingTab) {
+        setActiveTabState(existingTab);
+        return;
+    }
 
-        const actionId = newTab.id;
-        const content = (
-            <MockRouterProvider params={{ locale: currentParams.locale, id: actionId }}>
-                <ActionDetailPage />
-            </MockRouterProvider>
-        );
+    const actionId = newTab.id;
+    const content = (
+        <MockRouterProvider params={{ locale: currentParams.locale, id: actionId }}>
+            <ActionDetailPage />
+        </MockRouterProvider>
+    );
 
-        const tabWithContent: Tab = { ...newTab, content };
-        setActiveTabState(tabWithContent);
-        // Also update URL for consistency
-        window.history.pushState({}, '', tabWithContent.href);
-        return [...prevTabs, tabWithContent];
-    });
+    const tabWithContent: Tab = { ...newTab, content };
+    setTabs((prevTabs) => [...prevTabs, tabWithContent]);
+    setActiveTabState(tabWithContent);
   };
 
   const removeTab = (tabId: string) => {
@@ -92,14 +93,14 @@ export function TabsProvider({ children }: { children: React.ReactNode }) {
 
       const newTabs = prevTabs.filter((tab) => tab.id !== tabId);
       
-      let newActiveTab: Tab | null = null;
       if (activeTab?.id === tabId) {
         if (newTabs.length > 0) {
           const newActiveIndex = Math.max(0, tabToRemoveIndex - 1);
-          newActiveTab = newTabs[newActiveIndex];
+          setActiveTabState(newTabs[newActiveIndex]);
+        } else {
+            setActiveTabState(null);
+            window.history.pushState({}, '', `/${currentParams.locale}/dashboard`);
         }
-        setActiveTabState(newActiveTab);
-        window.history.pushState({}, '', newActiveTab?.href || `/${currentParams.locale}/dashboard`);
       }
       return newTabs;
     });
@@ -109,7 +110,6 @@ export function TabsProvider({ children }: { children: React.ReactNode }) {
      const tabToActivate = tabs.find(tab => tab.id === tabId);
      if(tabToActivate) {
         setActiveTabState(tabToActivate);
-        window.history.pushState({}, '', tabToActivate.href);
      }
   };
 
