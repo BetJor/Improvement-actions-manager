@@ -55,19 +55,18 @@ export function TabsProvider({ children }: { children: React.ReactNode }) {
   const currentParams = useParams();
   const pathname = usePathname();
 
-  const getInitialTabs = () => {
+  const getInitialTabs = (initialContent: React.ReactNode) => {
     const dashboardTab: Tab = {
       id: 'dashboard',
       title: t('dashboard'),
       href: `/${currentParams.locale}/dashboard`,
       isClosable: false,
-      // The initial content is passed via the children prop to DynamicTabs
-      content: undefined 
+      content: initialContent,
     };
     return [dashboardTab];
   };
 
-  const [tabs, setTabs] = useState<Tab[]>(getInitialTabs);
+  const [tabs, setTabs] = useState<Tab[]>(() => getInitialTabs(children));
   const [activeTab, setActiveTabState] = useState<Tab | null>(tabs[0]);
 
   useEffect(() => {

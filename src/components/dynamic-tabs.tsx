@@ -26,9 +26,11 @@ export function DynamicTabs({ initialContent }: { initialContent: React.ReactNod
     }
 
     const renderContent = () => {
-        // If there's an active tab, render its content.
-        // Otherwise, render the initial page content (e.g., the dashboard before any action is clicked).
-        return activeTab ? activeTab.content : initialContent;
+        if (!activeTab) return null; // Or some fallback UI
+        
+        // The dashboard content is passed as 'children' to the provider,
+        // which sets it on the initial tab. For other tabs, content is generated.
+        return activeTab.id === 'dashboard' ? initialContent : activeTab.content;
     }
 
     return (
