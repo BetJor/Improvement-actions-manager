@@ -25,9 +25,12 @@ export function AppSidebar() {
     { href: "/actions", icon: ListChecks, label: t("actions") },
   ]
   
-  const secondaryNavItems = [
+  const settingsNavItems = [
     { href: "/settings", icon: Settings, label: t("settings") },
     { href: "/ai-settings", icon: Sparkles, label: t("aiSettings") },
+  ]
+
+  const galleryNavItems = [
     { href: "/prompt-gallery", icon: Library, label: t("promptGallery") },
     { href: "/roadmap", icon: Route, label: t("roadmap") },
   ]
@@ -72,7 +75,22 @@ export function AppSidebar() {
                 </SidebarMenuItem>
             ))}
             <SidebarSeparator />
-            {secondaryNavItems.map((item) => (
+            {settingsNavItems.map((item) => (
+                <SidebarMenuItem key={item.href}>
+                <SidebarMenuButton
+                    asChild
+                    isActive={isActive(item.href)}
+                    tooltip={{ children: item.label }}
+                >
+                    <Link href={item.href}>
+                    <item.icon />
+                    <span>{item.label}</span>
+                    </Link>
+                </SidebarMenuButton>
+                </SidebarMenuItem>
+            ))}
+            <SidebarSeparator />
+            {galleryNavItems.map((item) => (
                 <SidebarMenuItem key={item.href}>
                 <SidebarMenuButton
                     asChild
