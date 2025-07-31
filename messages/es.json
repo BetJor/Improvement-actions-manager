@@ -214,6 +214,13 @@
           "task2": "Pendiente: Crear un mecanismo para asignar roles a los usuarios (p. ej., en un panel de administración).",
           "task3": "Pendiente: Proteger rutas y componentes de la interfaz según el rol del usuario."
         }
+      },
+      "phase7": {
+        "title": "Fase 7: Internacionalización",
+        "duration": "Estimado: 1 día",
+        "tasks": {
+          "task1": "Pendiente: Traducir todas las cadenas de texto de la aplicación al castellano (`messages/es.json`)."
+        }
       }
     }
   },

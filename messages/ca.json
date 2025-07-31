@@ -206,13 +206,20 @@
           "task3": "Crear la pàgina de configuració dels prompts de l'IA."
         }
       },
-       "phase6": {
+      "phase6": {
         "title": "Fase 6: Rols i Permisos d'Usuari",
         "duration": "Estimat: 3-4 dies",
         "tasks": {
           "task1": "Pendent: Definir una estructura de dades a Firestore per a rols i permisos.",
           "task2": "Pendent: Crear un mecanisme per a assignar rols als usuaris (p. ex., en un panell d'administració).",
           "task3": "Pendent: Protegir rutes i components de la interfície segons el rol de l'usuari."
+        }
+      },
+      "phase7": {
+        "title": "Fase 7: Internacionalització",
+        "duration": "Estimat: 1 dia",
+        "tasks": {
+          "task1": "Pendent: Traduir totes les cadenes de text de l'aplicació al castellà (`messages/es.json`)."
         }
       }
     }
