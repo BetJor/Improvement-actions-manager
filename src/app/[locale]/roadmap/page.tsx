@@ -45,7 +45,7 @@ import {
             "Implementar sistema de comentaris en les accions."
           ],
           pending_tasks: [
-            "Pendent: Implementar la pujada de fitxers adjunts (integració amb Firebase Storage)."
+            "Pendent: Implementar la pujada de fitxers adjunts (integració amb Firebase Storage). NOTA: Funcionalitat bloquejada fins que un administrador activi el Billing a la consola de Google Cloud per poder crear un bucket de Storage."
           ]
         },
         {
