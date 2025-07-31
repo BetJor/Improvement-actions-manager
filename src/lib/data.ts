@@ -344,26 +344,6 @@ export async function deleteMasterDataItem(collectionName: string, itemId: strin
 // --- CRUD for AI Prompts ---
 type PromptId = "improveWriting" | "analysisSuggestion" | "correctiveActions";
 
-const defaultPrompts: Record<PromptId, string> = {
-    improveWriting: `Ets un assistent expert en sistemes de gestió de qualitat. La teva tasca és reescriure les observacions de l'usuari per a fer-les més clares, professionals i detallades, sense perdre el significat original. Afegeix context si és possible, però no inventis informació crucial. L'objectiu és que qualsevol persona que llegeixi l'observació entengui perfectament el problema.`,
-    analysisSuggestion: `Ets un consultor expert en sistemes de gestió (Qualitat, Medi Ambient, Seguretat Laboral). A partir de les observacions inicials d'una no conformitat o oportunitat de millora, has de realitzar una anàlisi de causes arrel i proposar un pla d'accions formatives o de sensibilització per a solucionar el problema de fons.
-    
-    Instruccions:
-    1.  **Analitza les Causes Arrel**: Basant-te en les observacions, identifica les causes més probables del problema. Utilitza tècniques com els "5 Perquès" mentalment si cal. Descriu l'anàlisi de manera clara i estructurada.
-    2.  **Proposa Accions Formatives**: Genera una llista d'entre 1 i 3 accions formatives o de sensibilització que ataquin directament les causes arrel identificades. Aquestes accions han de ser concretes, realistes i orientades a educar o conscienciar el personal implicat. No proposis accions tècniques o d'inversió.
-    3.  **Format de Sortida**: Respon estrictament en el format JSON especificat. No incloguis cap text, explicació o caràcter addicional fora del JSON.
-    
-    Exemple de sortida esperada:
-    {
-      "causesAnalysis": "L'anàlisi indica que la causa arrel de l'error en la facturació rau en una manca de coneixement sobre l'última actualització del software ERP. El personal del departament financer no ha rebut formació específica sobre els nous mòduls de facturació, la qual cosa ha portat a una interpretació incorrecta dels camps i a errors en la introducció de dades.",
-      "proposedActions": [
-        { "description": "Sessió formativa sobre el nou mòdul de facturació de l'ERP per a tot el personal de finances." },
-        { "description": "Creació i distribució d'una guia ràpida visual amb els passos clau per a la generació de factures." }
-      ]
-    }`,
-    correctiveActions: ``, // Aquest es pot omplir més endavant
-};
-
 export async function getPrompt(promptId: PromptId): Promise<string> {
     const docRef = doc(db, 'app_settings', 'prompts');
     const docSnap = await getDoc(docRef);
@@ -372,8 +352,7 @@ export async function getPrompt(promptId: PromptId): Promise<string> {
         return docSnap.data()?.[promptId] || '';
     }
     
-    // Si no existeix a la BBDD, retorna el prompt per defecte
-    return defaultPrompts[promptId] || '';
+    return '';
 }
 
 export async function updatePrompt(promptId: PromptId, newPrompt: string): Promise<void> {

@@ -161,7 +161,7 @@
         "title": "Suggeriment de l'IA",
         "description": "L'assistent ha generat el següent anàlisi i pla d'acció. Vols acceptar aquests canvis?",
         "suggestedAnalysis": "Anàlisi de Causes Suggerit",
-        "suggestedActions": "Accions Formatives Suggerides",
+        "suggestedActions": "Accions Correctives Suggerides",
         "accept": "Acceptar i Omplir Formulari",
         "cancel": "Cancel·lar"
       }
@@ -260,7 +260,7 @@
       },
       "analysisPrompt": {
         "label": "Prompt de Suggeriment d'Anàlisi i Accions",
-        "placeholder": "Introdueix el prompt per a l'assistent que suggereix anàlisis de causes i accions formatives..."
+        "placeholder": "Introdueix el prompt per a l'assistent que suggereix anàlisis de causes i accions correctives..."
       },
       "correctiveActionsPrompt": {
         "label": "Prompt d'Accions Correctives",

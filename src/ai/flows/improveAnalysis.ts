@@ -1,7 +1,7 @@
 
 'use server';
 /**
- * @fileOverview A flow to suggest a cause analysis and formative actions
+ * @fileOverview A flow to suggest a cause analysis and corrective actions
  * based on the initial observations of an improvement action.
  * 
  * - suggestAnalysisAndActions - The main function to call to get the suggestion.
@@ -20,9 +20,9 @@ const SuggestAnalysisOutputSchema = z.object({
   causesAnalysis: z.string().describe("The detailed analysis of the root causes of the problem."),
   proposedActions: z.array(
     z.object({
-      description: z.string().describe("A specific, actionable training or formative action to address the causes."),
+      description: z.string().describe("A specific, actionable training or corrective action to address the causes."),
     })
-  ).describe("A list of proposed formative actions."),
+  ).describe("A list of proposed corrective actions."),
 });
 export type SuggestAnalysisOutput = z.infer<typeof SuggestAnalysisOutputSchema>;
 

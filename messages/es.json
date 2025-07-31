@@ -161,7 +161,7 @@
         "title": "Sugerencia de la IA",
         "description": "El asistente ha generado el siguiente análisis y plan de acción. ¿Quieres aceptar estos cambios?",
         "suggestedAnalysis": "Análisis de Causas Sugerido",
-        "suggestedActions": "Acciones Formativas Sugeridas",
+        "suggestedActions": "Acciones Correctivas Sugeridas",
         "accept": "Aceptar y Rellenar Formulario",
         "cancel": "Cancelar"
       }
