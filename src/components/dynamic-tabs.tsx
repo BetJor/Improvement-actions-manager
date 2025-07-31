@@ -10,7 +10,8 @@ export function DynamicTabs() {
   const { tabs, activeTab, setActiveTab, closeTab } = useTabs()
 
   const handleCloseTab = (e: React.MouseEvent, tabId: string) => {
-    e.stopPropagation() 
+    console.log(`[DynamicTabs] Intentant tancar la pestanya amb ID: ${tabId}`);
+    e.stopPropagation(); // Atura la propagació per a no activar el setActiveTab del contenidor
     closeTab(tabId)
   }
 
@@ -24,16 +25,21 @@ export function DynamicTabs() {
         {tabs.map((tab) => (
           <div
             key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
             className={cn(
-              "group inline-flex items-center py-2 px-3 border-b-2 font-medium text-sm cursor-pointer",
+              "group inline-flex items-center py-2 px-3 border-b-2 font-medium text-sm",
               activeTab === tab.id
                 ? "border-primary text-primary"
                 : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
             )}
           >
-            {tab.icon && <tab.icon className="mr-2 h-4 w-4" />}
-            <span>{tab.title}</span>
+            <div 
+              className="flex items-center cursor-pointer"
+              onClick={() => setActiveTab(tab.id)}
+            >
+              {tab.icon && <tab.icon className="mr-2 h-4 w-4" />}
+              <span>{tab.title}</span>
+            </div>
+            
             {tab.isClosable && (
               <button
                 onClick={(e) => handleCloseTab(e, tab.id)}
