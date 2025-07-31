@@ -23,16 +23,16 @@ function SidebarNavLink({ href, icon: Icon, label }: { href: string; icon: React
 
   return (
     <SidebarMenuItem>
-        <SidebarMenuButton
-            asChild
-            isActive={isActive}
-            tooltip={{ children: label }}
-        >
-            <Link href={href}>
-                <Icon />
-                <span>{label}</span>
-            </Link>
-        </SidebarMenuButton>
+      <SidebarMenuButton
+        asChild
+        isActive={isActive}
+        tooltip={{ children: label }}
+      >
+        <Link href={href}>
+          <Icon />
+          <span>{label}</span>
+        </Link>
+      </SidebarMenuButton>
     </SidebarMenuItem>
   );
 }

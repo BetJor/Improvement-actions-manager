@@ -64,7 +64,7 @@ export function ActionsTable({ actions }: ActionsTableProps) {
         if (sortConfig.key === 'responsible') {
             aValue = a.responsibleUser?.name || a.responsibleGroupId;
             bValue = b.responsibleUser?.name || b.responsibleGroupId;
-        } else if (sortConfig.key === 'actionId') { // Change from 'id' to 'actionId'
+        } else if (sortConfig.key === 'actionId') { 
             aValue = a['actionId'];
             bValue = b['actionId'];
         } else {
@@ -99,7 +99,7 @@ export function ActionsTable({ actions }: ActionsTableProps) {
     }
     return sortConfig.direction === 'asc' ? 
         <ArrowUpDown className="ml-2 h-4 w-4" /> : 
-        <ArrowUpDown className="ml-2 h-4 w-4" />; // Could use different icons for asc/desc
+        <ArrowUpDown className="ml-2 h-4 w-4" />; 
   };
 
   return (
