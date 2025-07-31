@@ -283,7 +283,6 @@
       "title": "Títol",
       "description": "Descripció",
       "prompt": "Prompt",
-      "descriptionAndPrompt": "Descripció i Prompt",
       "actions": "Accions"
     },
     "copy": {

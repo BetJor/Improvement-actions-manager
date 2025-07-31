@@ -4,9 +4,7 @@
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
-  CardTitle,
 } from "@/components/ui/card"
 import {
     Table,
@@ -18,9 +16,9 @@ import {
   } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import { useTranslations } from "next-intl"
-import { Copy, Loader2, Pencil, PlusCircle, Trash2 } from "lucide-react"
+import { Copy, Loader2, Pencil, PlusCircle, Trash2, ChevronDown } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
-import { useEffect, useState } from "react"
+import { Fragment, useEffect, useState } from "react"
 import { getGalleryPrompts, addGalleryPrompt, updateGalleryPrompt, deleteGalleryPrompt } from "@/lib/data"
 import type { GalleryPrompt } from "@/lib/types"
 import {
@@ -32,7 +30,7 @@ import {
     DialogFooter,
     DialogClose,
   } from "@/components/ui/dialog"
-  import {
+import {
     AlertDialog,
     AlertDialogAction,
     AlertDialogCancel,
@@ -46,6 +44,8 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
+import { cn } from "@/lib/utils"
 
 function PromptFormDialog({
     isOpen,
@@ -215,64 +215,85 @@ export default function PromptGalleryPage() {
                     <Table>
                         <TableHeader>
                             <TableRow>
+                                <TableHead className="w-8"></TableHead>
                                 <TableHead>{t("col.title")}</TableHead>
-                                <TableHead>{t("col.descriptionAndPrompt")}</TableHead>
+                                <TableHead>{t("col.description")}</TableHead>
                                 <TableHead className="text-right">{t("col.actions")}</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {isLoading ? (
                                 <TableRow>
-                                    <TableCell colSpan={3} className="h-24 text-center">
+                                    <TableCell colSpan={4} className="h-24 text-center">
                                         <Loader2 className="mx-auto h-6 w-6 animate-spin" />
                                     </TableCell>
                                 </TableRow>
                             ) : prompts.length > 0 ? (
                                 prompts.map((p) => (
-                                    <TableRow key={p.id}>
-                                        <TableCell className="font-semibold align-top">{p.title}</TableCell>
-                                        <TableCell>
-                                            <p className="text-muted-foreground">{p.description}</p>
-                                            <pre className="mt-4 p-4 bg-muted rounded-md overflow-x-auto text-sm whitespace-pre-wrap font-mono">
-                                                <code>
-                                                    {p.prompt}
-                                                </code>
-                                            </pre>
-                                        </TableCell>
-                                        <TableCell className="text-right align-top">
-                                            <div className="flex justify-end gap-1">
-                                                <Button variant="ghost" size="icon" onClick={() => handleCopy(p.prompt)}>
-                                                    <Copy className="h-4 w-4" />
-                                                </Button>
-                                                <Button variant="ghost" size="icon" onClick={() => handleEdit(p)}>
-                                                    <Pencil className="h-4 w-4" />
-                                                </Button>
-                                                <AlertDialog>
-                                                    <AlertDialogTrigger asChild>
-                                                    <Button variant="ghost" size="icon">
-                                                        <Trash2 className="h-4 w-4 text-destructive" />
-                                                    </Button>
-                                                    </AlertDialogTrigger>
-                                                    <AlertDialogContent>
-                                                    <AlertDialogHeader>
-                                                        <AlertDialogTitle>{t("delete.confirmationTitle")}</AlertDialogTitle>
-                                                        <AlertDialogDescription>
-                                                        {t("delete.confirmationMessage")}
-                                                        </AlertDialogDescription>
-                                                    </AlertDialogHeader>
-                                                    <AlertDialogFooter>
-                                                        <AlertDialogCancel>{t("cancel")}</AlertDialogCancel>
-                                                        <AlertDialogAction onClick={() => handleDelete(p.id)}>{t("delete.confirm")}</AlertDialogAction>
-                                                    </AlertDialogFooter>
-                                                    </AlertDialogContent>
-                                                </AlertDialog>
-                                            </div>
-                                        </TableCell>
-                                    </TableRow>
+                                    <Collapsible asChild key={p.id}>
+                                        <Fragment>
+                                            <TableRow>
+                                                <TableCell>
+                                                     <CollapsibleTrigger asChild>
+                                                        <Button variant="ghost" size="icon">
+                                                            <ChevronDown className="h-4 w-4 transition-transform data-[state=open]:rotate-180" />
+                                                        </Button>
+                                                    </CollapsibleTrigger>
+                                                </TableCell>
+                                                <TableCell className="font-semibold align-top">{p.title}</TableCell>
+                                                <TableCell className="text-muted-foreground align-top">
+                                                    {p.description}
+                                                </TableCell>
+                                                <TableCell className="text-right align-top">
+                                                    <div className="flex justify-end gap-1">
+                                                        <Button variant="ghost" size="icon" onClick={() => handleCopy(p.prompt)}>
+                                                            <Copy className="h-4 w-4" />
+                                                        </Button>
+                                                        <Button variant="ghost" size="icon" onClick={() => handleEdit(p)}>
+                                                            <Pencil className="h-4 w-4" />
+                                                        </Button>
+                                                        <AlertDialog>
+                                                            <AlertDialogTrigger asChild>
+                                                            <Button variant="ghost" size="icon">
+                                                                <Trash2 className="h-4 w-4 text-destructive" />
+                                                            </Button>
+                                                            </AlertDialogTrigger>
+                                                            <AlertDialogContent>
+                                                            <AlertDialogHeader>
+                                                                <AlertDialogTitle>{t("delete.confirmationTitle")}</AlertDialogTitle>
+                                                                <AlertDialogDescription>
+                                                                {t("delete.confirmationMessage")}
+                                                                </AlertDialogDescription>
+                                                            </AlertDialogHeader>
+                                                            <AlertDialogFooter>
+                                                                <AlertDialogCancel>{t("cancel")}</AlertDialogCancel>
+                                                                <AlertDialogAction onClick={() => handleDelete(p.id)}>{t("delete.confirm")}</AlertDialogAction>
+                                                            </AlertDialogFooter>
+                                                            </AlertDialogContent>
+                                                        </AlertDialog>
+                                                    </div>
+                                                </TableCell>
+                                            </TableRow>
+                                            <CollapsibleContent asChild>
+                                                <TableRow>
+                                                    <TableCell colSpan={4} className="p-0">
+                                                        <div className="p-4 bg-muted/50">
+                                                            <h4 className="font-semibold mb-2">{t("col.prompt")}</h4>
+                                                            <pre className="p-4 bg-muted rounded-md overflow-x-auto text-sm whitespace-pre-wrap font-mono">
+                                                                <code>
+                                                                    {p.prompt}
+                                                                </code>
+                                                            </pre>
+                                                        </div>
+                                                    </TableCell>
+                                                </TableRow>
+                                            </CollapsibleContent>
+                                        </Fragment>
+                                    </Collapsible>
                                 ))
                             ) : (
                                 <TableRow>
-                                    <TableCell colSpan={3} className="h-24 text-center">
+                                    <TableCell colSpan={4} className="h-24 text-center">
                                         {t("noPrompts")}
                                     </TableCell>
                                 </TableRow>
