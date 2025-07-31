@@ -74,7 +74,7 @@ export default function NewActionPage() {
   let finalTranscript = '';
 
   const [isImprovingText, setIsImprovingText] = useState(false);
-  const [aiSuggestion, setAiSuggestion] = useState<{ title: string; description: string } | null>(null);
+  const [aiSuggestion, setAiSuggestion] = useState<string | null>(null);
   const [isSuggestionDialogOpen, setIsSuggestionDialogOpen] = useState(false);
   const [hasImprovePrompt, setHasImprovePrompt] = useState(false);
 
@@ -227,8 +227,7 @@ export default function NewActionPage() {
 
   const handleAcceptSuggestion = () => {
     if (aiSuggestion) {
-      form.setValue('title', aiSuggestion.title, { shouldValidate: true });
-      form.setValue('description', aiSuggestion.description, { shouldValidate: true });
+      form.setValue('description', aiSuggestion, { shouldValidate: true });
     }
     setIsSuggestionDialogOpen(false);
     setAiSuggestion(null);
@@ -513,7 +512,7 @@ export default function NewActionPage() {
           <div className="grid gap-4 py-4">
             <div className="space-y-2">
               <Label htmlFor="suggestion-description">{t("form.suggestion.improvedDescription")}</Label>
-              <Textarea id="suggestion-description" readOnly value={aiSuggestion?.description || ''} rows={10} className="resize-y" />
+              <Textarea id="suggestion-description" readOnly value={aiSuggestion || ''} rows={10} className="resize-y" />
             </div>
           </div>
           <DialogFooter>
