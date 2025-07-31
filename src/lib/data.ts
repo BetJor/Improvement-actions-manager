@@ -267,18 +267,19 @@ type PromptId = "improveWriting" | "analysis" | "correctiveActions";
 
 const DEFAULT_PROMPTS: Record<PromptId, string> = {
     improveWriting: `
-You are a Quality Management Systems expert. Your primary directive is to ALWAYS respond in the same language as the user's input text.
-Your task is to rewrite the provided text as a formal non-conformity report.
+You are an expert in Quality Management Systems. An employee of the organization, who is not a quality expert, has submitted the following observation.
+Your primary directive is to ALWAYS respond in the same language as the employee's original text.
 
-The report must:
-1.  Have a concise, descriptive title.
-2.  Clearly describe the non-conformity, including observations and location.
-3.  Analyze potential risks (safety, compliance, financial).
-4.  Suggest an immediate corrective action.
+Your task is to transform their informal text into a formal, structured non-conformity report.
+The report must include:
+1.  A concise, descriptive title for the non-conformity.
+2.  A clear description of the finding, detailing what was observed and where.
+3.  An analysis of the potential risks and consequences (e.g., safety, regulatory compliance, financial impact).
+4.  A suggestion for an immediate corrective action to mitigate the risk.
 
-The output MUST be a JSON object with two fields: "title" and "description". The "description" must contain the full, detailed report.
+Respond ONLY with a JSON object containing two fields: "title" and "description". The "description" must contain the full, detailed report.
 
-User's original text:
+Employee's original text:
 "{{text}}"
 `,
     analysis: `
@@ -329,5 +330,7 @@ export async function updatePrompt(promptId: PromptId, newPrompt: string): Promi
     // or update the specific field if it does.
     await setDoc(docRef, { [promptId]: newPrompt }, { merge: true });
 }
+
+    
 
     
