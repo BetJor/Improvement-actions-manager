@@ -243,7 +243,7 @@ export function AnalysisSection({ action, user, isSubmitting, onSave }: Analysis
             <div className="space-y-4">
               <h3 className="text-lg font-semibold">{t("proposedActions.title")}</h3>
               {fields.map((field, index) => (
-                <div key={field.id} className="flex gap-4 p-4 border rounded-md">
+                <div key={field.id} className="flex gap-4 p-4 border rounded-md items-start">
                    <div className="flex-1 flex flex-col gap-4">
                      <FormField
                         control={form.control}
@@ -285,7 +285,7 @@ export function AnalysisSection({ action, user, isSubmitting, onSave }: Analysis
                         control={form.control}
                         name={`proposedActions.${index}.dueDate`}
                         render={({ field }) => (
-                            <FormItem className="flex flex-col">
+                            <FormItem>
                                <FormLabel>{t("proposedActions.dueDate")}</FormLabel>
                                <Popover>
                                 <PopoverTrigger asChild>

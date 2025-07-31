@@ -39,6 +39,7 @@ import {
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import type { ImprovementAction } from "@/lib/types"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "./ui/card"
 
 const formSchema = z.object({
   title: z.string().min(1, "El títol és requerit."),
@@ -246,6 +247,22 @@ export function ActionForm({
 
   if (isLoadingMasterData && mode ==='create') {
     return <div className="flex items-center gap-2"> <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Carregant dades...</div>
+  }
+
+  // View mode only shows the description
+  if (mode === 'view' && initialData) {
+    return (
+      <Card>
+        <CardHeader>
+            <CardTitle>{t("form.description.label")}</CardTitle>
+        </CardHeader>
+        <CardContent>
+            <p className="text-muted-foreground whitespace-pre-wrap">
+                {initialData.description}
+            </p>
+        </CardContent>
+      </Card>
+    )
   }
 
   return (

@@ -5,26 +5,8 @@ import { subDays, format, addDays } from 'date-fns';
 import { db } from './firebase';
 import { collection, getDocs, doc, getDoc, addDoc, query, orderBy, limit, writeBatch, updateDoc, deleteDoc, setDoc, Timestamp } from 'firebase/firestore';
 import { planActionWorkflow } from '@/ai/flows/planActionWorkflow';
-
-export const users: User[] = [
-  { id: 'user-1', name: 'Ana García', role: 'Director', avatar: 'https://i.pravatar.cc/150?u=a042581f4e29026024d', email: 'ana.garcia@example.com' },
-  { id: 'user-2', name: 'Carlos Rodríguez', role: 'Responsible', avatar: 'https://i.pravatar.cc/150?u=a042581f4e29026704d', email: 'carlos.rodriguez@example.com' },
-  { id: 'user-3', name: 'Laura Martinez', role: 'Creator', avatar: 'https://i.pravatar.cc/150?u=a04258114e29026702d', email: 'laura.martinez@example.com' },
-  { id: 'user-4', name: 'Javier López', role: 'Committee', avatar: 'https://i.pravatar.cc/150?u=a042581f4e29026708c', email: 'javier.lopez@example.com' },
-  { id: 'user-5', name: 'Sofía Hernandez', role: 'Admin', avatar: 'https://i.pravatar.cc/150?u=a0425e8ff4e29026704d', email: 'sofia.hernandez@example.com' },
-];
-
-export const groups: UserGroup[] = [
-  { id: 'finance@example.com', name: 'Departament Financer', userIds: ['user-1', 'user-2'] },
-  { id: 'it-security@example.com', name: 'Seguretat Informàtica', userIds: ['user-5'] },
-  { id: 'customer-support@example.com', name: 'Atenció al Client', userIds: ['user-1', 'user-3'] },
-  { id: 'quality-management@example.com', name: 'Gestió de Qualitat', userIds: ['user-2', 'user-4'] },
-  { id: 'risk-management@example.com', name: 'Gestió de Riscos', userIds: ['user-1', 'user-5'] },
-  { id: 'it-legacy-systems@example.com', name: 'Sistemes Legacy', userIds: ['user-5'] },
-  { id: 'rsc-committee@example.com', name: 'Comitè RSC', userIds: ['user-3', 'user-4'] },
-];
-
-// --- Master Data from Firestore ---
+import { users } from './static-data';
+import { a } from 'next-intl/dist/config-a681d451';
 
 async function seedCollection<T extends { id: string, [key: string]: any }>(collectionName: string, data: T[]) {
     const collectionRef = collection(db, collectionName);
@@ -152,6 +134,19 @@ export const getActionById = async (id: string): Promise<ImprovementAction | nul
                     dueDate: pa.dueDate instanceof Timestamp ? pa.dueDate.toDate() : new Date(pa.dueDate),
                 }));
             }
+
+            // Populate responsible user info
+            if (data.responsibleGroupId) {
+                const responsibleUser = users.find(u => u.id === data.responsibleGroupId);
+                if(responsibleUser) {
+                    data.responsibleUser = {
+                        id: responsibleUser.id,
+                        name: responsibleUser.name,
+                        avatar: responsibleUser.avatar
+                    }
+                }
+            }
+
 
             return { ...data, id: actionDocSnap.id } as ImprovementAction;
         } else {
