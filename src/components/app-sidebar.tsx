@@ -37,32 +37,33 @@ function SidebarNavLink({ href, icon: Icon, label }: { href: string; icon: React
   const { addTab, activeTab, setActiveTab } = useTabs();
   const currentParams = useParams();
 
-  const fullHref = `/${currentParams.locale}${href}`;
-
   const isActive = () => {
-    if (href === "/dashboard") {
+    if (href === `/${currentParams.locale}/dashboard`) {
         return activeTab?.id === 'dashboard';
     }
-    return activeTab?.id === fullHref;
+    return activeTab?.id === href;
   };
 
   const handleClick = (e: React.MouseEvent) => {
     e.preventDefault();
     
-    if (href === "/dashboard") {
+    if (href === `/${currentParams.locale}/dashboard`) {
         setActiveTab("dashboard");
         return;
     }
+    
+    // remove locale from href to match pageComponents keys
+    const pageKey = href.replace(`/${currentParams.locale}`, '');
+    const pageInfo = pageComponents[pageKey];
 
-    const pageInfo = pageComponents[href];
     if (pageInfo) {
       const PageComponent = 'component' in pageInfo ? pageInfo.component : pageInfo;
       const params = 'component' in pageInfo ? pageInfo.params : {};
 
       addTab({
-        id: fullHref, 
+        id: href, 
         title: label,
-        href: fullHref,
+        href: href,
         isClosable: true,
         content: (
           <MockRouterProvider params={{ locale: currentParams.locale, ...params }}>
@@ -90,20 +91,21 @@ function SidebarNavLink({ href, icon: Icon, label }: { href: string; icon: React
 
 export function AppSidebar() {
   const t = useTranslations("AppSidebar")
+  const locale = useParams().locale;
 
   const navItems = [
-    { href: "/dashboard", icon: Home, label: t("dashboard") },
-    { href: "/actions", icon: ListChecks, label: t("actions") },
+    { href: `/${locale}/dashboard`, icon: Home, label: t("dashboard") },
+    { href: `/${locale}/actions`, icon: ListChecks, label: t("actions") },
   ]
   
   const settingsNavItems = [
-    { href: "/settings", icon: Settings, label: t("settings") },
-    { href: "/ai-settings", icon: Sparkles, label: t("aiSettings") },
+    { href: `/${locale}/settings`, icon: Settings, label: t("settings") },
+    { href: `/${locale}/ai-settings`, icon: Sparkles, label: t("aiSettings") },
   ]
 
   const galleryNavItems = [
-    { href: "/prompt-gallery", icon: Library, label: t("promptGallery") },
-    { href: "/roadmap", icon: Route, label: t("roadmap") },
+    { href: `/${locale}/prompt-gallery`, icon: Library, label: t("promptGallery") },
+    { href: `/${locale}/roadmap`, icon: Route, label: t("roadmap") },
   ]
 
   return (
@@ -121,7 +123,7 @@ export function AppSidebar() {
         <SidebarContent>
             <SidebarMenu>
             {navItems.map((item) => (
-                <SidebarNavLink key={item.href} href={`/${useParams().locale}${item.href}`} icon={item.icon} label={item.label} />
+                <SidebarNavLink key={item.href} href={item.href} icon={item.icon} label={item.label} />
             ))}
             <SidebarSeparator />
             {settingsNavItems.map((item) => (
