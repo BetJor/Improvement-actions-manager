@@ -159,7 +159,7 @@ export function ActionDetailsPanel({ action, onActionUpdate }: ActionDetailsPane
               <p className="text-sm text-muted-foreground">Aquesta acció es va crear a partir del tancament no conforme de l'acció:</p>
               <p className="font-semibold">{action.originalActionTitle}</p>
               <Button asChild variant="outline" size="sm" className="w-full">
-                <Link href={`/actions/${action.originalActionId}`}>
+                <Link href={`/actions/${action.originalActionId}`} target="_blank" rel="noopener noreferrer">
                   <ExternalLink className="mr-2 h-4 w-4" />
                   Veure Acció Original
                 </Link>
@@ -169,7 +169,7 @@ export function ActionDetailsPanel({ action, onActionUpdate }: ActionDetailsPane
         )}
 
         <Card>
-            <Collapsible defaultOpen={true}>
+            <Collapsible defaultOpen={false}>
                 <CollapsibleTrigger asChild>
                     <div className="flex justify-between items-center p-4 cursor-pointer">
                         <CardTitle className="text-base flex items-center gap-2">

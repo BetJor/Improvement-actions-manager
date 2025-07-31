@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useMemo } from "react"
@@ -175,7 +176,7 @@ export function ActionsTable({ actions }: ActionsTableProps) {
               filteredAndSortedActions.map(action => (
                 <TableRow key={action.id}>
                   <TableCell className="font-medium">
-                    <Link href={`/actions/${action.id}`} className="text-primary hover:underline">{action.actionId}</Link>
+                    <Link href={`/actions/${action.id}`} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">{action.actionId}</Link>
                   </TableCell>
                   <TableCell>{action.title}</TableCell>
                   <TableCell>
