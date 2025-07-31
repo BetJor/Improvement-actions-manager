@@ -15,14 +15,14 @@ interface Tab extends TabType {
 interface TabsContextType {
   tabs: Tab[];
   activeTab: Tab | null;
-  addTab: (tab: Omit<Tab, 'content'>) => void;
+  addTab: (tab: Tab) => void;
   removeTab: (tabId: string) => void;
   setActiveTab: (tabId: string) => void;
 }
 
 const TabsContext = createContext<TabsContextType | undefined>(undefined);
 
-function MockRouterProvider({ children, params }: { children: React.ReactNode, params: any }) {
+export function MockRouterProvider({ children, params }: { children: React.ReactNode, params: any }) {
     const router = useContext(AppRouterContext);
     const layoutRouter = useContext(LayoutRouterContext);
     const globalLayoutRouter = useContext(GlobalLayoutRouterContext);
@@ -31,7 +31,6 @@ function MockRouterProvider({ children, params }: { children: React.ReactNode, p
         return null;
     }
     
-    // We only need to override the `params` from the LayoutRouterContext
     const mockLayoutRouter = {
         ...layoutRouter,
         params: params,
@@ -70,11 +69,16 @@ export function TabsProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (activeTab && activeTab.href !== pathname) {
-      window.history.pushState({}, '', activeTab.href);
+        // Prevent URL change if the active tab is for a static page that was just opened
+        if(activeTab.id.startsWith('/')) {
+             window.history.pushState({}, '', activeTab.href);
+        } else {
+             window.history.pushState({}, '', activeTab.href);
+        }
     }
   }, [activeTab, pathname]);
   
-  const addTab = (newTab: Omit<Tab, 'content'>) => {
+  const addTab = (newTab: Tab) => {
     setTabs(prevTabs => {
         const existingTab = prevTabs.find((tab) => tab.id === newTab.id);
         if (existingTab) {
@@ -82,16 +86,8 @@ export function TabsProvider({ children }: { children: React.ReactNode }) {
             return prevTabs;
         }
 
-        const actionId = newTab.id;
-        const content = (
-            <MockRouterProvider params={{ locale: currentParams.locale, id: actionId }}>
-                <ActionDetailPage />
-            </MockRouterProvider>
-        );
-
-        const tabWithContent: Tab = { ...newTab, content };
-        setActiveTabState(tabWithContent);
-        return [...prevTabs, tabWithContent];
+        setActiveTabState(newTab);
+        return [...prevTabs, newTab];
     });
   };
 

@@ -23,7 +23,9 @@ import { ActionStatusBadge } from "./action-status-badge"
 import type { ImprovementAction, ImprovementActionStatus, ImprovementActionType } from "@/lib/types"
 import { ArrowUpDown, ChevronDown } from "lucide-react"
 import { useTranslations } from "next-intl"
-import { useTabs } from "@/hooks/use-tabs"
+import { useTabs, MockRouterProvider } from "@/hooks/use-tabs"
+import ActionDetailPage from "@/app/[locale]/actions/[id]/page"
+import { useParams } from "next/navigation"
 
 interface ActionsTableProps {
   actions: ImprovementAction[]
@@ -34,6 +36,7 @@ type SortKey = keyof ImprovementAction | 'responsible'
 export function ActionsTable({ actions }: ActionsTableProps) {
   const t = useTranslations("ActionsTable")
   const { addTab } = useTabs();
+  const currentParams = useParams();
 
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState<Set<ImprovementActionStatus>>(new Set())
@@ -108,6 +111,11 @@ export function ActionsTable({ actions }: ActionsTableProps) {
       title: action.actionId,
       href: `/actions/${action.id}`,
       isClosable: true,
+      content: (
+          <MockRouterProvider params={{ locale: currentParams.locale, id: action.id }}>
+              <ActionDetailPage />
+          </MockRouterProvider>
+      ),
     });
   };
 

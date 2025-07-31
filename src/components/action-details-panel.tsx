@@ -26,7 +26,9 @@ import { useState, useEffect, useRef } from "react"
 import type { ActionComment, ActionAttachment } from "@/lib/types"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
-import { useTabs } from "@/hooks/use-tabs"
+import { useTabs, MockRouterProvider } from "@/hooks/use-tabs"
+import ActionDetailPage from "@/app/[locale]/actions/[id]/page"
+import { useParams } from "next/navigation"
 
 
 interface DetailRowProps {
@@ -61,6 +63,7 @@ export function ActionDetailsPanel({ action, onActionUpdate }: ActionDetailsPane
   const { user } = useAuth()
   const { toast } = useToast()
   const { addTab } = useTabs();
+  const currentParams = useParams();
   
   const [newComment, setNewComment] = useState("");
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
@@ -153,6 +156,11 @@ export function ActionDetailsPanel({ action, onActionUpdate }: ActionDetailsPane
         title: action.originalActionTitle,
         href: `/actions/${action.originalActionId}`,
         isClosable: true,
+        content: (
+            <MockRouterProvider params={{ locale: currentParams.locale, id: action.originalActionId }}>
+                <ActionDetailPage />
+            </MockRouterProvider>
+        ),
       });
     }
   };
