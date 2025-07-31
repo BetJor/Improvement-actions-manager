@@ -246,7 +246,7 @@ export function AnalysisSection({ action, user, isSubmitting, onSave }: Analysis
                             <FormItem>
                                 <FormLabel>{t("proposedActions.description")}</FormLabel>
                                 <FormControl>
-                                    <Input {...field} placeholder={t("proposedActions.descriptionPlaceholder")} />
+                                    <Textarea {...field} placeholder={t("proposedActions.descriptionPlaceholder")} rows={2} className="resize-y" />
                                 </FormControl>
                                 <FormMessage />
                             </FormItem>
@@ -287,16 +287,16 @@ export function AnalysisSection({ action, user, isSubmitting, onSave }: Analysis
                                     <Button
                                         variant={"outline"}
                                         className={cn(
-                                        "w-full pl-3 text-left font-normal",
+                                        "w-full justify-start text-left font-normal",
                                         !field.value && "text-muted-foreground"
                                         )}
                                     >
+                                        <CalendarIcon className="mr-2 h-4 w-4" />
                                         {field.value ? (
                                         format(field.value, "PPP", { locale: es })
                                         ) : (
                                         <span>{t("proposedActions.dueDatePlaceholder")}</span>
                                         )}
-                                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                                     </Button>
                                     </FormControl>
                                 </PopoverTrigger>
@@ -396,3 +396,5 @@ export function AnalysisSection({ action, user, isSubmitting, onSave }: Analysis
     </>
   )
 }
+
+    
