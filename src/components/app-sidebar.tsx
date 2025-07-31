@@ -36,18 +36,22 @@ const pageComponents: { [key: string]: React.ComponentType | { component: React.
 function SidebarNavLink({ href, icon: Icon, label }: { href: string; icon: React.ElementType; label: string }) {
   const { addTab, activeTab, setActiveTab } = useTabs();
   const currentParams = useParams();
+  const pathname = usePathname();
 
   const isActive = () => {
-    if (href === `/${currentParams.locale}/dashboard`) {
+    // Exact match for dashboard
+    if (href.endsWith('/dashboard')) {
         return activeTab?.id === 'dashboard';
     }
+    // Match for other main routes
     return activeTab?.id === href;
   };
-
+  
   const handleClick = (e: React.MouseEvent) => {
     e.preventDefault();
     
-    if (href === `/${currentParams.locale}/dashboard`) {
+    // Handle dashboard separately
+    if (href.endsWith('/dashboard')) {
         setActiveTab("dashboard");
         return;
     }

@@ -1,4 +1,6 @@
 
+"use client"
+
 import {
     Card,
     CardContent,
@@ -9,7 +11,7 @@ import {
   import { CheckCircle2, CircleDot } from "lucide-react"
 
   
-  export default async function RoadmapPage() {
+  export default function RoadmapPage() {
   
     const timeline = [
         {
@@ -149,4 +151,3 @@ import {
       </div>
     )
   }
-  
