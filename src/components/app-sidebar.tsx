@@ -67,16 +67,17 @@ function SidebarNavLink({ href, icon: Icon, label }: { href: string; icon: React
 
   return (
     <SidebarMenuItem>
-        <Link href={href} passHref legacyBehavior>
-            <SidebarMenuButton
-                isActive={isActive()}
-                tooltip={{ children: label }}
-                onClick={handleClick}
-            >
-                <Icon />
-                <span>{label}</span>
-            </SidebarMenuButton>
+      <SidebarMenuButton
+        asChild
+        isActive={isActive()}
+        tooltip={{ children: label }}
+        onClick={handleClick}
+      >
+        <Link href={href}>
+            <Icon />
+            <span>{label}</span>
         </Link>
+      </SidebarMenuButton>
     </SidebarMenuItem>
   );
 }
