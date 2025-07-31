@@ -9,17 +9,15 @@ import { useAuth } from "@/hooks/use-auth"
 import type { ImprovementAction, ProposedActionStatus } from "@/lib/types"
 import { useToast } from "@/hooks/use-toast"
 import { useTranslations } from "next-intl"
-import { ActionForm } from "@/components/action-form"
 import { AnalysisSection } from "@/components/analysis-section"
 import { VerificationSection } from "@/components/verification-section"
 import { ClosureSection } from "@/components/closure-section"
 import { ActionDetailsPanel } from "@/components/action-details-panel"
-import { Button } from "@/components/ui/button"
-import { FileEdit, Loader2, Microscope, ShieldCheck, Flag } from "lucide-react"
+import { ActionDetailsTab } from "@/components/action-details-tab"
+import { Loader2 } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Separator } from "@/components/ui/separator"
-import { Textarea } from "@/components/ui/textarea"
 import { format } from "date-fns"
 import { es } from "date-fns/locale"
 import { cn } from "@/lib/utils"
@@ -27,7 +25,6 @@ import { cn } from "@/lib/utils"
 
 export default function ActionDetailPage() {
   const t = useTranslations("ActionDetailPage")
-  const tForm = useTranslations("NewActionPage")
   const router = useRouter()
   const params = useParams()
   const { toast } = useToast()
@@ -35,7 +32,6 @@ export default function ActionDetailPage() {
   
   const [action, setAction] = useState<ImprovementAction | null>(null)
   const [isLoading, setIsLoading] = useState(true)
-  const [isEditing, setIsEditing] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [masterData, setMasterData] = useState<any>(null)
 
@@ -87,37 +83,7 @@ export default function ActionDetailPage() {
     loadData()
   }, [params.id, toast])
 
-  const handleEdit = async (formData: any, status?: 'Borrador' | 'Pendiente Análisis') => {
-    if (!action) return;
-    setIsSubmitting(true);
-    try {
-        const dataToUpdate = { ...formData };
-        if (status) {
-          dataToUpdate.status = status;
-        }
-        
-        await updateAction(action.id, dataToUpdate, masterData, status);
-        toast({
-            title: "Acció actualitzada",
-            description: "L'acció s'ha desat correctament.",
-        });
-        // Refresh data after update
-        const updatedAction = await getActionById(action.id);
-        setAction(updatedAction);
-        setIsEditing(false); // Exit edit mode
-    } catch (error) {
-        console.error("Error updating action:", error);
-        toast({
-            variant: "destructive",
-            title: "Error en desar",
-            description: "No s'ha pogut actualitzar l'acció.",
-        });
-    } finally {
-        setIsSubmitting(false);
-    }
-  }
-
-  const handleSaveAnalysis = async (analysisData: any) => {
+  const handleAnalysisSave = async (analysisData: any) => {
     if (!action) return;
     setIsSubmitting(true);
     try {
@@ -147,7 +113,7 @@ export default function ActionDetailPage() {
     }
   }
 
-  const handleSaveVerification = async (verificationData: any) => {
+  const handleVerificationSave = async (verificationData: any) => {
     if (!action) return;
     setIsSubmitting(true);
     try {
@@ -177,7 +143,7 @@ export default function ActionDetailPage() {
     }
   };
 
-  const handleSaveClosure = async (closureData: any) => {
+  const handleClosureSave = async (closureData: any) => {
     if (!action || !user) return;
     setIsSubmitting(true);
     try {
@@ -217,18 +183,8 @@ export default function ActionDetailPage() {
     }
   };
 
-  const getActionButtons = (status: string) => {
-    if (isEditing) return null; // No show buttons in edit mode
-
-    switch (status) {
-      case "Borrador":
-        return <Button onClick={() => setIsEditing(true)}><FileEdit className="mr-2 h-4 w-4" /> {t("editDraft")}</Button>
-      case "Pendiente Análisis":
-      case "Pendiente Comprobación":
-      case "Pendiente de Cierre":
-      default:
-        return null
-    }
+  const handleActionUpdate = async (updatedActionData: ImprovementAction) => {
+    setAction(updatedActionData);
   }
   
   const isAnalysisTabDisabled = action?.status === 'Borrador';
@@ -263,14 +219,8 @@ export default function ActionDetailPage() {
       
       {/* Main Content */}
       <div className="lg:col-span-3 flex flex-col gap-6">
-          <header className="flex items-start justify-between gap-4">
-              <div>
-                <h1 className="text-3xl font-bold tracking-tight">{action.actionId}: {isEditing ? t("editingTitle") : action.title}</h1>
-                <p className="text-muted-foreground mt-1">{isEditing ? t("editingDescription") : t("viewingDescription")}</p>
-              </div>
-              <div className="flex-shrink-0">
-                  {getActionButtons(action.status)}
-              </div>
+          <header>
+              <h1 className="text-3xl font-bold tracking-tight">{action.actionId}: {action.title}</h1>
           </header>
 
           <Tabs defaultValue="details" className="w-full">
@@ -282,16 +232,11 @@ export default function ActionDetailPage() {
               </TabsList>
               
               <TabsContent value="details" className="mt-4">
-                  <ActionForm 
-                      mode={isEditing ? 'edit' : 'view'}
-                      initialData={action}
+                  <ActionDetailsTab
+                      action={action}
                       masterData={masterData}
-                      isLoadingMasterData={!masterData}
-                      isSubmitting={isSubmitting}
-                      onSubmit={handleEdit}
-                      onCancel={() => setIsEditing(false)}
-                      t={tForm}
-                  />
+                      onActionUpdate={handleActionUpdate}
+                   />
               </TabsContent>
 
               <TabsContent value="analysis" className="mt-4">
@@ -300,7 +245,7 @@ export default function ActionDetailPage() {
                         action={action}
                         user={user}
                         isSubmitting={isSubmitting}
-                        onSave={handleSaveAnalysis}
+                        onSave={handleAnalysisSave}
                       />
                   ) : action.analysis ? (
                       <Card>
@@ -347,7 +292,7 @@ export default function ActionDetailPage() {
                         action={action}
                         user={user}
                         isSubmitting={isSubmitting}
-                        onSave={handleSaveVerification}
+                        onSave={handleVerificationSave}
                       />
                   ) : action.verification ? (
                        <Card>
@@ -392,7 +337,7 @@ export default function ActionDetailPage() {
                   {action.status === 'Pendiente de Cierre' && user ? (
                     <ClosureSection
                       isSubmitting={isSubmitting}
-                      onSave={handleSaveClosure}
+                      onSave={handleClosureSave}
                     />
                   ) : action.closure ? (
                     <Card>
@@ -427,7 +372,7 @@ export default function ActionDetailPage() {
 
       {/* Right Sidebar */}
       <aside className="lg:col-span-1 flex flex-col gap-6">
-        <ActionDetailsPanel action={action} onActionUpdate={setAction} />
+        <ActionDetailsPanel action={action} onActionUpdate={handleActionUpdate} />
       </aside>
     </div>
   )
