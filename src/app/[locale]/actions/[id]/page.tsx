@@ -23,8 +23,7 @@ export default function ActionDetailPage({ params }: DetailPageProps) {
   const router = useRouter()
   const { toast } = useToast()
   const { user } = useAuth()
-  const actionId = params.id;
-
+  
   const [action, setAction] = useState<ImprovementAction | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isEditing, setIsEditing] = useState(false)
@@ -33,8 +32,11 @@ export default function ActionDetailPage({ params }: DetailPageProps) {
 
 
   useEffect(() => {
+    // Read the actionId from params inside the effect to ensure it's available client-side
+    const actionId = params.id;
+    if (!actionId) return;
+
     async function loadData() {
-      if (!actionId) return;
       setIsLoading(true)
       try {
         const [
@@ -75,13 +77,18 @@ export default function ActionDetailPage({ params }: DetailPageProps) {
       }
     }
     loadData()
-  }, [actionId, toast])
+  }, [params, toast])
 
   const handleEdit = async (formData: any, status?: 'Borrador' | 'Pendiente Análisis') => {
     if (!action) return;
     setIsSubmitting(true);
     try {
-        await updateAction(action.id, formData, masterData, status);
+        const dataToUpdate = { ...formData };
+        if (status) {
+          dataToUpdate.status = status;
+        }
+        
+        await updateAction(action.id, dataToUpdate, masterData, status);
         toast({
             title: "Acció actualitzada",
             description: "L'acció s'ha desat correctament.",
