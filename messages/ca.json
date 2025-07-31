@@ -16,7 +16,8 @@
     "myGroups": "Els Meus Grups",
     "settings": "Configuració",
     "aiSettings": "Configuració IA",
-    "roadmap": "Roadmap"
+    "roadmap": "Roadmap",
+    "promptGallery": "Galeria de Prompts"
   },
   "ActionsPage": {
     "title": "Accions de Millora",
@@ -267,6 +268,25 @@
         "placeholder": "Introdueix el prompt per a l'assistent de propostes d'accions..."
       },
       "save": "Desar Canvis"
+    }
+  },
+  "PromptGalleryPage": {
+    "title": "Galeria de Prompts",
+    "description": "Explora una col·lecció de prompts útils que pots copiar i adaptar a la teva configuració d'IA.",
+    "copy": {
+      "button": "Copiar Prompt",
+      "toastTitle": "Prompt Copiat!",
+      "toastDescription": "El prompt s'ha copiat al porta-retalls."
+    },
+    "prompts": {
+      "improveWriting": {
+        "title": "Millorar la Redacció d'Observacions",
+        "description": "Aquest prompt refina un text per a fer-lo més formal, clar i adequat per a un sistema de gestió de qualitat."
+      },
+      "analysisSuggestion": {
+        "title": "Suggerir Anàlisi de Causes i Accions",
+        "description": "Donades unes observacions, aquest prompt genera una anàlisi de causes arrel i proposa un pla d'acció en format JSON."
+      }
     }
   }
 }

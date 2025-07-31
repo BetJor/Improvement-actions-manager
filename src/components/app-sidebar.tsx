@@ -3,7 +3,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Home, ListChecks, Settings, Route, Sparkles } from "lucide-react"
+import { Home, ListChecks, Settings, Route, Sparkles, Library } from "lucide-react"
 import { useTranslations } from "next-intl"
 import {
   Sidebar,
@@ -28,6 +28,7 @@ export function AppSidebar() {
   const secondaryNavItems = [
     { href: "/settings", icon: Settings, label: t("settings") },
     { href: "/ai-settings", icon: Sparkles, label: t("aiSettings") },
+    { href: "/prompt-gallery", icon: Library, label: t("promptGallery") },
     { href: "/roadmap", icon: Route, label: t("roadmap") },
   ]
 

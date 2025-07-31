@@ -16,7 +16,8 @@
     "myGroups": "Mis Grupos",
     "settings": "Configuración",
     "aiSettings": "Configuración IA",
-    "roadmap": "Roadmap"
+    "roadmap": "Roadmap",
+    "promptGallery": "Galería de Prompts"
   },
   "ActionsPage": {
     "title": "Acciones de Mejora",
@@ -267,6 +268,25 @@
         "placeholder": "Introduce el prompt para el asistente de propuestas de acciones..."
       },
       "save": "Guardar Cambios"
+    }
+  },
+  "PromptGalleryPage": {
+    "title": "Galería de Prompts",
+    "description": "Explora una colección de prompts útiles que puedes copiar y adaptar a tu configuración de IA.",
+    "copy": {
+      "button": "Copiar Prompt",
+      "toastTitle": "¡Prompt Copiado!",
+      "toastDescription": "El prompt se ha copiado al portapapeles."
+    },
+    "prompts": {
+      "improveWriting": {
+        "title": "Mejorar la Redacción de Observaciones",
+        "description": "Este prompt refina un texto para hacerlo más formal, claro y adecuado para un sistema de gestión de calidad."
+      },
+      "analysisSuggestion": {
+        "title": "Sugerir Análisis de Causas y Acciones",
+        "description": "Dadas unas observaciones, este prompt genera un análisis de causas raíz y propone un plan de acción en formato JSON."
+      }
     }
   }
 }
