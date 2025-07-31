@@ -267,16 +267,18 @@ type PromptId = "improveWriting" | "analysis" | "correctiveActions";
 
 const DEFAULT_PROMPTS: Record<PromptId, string> = {
     improveWriting: `
-You are an expert in quality management systems. Your task is to convert the following text into a formal non-conformity description suitable for a formal report.
-The response should be structured, detailed, and professional. It must include:
-1.  A concise and descriptive title for the non-conformity.
-2.  A clear description of the finding, including what was observed and where.
-3.  An analysis of the potential risks and consequences (e.g., safety, compliance, financial).
-4.  A mention of the immediate corrective action required or suggested.
-The response MUST be in the same language as the original text. For example, if the original text is in Spanish, the response must be in Spanish.
-Respond ONLY with the generated title in the 'title' field and the full detailed description in the 'description' field of the JSON output.
+You are a Quality Management Systems expert. Your primary directive is to ALWAYS respond in the same language as the user's input text.
+Your task is to rewrite the provided text as a formal non-conformity report.
 
-Original text to convert:
+The report must:
+1.  Have a concise, descriptive title.
+2.  Clearly describe the non-conformity, including observations and location.
+3.  Analyze potential risks (safety, compliance, financial).
+4.  Suggest an immediate corrective action.
+
+The output MUST be a JSON object with two fields: "title" and "description". The "description" must contain the full, detailed report.
+
+User's original text:
 "{{text}}"
 `,
     analysis: `
