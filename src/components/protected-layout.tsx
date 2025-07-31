@@ -7,9 +7,8 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { AppSidebar } from "@/components/app-sidebar";
 import { Header } from "@/components/header";
-import { useLocale } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { SidebarProvider } from "@/components/ui/sidebar";
-import { TabsProvider } from "@/hooks/use-tabs";
 import { DynamicTabs } from "./dynamic-tabs";
 
 export function ProtectedLayout({ children }: { children: React.ReactNode }) {
@@ -17,6 +16,7 @@ export function ProtectedLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const locale = useLocale();
+  const tSidebar = useTranslations("AppSidebar");
 
   useEffect(() => {
     if (!loading && !user && !pathname.includes('/login')) {
@@ -38,15 +38,13 @@ export function ProtectedLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <SidebarProvider>
-      <TabsProvider>
-        <div className="flex h-full w-full">
-          <AppSidebar />
-          <div className="flex flex-1 flex-col overflow-y-auto">
-            <Header />
-            <DynamicTabs initialContent={children}/>
-          </div>
+      <div className="flex h-full w-full">
+        <AppSidebar t={tSidebar} />
+        <div className="flex flex-1 flex-col overflow-y-auto">
+          <Header />
+          <DynamicTabs initialContent={children}/>
         </div>
-      </TabsProvider>
+      </div>
     </SidebarProvider>
   );
 }

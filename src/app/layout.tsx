@@ -6,6 +6,7 @@ import { NextIntlClientProvider } from "next-intl"
 import { AuthProvider } from "@/hooks/use-auth"
 import { ProtectedLayout } from "@/components/protected-layout"
 import { Toaster } from "@/components/ui/toaster"
+import { TabsProvider } from "@/hooks/use-tabs"
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -24,10 +25,12 @@ export default async function RootLayout({
       <body className={inter.className}>
         <NextIntlClientProvider locale={locale} messages={messages}>
           <AuthProvider>
+            <TabsProvider>
               <ProtectedLayout>
                 {children}
               </ProtectedLayout>
               <Toaster />
+            </TabsProvider>
           </AuthProvider>
         </NextIntlClientProvider>
       </body>

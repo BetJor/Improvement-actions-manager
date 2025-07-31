@@ -2,9 +2,8 @@
 "use client"
 
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useParams } from "next/navigation"
 import { Home, ListChecks, Settings, Route, Sparkles, Library } from "lucide-react"
-import { useTranslations } from "next-intl"
 import {
   Sidebar,
   SidebarContent,
@@ -21,7 +20,7 @@ import SettingsPage from "@/app/[locale]/settings/page"
 import AiSettingsPage from "@/app/[locale]/ai-settings/page"
 import PromptGalleryPage from "@/app/[locale]/prompt-gallery/page"
 import RoadmapPage from "@/app/[locale]/roadmap/page"
-import { useParams } from "next/navigation"
+import { useAuth } from "@/hooks/use-auth"
 
 
 const pageComponents: { [key: string]: React.ComponentType | { component: React.ComponentType, params?: any } } = {
@@ -36,34 +35,26 @@ const pageComponents: { [key: string]: React.ComponentType | { component: React.
 function SidebarNavLink({ href, icon: Icon, label }: { href: string; icon: React.ElementType; label: string }) {
   const { addTab, activeTab, setActiveTab } = useTabs();
   const currentParams = useParams();
-  const pathname = usePathname();
 
   const isActive = () => {
-    // Exact match for dashboard
-    if (href.endsWith('/dashboard')) {
-        return activeTab?.id === 'dashboard';
-    }
-    // Match for other main routes
     return activeTab?.id === href;
   };
   
   const handleClick = (e: React.MouseEvent) => {
     e.preventDefault();
     
-    // Handle dashboard separately
     if (href.endsWith('/dashboard')) {
         setActiveTab("dashboard");
         return;
     }
     
-    // remove locale from href to match pageComponents keys
     const pageKey = href.replace(`/${currentParams.locale}`, '');
     const pageInfo = pageComponents[pageKey];
 
     if (pageInfo) {
       const PageComponent = 'component' in pageInfo ? pageInfo.component : pageInfo;
       const params = 'component' in pageInfo ? pageInfo.params : {};
-
+      
       addTab({
         id: href, 
         title: label,
@@ -93,9 +84,11 @@ function SidebarNavLink({ href, icon: Icon, label }: { href: string; icon: React
 }
 
 
-export function AppSidebar() {
-  const t = useTranslations("AppSidebar")
+export function AppSidebar({ t }: { t: any }) {
   const locale = useParams().locale;
+  const { user } = useAuth(); // Ensure user context is available if needed for links
+
+  if (!user) return null; // Or a loading state
 
   const navItems = [
     { href: `/${locale}/dashboard`, icon: Home, label: t("dashboard") },

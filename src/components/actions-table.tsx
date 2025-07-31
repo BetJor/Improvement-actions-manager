@@ -34,7 +34,6 @@ type SortKey = keyof ImprovementAction | 'responsible'
 
 export function ActionsTable({ actions }: ActionsTableProps) {
   const t = useTranslations("ActionsTable")
-  const tCols = useTranslations("ActionsTable.col")
   const { addTab } = useTabs();
   const currentParams = useParams();
 
@@ -111,9 +110,9 @@ export function ActionsTable({ actions }: ActionsTableProps) {
       href: `/${currentParams.locale}/actions/${action.id}`,
       isClosable: true,
       content: (
-          <MockRouterProvider params={{ locale: currentParams.locale, id: action.id }}>
-              <ActionDetailPage />
-          </MockRouterProvider>
+        <MockRouterProvider params={{ locale: currentParams.locale, id: action.id }}>
+          <ActionDetailPage />
+        </MockRouterProvider>
       ),
     });
   };
@@ -182,12 +181,12 @@ export function ActionsTable({ actions }: ActionsTableProps) {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead><Button variant="ghost" onClick={() => requestSort('actionId')}>{tCols("id")} {getSortIcon('actionId')}</Button></TableHead>
-              <TableHead><Button variant="ghost" onClick={() => requestSort('title')}>{tCols("title")} {getSortIcon('title')}</Button></TableHead>
-              <TableHead><Button variant="ghost" onClick={() => requestSort('status')}>{tCols("status")} {getSortIcon('status')}</Button></TableHead>
-              <TableHead><Button variant="ghost" onClick={() => requestSort('type')}>{tCols("type")} {getSortIcon('type')}</Button></TableHead>
-              <TableHead><Button variant="ghost" onClick={() => requestSort('responsible')}>{tCols("responsible")} {getSortIcon('responsible')}</Button></TableHead>
-              <TableHead><Button variant="ghost" onClick={() => requestSort('implementationDueDate')}>{tCols("dueDate")} {getSortIcon('implementationDueDate')}</Button></TableHead>
+              <TableHead><Button variant="ghost" onClick={() => requestSort('actionId')}>{t("col.id")} {getSortIcon('actionId')}</Button></TableHead>
+              <TableHead><Button variant="ghost" onClick={() => requestSort('title')}>{t("col.title")} {getSortIcon('title')}</Button></TableHead>
+              <TableHead><Button variant="ghost" onClick={() => requestSort('status')}>{t("col.status")} {getSortIcon('status')}</Button></TableHead>
+              <TableHead><Button variant="ghost" onClick={() => requestSort('type')}>{t("col.type")} {getSortIcon('type')}</Button></TableHead>
+              <TableHead><Button variant="ghost" onClick={() => requestSort('responsible')}>{t("col.responsible")} {getSortIcon('responsible')}</Button></TableHead>
+              <TableHead><Button variant="ghost" onClick={() => requestSort('implementationDueDate')}>{t("col.dueDate")} {getSortIcon('implementationDueDate')}</Button></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
