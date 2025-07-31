@@ -2,7 +2,6 @@
 "use client"
 
 import { useState, useMemo } from "react"
-import Link from "next/link"
 import {
   Table,
   TableHeader,
@@ -104,12 +103,11 @@ export function ActionsTable({ actions }: ActionsTableProps) {
         <ArrowUpDown className="ml-2 h-4 w-4" />; // Could use different icons for asc/desc
   };
 
-  const handleOpenAction = (e: React.MouseEvent, action: ImprovementAction) => {
-    e.preventDefault();
+  const handleOpenAction = (action: ImprovementAction) => {
     addTab({
       id: action.id,
       title: action.actionId,
-      href: `/actions/${action.id}`,
+      href: `/${currentParams.locale}/actions/${action.id}`,
       isClosable: true,
       content: (
           <MockRouterProvider params={{ locale: currentParams.locale, id: action.id }}>
@@ -186,7 +184,7 @@ export function ActionsTable({ actions }: ActionsTableProps) {
               <TableHead><Button variant="ghost" onClick={() => requestSort('actionId')}>{t("col.id")} {getSortIcon('actionId')}</Button></TableHead>
               <TableHead><Button variant="ghost" onClick={() => requestSort('title')}>{t("col.title")} {getSortIcon('title')}</Button></TableHead>
               <TableHead><Button variant="ghost" onClick={() => requestSort('status')}>{t("col.status")} {getSortIcon('status')}</Button></TableHead>
-              <TableHead><Button variant="ghost" onClick={() => requestSort('type')}>{t("col.type")} {getSortIcon('type')}</Button></TableHead>
+              <TableHead><Button variant="ghost" onClick={() => requestSort('type')}>{t("col.col.type")} {getSortIcon('type')}</Button></TableHead>
               <TableHead><Button variant="ghost" onClick={() => requestSort('responsible')}>{t("col.responsible")} {getSortIcon('responsible')}</Button></TableHead>
               <TableHead><Button variant="ghost" onClick={() => requestSort('implementationDueDate')}>{t("col.dueDate")} {getSortIcon('implementationDueDate')}</Button></TableHead>
             </TableRow>
@@ -196,7 +194,9 @@ export function ActionsTable({ actions }: ActionsTableProps) {
               filteredAndSortedActions.map(action => (
                 <TableRow key={action.id}>
                   <TableCell className="font-medium">
-                    <a href={`/actions/${action.id}`} onClick={(e) => handleOpenAction(e, action)} className="text-primary hover:underline">{action.actionId}</a>
+                    <Button variant="link" onClick={() => handleOpenAction(action)} className="p-0 h-auto">
+                        {action.actionId}
+                    </Button>
                   </TableCell>
                   <TableCell>{action.title}</TableCell>
                   <TableCell>
