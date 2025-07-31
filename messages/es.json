@@ -57,6 +57,14 @@
       },
       "improve": {
         "button": "Mejorar texto con IA"
+      },
+      "suggestion": {
+        "title": "Sugerencia de la IA",
+        "description": "El asistente ha generado el siguiente título y descripción. ¿Quieres aceptar estos cambios?",
+        "suggestedTitle": "Título sugerido",
+        "improvedDescription": "Descripción mejorada",
+        "accept": "Aceptar Sugerencia",
+        "cancel": "Cancelar"
       }
     }
   },
@@ -245,3 +253,5 @@
     }
   }
 }
+
+    
