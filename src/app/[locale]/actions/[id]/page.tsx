@@ -313,8 +313,8 @@ export default function ActionDetailPage() {
                              <div>
                                 <h3 className="font-semibold text-lg mb-4">{t('verification.statusOfActions')}</h3>
                                 <div className="space-y-4">
-                                    {action.analysis?.proposedActions.map((pa) => (
-                                        <div key={pa.id} className="p-4 border rounded-lg">
+                                    {action.analysis?.proposedActions.map((pa, index) => (
+                                        <div key={`${pa.id}-${index}`} className="p-4 border rounded-lg">
                                             <p className="font-medium">{pa.description}</p>
                                             <p className="text-sm text-muted-foreground mt-1">
                                                 Estat: <span className="font-semibold">{action.verification?.proposedActionsStatus[pa.id]}</span>
