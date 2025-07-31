@@ -29,7 +29,7 @@ import { useToast } from "@/hooks/use-toast"
 import { useState, useMemo, useEffect, useRef } from "react"
 import { Loader2, Mic, MicOff, Wand2, Save, Send, Ban } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { improveWriting } from "@/ai/flows/improveWriting"
+import { improveWriting, type ImproveWritingOutput } from "@/ai/flows/improveWriting"
 import {
   Dialog,
   DialogContent,
@@ -81,7 +81,7 @@ export function ActionForm({
   let finalTranscript = '';
 
   const [isImprovingText, setIsImprovingText] = useState(false);
-  const [aiSuggestion, setAiSuggestion] = useState<string | null>(null);
+  const [aiSuggestion, setAiSuggestion] = useState<ImproveWritingOutput | null>(null);
   const [isSuggestionDialogOpen, setIsSuggestionDialogOpen] = useState(false);
   const [hasImprovePrompt, setHasImprovePrompt] = useState(false);
 
@@ -230,7 +230,8 @@ export function ActionForm({
 
   const handleAcceptSuggestion = () => {
     if (aiSuggestion) {
-        form.setValue('description', aiSuggestion, { shouldValidate: true });
+        form.setValue('title', aiSuggestion.title, { shouldValidate: true });
+        form.setValue('description', aiSuggestion.description, { shouldValidate: true });
     }
     setIsSuggestionDialogOpen(false);
     setAiSuggestion(null);
@@ -511,10 +512,14 @@ export function ActionForm({
             <DialogTitle>{t("form.suggestion.title")}</DialogTitle>
             <DialogDescription>{t("form.suggestion.description")}</DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
+          <div className="grid gap-4 py-4 max-h-[60vh] overflow-y-auto pr-4">
+             <div className="space-y-2">
+              <Label htmlFor="suggestion-title">{t("form.suggestion.suggestedTitle")}</Label>
+              <Input id="suggestion-title" readOnly value={aiSuggestion?.title || ''} />
+            </div>
             <div className="space-y-2">
               <Label htmlFor="suggestion-description">{t("form.suggestion.improvedDescription")}</Label>
-              <Textarea id="suggestion-description" readOnly value={aiSuggestion || ''} rows={10} className="resize-y" />
+              <Textarea id="suggestion-description" readOnly value={aiSuggestion?.description || ''} rows={10} className="resize-y" />
             </div>
           </div>
           <DialogFooter>
@@ -526,5 +531,3 @@ export function ActionForm({
     </>
   )
 }
-
-    
