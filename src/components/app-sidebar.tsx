@@ -21,43 +21,51 @@ import SettingsPage from "@/app/[locale]/settings/page"
 import AiSettingsPage from "@/app/[locale]/ai-settings/page"
 import PromptGalleryPage from "@/app/[locale]/prompt-gallery/page"
 import RoadmapPage from "@/app/[locale]/roadmap/page"
+import { useParams } from "next/navigation"
 
-const pageComponents: { [key: string]: React.ComponentType } = {
-  '/actions': ActionsPage,
-  '/settings': SettingsPage,
-  '/ai-settings': AiSettingsPage,
-  '/prompt-gallery': PromptGalleryPage,
-  '/roadmap': RoadmapPage,
+
+const pageComponents: { [key: string]: React.ComponentType | { component: React.ComponentType, params?: any } } = {
+    '/actions': ActionsPage,
+    '/settings': SettingsPage,
+    '/ai-settings': AiSettingsPage,
+    '/prompt-gallery': PromptGalleryPage,
+    '/roadmap': RoadmapPage,
 };
+
 
 function SidebarNavLink({ href, icon: Icon, label }: { href: string; icon: React.ElementType; label: string }) {
   const { addTab, activeTab, setActiveTab } = useTabs();
-  const pathname = usePathname();
+  const currentParams = useParams();
+
+  const fullHref = `/${currentParams.locale}${href}`;
 
   const isActive = () => {
-    if (href.endsWith("/dashboard")) {
+    if (href === "/dashboard") {
         return activeTab?.id === 'dashboard';
     }
-    return activeTab?.id === href;
+    return activeTab?.id === fullHref;
   };
 
   const handleClick = (e: React.MouseEvent) => {
     e.preventDefault();
     
-    if (href.endsWith("/dashboard")) {
+    if (href === "/dashboard") {
         setActiveTab("dashboard");
         return;
     }
 
-    const PageComponent = pageComponents[href.substring(3)]; // remove locale
-    if (PageComponent) {
+    const pageInfo = pageComponents[href];
+    if (pageInfo) {
+      const PageComponent = 'component' in pageInfo ? pageInfo.component : pageInfo;
+      const params = 'component' in pageInfo ? pageInfo.params : {};
+
       addTab({
-        id: href, 
+        id: fullHref, 
         title: label,
-        href: href,
+        href: fullHref,
         isClosable: true,
         content: (
-          <MockRouterProvider params={{}}>
+          <MockRouterProvider params={{ locale: currentParams.locale, ...params }}>
             <PageComponent />
           </MockRouterProvider>
         ),
@@ -68,15 +76,12 @@ function SidebarNavLink({ href, icon: Icon, label }: { href: string; icon: React
   return (
     <SidebarMenuItem>
       <SidebarMenuButton
-        asChild
         isActive={isActive()}
         tooltip={{ children: label }}
         onClick={handleClick}
       >
-        <Link href={href}>
-            <Icon />
-            <span>{label}</span>
-        </Link>
+        <Icon />
+        <span>{label}</span>
       </SidebarMenuButton>
     </SidebarMenuItem>
   );
@@ -84,7 +89,6 @@ function SidebarNavLink({ href, icon: Icon, label }: { href: string; icon: React
 
 
 export function AppSidebar() {
-  const pathname = usePathname()
   const t = useTranslations("AppSidebar")
 
   const navItems = [
@@ -117,15 +121,15 @@ export function AppSidebar() {
         <SidebarContent>
             <SidebarMenu>
             {navItems.map((item) => (
-                <SidebarNavLink key={item.href} {...item} />
+                <SidebarNavLink key={item.href} href={`/${useParams().locale}${item.href}`} icon={item.icon} label={item.label} />
             ))}
             <SidebarSeparator />
             {settingsNavItems.map((item) => (
-                <SidebarNavLink key={item.href} {...item} />
+                <SidebarNavLink key={item.href} href={item.href} icon={item.icon} label={item.label} />
             ))}
             <SidebarSeparator />
             {galleryNavItems.map((item) => (
-                <SidebarNavLink key={item.href} {...item} />
+                <SidebarNavLink key={item.href} href={item.href} icon={item.icon} label={item.label} />
             ))}
             </SidebarMenu>
         </SidebarContent>
