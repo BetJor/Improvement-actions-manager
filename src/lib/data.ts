@@ -3,7 +3,7 @@
 import type { ImprovementAction, User, UserGroup, ImprovementActionType, ActionUserInfo, ActionCategory, ActionSubcategory, AffectedArea, MasterDataItem, WorkflowPlan } from './types';
 import { subDays, format, addDays } from 'date-fns';
 import { db } from './firebase';
-import { collection, getDocs, doc, getDoc, addDoc, query, orderBy, limit, writeBatch, updateDoc, deleteDoc, setDoc, Timestamp } from 'firebase/firestore';
+import { collection, getDocs, doc, getDoc, addDoc, query, orderBy, limit, writeBatch, updateDoc, deleteDoc, setDoc, Timestamp, arrayUnion } from 'firebase/firestore';
 import { planActionWorkflow } from '@/ai/flows/planActionWorkflow';
 import { users } from './static-data';
 import { a } from 'next-intl/dist/config-a681d451';
@@ -134,6 +134,9 @@ export const getActionById = async (id: string): Promise<ImprovementAction | nul
                     dueDate: pa.dueDate instanceof Timestamp ? pa.dueDate.toDate() : new Date(pa.dueDate),
                 }));
             }
+            if (data.comments) {
+                data.comments = data.comments.sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime());
+            }
 
             // Populate responsible user info
             if (data.responsibleGroupId) {
@@ -259,8 +262,13 @@ export async function updateAction(actionId: string, data: any, masterData?: any
     
     let dataToUpdate: any = {};
 
-    if (masterData) {
-        // Find names from IDs if masterData is provided (for draft editing)
+    if (data.newComment) {
+        // Handle adding a new comment
+        dataToUpdate = {
+            comments: arrayUnion(data.newComment)
+        };
+    } else if (masterData) {
+        // Handle editing a draft
         dataToUpdate = {
             title: data.title,
             description: data.description,
@@ -279,7 +287,7 @@ export async function updateAction(actionId: string, data: any, masterData?: any
         // If no masterData, we are likely updating other fields like analysis, verification or closure
         dataToUpdate = { ...data };
 
-        // Handle closure logic
+        // Handle closure logic for non-compliant actions
         if (data.closure && !data.closure.isCompliant) {
             const originalActionSnap = await getDoc(actionDocRef);
             if(originalActionSnap.exists()) {
@@ -373,5 +381,7 @@ export async function updatePrompt(promptId: PromptId, newPrompt: string): Promi
     await setDoc(docRef, { [promptId]: newPrompt }, { merge: true });
 }
 
+
+    
 
     

@@ -427,8 +427,10 @@ export default function ActionDetailPage() {
 
       {/* Right Sidebar */}
       <aside className="lg:col-span-1 flex flex-col gap-6">
-        <ActionDetailsPanel action={action} />
+        <ActionDetailsPanel action={action} onActionUpdate={setAction} />
       </aside>
     </div>
   )
 }
+
+    

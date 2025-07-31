@@ -8,7 +8,7 @@ import { getFirestore } from "firebase/firestore";
 const firebaseConfig = {
   "projectId": "improvement-actions-manager",
   "appId": "1:920139375274:web:3c4fd3616765e7480566d3",
-  "storageBucket": "improvement-actions-manager.firebasestorage.app",
+  "storageBucket": "improvement-actions-manager.appspot.com",
   "apiKey": "AIzaSyDb99QMKUYzyWyajTwZ2plmEB1o35g_9H4",
   "authDomain": "improvement-actions-manager.firebaseapp.com",
   "messagingSenderId": "920139375274"
@@ -19,3 +19,5 @@ const auth = getAuth(firebaseApp);
 const db = getFirestore(firebaseApp);
 
 export { firebaseApp, auth, db };
+
+    
