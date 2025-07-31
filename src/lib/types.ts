@@ -98,4 +98,3 @@ export interface ImprovementAction {
   // The dynamic workflow plan will be stored here
   workflowPlan?: WorkflowPlan;
 };
-

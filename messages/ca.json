@@ -48,6 +48,8 @@
         "description": "Assigna la persona encarregada de l'anàlisi."
       },
       "submit": "Crear Acció",
+      "saveAsDraft": "Desar com a Esborrany",
+      "sendForAnalysis": "Enviar per a Anàlisi",
       "toast": {
         "title": "Acció Creada",
         "description": "La nova acció de millora s'ha creat correctament."
@@ -253,5 +255,3 @@
     }
   }
 }
-
-    

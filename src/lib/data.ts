@@ -156,6 +156,7 @@ interface CreateActionData {
     type: string;
     responsibleGroupId: string;
     creator: ActionUserInfo;
+    status: 'Borrador' | 'Pendiente Análisis';
     // Pass master data to avoid re-fetching
     allCategories: ActionCategory[];
     allSubcategories: ActionSubcategory[];
@@ -199,7 +200,7 @@ export async function createAction(data: CreateActionData): Promise<string> {
       subcategory: subcategoryName,
       description: data.description,
       type: typeName,
-      status: 'Borrador',
+      status: data.status || 'Borrador',
       affectedAreas: affectedAreaName,
       assignedTo: data.assignedTo,
       creator: data.creator,

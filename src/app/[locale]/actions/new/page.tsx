@@ -26,12 +26,12 @@ import {
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { createAction, getActionTypes, getCategories, getSubcategories, getAffectedAreas, groups, getPrompt } from "@/lib/data"
-import type { ImprovementActionType, ActionCategory, ActionSubcategory, AffectedArea } from "@/lib/types"
+import type { ImprovementActionType, ActionCategory, ActionSubcategory, AffectedArea, ImprovementActionStatus } from "@/lib/types"
 import { useToast } from "@/hooks/use-toast"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/hooks/use-auth"
 import { useState, useMemo, useEffect, useRef } from "react"
-import { Loader2, Mic, MicOff, Wand2 } from "lucide-react"
+import { Loader2, Mic, MicOff, Wand2, Save, Send } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { improveWriting } from "@/ai/flows/improveWriting"
 import {
@@ -227,14 +227,13 @@ export default function NewActionPage() {
 
   const handleAcceptSuggestion = () => {
     if (aiSuggestion) {
-      form.setValue('description', aiSuggestion, { shouldValidate: true });
+        form.setValue('description', aiSuggestion, { shouldValidate: true });
     }
     setIsSuggestionDialogOpen(false);
     setAiSuggestion(null);
   };
 
-
-  async function onSubmit(values: z.infer<typeof formSchema>) {
+  const onSubmit = async (values: z.infer<typeof formSchema>, status: 'Borrador' | 'Pendiente Análisis') => {
     if (!user) {
       toast({
         variant: "destructive",
@@ -249,6 +248,7 @@ export default function NewActionPage() {
     try {
       const actionData = {
         ...values,
+        status,
         creator: {
           id: user.uid,
           name: user.displayName || "Usuari desconegut",
@@ -281,6 +281,10 @@ export default function NewActionPage() {
   }
   
   const disableForm = isSubmitting || isLoadingData;
+  const handleFormSubmit = (status: 'Borrador' | 'Pendiente Análisis') => {
+      form.handleSubmit((values) => onSubmit(values, status))();
+  };
+
 
   return (
     <>
@@ -292,7 +296,7 @@ export default function NewActionPage() {
         <CardContent>
           {isLoadingData && <div className="flex items-center gap-2"> <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Carregant dades...</div>}
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6" style={{ display: isLoadingData ? 'none' : 'block' }}>
+            <form onSubmit={(e) => e.preventDefault()} className="space-y-6" style={{ display: isLoadingData ? 'none' : 'block' }}>
               <FormField
                 control={form.control}
                 name="title"
@@ -494,10 +498,16 @@ export default function NewActionPage() {
                 />
               </div>
               
-              <Button type="submit" disabled={disableForm}>
-                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                {isSubmitting ? 'Creant...' : t("form.submit")}
-              </Button>
+              <div className="flex gap-2">
+                <Button type="button" variant="outline" onClick={() => handleFormSubmit('Borrador')} disabled={disableForm}>
+                    {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                    {t("form.saveAsDraft")}
+                </Button>
+                <Button type="button" onClick={() => handleFormSubmit('Pendiente Análisis')} disabled={disableForm}>
+                    {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
+                    {t("form.sendForAnalysis")}
+                </Button>
+              </div>
             </form>
           </Form>
         </CardContent>
