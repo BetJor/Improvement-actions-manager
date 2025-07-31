@@ -224,8 +224,8 @@ export default function NewActionPage() {
 
   const handleAcceptSuggestion = () => {
     if (aiSuggestion) {
-      form.setValue('title', aiSuggestion.title);
-      form.setValue('description', aiSuggestion.description);
+      form.setValue('title', aiSuggestion.title, { shouldValidate: true });
+      form.setValue('description', aiSuggestion.description, { shouldValidate: true });
     }
     setIsSuggestionDialogOpen(false);
     setAiSuggestion(null);
@@ -506,10 +506,6 @@ export default function NewActionPage() {
             <DialogDescription>{t("form.suggestion.description")}</DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="suggestion-title">{t("form.suggestion.suggestedTitle")}</Label>
-              <Input id="suggestion-title" readOnly value={aiSuggestion?.title || ''} />
-            </div>
             <div className="space-y-2">
               <Label htmlFor="suggestion-description">{t("form.suggestion.improvedDescription")}</Label>
               <Textarea id="suggestion-description" readOnly value={aiSuggestion?.description || ''} rows={10} className="resize-y" />
