@@ -32,7 +32,7 @@ export default function ActionDetailPage({ params }: DetailPageProps) {
 
 
   useEffect(() => {
-    // Read the actionId from params inside the effect to ensure it's available client-side
+    // Correct way to get actionId from params in a Client Component
     const actionId = params.id;
     if (!actionId) return;
 
