@@ -8,85 +8,25 @@ import { planActionWorkflow } from '@/ai/flows/planActionWorkflow';
 import { users } from './static-data';
 import { a } from 'next-intl/dist/config-a681d451';
 
-async function seedCollection<T extends { id: string, [key: string]: any }>(collectionName: string, data: T[]) {
-    const collectionRef = collection(db, collectionName);
-    const docRef = doc(collectionRef, data[0].id); // Check only for the first item's existence
-    const docSnap = await getDoc(docRef);
-
-    if (!docSnap.exists()) {
-      console.log(`Seeding '${collectionName}' collection...`);
-      const batch = writeBatch(db);
-      data.forEach(item => {
-        const docRef = doc(collectionRef, item.id);
-        const dataToSet = { ...item };
-        delete dataToSet.id; // Don't store the id field inside the document
-        batch.set(docRef, dataToSet);
-      });
-      await batch.commit();
-      console.log(`'${collectionName}' collection seeded successfully.`);
-    }
-}
-
-
 export const getActionTypes = async (): Promise<ImprovementActionType[]> => {
-  const mockActionTypes = [
-    { id: "T01", name: "No Conformitat" },
-    { id: "T02", name: "Observació" },
-    { id: "T03", name: "Oportunitat de Millora" },
-    { id: "T04", name: "Reclamació de Client" },
-    { id: "T05", name: "Auditoria Interna" },
-    { id: "T06", name: "Auditoria Externa" },
-  ];
-  await seedCollection('actionTypes', mockActionTypes);
-
   const typesCol = collection(db, 'actionTypes');
   const snapshot = await getDocs(query(typesCol, orderBy("name")));
   return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ImprovementActionType));
 };
 
 export const getCategories = async (): Promise<ActionCategory[]> => {
-    const mockCategories = [
-        { id: "C01", name: "Gestió de la Qualitat" },
-        { id: "C02", name: "Seguretat i Salut Laboral" },
-        { id: "C03", name: "Medi Ambient" },
-        { id: "C04", name: "Seguretat de la Informació" },
-    ];
-    await seedCollection('categories', mockCategories);
-
-
   const categoriesCol = collection(db, 'categories');
   const snapshot_data = await getDocs(query(categoriesCol, orderBy("name")));
   return snapshot_data.docs.map(doc => ({ id: doc.id, ...doc.data() } as ActionCategory));
 };
 
 export const getSubcategories = async (): Promise<ActionSubcategory[]> => {
-    const mockSubcategories = [
-        { id: "SC01", categoryId: "C01", name: "Processos interns" },
-        { id: "SC02", categoryId: "C01", name: "Producte no conforme" },
-        { id: "SC03", categoryId: "C02", name: "Accidents laborals" },
-        { id: "SC04", categoryId: "C02", name: "Equips de protecció" },
-        { id: "SC05", categoryId: "C03", name: "Gestió de residus" },
-        { id: "SC06", categoryId: "C03", name: "Consum energètic" },
-        { id: "SC07", categoryId: "C04", name: "Control d'accés" },
-        { id: "SC08", categoryId: "C04", name: "Incidents de seguretat" },
-      ];
-    await seedCollection('subcategories', mockSubcategories);
-
   const subcategoriesCol = collection(db, 'subcategories');
   const snapshot = await getDocs(query(subcategoriesCol, orderBy("name")));
   return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ActionSubcategory));
 };
 
 export const getAffectedAreas = async (): Promise<AffectedArea[]> => {
-    const mockAffectedAreas = [
-        { id: "A01", name: "Departament de Producció" },
-        { id: "A02", name: "Departament de Logística" },
-        { id: "A03", name: "Departament Financer" },
-        { id: "A04", name: "Recursos Humans" },
-        { id: "A05", name: "IT" },
-      ];
-    await seedCollection('affectedAreas', mockAffectedAreas);
-
   const affectedAreasCol = collection(db, 'affectedAreas');
   const snapshot = await getDocs(query(affectedAreasCol, orderBy("name")));
   return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as AffectedArea));
@@ -359,7 +299,6 @@ export async function updatePrompt(promptId: PromptId, newPrompt: string): Promi
     const docRef = doc(db, 'app_settings', 'prompts');
     await setDoc(docRef, { [promptId]: newPrompt }, { merge: true });
 }
-
 
     
 
