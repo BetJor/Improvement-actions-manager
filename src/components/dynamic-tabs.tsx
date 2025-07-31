@@ -19,16 +19,14 @@ export function DynamicTabs({ initialContent }: { initialContent: React.ReactNod
     useEffect(() => {
         // This effect ensures that the initial page (e.g., dashboard) is added as the first tab
         if (tabs.length === 0 && pathname) {
-            const isDashboard = pathname.endsWith('/dashboard');
-            
             addTab({
-                id: isDashboard ? 'dashboard' : pathname,
-                title: isDashboard ? t('dashboard') : 'Dashboard',
+                id: 'dashboard', // Use a fixed ID for the main tab
+                title: t('dashboard'),
                 href: pathname,
                 isClosable: false
             });
         }
-    }, []);
+    }, [pathname, addTab, t, tabs.length]);
 
 
     const handleTabClick = (tabId: string, href: string) => {
@@ -83,7 +81,7 @@ export function DynamicTabs({ initialContent }: { initialContent: React.ReactNod
             <main className="flex-1 space-y-4 p-4 lg:p-6 bg-background/60 overflow-y-auto">
                 {tabs.map(tab => (
                     <div key={tab.id} style={{ display: activeTab?.id === tab.id ? 'block' : 'none' }}>
-                        {tab.id === pathname ? initialContent : activeTab?.content}
+                        {tab.id === 'dashboard' ? initialContent : activeTab?.content}
                     </div>
                 ))}
             </main>
