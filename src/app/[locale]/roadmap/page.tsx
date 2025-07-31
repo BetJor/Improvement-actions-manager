@@ -44,7 +44,6 @@ import {
             "Implementar formularis d'Anàlisi i Verificació per interactuar amb el workflow."
           ],
           pending_tasks: [
-            "Pendent: Implementar un sistema de notificacions per als usuaris.",
             "Pendent: Implementar la pujada de fitxers adjunts (integració amb Firebase Storage)."
           ]
         },
@@ -93,6 +92,16 @@ import {
           pending_tasks: [
             "Pendent: Traduir totes les cadenes de text de l'aplicació al castellà (`messages/es.json`)."
           ]
+        },
+        {
+            key: "phase8",
+            title: "Fase 8: Subscripcions i Notificacions",
+            duration: "Estimat: 3-4 dies",
+            completed_tasks: [],
+            pending_tasks: [
+              "Pendent: Implementar un sistema de subscripció a les accions de millora.",
+              "Pendent: Configurar l'enviament de notificacions (p. ex., per email) quan hi hagi actualitzacions rellevants (nous comentaris, canvis d'estat)."
+            ]
         }
     ];
 
