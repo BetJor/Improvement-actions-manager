@@ -1,6 +1,6 @@
 
 "use client"
-import { CircleUser, Menu, Users, Bell, Home, ListChecks, GanttChartSquare, Settings, Route } from "lucide-react"
+import { CircleUser, Menu, Users, Bell, Home, ListChecks, GanttChartSquare, Settings, Route, Sparkles, Library } from "lucide-react"
 import Link from "next/link"
 import {
   DropdownMenu,
@@ -27,6 +27,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { usePathname } from "next/navigation"
 import React from "react"
 import { SidebarTrigger } from "@/components/ui/sidebar"
+import { useTabs } from "@/hooks/use-tabs"
 
 
 const pageConfig: { [key: string]: { icon: React.ElementType, titleKey: string } } = {
@@ -36,6 +37,8 @@ const pageConfig: { [key: string]: { icon: React.ElementType, titleKey: string }
   '/actions/[id]': { icon: ListChecks, titleKey: 'actions' },
   '/my-groups': { icon: Users, titleKey: 'myGroups' },
   '/settings': { icon: Settings, titleKey: 'settings' },
+  '/ai-settings': { icon: Sparkles, titleKey: 'aiSettings' },
+  '/prompt-gallery': { icon: Library, titleKey: 'promptGallery' },
   '/roadmap': { icon: Route, titleKey: 'roadmap' },
 };
 
@@ -45,37 +48,13 @@ export function Header() {
   const tSidebar = useTranslations('AppSidebar');
   const tDialog = useTranslations('SettingsDialog');
   const { user, logout } = useAuth();
+  const { tabs, activeTab } = useTabs();
   const pathname = usePathname();
 
-  const getCurrentPageConfig = () => {
-    const segments = pathname.split('/').filter(Boolean);
-    let effectivePath = '';
-    
-    // This logic handles nested routes like /actions/[id] or /settings/general
-    if (segments.length > 1) {
-        if (segments[0] === 'ca' || segments[0] === 'es') {
-            const pageSegment = segments[1] || '';
-            const potentialPath = `/${pageSegment}`;
-            if (pageConfig[potentialPath]) {
-                effectivePath = potentialPath;
-            } else if (pageSegment === 'actions' && segments.length > 2) {
-                effectivePath = `/actions/[id]`;
-            }
-        }
-    }
-  
-    const config = pageConfig[effectivePath];
-    if (config) {
-      const PageIcon = config.icon || GanttChartSquare;
-      const title = tSidebar(config.titleKey as any);
-      return { Icon: PageIcon, title };
-    }
-  
-    // Default fallback
-    return { Icon: GanttChartSquare, title: t('title') };
-  };
+  const activeTabData = tabs.find(tab => tab.id === activeTab);
+  const Icon = activeTabData?.icon || GanttChartSquare;
+  const title = activeTabData?.title || t('title');
 
-  const { Icon, title } = getCurrentPageConfig();
 
   return (
     <header className="sticky top-0 z-10 flex h-14 items-center gap-4 border-b bg-sidebar px-4 sm:h-16 sm:px-6">
