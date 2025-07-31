@@ -274,7 +274,7 @@ The response should be structured, detailed, and professional. It must include:
 2.  A clear description of the finding, including what was observed and where.
 3.  An analysis of the potential risks and consequences (e.g., safety, compliance, financial).
 4.  A mention of the immediate corrective action required or suggested.
-The response MUST be in the same language as the original text.
+The response MUST be in the same language as the original text. For example, if the original text is in Spanish, the response must be in Spanish.
 Respond ONLY with the generated title in the 'title' field and the full detailed description in the 'description' field of the JSON output.
 Original text to convert:
 "{{text}}"
@@ -327,3 +327,5 @@ export async function updatePrompt(promptId: PromptId, newPrompt: string): Promi
     // or update the specific field if it does.
     await setDoc(docRef, { [promptId]: newPrompt }, { merge: true });
 }
+
+    
