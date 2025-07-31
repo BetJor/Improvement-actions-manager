@@ -157,15 +157,10 @@ interface CreateActionData {
     responsibleGroupId: string;
     creator: ActionUserInfo;
     status: 'Borrador' | 'Pendiente Análisis';
-    // Pass master data to avoid re-fetching
-    allCategories: ActionCategory[];
-    allSubcategories: ActionSubcategory[];
-    allAffectedAreas: AffectedArea[];
-    allActionTypes: ImprovementActionType[];
 }
 
 // Function to create a new action
-export async function createAction(data: CreateActionData): Promise<string> {
+export async function createAction(data: CreateActionData, masterData: any): Promise<string> {
     const actionsCol = collection(db, 'actions');
   
     // 1. Get the last actionId to generate the new one
@@ -188,25 +183,28 @@ export async function createAction(data: CreateActionData): Promise<string> {
     const creationDate = format(today, 'dd/MM/yyyy');
 
     // Find names from IDs
-    const categoryName = data.allCategories.find(c => c.id === data.category)?.name || data.category;
-    const subcategoryName = data.allSubcategories.find(s => s.id === data.subcategory)?.name || data.subcategory;
-    const affectedAreaName = data.allAffectedAreas.find(a => a.id === data.affectedAreas)?.name || data.affectedAreas;
-    const typeName = data.allActionTypes.find(t => t.id === data.type)?.name || data.type;
+    const categoryName = masterData.categories.find((c: any) => c.id === data.category)?.name || data.category;
+    const subcategoryName = masterData.subcategories.find((s: any) => s.id === data.subcategory)?.name || data.subcategory;
+    const affectedAreaName = masterData.affectedAreas.find((a: any) => a.id === data.affectedAreas)?.name || data.affectedAreas;
+    const typeName = masterData.actionTypes.find((t: any) => t.id === data.type)?.name || data.type;
 
     const newAction: Omit<ImprovementAction, 'id'> = {
       actionId: newActionId,
       title: data.title,
       category: categoryName,
+      categoryId: data.category,
       subcategory: subcategoryName,
+      subcategoryId: data.subcategory,
       description: data.description,
       type: typeName,
+      typeId: data.type,
       status: data.status || 'Borrador',
       affectedAreas: affectedAreaName,
+      affectedAreasId: data.affectedAreas,
       assignedTo: data.assignedTo,
       creator: data.creator,
       responsibleGroupId: data.responsibleGroupId,
       creationDate: creationDate,
-      // These will be replaced by the dynamic workflow plan
       analysisDueDate: '', 
       implementationDueDate: '',
       closureDueDate: '',
@@ -228,7 +226,6 @@ export async function createAction(data: CreateActionData): Promise<string> {
         // 5. Save the workflow plan back to the action document
         await updateDoc(docRef, { 
             workflowPlan: workflowPlan,
-            // Optionally update top-level dates from the plan
             analysisDueDate: workflowPlan.steps.find(s => s.stepName.includes('Análisis'))?.dueDate || '',
             implementationDueDate: workflowPlan.steps.find(s => s.stepName.includes('Implantación'))?.dueDate || '',
             closureDueDate: workflowPlan.steps.find(s => s.stepName.includes('Cierre'))?.dueDate || '',
@@ -236,12 +233,38 @@ export async function createAction(data: CreateActionData): Promise<string> {
         
     } catch (error) {
         console.error("Error planning workflow for action:", newActionId, error);
-        // If the flow fails, the action is still created, but without a plan.
-        // This could be handled with a retry mechanism or manual intervention.
     }
 
-
     return docRef.id;
+}
+
+
+// Function to update an existing action
+export async function updateAction(actionId: string, data: any, masterData: any): Promise<void> {
+    const actionDocRef = doc(db, 'actions', actionId);
+    
+    // Find names from IDs
+    const categoryName = masterData.categories.find((c: any) => c.id === data.category)?.name || data.category;
+    const subcategoryName = masterData.subcategories.find((s: any) => s.id === data.subcategory)?.name || data.subcategory;
+    const affectedAreaName = masterData.affectedAreas.find((a: any) => a.id === data.affectedAreas)?.name || data.affectedAreas;
+    const typeName = masterData.actionTypes.find((t: any) => t.id === data.type)?.name || data.type;
+
+    const dataToUpdate = {
+        title: data.title,
+        description: data.description,
+        assignedTo: data.assignedTo,
+        responsibleGroupId: data.responsibleGroupId,
+        category: categoryName,
+        categoryId: data.category,
+        subcategory: subcategoryName,
+        subcategoryId: data.subcategory,
+        affectedAreas: affectedAreaName,
+        affectedAreasId: data.affectedAreas,
+        type: typeName,
+        typeId: data.type,
+    };
+
+    await updateDoc(actionDocRef, dataToUpdate);
 }
 
 
@@ -274,13 +297,10 @@ export async function getPrompt(promptId: PromptId): Promise<string> {
         return docSnap.data()?.[promptId] || '';
     }
     
-    // If it doesn't exist, return an empty string
     return '';
 }
 
 export async function updatePrompt(promptId: PromptId, newPrompt: string): Promise<void> {
     const docRef = doc(db, 'app_settings', 'prompts');
-    // Use setDoc with merge: true to create the document if it doesn't exist
-    // or update the specific field if it does.
     await setDoc(docRef, { [promptId]: newPrompt }, { merge: true });
 }

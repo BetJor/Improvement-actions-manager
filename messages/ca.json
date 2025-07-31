@@ -28,12 +28,12 @@
     "description": "Omple el formulari següent per crear una nova acció. Començarà en estat 'Esorrany'.",
     "form": {
       "title": {
-        "label": "Títol",
+        "label": "Assumpte",
         "placeholder": "p. ex., Optimització del procés de facturació",
         "description": "Un títol breu però descriptiu per a l'acció."
       },
       "description": {
-        "label": "Descripció",
+        "label": "Observacions",
         "placeholder": "Descriu la no conformitat o l'àrea de millora...",
         "description": "Proporciona una descripció detallada del problema."
       },
@@ -62,7 +62,7 @@
       },
       "suggestion": {
         "title": "Suggeriment de l'IA",
-        "description": "L'assistent ha generat el següent títol i descripció. Vols acceptar aquests canvis?",
+        "description": "L'assistent ha generat la següent descripció. Vols acceptar aquests canvis?",
         "suggestedTitle": "Títol suggerit",
         "improvedDescription": "Descripció millorada",
         "accept": "Acceptar Suggeriment",
@@ -124,7 +124,10 @@
     "workflowPlan": {
       "title": "Pla de Treball",
       "description": "Aquest és el pla de treball generat automàticament per a aquesta acció."
-    }
+    },
+    "editingTitle": "Editant Acció de Millora",
+    "editingDescription": "Estàs modificant els detalls d'aquesta acció. Desa els canvis quan hagis acabat.",
+    "viewingDescription": "Visualitzant els detalls de l'acció. Per a modificar, fes clic a 'Editar'."
   },
   "RootLayout": {
     "title": "Gestor d'Accions de Millora",

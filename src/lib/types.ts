@@ -1,6 +1,5 @@
 
 
-
 export interface MasterDataItem {
   id?: string;
   name: string;
@@ -14,13 +13,11 @@ export type ImprovementActionStatus = 'Borrador' | 'Pendiente Análisis' | 'Pend
 export interface User {
   id: string;
   name: string;
-  // El rol es determinarà pels grups de Google, el camp es pot eliminar o mantenir per a info addicional.
   role?: 'Creator' | 'Responsible' | 'Director' | 'Committee' | 'Admin';
   avatar: string;
   email: string;
 };
 
-// Nou tipus per a representar els grups
 export interface UserGroup {
   id: string; // p.ex., l'email del Google Group
   name: string;
@@ -35,15 +32,12 @@ export interface ActionSubcategory extends MasterDataItem {
 
 export interface AffectedArea extends MasterDataItem {}
 
-// Representa la informació de l'usuari emmagatzemada dins d'una acció.
-// És més lleuger que l'objecte User complet.
 export interface ActionUserInfo {
   id: string;
   name: string;
   avatar?: string;
 }
 
-// Represents a single step in a dynamic workflow
 export interface WorkflowStep {
   stepName: string;
   responsibleParty: string;
@@ -53,7 +47,6 @@ export interface WorkflowStep {
   notes?: string;
 }
 
-// Represents the entire plan for an action
 export interface WorkflowPlan {
   workflowId: string;
   actionId: string;
@@ -64,21 +57,32 @@ export interface WorkflowPlan {
 export interface ImprovementAction {
   id: string; // Firestore document ID
   actionId: string; // User-facing ID like AM-24001
-  title: string; // ASUNTO
-  category: string; // CATEGORÍA
-  subcategory: string; // SUBCATEGORÍA
-  type: string;
-  status: ImprovementActionStatus;
-  description: string; // OBSERVACIONES
-  affectedAreas: string; // AA.FF. IMPLICADES
-  assignedTo: string; // ASIGNADO A
+  title: string; 
+  description: string;
   creator: ActionUserInfo;
-  responsibleGroupId: string; // ID del grup responsable
-  responsibleUser?: ActionUserInfo; // Opcional, si una persona específica s'assigna dins del grup
+  responsibleGroupId: string; 
+  responsibleUser?: ActionUserInfo;
   creationDate: string;
+
+  // Fields with names and IDs
+  category: string;
+  categoryId: string;
+  subcategory: string;
+  subcategoryId: string;
+  type: string;
+  typeId: string;
+  affectedAreas: string; 
+  affectedAreasId: string;
+  assignedTo: string;
+  
+  status: ImprovementActionStatus;
+
+  // Dates
   analysisDueDate: string;
   implementationDueDate: string;
   closureDueDate: string;
+
+  // Optional detailed sections
   analysis?: {
     causes: string;
     proposedAction: string;
@@ -95,6 +99,5 @@ export interface ImprovementAction {
     isCompliant: boolean;
     date: string;
   };
-  // The dynamic workflow plan will be stored here
   workflowPlan?: WorkflowPlan;
 };

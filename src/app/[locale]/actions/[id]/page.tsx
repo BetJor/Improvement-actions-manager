@@ -1,64 +1,111 @@
-import { getActionById } from "@/lib/data"
-import { notFound } from "next/navigation"
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
+
+"use client"
+
+import { useEffect, useState } from "react"
+import { getActionById, getActionTypes, getCategories, getSubcategories, getAffectedAreas, updateAction } from "@/lib/data"
+import { notFound, useRouter } from "next/navigation"
+import { useAuth } from "@/hooks/use-auth"
+import type { ImprovementAction } from "@/lib/types"
+import { useToast } from "@/hooks/use-toast"
+import { useTranslations } from "next-intl"
+import { ActionForm } from "@/components/action-form"
 import { Button } from "@/components/ui/button"
-import { Separator } from "@/components/ui/separator"
-import { ActionStatusBadge } from "@/components/action-status-badge"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { CheckCircle2, XCircle, FileEdit, Microscope, ShieldCheck, Flag, CalendarClock, UserCheck, Milestone } from "lucide-react"
-import { getTranslations } from "next-intl/server"
+import { FileEdit, Loader2, Microscope, ShieldCheck, Flag } from "lucide-react"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 
 interface DetailPageProps {
   params: { id: string }
 }
 
-const InfoField = ({ label, value }: { label: string; value: React.ReactNode }) => (
-  <div className="grid grid-cols-2 gap-2">
-    <dt className="text-sm font-medium text-muted-foreground">{label}</dt>
-    <dd className="text-sm">{value}</dd>
-  </div>
-)
+export default function ActionDetailPage({ params }: DetailPageProps) {
+  const t = useTranslations("ActionDetailPage")
+  const tForm = useTranslations("NewActionPage")
+  const router = useRouter()
+  const { toast } = useToast()
+  const { user } = useAuth()
 
-const UserField = ({ label, user }: { label: string; user: { name: string; avatar: string } }) => (
-  <div className="grid grid-cols-2 gap-2 items-center">
-    <dt className="text-sm font-medium text-muted-foreground">{label}</dt>
-    <dd className="flex items-center gap-2 text-sm">
-      <Avatar className="h-6 w-6">
-        <AvatarImage src={user.avatar} alt={user.name} />
-        <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
-      </Avatar>
-      <span>{user.name}</span>
-    </dd>
-  </div>
-)
-
-const GroupField = ({ label, groupId }: { label: string; groupId: string }) => (
-    <div className="grid grid-cols-2 gap-2 items-center">
-      <dt className="text-sm font-medium text-muted-foreground">{label}</dt>
-      <dd className="text-sm">{groupId}</dd>
-    </div>
-  )
+  const [action, setAction] = useState<ImprovementAction | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [isEditing, setIsEditing] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [masterData, setMasterData] = useState<any>(null)
 
 
-export default async function ActionDetailPage({ params }: DetailPageProps) {
-  const t = await getTranslations("ActionDetailPage");
-  const action = await getActionById(params.id)
+  useEffect(() => {
+    async function loadData() {
+      setIsLoading(true)
+      try {
+        const [
+          actionData, 
+          types, 
+          cats, 
+          subcats, 
+          areas
+        ] = await Promise.all([
+          getActionById(params.id),
+          getActionTypes(),
+          getCategories(),
+          getSubcategories(),
+          getAffectedAreas(),
+        ]);
 
-  if (!action) {
-    notFound()
+        if (!actionData) {
+          notFound()
+          return
+        }
+        setAction(actionData)
+        setMasterData({
+            actionTypes: types,
+            categories: cats,
+            subcategories: subcats,
+            affectedAreas: areas,
+        })
+
+      } catch (error) {
+        console.error("Error loading action details:", error)
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "No s'ha pogut carregar l'acció.",
+        })
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    loadData()
+  }, [params.id, toast])
+
+  const handleEdit = async (formData: any) => {
+    if (!action) return;
+    setIsSubmitting(true);
+    try {
+        await updateAction(action.id, formData, masterData);
+        toast({
+            title: "Acció actualitzada",
+            description: "L'acció s'ha desat correctament.",
+        });
+        // Refresh data after update
+        const updatedAction = await getActionById(action.id);
+        setAction(updatedAction);
+        setIsEditing(false); // Exit edit mode
+    } catch (error) {
+        console.error("Error updating action:", error);
+        toast({
+            variant: "destructive",
+            title: "Error en desar",
+            description: "No s'ha pogut actualitzar l'acció.",
+        });
+    } finally {
+        setIsSubmitting(false);
+    }
   }
 
   const getActionButtons = (status: string) => {
+    if (isEditing) return null; // No show buttons in edit mode
+
     switch (status) {
       case "Borrador":
-        return <Button><FileEdit className="mr-2 h-4 w-4" /> {t("editDraft")}</Button>
+        return <Button onClick={() => setIsEditing(true)}><FileEdit className="mr-2 h-4 w-4" /> {t("editDraft")}</Button>
       case "Pendiente Análisis":
         return <Button><Microscope className="mr-2 h-4 w-4" /> {t("performAnalysis")}</Button>
       case "Pendiente Comprobación":
@@ -70,125 +117,38 @@ export default async function ActionDetailPage({ params }: DetailPageProps) {
     }
   }
 
+  if (isLoading) {
+    return <div className="flex items-center justify-center"><Loader2 className="mr-2 h-8 w-8 animate-spin" /> Carregant...</div>
+  }
+
+  if (!action) {
+    return null; // or a not found component
+  }
+
   return (
     <div className="flex flex-col gap-6">
-      <header className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">{action.actionId}: {action.title}</h1>
-          <p className="text-muted-foreground mt-1">{action.description}</p>
-        </div>
-        <div className="flex-shrink-0">
-          {getActionButtons(action.status)}
-        </div>
-      </header>
+        <header className="flex items-start justify-between gap-4">
+            <div>
+            <h1 className="text-3xl font-bold tracking-tight">{action.actionId}: {isEditing ? t("editingTitle") : action.title}</h1>
+            <p className="text-muted-foreground mt-1">{isEditing ? t("editingDescription") : t("viewingDescription")}</p>
+            </div>
+            <div className="flex-shrink-0">
+                {getActionButtons(action.status)}
+            </div>
+        </header>
 
-      <div className="grid md:grid-cols-3 gap-6">
-        <div className="md:col-span-2 space-y-6">
-          {action.workflowPlan && (
-            <Card>
-              <CardHeader>
-                <CardTitle>{t("workflowPlan.title")}</CardTitle>
-                <CardDescription>{t("workflowPlan.description")}</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ul className="space-y-4">
-                  {action.workflowPlan.steps.map((step, index) => (
-                    <li key={index} className="flex items-start gap-4">
-                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
-                        <Milestone className="h-5 w-5 text-primary" />
-                      </div>
-                      <div className="flex-1">
-                        <p className="font-semibold">{step.stepName}</p>
-                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                          <div className="flex items-center gap-1.5">
-                            <UserCheck className="h-4 w-4" />
-                            <span>{step.responsibleParty}</span>
-                          </div>
-                          <div className="flex items-center gap-1.5">
-                             <CalendarClock className="h-4 w-4" />
-                             <span>{step.dueDate}</span>
-                          </div>
-                        </div>
-                      </div>
-                       <ActionStatusBadge status={step.status as any} />
-                    </li>
-                  ))}
-                </ul>
-              </CardContent>
-            </Card>
-          )}
+        <ActionForm 
+            mode={isEditing ? 'edit' : 'view'}
+            initialData={action}
+            masterData={masterData}
+            isLoadingMasterData={!masterData}
+            isSubmitting={isSubmitting}
+            onSubmit={handleEdit}
+            onCancel={() => setIsEditing(false)}
+            t={tForm}
+        />
 
-          {action.analysis && (
-            <Card>
-              <CardHeader>
-                <CardTitle>{t("causesAndProposedAction")}</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <h3 className="font-semibold mb-2">{t("causesAnalysis")}</h3>
-                  <p className="text-sm text-muted-foreground">{action.analysis.causes}</p>
-                </div>
-                <div>
-                  <h3 className="font-semibold mb-2">{t("proposedAction")}</h3>
-                  <p className="text-sm text-muted-foreground">{action.analysis.proposedAction}</p>
-                </div>
-              </CardContent>
-              <CardFooter className="text-xs text-muted-foreground">
-                {t("analysisPerformedBy", {name: action.analysis.responsible.name, date: action.analysis.date})}
-              </CardFooter>
-            </Card>
-          )}
-
-          {action.verification && (
-            <Card>
-              <CardHeader>
-                <CardTitle>{t("implementationVerification")}</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <h3 className="font-semibold mb-2">{t("followUpAndNotes")}</h3>
-                  <p className="text-sm text-muted-foreground">{action.verification.notes}</p>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {action.closure && (
-             <Card>
-              <CardHeader>
-                <CardTitle>{t("actionClosure")}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                 <p className="text-sm text-muted-foreground">{action.closure.notes}</p>
-              </CardContent>
-            </Card>
-          )}
-
-        </div>
-
-        <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>{t("details")}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <dl className="space-y-4">
-                <InfoField label={t("status")} value={<ActionStatusBadge status={action.status} />} />
-                <InfoField label={t("type")} value={action.type} />
-                <Separator />
-                <UserField label={t("creator")} user={action.creator} />
-                <GroupField label={t("responsible")} groupId={action.responsibleGroupId} />
-                {action.responsibleUser && <UserField label="Responsable assignat" user={action.responsibleUser} />}
-                <Separator />
-                <InfoField label={t("creationDate")} value={action.creationDate} />
-                <InfoField label={t("analysisDue")} value={action.analysisDueDate} />
-                <InfoField label={t("implementationDue")} value={action.implementationDueDate} />
-                <InfoField label={t("closureDue")} value={action.closureDueDate} />
-              </dl>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+        {/* TODO: We can add other info cards here later, like workflow, analysis, etc. */}
     </div>
   )
 }

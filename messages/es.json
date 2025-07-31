@@ -28,12 +28,12 @@
     "description": "Rellena el formulario para crear una nueva acción. Empezará en estado 'Borrador'.",
     "form": {
       "title": {
-        "label": "Título",
+        "label": "Asunto",
         "placeholder": "p. ej., Optimización del proceso de facturación",
         "description": "Un título breve pero descriptivo para la acción."
       },
       "description": {
-        "label": "Descripción",
+        "label": "Observaciones",
         "placeholder": "Describe la no conformidad o el área de mejora...",
         "description": "Proporciona una descripción detallada del problema."
       },
@@ -62,7 +62,7 @@
       },
       "suggestion": {
         "title": "Sugerencia de la IA",
-        "description": "El asistente ha generado el siguiente título y descripción. ¿Quieres aceptar estos cambios?",
+        "description": "El asistente ha generado la siguiente descripción. ¿Quieres aceptar estos cambios?",
         "suggestedTitle": "Título sugerido",
         "improvedDescription": "Descripción mejorada",
         "accept": "Aceptar Sugerencia",
@@ -124,7 +124,10 @@
     "workflowPlan": {
       "title": "Plan de Trabajo",
       "description": "Este es el plan de trabajo generado automáticamente para esta acción."
-    }
+    },
+    "editingTitle": "Editando Acción de Mejora",
+    "editingDescription": "Estás modificando los detalles de esta acción. Guarda los cambios cuando hayas terminado.",
+    "viewingDescription": "Visualizando los detalles de la acción. Para modificar, haz clic en 'Editar'."
   },
   "RootLayout": {
     "title": "Gestor de Acciones de Mejora",
