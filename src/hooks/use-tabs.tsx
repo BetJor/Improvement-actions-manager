@@ -1,7 +1,8 @@
 
+
 "use client";
 
-import React, { createContext, useContext, useState, ReactNode, useMemo, ComponentType, useEffect } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from './use-auth';
 
@@ -17,7 +18,7 @@ import RoadmapPage from '@/app/[locale]/roadmap/page';
 
 import { Home, ListChecks, Settings, Sparkles, Library, Route, FilePlus, GanttChartSquare } from 'lucide-react';
 
-const pageComponentMapping: { [key: string]: ComponentType<any> } = {
+const pageComponentMapping: { [key: string]: React.ComponentType<any> } = {
     '/dashboard': DashboardPage,
     '/actions': ActionsPage,
     '/actions/new': NewActionPage,
@@ -41,7 +42,7 @@ export interface Tab {
     id: string; // Should be the same as the path
     title: string;
     path: string;
-    icon: ComponentType<{ className?: string }>;
+    icon: React.ComponentType<{ className?: string }>;
     isClosable: boolean;
     content: ReactNode;
 }
@@ -101,19 +102,21 @@ export function TabsProvider({ children }: { children: ReactNode }) {
     const closeTab = (tabId: string) => {
         const tabToCloseIndex = tabs.findIndex(tab => tab.id === tabId);
         if (tabToCloseIndex === -1) return;
+
+        const updatedTabs = tabs.filter(t => t.id !== tabId);
+        setTabs(updatedTabs);
     
-        const newTabs = tabs.filter(t => t.id !== tabId);
-        
         if (activeTab === tabId) {
-            if (newTabs.length > 0) {
+            if (updatedTabs.length > 0) {
                 const newActiveIndex = Math.max(0, tabToCloseIndex - 1);
-                setActiveTabState(newTabs[newActiveIndex].id);
+                const newActiveTab = updatedTabs[newActiveIndex];
+                setActiveTabState(newActiveTab.id);
+                router.push(newActiveTab.path);
             } else {
                  setActiveTabState('/dashboard');
+                 router.push('/dashboard');
             }
         }
-        
-        setTabs(newTabs);
     };
 
     useEffect(() => {
@@ -172,22 +175,8 @@ export function TabsProvider({ children }: { children: ReactNode }) {
         }
     }, [pathname, tabs, activeTab]);
 
-    useEffect(() => {
-        if (activeTab && pathname !== activeTab) {
-          router.push(activeTab);
-        }
-    }, [activeTab, pathname, router]);
-
-    const value = useMemo(() => ({
-        tabs,
-        activeTab,
-        openTab,
-        closeTab,
-        setActiveTab,
-    }), [tabs, activeTab, openTab, closeTab, setActiveTab]);
-
     return (
-        <TabsContext.Provider value={value}>
+        <TabsContext.Provider value={{ tabs, activeTab, openTab, closeTab, setActiveTab }}>
             {children}
         </TabsContext.Provider>
     );
