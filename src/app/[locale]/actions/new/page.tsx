@@ -25,7 +25,7 @@ import {
 } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { createAction, getActionTypes, getCategories, getSubcategories, getAffectedAreas, groups } from "@/lib/data"
+import { createAction, getActionTypes, getCategories, getSubcategories, getAffectedAreas, groups, getPrompt } from "@/lib/data"
 import type { ImprovementActionType, ActionCategory, ActionSubcategory, AffectedArea } from "@/lib/types"
 import { useToast } from "@/hooks/use-toast"
 import { useRouter } from "next/navigation"
@@ -76,6 +76,7 @@ export default function NewActionPage() {
   const [isImprovingText, setIsImprovingText] = useState(false);
   const [aiSuggestion, setAiSuggestion] = useState<{ title: string; description: string } | null>(null);
   const [isSuggestionDialogOpen, setIsSuggestionDialogOpen] = useState(false);
+  const [hasImprovePrompt, setHasImprovePrompt] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -95,16 +96,18 @@ export default function NewActionPage() {
     async function loadMasterData() {
       try {
         setIsLoadingData(true);
-        const [types, cats, subcats, areas] = await Promise.all([
+        const [types, cats, subcats, areas, improvePrompt] = await Promise.all([
           getActionTypes(),
           getCategories(),
           getSubcategories(),
           getAffectedAreas(),
+          getPrompt("improveWriting"),
         ]);
         setActionTypes(types);
         setCategories(cats);
         setSubcategories(subcats);
         setAffectedAreas(areas);
+        setHasImprovePrompt(!!improvePrompt);
       } catch (error) {
         console.error("Failed to load master data", error);
         toast({
@@ -418,18 +421,20 @@ export default function NewActionPage() {
                               {isRecording ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
                               <span className="sr-only">{isRecording ? "Aturar enregistrament" : "Iniciar enregistrament"}</span>
                           </Button>
-                          <Button 
-                              type="button" 
-                              size="icon" 
-                              variant="ghost" 
-                              onClick={handleImproveText}
-                              disabled={disableForm || isImprovingText}
-                              className="h-8 w-8"
-                              title={t("form.improve.button")}
-                          >
-                              {isImprovingText ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}
-                              <span className="sr-only">{t("form.improve.button")}</span>
-                          </Button>
+                          {hasImprovePrompt && (
+                            <Button 
+                                type="button" 
+                                size="icon" 
+                                variant="ghost" 
+                                onClick={handleImproveText}
+                                disabled={disableForm || isImprovingText}
+                                className="h-8 w-8"
+                                title={t("form.improve.button")}
+                            >
+                                {isImprovingText ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}
+                                <span className="sr-only">{t("form.improve.button")}</span>
+                            </Button>
+                          )}
                       </div>
                      </div>
                     <FormMessage />
@@ -520,5 +525,3 @@ export default function NewActionPage() {
     </>
   )
 }
-
-    

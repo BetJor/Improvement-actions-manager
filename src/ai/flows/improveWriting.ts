@@ -35,6 +35,10 @@ const improveWritingFlow = ai.defineFlow(
     // Get the dynamic prompt from Firestore
     const promptText = await getPrompt('improveWriting');
 
+    if (!promptText) {
+      throw new Error("The 'improveWriting' prompt is not configured in the settings.");
+    }
+
     // Define the prompt dynamically
     const improveWritingPrompt = ai.definePrompt({
         name: 'improveWritingPrompt',
