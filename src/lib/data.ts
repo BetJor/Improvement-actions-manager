@@ -1,5 +1,4 @@
 
-
 import type { ImprovementAction, User, UserGroup, ImprovementActionType, ActionUserInfo, ActionCategory, ActionSubcategory, AffectedArea, MasterDataItem, WorkflowPlan } from './types';
 import { subDays, format, addDays } from 'date-fns';
 import { db } from './firebase';
@@ -276,6 +275,7 @@ The response should be structured, detailed, and professional. It must include:
 4.  A mention of the immediate corrective action required or suggested.
 The response MUST be in the same language as the original text. For example, if the original text is in Spanish, the response must be in Spanish.
 Respond ONLY with the generated title in the 'title' field and the full detailed description in the 'description' field of the JSON output.
+
 Original text to convert:
 "{{text}}"
 `,
