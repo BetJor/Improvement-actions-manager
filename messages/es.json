@@ -315,6 +315,10 @@
       "integrateGoogleLogin": {
         "title": "Integrar Login con Google",
         "description": "Genera toda la funcionalidad de autenticación de usuarios con Firebase, incluyendo rutas protegidas y la página de login."
+      },
+      "replicateLayout": {
+        "title": "Replicar el Layout de la Aplicación",
+        "description": "Genera la estructura básica del layout, incluyendo la barra lateral, la cabecera y la disposición general del contenido."
       }
     }
   }
