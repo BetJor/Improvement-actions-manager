@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
@@ -78,10 +77,14 @@ export function TabsProvider({ children }: { children: ReactNode }) {
     const setActiveTab = (tabId: string) => {
         const tab = tabs.find(t => t.id === tabId);
         if (tab) {
+            console.log(`[useTabs] setActiveTab: Canviant a pestanya ${tabId}`);
             setActiveTabState(tab.id);
             if (window.location.pathname !== tab.path) {
+                console.log(`[useTabs] setActiveTab: Navegant a la ruta ${tab.path}`);
                 router.push(tab.path);
             }
+        } else {
+             console.warn(`[useTabs] setActiveTab: S'ha intentat activar una pestanya no existent amb ID ${tabId}`);
         }
     };
     
@@ -100,24 +103,43 @@ export function TabsProvider({ children }: { children: ReactNode }) {
     };
 
     const closeTab = (tabId: string) => {
+        console.log(`[useTabs] closeTab: Rebuda crida per tancar ${tabId}. Pestanya activa actual: ${activeTab}`);
         const tabToCloseIndex = tabs.findIndex(tab => tab.id === tabId);
-        if (tabToCloseIndex === -1) return;
 
+        if (tabToCloseIndex === -1) {
+            console.error(`[useTabs] closeTab: No s'ha trobat la pestanya amb ID ${tabId} per tancar.`);
+            return;
+        }
+        
+        console.log(`[useTabs] closeTab: La pestanya a tancar es troba a l'índex ${tabToCloseIndex}.`);
+        
         const updatedTabs = tabs.filter(t => t.id !== tabId);
-        setTabs(updatedTabs);
-    
+        console.log(`[useTabs] closeTab: Nou array de pestanyes després de filtrar:`, updatedTabs.map(t => t.id));
+
         if (activeTab === tabId) {
+            console.log(`[useTabs] closeTab: La pestanya tancada era l'activa.`);
+            let nextActiveTab: Tab | undefined;
             if (updatedTabs.length > 0) {
-                const newActiveIndex = Math.max(0, tabToCloseIndex - 1);
-                const newActiveTab = updatedTabs[newActiveIndex];
-                setActiveTabState(newActiveTab.id);
-                router.push(newActiveTab.path);
-            } else {
-                 setActiveTabState('/dashboard');
-                 router.push('/dashboard');
+                // Prioritza la pestanya de l'esquerra
+                nextActiveTab = updatedTabs[Math.max(0, tabToCloseIndex - 1)];
             }
+            
+            console.log(`[useTabs] closeTab: La següent pestanya activa serà:`, nextActiveTab?.id || 'cap');
+
+            setTabs(updatedTabs);
+            if (nextActiveTab) {
+                setActiveTab(nextActiveTab.id);
+            } else {
+                console.log(`[useTabs] closeTab: No queden pestanyes, es navega a /dashboard.`);
+                setActiveTabState('/dashboard');
+                router.push('/dashboard');
+            }
+        } else {
+            console.log(`[useTabs] closeTab: La pestanya tancada NO era l'activa. Només s'actualitza la llista.`);
+            setTabs(updatedTabs);
         }
     };
+
 
     useEffect(() => {
         const pathWithoutLocale = pathname.split('/').slice(2).join('/');
@@ -173,7 +195,15 @@ export function TabsProvider({ children }: { children: ReactNode }) {
             });
             setActiveTabState(newTab.id);
         }
-    }, [pathname, tabs, activeTab]);
+    }, [pathname]);
+
+    useEffect(() => {
+        // Aquest useEffect només s'encarrega de la navegació quan l'activeTab canvia.
+        const activeTabData = tabs.find(t => t.id === activeTab);
+        if (activeTabData && activeTabData.path !== pathname) {
+           // No naveguem aqui per evitar conflictes
+        }
+    }, [activeTab, tabs, pathname, router]);
 
     return (
         <TabsContext.Provider value={{ tabs, activeTab, openTab, closeTab, setActiveTab }}>

@@ -9,9 +9,16 @@ import { X } from "lucide-react"
 export function DynamicTabs() {
   const { tabs, activeTab, setActiveTab, closeTab } = useTabs()
 
+  const handleTabClick = (tabId: string) => {
+    console.log(`[DynamicTabs] handleTabClick: S'ha fet clic per activar la pestanya ${tabId}`);
+    setActiveTab(tabId);
+  }
+
   const handleCloseTab = (e: React.MouseEvent, tabId: string) => {
+    console.log(`[DynamicTabs] handleCloseTab: Iniciant tancament per a ${tabId}`);
     e.preventDefault();
     e.stopPropagation();
+    console.log(`[DynamicTabs] handleCloseTab: e.stopPropagation() cridat per a ${tabId}`);
     closeTab(tabId);
   };
 
@@ -25,7 +32,7 @@ export function DynamicTabs() {
         {tabs.map((tab) => (
           <div
             key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
+            onClick={() => handleTabClick(tab.id)}
             className={cn(
               "group inline-flex items-center border-b-2 font-medium text-sm cursor-pointer",
               activeTab === tab.id
