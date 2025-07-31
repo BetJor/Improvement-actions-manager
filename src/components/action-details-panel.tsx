@@ -6,14 +6,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { ActionStatusBadge } from "./action-status-badge"
 import { Separator } from "./ui/separator"
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar"
-import { CircleUser, Calendar, Flag, User as UserIcon, Users, Tag, CalendarClock, MessageSquare, Paperclip, Upload, Download, Send, Loader2, Trash2, Info } from "lucide-react"
+import { CircleUser, Calendar, Flag, User as UserIcon, Users, Tag, CalendarClock, MessageSquare, Paperclip, Upload, Download, Send, Loader2, Trash2, Info, ChevronDown } from "lucide-react"
 import { useTranslations } from "next-intl"
 import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion"
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible"
 import { Button } from "./ui/button"
 import { Textarea } from "./ui/textarea"
 import { Input } from "./ui/input"
@@ -23,8 +22,9 @@ import { useAuth } from "@/hooks/use-auth"
 import { updateAction, getActionById, uploadFileAndUpdateAction } from "@/lib/data"
 import { useToast } from "@/hooks/use-toast"
 import { useState, useEffect, useRef } from "react"
-import type { ActionComment } from "@/lib/types"
+import type { ActionComment, ActionAttachment } from "@/lib/types"
 import { Badge } from "@/components/ui/badge"
+import { cn } from "@/lib/utils"
 
 
 interface DetailRowProps {
@@ -144,20 +144,25 @@ export function ActionDetailsPanel({ action, onActionUpdate }: ActionDetailsPane
 
   
   return (
-    <Card>
-        <Accordion type="multiple" defaultValue={['details']} className="w-full">
-            <AccordionItem value="details" className="border-b">
-                <AccordionTrigger className="p-4">
-                    <div className="flex justify-between items-center w-full">
+    <div className="flex flex-col gap-6">
+        <Card>
+            <Collapsible defaultOpen={false}>
+                <CollapsibleTrigger asChild>
+                    <div className="flex justify-between items-center p-4 cursor-pointer">
                         <CardTitle className="text-base flex items-center gap-2">
                             <Info className="h-5 w-5" />
                             {t('details')}
                         </CardTitle>
-                        <ActionStatusBadge status={action.status} />
+                        <div className="flex items-center gap-2">
+                            <ActionStatusBadge status={action.status} />
+                             <Button variant="ghost" size="icon" className="data-[state=open]:rotate-180">
+                                <ChevronDown className="h-4 w-4 transition-transform" />
+                            </Button>
+                        </div>
                     </div>
-                </AccordionTrigger>
-                <AccordionContent>
-                    <CardContent className="space-y-4 pt-4">
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                    <CardContent className="space-y-4 pt-0">
                         <DetailRow icon={Tag} label={t("type")} value={action.type} />
                         <Separator />
                         <DetailRow 
@@ -184,21 +189,28 @@ export function ActionDetailsPanel({ action, onActionUpdate }: ActionDetailsPane
                         <DetailRow icon={CalendarClock} label={t("implementationDue")} value={action.implementationDueDate} />
                         <DetailRow icon={CalendarClock} label={t("closureDue")} value={action.closureDueDate} />
                     </CardContent>
-                </AccordionContent>
-            </AccordionItem>
-            
-            <AccordionItem value="comments" className="border-b">
-                <AccordionTrigger className="p-4">
-                     <div className="flex justify-between items-center w-full">
+                </CollapsibleContent>
+            </Collapsible>
+        </Card>
+
+        <Card>
+            <Collapsible defaultOpen={false}>
+                <CollapsibleTrigger asChild>
+                    <div className="flex justify-between items-center p-4 cursor-pointer">
                         <CardTitle className="flex items-center gap-2 text-base">
                             <MessageSquare className="h-5 w-5" />
                             {t('comments.title')}
                         </CardTitle>
-                        <Badge variant="secondary">{(action.comments || []).length}</Badge>
+                        <div className="flex items-center gap-2">
+                            <Badge variant="secondary">{(action.comments || []).length}</Badge>
+                            <Button variant="ghost" size="icon" className="data-[state=open]:rotate-180">
+                                <ChevronDown className="h-4 w-4 transition-transform" />
+                            </Button>
+                        </div>
                     </div>
-                </AccordionTrigger>
-                <AccordionContent>
-                    <CardContent className="space-y-4 pt-4">
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                    <CardContent className="space-y-4 pt-0">
                         <div className="space-y-4 max-h-60 overflow-y-auto pr-2">
                             {(action.comments || []).length > 0 ? (
                                 action.comments.map(comment => (
@@ -235,21 +247,28 @@ export function ActionDetailsPanel({ action, onActionUpdate }: ActionDetailsPane
                             </Button>
                         </form>
                     </CardContent>
-                </AccordionContent>
-            </AccordionItem>
+                </CollapsibleContent>
+            </Collapsible>
+        </Card>
 
-             <AccordionItem value="attachments" className="border-b-0">
-                <AccordionTrigger className="p-4">
-                    <div className="flex justify-between items-center w-full">
+        <Card>
+            <Collapsible defaultOpen={false}>
+                <CollapsibleTrigger asChild>
+                    <div className="flex justify-between items-center p-4 cursor-pointer">
                         <CardTitle className="flex items-center gap-2 text-base">
                             <Paperclip className="h-5 w-5" />
                             {t('attachments.title')}
                         </CardTitle>
-                        <Badge variant="secondary">{(action.attachments || []).length}</Badge>
+                        <div className="flex items-center gap-2">
+                            <Badge variant="secondary">{(action.attachments || []).length}</Badge>
+                            <Button variant="ghost" size="icon" className="data-[state=open]:rotate-180">
+                                <ChevronDown className="h-4 w-4 transition-transform" />
+                            </Button>
+                        </div>
                     </div>
-                </AccordionTrigger>
-                <AccordionContent>
-                    <CardContent className="space-y-4 pt-4">
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                    <CardContent className="space-y-4 pt-0">
                         <div className="flex items-center justify-center w-full">
                             <label htmlFor="dropzone-file" className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-muted/50 hover:bg-muted/80">
                                 <div className="flex flex-col items-center justify-center pt-5 pb-6 text-center">
@@ -296,10 +315,11 @@ export function ActionDetailsPanel({ action, onActionUpdate }: ActionDetailsPane
                              )}
                         </div>
                     </CardContent>
-                </AccordionContent>
-            </AccordionItem>
-
-        </Accordion>
-    </Card>
+                </CollapsibleContent>
+            </Collapsible>
+        </Card>
+    </div>
   )
 }
+
+    
