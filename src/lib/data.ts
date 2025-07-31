@@ -115,6 +115,8 @@ export interface CreateActionData {
     responsibleGroupId: string;
     creator: ActionUserInfo;
     status: 'Borrador' | 'Pendiente Análisis';
+    originalActionId?: string; // The Firestore ID
+    originalActionTitle?: string;
 }
 
 // Function to create a new action
@@ -166,6 +168,8 @@ export async function createAction(data: CreateActionData, masterData: any): Pro
       analysisDueDate: '', 
       implementationDueDate: '',
       closureDueDate: '',
+      originalActionId: data.originalActionId,
+      originalActionTitle: data.originalActionTitle,
     };
   
     // 3. Add the new document to Firestore
@@ -249,7 +253,9 @@ export async function updateAction(actionId: string, data: any, masterData?: any
                     type: originalAction.typeId,
                     responsibleGroupId: originalAction.responsibleGroupId,
                     creator: data.closure.closureResponsible, // The closer is the creator of the new action
-                    status: 'Borrador' // New BIS action starts as a draft
+                    status: 'Borrador', // New BIS action starts as a draft
+                    originalActionId: originalAction.id,
+                    originalActionTitle: `${originalAction.actionId}: ${originalAction.title}`
                 };
                 await createAction(bisActionData, allMasterData);
             }

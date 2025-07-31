@@ -6,8 +6,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { ActionStatusBadge } from "./action-status-badge"
 import { Separator } from "./ui/separator"
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar"
-import { CircleUser, Calendar, Flag, User as UserIcon, Users, Tag, CalendarClock, MessageSquare, Paperclip, Upload, Download, Send, Loader2, Trash2, Info, ChevronDown } from "lucide-react"
+import { CircleUser, Calendar, Flag, User as UserIcon, Users, Tag, CalendarClock, MessageSquare, Paperclip, Upload, Download, Send, Loader2, Trash2, Info, ChevronDown, Link as LinkIcon, ExternalLink } from "lucide-react"
 import { useTranslations } from "next-intl"
+import Link from "next/link"
 import {
   Collapsible,
   CollapsibleContent,
@@ -145,8 +146,30 @@ export function ActionDetailsPanel({ action, onActionUpdate }: ActionDetailsPane
   
   return (
     <div className="flex flex-col gap-6">
+        
+        {action.originalActionId && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2">
+                <LinkIcon className="h-5 w-5" />
+                Acció Original (BIS)
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-sm text-muted-foreground">Aquesta acció es va crear a partir del tancament no conforme de l'acció:</p>
+              <p className="font-semibold">{action.originalActionTitle}</p>
+              <Button asChild variant="outline" size="sm" className="w-full">
+                <Link href={`/actions/${action.originalActionId}`}>
+                  <ExternalLink className="mr-2 h-4 w-4" />
+                  Veure Acció Original
+                </Link>
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+
         <Card>
-            <Collapsible defaultOpen={false}>
+            <Collapsible defaultOpen={true}>
                 <CollapsibleTrigger asChild>
                     <div className="flex justify-between items-center p-4 cursor-pointer">
                         <CardTitle className="text-base flex items-center gap-2">
@@ -321,5 +344,3 @@ export function ActionDetailsPanel({ action, onActionUpdate }: ActionDetailsPane
     </div>
   )
 }
-
-    

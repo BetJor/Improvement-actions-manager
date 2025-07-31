@@ -113,6 +113,10 @@ export interface ImprovementAction {
   implementationDueDate: string;
   closureDueDate: string;
 
+  // BIS Action traceability
+  originalActionId?: string; // The Firestore ID of the original action
+  originalActionTitle?: string;
+
   // Optional detailed sections
   analysis?: {
     causes: string;
