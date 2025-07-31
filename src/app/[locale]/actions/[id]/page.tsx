@@ -23,7 +23,7 @@ export default function ActionDetailPage({ params }: DetailPageProps) {
   const router = useRouter()
   const { toast } = useToast()
   const { user } = useAuth()
-  const { id: actionId } = params;
+  const actionId = params.id;
 
   const [action, setAction] = useState<ImprovementAction | null>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -34,6 +34,7 @@ export default function ActionDetailPage({ params }: DetailPageProps) {
 
   useEffect(() => {
     async function loadData() {
+      if (!actionId) return;
       setIsLoading(true)
       try {
         const [
