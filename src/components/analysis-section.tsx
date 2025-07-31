@@ -38,6 +38,7 @@ const analysisSchema = z.object({
   causes: z.string().min(1, "L'anàlisi de causes és requerit."),
   proposedActions: z.array(
     z.object({
+      id: z.string().optional(),
       description: z.string().min(1, "La descripció és requerida."),
       responsibleUserId: z.string().min(1, "El responsable és requerit."),
       dueDate: z.date({ required_error: "La data de venciment és requerida." }),
@@ -72,7 +73,7 @@ export function AnalysisSection({ action, user, isSubmitting, onSave }: Analysis
     resolver: zodResolver(analysisSchema),
     defaultValues: {
       causes: action.analysis?.causes || "",
-      proposedActions: action.analysis?.proposedActions || [],
+      proposedActions: action.analysis?.proposedActions.map(pa => ({...pa, dueDate: new Date(pa.dueDate)})) || [],
       verificationResponsibleUserId: action.analysis?.verificationResponsibleUserId || "",
     },
   })
@@ -151,6 +152,7 @@ export function AnalysisSection({ action, user, isSubmitting, onSave }: Analysis
       form.setValue('causes', aiSuggestion.causesAnalysis, { shouldValidate: true });
       
       const newActions = aiSuggestion.proposedActions.map(action => ({
+        id: crypto.randomUUID(),
         description: action.description,
         responsibleUserId: '', // User must select this
         dueDate: new Date(), // Defaults to today, user must change
@@ -165,6 +167,10 @@ export function AnalysisSection({ action, user, isSubmitting, onSave }: Analysis
   const onSubmit = (values: AnalysisFormValues) => {
     const analysisData = {
         ...values,
+        proposedActions: values.proposedActions.map(pa => ({
+            ...pa,
+            id: pa.id || crypto.randomUUID(),
+        })),
         analysisResponsible: {
             id: user.uid,
             name: user.displayName || "Usuari desconegut",
@@ -279,7 +285,7 @@ export function AnalysisSection({ action, user, isSubmitting, onSave }: Analysis
                         control={form.control}
                         name={`proposedActions.${index}.dueDate`}
                         render={({ field }) => (
-                            <FormItem>
+                            <FormItem className="flex flex-col">
                                <FormLabel>{t("proposedActions.dueDate")}</FormLabel>
                                <Popover>
                                 <PopoverTrigger asChild>

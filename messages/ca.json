@@ -110,6 +110,7 @@
     "causesAnalysis": "Anàlisi de les Causes",
     "proposedAction": "Acció Proposada",
     "analysisPerformedBy": "Anàlisi realitzat per {name} el {date}",
+    "verificationPerformedBy": "Verificació realitzada per {name} el {date}",
     "implementationVerification": "Comprovació de la Implantació",
     "followUpAndNotes": "Seguiment i Anotacions",
     "actionClosure": "Tancament de l'Acció",
@@ -164,6 +165,19 @@
         "suggestedActions": "Accions Formatives Suggerides",
         "accept": "Acceptar i Omplir Formulari",
         "cancel": "Cancel·lar"
+      }
+    },
+    "verification": {
+      "title": "Verificació de la Implantació",
+      "description": "Comprova si les accions proposades s'han implantat i si han estat eficaces.",
+      "notesLabel": "Observacions Generals",
+      "notesPlaceholder": "Afegeix aquí les teves observacions sobre el procés de verificació...",
+      "statusOfActions": "Estat de les Accions Proposades",
+      "saveButton": "Desar Verificació i Avançar",
+      "status": {
+        "implemented": "Implementada",
+        "partiallyImplemented": "Implementada Parcialment",
+        "notImplemented": "No Implementada"
       }
     },
     "tabs": {
@@ -310,5 +324,3 @@
     }
   }
 }
-
-    

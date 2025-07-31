@@ -53,11 +53,14 @@ export interface WorkflowPlan {
   steps: WorkflowStep[];
 }
 
+export type ProposedActionStatus = 'Implementada' | 'Implementada Parcialment' | 'No Implementada';
+
 export interface ProposedAction {
   id: string;
   description: string;
   responsibleUserId: string;
   dueDate: Date | string; // Acceptem string per a la inicialització des de Firestore
+  status?: ProposedActionStatus;
 }
 
 export interface ImprovementAction {
@@ -98,8 +101,10 @@ export interface ImprovementAction {
   };
   verification?: {
     notes: string;
-    isCompliant: boolean;
-    date: string;
+    isEffective: boolean;
+    verificationDate: string;
+    verificationResponsible: ActionUserInfo;
+    proposedActionsStatus: Record<string, ProposedActionStatus>;
   };
   closure?: {
     notes: string;

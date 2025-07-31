@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast"
 import { useTranslations } from "next-intl"
 import { ActionForm } from "@/components/action-form"
 import { AnalysisSection } from "@/components/analysis-section"
+import { VerificationSection } from "@/components/verification-section"
 import { Button } from "@/components/ui/button"
 import { FileEdit, Loader2, Microscope, ShieldCheck, Flag } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -142,6 +143,36 @@ export default function ActionDetailPage() {
     }
   }
 
+  const handleSaveVerification = async (verificationData: any) => {
+    if (!action) return;
+    setIsSubmitting(true);
+    try {
+      await updateAction(action.id, {
+        verification: verificationData,
+        status: "Pendiente de Cierre", // Move to next state
+      });
+
+      toast({
+        title: "Verificació desada",
+        description: "La verificació de la implantació s'ha desat correctament.",
+      });
+
+      // Refresh data
+      const updatedAction = await getActionById(action.id);
+      setAction(updatedAction);
+
+    } catch (error) {
+      console.error("Error saving verification:", error);
+      toast({
+          variant: "destructive",
+          title: "Error en desar",
+          description: "No s'ha pogut desar la verificació.",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const getActionButtons = (status: string) => {
     if (isEditing) return null; // No show buttons in edit mode
 
@@ -152,7 +183,8 @@ export default function ActionDetailPage() {
         // The button is inside the AnalysisSection component now
         return null; 
       case "Pendiente Comprobación":
-        return <Button><ShieldCheck className="mr-2 h-4 w-4" /> {t("verifyImplementation")}</Button>
+        // The button is inside the VerificationSection component now
+        return null;
       case "Pendiente de Cierre":
         return <Button><Flag className="mr-2 h-4 w-4" /> {t("closeAction")}</Button>
       default:
@@ -161,6 +193,9 @@ export default function ActionDetailPage() {
   }
   
   const isAnalysisTabDisabled = action?.status === 'Borrador';
+  const isVerificationTabDisabled = action?.status === 'Borrador' || action?.status === 'Pendiente Análisis';
+  const isClosureTabDisabled = action?.status !== 'Finalizada';
+
 
   if (isLoading) {
     return <div className="flex items-center justify-center h-full"><Loader2 className="mr-2 h-8 w-8 animate-spin" /> Carregant...</div>
@@ -186,8 +221,8 @@ export default function ActionDetailPage() {
             <TabsList>
                 <TabsTrigger value="details">{t('tabs.details')}</TabsTrigger>
                 <TabsTrigger value="analysis" disabled={isAnalysisTabDisabled}>{t('tabs.causesAndProposedAction')}</TabsTrigger>
-                <TabsTrigger value="verification" disabled>{t('tabs.implementationVerification')}</TabsTrigger>
-                <TabsTrigger value="closure" disabled>{t('tabs.actionClosure')}</TabsTrigger>
+                <TabsTrigger value="verification" disabled={isVerificationTabDisabled}>{t('tabs.implementationVerification')}</TabsTrigger>
+                <TabsTrigger value="closure" disabled={isClosureTabDisabled}>{t('tabs.actionClosure')}</TabsTrigger>
             </TabsList>
             
             <TabsContent value="details" className="mt-4">
@@ -217,7 +252,7 @@ export default function ActionDetailPage() {
                             <CardTitle>{t('causesAndProposedAction')}</CardTitle>
                             <CardDescription>
                                 {t('analysisPerformedBy', { 
-                                    name: action.analysis.analysisResponsible.name, 
+                                    name: action.analysis.analysisResponsible?.name, 
                                     date: format(new Date(action.analysis.analysisDate), "PPP", { locale: es }) 
                                 })}
                             </CardDescription>
@@ -249,9 +284,55 @@ export default function ActionDetailPage() {
                   </div>
                 )}
             </TabsContent>
+
+            <TabsContent value="verification" className="mt-4">
+                {action.status === 'Pendiente Comprobación' && user && action.analysis ? (
+                    <VerificationSection
+                      action={action}
+                      user={user}
+                      isSubmitting={isSubmitting}
+                      onSave={handleSaveVerification}
+                    />
+                ) : action.verification ? (
+                     <Card>
+                        <CardHeader>
+                            <CardTitle>{t('implementationVerification')}</CardTitle>
+                             <CardDescription>
+                                {t('verificationPerformedBy', { 
+                                    name: action.verification.verificationResponsible?.name, 
+                                    date: format(new Date(action.verification.verificationDate), "PPP", { locale: es }) 
+                                })}
+                            </CardDescription>
+                        </CardHeader>
+                         <CardContent className="space-y-6">
+                            <div>
+                                <h3 className="font-semibold text-lg mb-2">{t('verification.notesLabel')}</h3>
+                                <p className="text-muted-foreground whitespace-pre-wrap">{action.verification.notes}</p>
+                            </div>
+                            <Separator />
+                             <div>
+                                <h3 className="font-semibold text-lg mb-4">{t('verification.statusOfActions')}</h3>
+                                <div className="space-y-4">
+                                    {action.analysis?.proposedActions.map((pa) => (
+                                        <div key={pa.id} className="p-4 border rounded-lg">
+                                            <p className="font-medium">{pa.description}</p>
+                                            <p className="text-sm text-muted-foreground mt-1">
+                                                Estat: <span className="font-semibold">{action.verification?.proposedActionsStatus[pa.id]}</span>
+                                            </p>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+                ) : (
+                    <div className="text-center text-muted-foreground py-10">
+                        <p>La verificació es podrà realitzar un cop s'hagi completat l'anàlisi de causes.</p>
+                    </div>
+                )}
+            </TabsContent>
+
         </Tabs>
     </div>
   )
 }
-
-    
