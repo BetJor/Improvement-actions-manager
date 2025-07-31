@@ -7,21 +7,23 @@ import { X, GripVertical } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
+import { useTranslations } from "next-intl";
+
 
 export function DynamicTabs({ initialContent }: { initialContent: React.ReactNode }) {
     const { tabs, activeTab, addTab, removeTab, setActiveTab } = useTabs();
     const pathname = usePathname();
     const router = useRouter();
+    const t = useTranslations("AppSidebar");
 
     useEffect(() => {
         // This effect ensures that the initial page (e.g., dashboard) is added as the first tab
         if (tabs.length === 0 && pathname) {
-            const pageTitleMatch = pathname.match(/\/([a-zA-Z-]+)$/);
-            const pageTitle = pageTitleMatch ? pageTitleMatch[1].charAt(0).toUpperCase() + pageTitleMatch[1].slice(1) : "Dashboard";
+            const isDashboard = pathname.endsWith('/dashboard');
             
             addTab({
-                id: pathname,
-                title: pageTitle,
+                id: isDashboard ? 'dashboard' : pathname,
+                title: isDashboard ? t('dashboard') : 'Dashboard',
                 href: pathname,
                 isClosable: false
             });
@@ -88,4 +90,3 @@ export function DynamicTabs({ initialContent }: { initialContent: React.ReactNod
         </>
     );
 }
-
