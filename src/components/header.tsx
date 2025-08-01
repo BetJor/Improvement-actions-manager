@@ -77,11 +77,9 @@ export function Header() {
             </SheetContent>
         </Sheet>
 
-        <div className="flex-1">
-          <div className="flex items-center gap-2">
+        <div className="flex flex-1 items-center gap-2">
             <Icon className="h-5 w-5 text-muted-foreground" />
             <h1 className="font-semibold text-lg">{title}</h1>
-          </div>
         </div>
 
         <div className="flex items-center gap-4">
