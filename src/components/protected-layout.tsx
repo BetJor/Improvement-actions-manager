@@ -7,9 +7,10 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { AppSidebar } from "@/components/app-sidebar";
 import { Header } from "@/components/header";
-import { useLocale, useTranslations } from "next-intl";
+import { useLocale, useTranslations, NextIntlClientProvider, AbstractIntlMessages } from "next-intl";
 import { TabsProvider, useTabs } from "@/hooks/use-tabs";
 import { DynamicTabs } from "./dynamic-tabs";
+import { SidebarProvider } from "./ui/sidebar";
 
 
 function LayoutWithTabs({ children }: { children: React.ReactNode }) {
@@ -35,11 +36,18 @@ function LayoutWithTabs({ children }: { children: React.ReactNode }) {
 }
 
 
-export function ProtectedLayout({ children }: { children: React.ReactNode }) {
+export function ProtectedLayout({ 
+  children,
+  locale,
+  messages
+}: { 
+  children: React.ReactNode,
+  locale: string,
+  messages: AbstractIntlMessages
+}) {
   const { user, loading } = useAuth();
   const pathname = usePathname();
   const router = useRouter();
-  const locale = useLocale();
   
   useEffect(() => {
     if (!loading && !user && !pathname.includes('/login')) {
@@ -54,16 +62,24 @@ export function ProtectedLayout({ children }: { children: React.ReactNode }) {
   if (!user && !pathname.includes('/login')) {
      return null;
   }
-  
+
+  const content = (
+      <SidebarProvider>
+          <TabsProvider>
+              <LayoutWithTabs>
+                  {children}
+              </LayoutWithTabs>
+          </TabsProvider>
+      </SidebarProvider>
+  )
+
   if (pathname.includes('/login')) {
       return <>{children}</>
   }
 
   return (
-    <TabsProvider>
-        <LayoutWithTabs>
-            {children}
-        </LayoutWithTabs>
-    </TabsProvider>
+    <NextIntlClientProvider locale={locale} messages={messages}>
+      {content}
+    </NextIntlClientProvider>
   );
 }
