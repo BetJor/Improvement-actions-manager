@@ -57,28 +57,14 @@ export function Header() {
 
 
   return (
-    <header className="sticky top-0 z-10 flex h-14 items-center gap-4 bg-primary px-4 text-primary-foreground sm:h-16 sm:px-6">
+    <header className="sticky top-0 z-30 flex h-14 items-center justify-between gap-4 border-b bg-primary px-4 text-primary-foreground sm:h-16 sm:px-6">
       
-      <Sheet>
-          <SheetTrigger asChild>
-              <Button
-                  variant="outline"
-                  size="icon"
-                  className="shrink-0 md:hidden"
-              >
-                  <Menu className="h-5 w-5" />
-                  <span className="sr-only">Toggle navigation menu</span>
-              </Button>
-          </SheetTrigger>
-          <SheetContent side="left" className="w-[240px] p-0">
-              {/* We need a simplified AppSidebar for mobile */}
-          </SheetContent>
-      </Sheet>
-
-      <div className="flex flex-1 items-center gap-2">
-          <Icon className="h-5 w-5" />
-          <h1 className="font-semibold text-lg">{title}</h1>
+      <div className="flex items-center gap-4">
+          <SidebarTrigger className="hidden text-primary-foreground hover:text-primary-foreground/90 md:flex" />
+          <GanttChartSquare className="h-7 w-7" />
+          <h1 className="text-lg font-semibold">{t('title')}</h1>
       </div>
+
 
       <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" className="rounded-full text-primary-foreground hover:text-primary-foreground/90">

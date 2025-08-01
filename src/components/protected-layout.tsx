@@ -21,7 +21,7 @@ function LayoutWithTabs({ children }: { children: React.ReactNode }) {
 
     return (
         <SidebarProvider>
-            <div className="flex flex-col h-screen w-full">
+             <div className="flex h-screen w-full flex-col">
                 <Header />
                 <div className="flex flex-1 overflow-hidden">
                     <AppSidebar t={tSidebar} />
