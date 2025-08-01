@@ -58,7 +58,7 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-10 flex h-14 items-center gap-4 bg-primary px-4 text-primary-foreground sm:h-16 sm:px-6">
-      <SidebarTrigger className="hidden md:flex" />
+      <SidebarTrigger className="hidden md:flex text-primary-foreground hover:text-primary-foreground/90" />
       
       <Sheet>
           <SheetTrigger asChild>
@@ -82,7 +82,7 @@ export function Header() {
       </div>
 
       <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" className="rounded-full">
+          <Button variant="ghost" size="icon" className="rounded-full text-primary-foreground hover:text-primary-foreground/90">
             <Bell className="h-5 w-5" />
             <span className="sr-only">{tSidebar("toggleNotifications")}</span>
           </Button>
@@ -90,7 +90,7 @@ export function Header() {
           <Dialog>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="flex items-center gap-2 relative h-8 rounded-full">
+                  <Button variant="ghost" className="flex items-center gap-2 relative h-8 rounded-full text-primary-foreground hover:text-primary-foreground/90">
                     <Avatar className="h-8 w-8">
                       {user?.photoURL && <AvatarImage src={user.photoURL} alt={user.displayName || 'User'} />}
                       <AvatarFallback>
