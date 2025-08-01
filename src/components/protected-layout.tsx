@@ -21,10 +21,10 @@ function LayoutWithTabs({ children }: { children: React.ReactNode }) {
 
     return (
         <SidebarProvider>
-            <div className="flex h-full w-full">
-                <AppSidebar t={tSidebar} />
-                <div className="flex flex-1 flex-col overflow-y-auto">
-                    <Header />
+            <div className="flex flex-col h-screen w-full">
+                <Header />
+                <div className="flex flex-1 overflow-hidden">
+                    <AppSidebar t={tSidebar} />
                     <main className="flex-1 flex flex-col bg-background/60 overflow-y-auto">
                         <DynamicTabs />
                         <div className="p-4 lg:p-6 flex-grow">
