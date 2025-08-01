@@ -22,7 +22,9 @@ function LayoutWithTabs({ children }: { children: React.ReactNode }) {
             <div className="flex flex-1 overflow-hidden">
                 <AppSidebar t={tSidebar} />
                 <main className="flex-1 flex flex-col bg-background/60 overflow-y-auto p-4 sm:p-6">
-                    <DynamicTabs />
+                    <div className="mb-6">
+                        <DynamicTabs />
+                    </div>
                     <div className="flex-grow">
                         {children}
                     </div>
@@ -80,4 +82,3 @@ export function ProtectedLayout({
     </NextIntlClientProvider>
   );
 }
-
