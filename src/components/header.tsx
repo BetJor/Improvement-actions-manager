@@ -1,4 +1,3 @@
-
 "use client"
 import { CircleUser, Menu, Users, Bell, Home, ListChecks, GanttChartSquare, Settings, Route, Sparkles, Library } from "lucide-react"
 import Link from "next/link"
@@ -50,6 +49,9 @@ export function Header() {
   const { user, logout } = useAuth();
   const { tabs, activeTab } = useTabs();
   const pathname = usePathname();
+  
+  console.log("[Header] Rendering");
+
 
   const activeTabData = tabs.find(tab => tab.id === activeTab);
   const Icon = activeTabData?.icon || GanttChartSquare;
@@ -60,7 +62,7 @@ export function Header() {
     <header className="sticky top-0 z-30 flex h-14 items-center justify-between gap-4 border-b bg-primary px-4 text-primary-foreground sm:h-16 sm:px-6">
       
       <div className="flex items-center gap-4">
-          <SidebarTrigger className="hidden text-primary-foreground hover:text-primary-foreground/90 md:flex" />
+          <SidebarTrigger className="text-primary-foreground hover:text-primary-foreground/90" />
           <GanttChartSquare className="h-7 w-7" />
           <h1 className="text-lg font-semibold">{t('title')}</h1>
       </div>

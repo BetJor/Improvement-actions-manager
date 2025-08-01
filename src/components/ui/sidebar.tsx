@@ -88,13 +88,19 @@ const SidebarProvider = React.forwardRef<
       },
       [setOpenProp, open]
     )
+    
+    React.useEffect(() => {
+        console.log("[SidebarProvider] Initial state:", { open, isMobile });
+    }, []);
+
 
     // Helper to toggle the sidebar.
     const toggleSidebar = React.useCallback(() => {
-      return isMobile
-        ? setOpenMobile((open) => !open)
-        : setOpen((open) => !open)
-    }, [isMobile, setOpen, setOpenMobile])
+      console.log("[SidebarProvider] toggleSidebar called. Current state:", { open, isMobile, openMobile });
+      const newState = isMobile ? !openMobile : !open;
+      console.log("[SidebarProvider] New state will be:", newState);
+      isMobile ? setOpenMobile(newState) : setOpen(newState);
+    }, [isMobile, setOpen, open, openMobile, setOpenMobile])
 
     // Adds a keyboard shortcut to toggle the sidebar.
     React.useEffect(() => {
@@ -168,7 +174,7 @@ const Sidebar = React.forwardRef<
     {
       side = "left",
       variant = "sidebar",
-      collapsible = "offcanvas",
+      collapsible = "icon",
       className,
       children,
       ...props
@@ -273,6 +279,7 @@ const SidebarTrigger = React.forwardRef<
       size="icon"
       className={cn("h-7 w-7", className)}
       onClick={(event) => {
+        console.log("[SidebarTrigger] Clicked!");
         onClick?.(event)
         toggleSidebar()
       }}
