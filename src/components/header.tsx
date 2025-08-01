@@ -58,7 +58,6 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-10 flex h-14 items-center gap-4 bg-primary px-4 text-primary-foreground sm:h-16 sm:px-6">
-      <SidebarTrigger className="hidden md:flex text-primary-foreground hover:text-primary-foreground/90" />
       
       <Sheet>
           <SheetTrigger asChild>
