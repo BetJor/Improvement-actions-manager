@@ -62,8 +62,8 @@ export function AppSidebar({ t }: { t: any }) {
   ]
 
   return (
-    <Sidebar collapsible="icon">
-        <SidebarContent className="flex flex-col p-2">
+    <Sidebar collapsible="icon" className="p-2">
+        <SidebarContent className="flex flex-col">
             <SidebarMenu>
                 {mainNavItems.map((item) => (
                     <SidebarNavLink key={item.href} href={item.href} icon={item.icon} label={item.label} />
