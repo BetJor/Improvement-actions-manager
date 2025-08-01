@@ -57,7 +57,7 @@ export function Header() {
 
 
   return (
-    <header className="sticky top-0 z-10 flex h-14 items-center gap-4 bg-sidebar px-4 sm:h-16 sm:px-6">
+    <header className="sticky top-0 z-10 flex h-14 items-center gap-4 bg-primary text-primary-foreground px-4 sm:h-16 sm:px-6">
       <Dialog>
         <SidebarTrigger className="hidden md:flex" />
         
@@ -78,7 +78,7 @@ export function Header() {
         </Sheet>
 
         <div className="flex flex-1 items-center gap-2">
-            <Icon className="h-5 w-5 text-muted-foreground" />
+            <Icon className="h-5 w-5" />
             <h1 className="font-semibold text-lg">{title}</h1>
         </div>
 

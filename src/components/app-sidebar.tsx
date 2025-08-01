@@ -61,12 +61,12 @@ export function AppSidebar({ t }: { t: any }) {
 
   return (
     <Sidebar collapsible="icon">
-        <SidebarHeader className="flex h-14 items-center bg-sidebar px-4 sm:h-16">
+        <SidebarHeader className="flex h-14 items-center bg-primary text-primary-foreground px-4 sm:h-16">
             <div className="flex items-center gap-2.5">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 transition-transform duration-200 group-data-[collapsible=icon]:-rotate-90">
-                    <GanttChartSquare className="h-6 w-6 text-primary" />
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary-foreground/10 transition-transform duration-200 group-data-[collapsible=icon]:-rotate-90">
+                    <GanttChartSquare className="h-6 w-6 text-primary-foreground" />
                 </div>
-                <span className="text-lg font-semibold text-primary transition-opacity duration-200 group-data-[collapsible=icon]:opacity-0">
+                <span className="text-lg font-semibold transition-opacity duration-200 group-data-[collapsible=icon]:opacity-0">
                     {t("title")}
                 </span>
             </div>
