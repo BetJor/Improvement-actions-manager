@@ -3,7 +3,7 @@
 
 import Link from "next/link"
 import { usePathname, useParams } from "next/navigation"
-import { Home, ListChecks, Settings, Route, Sparkles, Library } from "lucide-react"
+import { Home, ListChecks, Settings, Route, Sparkles, Library, PanelBottom } from "lucide-react"
 import {
   Sidebar,
   SidebarContent,
@@ -12,6 +12,8 @@ import {
   SidebarMenuButton,
   SidebarSeparator,
   SidebarTrigger,
+  SidebarGroup,
+  SidebarGroupLabel,
 } from "@/components/ui/sidebar"
 import { GanttChartSquare } from "lucide-react"
 import { useAuth } from "@/hooks/use-auth"
@@ -19,7 +21,7 @@ import { useAuth } from "@/hooks/use-auth"
 
 function SidebarNavLink({ href, icon: Icon, label }: { href: string; icon: React.ElementType; label: string }) {
   const pathname = usePathname();
-  const isActive = pathname === href;
+  const isActive = pathname === href || (href !== `/${useParams().locale}/dashboard` && pathname.startsWith(href));
 
   return (
     <SidebarMenuItem>
@@ -44,37 +46,47 @@ export function AppSidebar({ t }: { t: any }) {
 
   if (!user) return null;
 
-  const navItems = [
+  const mainNavItems = [
     { href: `/${locale}/dashboard`, icon: Home, label: t("dashboard") },
     { href: `/${locale}/actions`, icon: ListChecks, label: t("actions") },
   ]
   
-  const settingsNavItems = [
+  const adminNavItems = [
     { href: `/${locale}/settings`, icon: Settings, label: t("settings") },
     { href: `/${locale}/ai-settings`, icon: Sparkles, label: t("aiSettings") },
+    { href: `/${locale}/prompt-gallery`, icon: Library, label: t("promptGallery") },
   ]
 
-  const galleryNavItems = [
-    { href: `/${locale}/prompt-gallery`, icon: Library, label: t("promptGallery") },
+  const aboutNavItems = [
     { href: `/${locale}/roadmap`, icon: Route, label: t("roadmap") },
   ]
 
   return (
     <Sidebar collapsible="icon">
-        <SidebarContent className="flex flex-col p-2 pt-4">
+        <SidebarContent className="flex flex-col p-2">
             <SidebarMenu>
-            {navItems.map((item) => (
-                <SidebarNavLink key={item.href} href={item.href} icon={item.icon} label={item.label} />
-            ))}
-            <SidebarSeparator />
-            {settingsNavItems.map((item) => (
-                <SidebarNavLink key={item.href} href={item.href} icon={item.icon} label={item.label} />
-            ))}
-            <SidebarSeparator />
-            {galleryNavItems.map((item) => (
-                <SidebarNavLink key={item.href} href={item.href} icon={item.icon} label={item.label} />
-            ))}
+                {mainNavItems.map((item) => (
+                    <SidebarNavLink key={item.href} href={item.href} icon={item.icon} label={item.label} />
+                ))}
             </SidebarMenu>
+
+            <SidebarGroup className="mt-4">
+                <SidebarGroupLabel>Administració</SidebarGroupLabel>
+                <SidebarMenu>
+                    {adminNavItems.map((item) => (
+                        <SidebarNavLink key={item.href} href={item.href} icon={item.icon} label={item.label} />
+                    ))}
+                </SidebarMenu>
+            </SidebarGroup>
+            
+            <div className="mt-auto">
+                <SidebarMenu>
+                    <SidebarSeparator />
+                    {aboutNavItems.map((item) => (
+                        <SidebarNavLink key={item.href} href={item.href} icon={item.icon} label={item.label} />
+                    ))}
+                </SidebarMenu>
+            </div>
         </SidebarContent>
     </Sidebar>
   )
