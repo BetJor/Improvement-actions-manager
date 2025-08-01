@@ -43,31 +43,28 @@ export default function ActionDetailPage() {
     async function loadData() {
       setIsLoading(true)
       try {
-        const [
-          actionData, 
-          types, 
-          cats, 
-          subcats, 
-          areas
-        ] = await Promise.all([
-          getActionById(actionId),
-          getActionTypes(),
-          getCategories(),
-          getSubcategories(),
-          getAffectedAreas(),
-        ]);
+        const actionData = await getActionById(actionId);
 
         if (!actionData) {
           notFound()
           return
         }
         setAction(actionData)
-        setMasterData({
+
+        // Carreguem les dades mestres de manera asíncrona i no bloquegem la UI
+        Promise.all([
+          getActionTypes(),
+          getCategories(),
+          getSubcategories(),
+          getAffectedAreas(),
+        ]).then(([types, cats, subcats, areas]) => {
+          setMasterData({
             actionTypes: types,
             categories: cats,
             subcategories: subcats,
             affectedAreas: areas,
-        })
+          });
+        });
 
       } catch (error) {
         console.error("Error loading action details:", error)
@@ -377,5 +374,3 @@ export default function ActionDetailPage() {
     </div>
   )
 }
-
-    
