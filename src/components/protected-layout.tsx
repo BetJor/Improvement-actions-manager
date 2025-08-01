@@ -20,18 +20,20 @@ function LayoutWithTabs({ children }: { children: React.ReactNode }) {
     const activeTabContent = tabs.find(tab => tab.id === activeTab)?.content;
 
     return (
-        <div className="flex h-screen w-full flex-col">
-            <Header />
-            <div className="flex flex-1 overflow-hidden">
-                <AppSidebar t={tSidebar} />
-                <main className="flex-1 flex flex-col bg-background/60 overflow-y-auto">
-                    <DynamicTabs />
-                    <div className="p-4 lg:p-6 flex-grow">
-                        {activeTabContent || children}
-                    </div>
-                </main>
+        <SidebarProvider>
+            <div className="flex h-screen w-full flex-col">
+                <Header />
+                <div className="flex flex-1 overflow-hidden">
+                    <AppSidebar t={tSidebar} />
+                    <main className="flex-1 flex flex-col bg-background/60 overflow-y-auto">
+                        <DynamicTabs />
+                        <div className="p-4 lg:p-6 flex-grow">
+                            {activeTabContent || children}
+                        </div>
+                    </main>
+                </div>
             </div>
-        </div>
+        </SidebarProvider>
     );
 }
 
@@ -64,17 +66,19 @@ export function ProtectedLayout({
   }
 
   const content = (
-      <SidebarProvider>
-          <TabsProvider>
-              <LayoutWithTabs>
-                  {children}
-              </LayoutWithTabs>
-          </TabsProvider>
-      </SidebarProvider>
+      <TabsProvider>
+          <LayoutWithTabs>
+              {children}
+          </LayoutWithTabs>
+      </TabsProvider>
   )
 
   if (pathname.includes('/login')) {
-      return <>{children}</>
+      return (
+        <NextIntlClientProvider locale={locale} messages={messages}>
+            {children}
+        </NextIntlClientProvider>
+      );
   }
 
   return (
