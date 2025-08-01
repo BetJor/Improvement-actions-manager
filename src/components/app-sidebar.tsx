@@ -11,7 +11,6 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
   SidebarSeparator,
-  SidebarTrigger,
   SidebarGroup,
   SidebarGroupLabel,
 } from "@/components/ui/sidebar"
@@ -62,8 +61,8 @@ export function AppSidebar({ t }: { t: any }) {
   ]
 
   return (
-    <Sidebar collapsible="icon" className="p-2">
-        <SidebarContent className="flex flex-col">
+    <Sidebar collapsible="icon" className="p-0 border-r-0 bg-sidebar">
+        <SidebarContent className="flex flex-col p-2">
             <SidebarMenu>
                 {mainNavItems.map((item) => (
                     <SidebarNavLink key={item.href} href={item.href} icon={item.icon} label={item.label} />
