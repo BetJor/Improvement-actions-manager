@@ -57,7 +57,7 @@ export function Header() {
 
 
   return (
-    <header className="sticky top-0 z-10 flex h-14 items-center gap-4 border-b bg-sidebar px-4 sm:h-16 sm:px-6">
+    <header className="sticky top-0 z-10 flex h-14 items-center gap-4 bg-sidebar px-4 sm:h-16 sm:px-6">
       <Dialog>
         <SidebarTrigger className="hidden md:flex" />
         
