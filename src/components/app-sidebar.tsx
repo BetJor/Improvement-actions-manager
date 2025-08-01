@@ -51,14 +51,14 @@ export function AppSidebar({ t }: { t: any }) {
   ]
 
   return (
-    <Sidebar>
+    <Sidebar className="h-[calc(100vh-3.5rem)]">
         <SidebarHeader>
             <div className="flex items-center gap-2">
                 <GanttChartSquare className="h-7 w-7 text-primary" />
                 <span className="text-lg font-semibold">{t('title')}</span>
             </div>
         </SidebarHeader>
-        <SidebarContent className="pt-4">
+        <SidebarContent>
             <SidebarMenu>
                 {mainNavItems.map((item) => (
                     <SidebarNavLink key={item.href} href={item.href} icon={item.icon} label={item.label} />

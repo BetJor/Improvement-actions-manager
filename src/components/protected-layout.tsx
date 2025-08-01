@@ -7,7 +7,7 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { AppSidebar } from "@/components/app-sidebar";
 import { Header } from "@/components/header";
-import { useLocale, useTranslations, NextIntlClientProvider, AbstractIntlMessages } from "next-intl";
+import { useTranslations, NextIntlClientProvider, AbstractIntlMessages } from "next-intl";
 import { TabsProvider, useTabs } from "@/hooks/use-tabs";
 import { DynamicTabs } from "./dynamic-tabs";
 import { SidebarProvider } from "./ui/sidebar";
@@ -20,20 +20,18 @@ function LayoutWithTabs({ children }: { children: React.ReactNode }) {
     const activeTabContent = tabs.find(tab => tab.id === activeTab)?.content;
 
     return (
-        <SidebarProvider>
-            <div className="flex h-screen w-full flex-col">
-                <Header />
-                <div className="flex flex-1 overflow-hidden">
-                    <AppSidebar t={tSidebar} />
-                    <main className="flex-1 flex flex-col bg-background/60 overflow-y-auto">
-                        <DynamicTabs />
-                        <div className="p-4 lg:p-6 flex-grow">
-                            {activeTabContent || children}
-                        </div>
-                    </main>
-                </div>
+        <div className="relative flex h-screen w-full flex-col">
+            <Header />
+            <div className="flex flex-1 pt-14">
+                <AppSidebar t={tSidebar} />
+                <main className="flex-1 flex flex-col bg-background/60 overflow-y-auto">
+                    <DynamicTabs />
+                    <div className="p-4 lg:p-6 flex-grow">
+                        {activeTabContent || children}
+                    </div>
+                </main>
             </div>
-        </SidebarProvider>
+        </div>
     );
 }
 
@@ -62,7 +60,11 @@ export function ProtectedLayout({
   }
   
   if (!user && !pathname.includes('/login')) {
-     return null;
+     return (
+        <NextIntlClientProvider locale={locale} messages={messages}>
+            {children}
+        </NextIntlClientProvider>
+      );
   }
 
   const content = (
@@ -73,17 +75,11 @@ export function ProtectedLayout({
       </TabsProvider>
   )
 
-  if (pathname.includes('/login')) {
-      return (
-        <NextIntlClientProvider locale={locale} messages={messages}>
-            {children}
-        </NextIntlClientProvider>
-      );
-  }
-
   return (
     <NextIntlClientProvider locale={locale} messages={messages}>
-      {content}
+        <SidebarProvider>
+            {content}
+        </SidebarProvider>
     </NextIntlClientProvider>
   );
 }
