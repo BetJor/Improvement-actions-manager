@@ -7,7 +7,6 @@ import { Home, ListChecks, Settings, Route, Sparkles, Library } from "lucide-rea
 import {
   Sidebar,
   SidebarContent,
-  SidebarHeader,
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
@@ -62,7 +61,7 @@ export function AppSidebar({ t }: { t: any }) {
 
   return (
     <Sidebar collapsible="icon">
-        <SidebarContent className="pt-4">
+        <SidebarContent>
             <SidebarMenu>
             {navItems.map((item) => (
                 <SidebarNavLink key={item.href} href={item.href} icon={item.icon} label={item.label} />
