@@ -89,16 +89,9 @@ const SidebarProvider = React.forwardRef<
       [setOpenProp, open]
     )
     
-    React.useEffect(() => {
-        console.log("[SidebarProvider] Initial state:", { open, isMobile });
-    }, []);
-
-
     // Helper to toggle the sidebar.
     const toggleSidebar = React.useCallback(() => {
-      console.log("[SidebarProvider] toggleSidebar called. Current state:", { open, isMobile, openMobile });
       const newState = isMobile ? !openMobile : !open;
-      console.log("[SidebarProvider] New state will be:", newState);
       isMobile ? setOpenMobile(newState) : setOpen(newState);
     }, [isMobile, setOpen, open, openMobile, setOpenMobile])
 
@@ -221,7 +214,7 @@ const Sidebar = React.forwardRef<
     return (
       <div
         ref={ref}
-        className="group peer hidden md:block text-sidebar-foreground"
+        className={cn("group peer hidden md:block text-sidebar-foreground", className)}
         data-state={state}
         data-collapsible={state === "collapsed" ? collapsible : ""}
         data-variant={variant}
@@ -231,24 +224,25 @@ const Sidebar = React.forwardRef<
         <div
           className={cn(
             "duration-200 relative h-svh w-[--sidebar-width] bg-transparent transition-[width] ease-linear",
+            "group-data-[collapsible=icon]:w-[--sidebar-width-icon]",
             "group-data-[collapsible=offcanvas]:w-0",
             "group-data-[side=right]:rotate-180",
             variant === "floating" || variant === "inset"
               ? "group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)_+_theme(spacing.4))]"
-              : "group-data-[collapsible=icon]:w-[--sidebar-width-icon]"
+              : ""
           )}
         />
         <div
           className={cn(
             "duration-200 fixed inset-y-0 z-10 hidden h-svh w-[--sidebar-width] transition-[left,right,width] ease-linear md:flex",
+            "group-data-[collapsible=icon]:w-[--sidebar-width-icon]",
             side === "left"
               ? "left-0 group-data-[collapsible=offcanvas]:left-[calc(var(--sidebar-width)*-1)]"
               : "right-0 group-data-[collapsible=offcanvas]:right-[calc(var(--sidebar-width)*-1)]",
             // Adjust the padding for floating and inset variants.
             variant === "floating" || variant === "inset"
               ? "p-2 group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)_+_theme(spacing.4)_+2px)]"
-              : "group-data-[collapsible=icon]:w-[--sidebar-width-icon] group-data-[side=left] group-data-[side=right]:border-l",
-            className
+              : "group-data-[side=left] group-data-[side=right]:border-l"
           )}
           {...props}
         >
@@ -279,7 +273,6 @@ const SidebarTrigger = React.forwardRef<
       size="icon"
       className={cn("h-7 w-7", className)}
       onClick={(event) => {
-        console.log("[SidebarTrigger] Clicked!");
         onClick?.(event)
         toggleSidebar()
       }}

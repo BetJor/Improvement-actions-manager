@@ -50,9 +50,6 @@ export function Header() {
   const { tabs, activeTab } = useTabs();
   const pathname = usePathname();
   
-  console.log("[Header] Rendering");
-
-
   const activeTabData = tabs.find(tab => tab.id === activeTab);
   const Icon = activeTabData?.icon || GanttChartSquare;
   const title = activeTabData?.title || t('title');
@@ -63,8 +60,6 @@ export function Header() {
       
       <div className="flex items-center gap-4">
           <SidebarTrigger className="text-primary-foreground hover:text-primary-foreground/90" />
-          <GanttChartSquare className="h-7 w-7" />
-          <h1 className="text-lg font-semibold">{t('title')}</h1>
       </div>
 
 

@@ -3,7 +3,7 @@
 
 import Link from "next/link"
 import { usePathname, useParams } from "next/navigation"
-import { Home, ListChecks, Settings, Route, Sparkles, Library } from "lucide-react"
+import { Home, ListChecks, Settings, Route, Sparkles, Library, GanttChartSquare } from "lucide-react"
 import { useAuth } from "@/hooks/use-auth"
 import { cn } from "@/lib/utils"
 import { Sidebar, SidebarContent, SidebarHeader, SidebarMenu, SidebarMenuItem, SidebarMenuButton, useSidebar } from "./ui/sidebar"
@@ -12,18 +12,17 @@ import { Sidebar, SidebarContent, SidebarHeader, SidebarMenu, SidebarMenuItem, S
 function SidebarNavLink({ href, icon: Icon, label }: { href: string; icon: React.ElementType; label: string }) {
   const pathname = usePathname();
   const params = useParams();
-  const isActive = pathname === href || (href !== `/${params.locale}/dashboard` && pathname.startsWith(href));
+  const locale = params.locale;
+  const isActive = pathname === href || (href !== `/${locale}/dashboard` && pathname.startsWith(href));
 
   return (
     <SidebarMenuItem>
-        <Link href={href} passHref>
-            <SidebarMenuButton asChild isActive={isActive}>
-                <span>
-                    <Icon className="h-4 w-4" />
-                    <span>{label}</span>
-                </span>
-            </SidebarMenuButton>
-        </Link>
+        <SidebarMenuButton asChild isActive={isActive}>
+            <Link href={href}>
+                <Icon className="h-4 w-4" />
+                <span>{label}</span>
+            </Link>
+        </SidebarMenuButton>
     </SidebarMenuItem>
   );
 }
@@ -34,9 +33,6 @@ export function AppSidebar({ t }: { t: any }) {
   const { user } = useAuth(); 
   const { state } = useSidebar();
   
-  console.log("[AppSidebar] Rendering with state:", state);
-
-
   if (!user) return null;
 
   const mainNavItems = [
@@ -55,20 +51,32 @@ export function AppSidebar({ t }: { t: any }) {
   ]
 
   return (
-    <aside className="hidden w-64 flex-col border-r bg-background md:flex">
-        <nav className="flex flex-col gap-2 p-4 text-sm font-medium">
-            {mainNavItems.map((item) => (
-                <SidebarNavLink key={item.href} href={item.href} icon={item.icon} label={item.label} />
-            ))}
-            <div className="my-2 border-t border-muted"></div>
-            {adminNavItems.map((item) => (
-                <SidebarNavLink key={item.href} href={item.href} icon={item.icon} label={item.label} />
-            ))}
-            <div className="my-2 border-t border-muted"></div>
-            {aboutNavItems.map((item) => (
-                <SidebarNavLink key={item.href} href={item.href} icon={item.icon} label={item.label} />
-            ))}
-        </nav>
-    </aside>
+    <Sidebar>
+        <SidebarHeader>
+            <div className="flex items-center gap-2">
+                <GanttChartSquare className="h-7 w-7 text-primary" />
+                <span className="text-lg font-semibold">{t('title')}</span>
+            </div>
+        </SidebarHeader>
+        <SidebarContent className="pt-4">
+            <SidebarMenu>
+                {mainNavItems.map((item) => (
+                    <SidebarNavLink key={item.href} href={item.href} icon={item.icon} label={item.label} />
+                ))}
+            </SidebarMenu>
+            <div className="my-4 border-t border-border -mx-2"></div>
+             <SidebarMenu>
+                {adminNavItems.map((item) => (
+                    <SidebarNavLink key={item.href} href={item.href} icon={item.icon} label={item.label} />
+                ))}
+            </SidebarMenu>
+            <div className="my-4 border-t border-border -mx-2"></div>
+            <SidebarMenu>
+                {aboutNavItems.map((item) => (
+                    <SidebarNavLink key={item.href} href={item.href} icon={item.icon} label={item.label} />
+                ))}
+            </SidebarMenu>
+        </SidebarContent>
+    </Sidebar>
   )
 }
