@@ -3,39 +3,25 @@
 
 import Link from "next/link"
 import { usePathname, useParams } from "next/navigation"
-import { Home, ListChecks, Settings, Route, Sparkles, Library, PanelLeft } from "lucide-react"
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarMenu,
-  SidebarMenuItem,
-  SidebarMenuButton,
-  SidebarSeparator,
-  SidebarGroup,
-  SidebarGroupLabel,
-} from "@/components/ui/sidebar"
-import { GanttChartSquare } from "lucide-react"
+import { Home, ListChecks, Settings, Route, Sparkles, Library } from "lucide-react"
 import { useAuth } from "@/hooks/use-auth"
-
+import { cn } from "@/lib/utils"
 
 function SidebarNavLink({ href, icon: Icon, label }: { href: string; icon: React.ElementType; label: string }) {
   const pathname = usePathname();
-  const params = useParams();
-  const isActive = pathname === href || (href !== `/${params.locale}/dashboard` && pathname.startsWith(href));
+  const isActive = pathname.startsWith(href);
 
   return (
-    <SidebarMenuItem>
-      <SidebarMenuButton
-        asChild
-        isActive={isActive}
-        tooltip={{ children: label }}
-      >
-        <Link href={href}>
-          <Icon />
-          <span>{label}</span>
-        </Link>
-      </SidebarMenuButton>
-    </SidebarMenuItem>
+    <Link 
+      href={href} 
+      className={cn(
+        "flex items-center gap-3 rounded-lg px-3 py-2 text-primary-foreground/80 transition-all hover:text-primary-foreground",
+        isActive && "bg-primary-foreground/10 text-primary-foreground"
+      )}
+    >
+      <Icon className="h-4 w-4" />
+      {label}
+    </Link>
   );
 }
 
@@ -62,32 +48,20 @@ export function AppSidebar({ t }: { t: any }) {
   ]
 
   return (
-    <Sidebar collapsible="icon" className="p-0 border-r-0 bg-sidebar">
-        <SidebarContent className="flex flex-col p-2">
-            <SidebarMenu>
-                {mainNavItems.map((item) => (
-                    <SidebarNavLink key={item.href} href={item.href} icon={item.icon} label={item.label} />
-                ))}
-            </SidebarMenu>
-
-            <SidebarGroup className="mt-4">
-                <SidebarGroupLabel>Administració</SidebarGroupLabel>
-                <SidebarMenu>
-                    {adminNavItems.map((item) => (
-                        <SidebarNavLink key={item.href} href={item.href} icon={item.icon} label={item.label} />
-                    ))}
-                </SidebarMenu>
-            </SidebarGroup>
-            
-            <div className="mt-auto">
-                <SidebarMenu>
-                    <SidebarSeparator />
-                    {aboutNavItems.map((item) => (
-                        <SidebarNavLink key={item.href} href={item.href} icon={item.icon} label={item.label} />
-                    ))}
-                </SidebarMenu>
-            </div>
-        </SidebarContent>
-    </Sidebar>
+    <aside className="hidden w-64 flex-col bg-primary text-primary-foreground md:flex">
+      <nav className="flex flex-col gap-2 p-4 text-sm font-medium">
+        {mainNavItems.map((item) => (
+            <SidebarNavLink key={item.href} href={item.href} icon={item.icon} label={item.label} />
+        ))}
+         <div className="my-2 border-t border-primary-foreground/20"></div>
+        {adminNavItems.map((item) => (
+            <SidebarNavLink key={item.href} href={item.href} icon={item.icon} label={item.label} />
+        ))}
+        <div className="my-2 border-t border-primary-foreground/20"></div>
+        {aboutNavItems.map((item) => (
+            <SidebarNavLink key={item.href} href={item.href} icon={item.icon} label={item.label} />
+        ))}
+      </nav>
+    </aside>
   )
 }
