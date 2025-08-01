@@ -20,7 +20,8 @@ import { useAuth } from "@/hooks/use-auth"
 
 function SidebarNavLink({ href, icon: Icon, label }: { href: string; icon: React.ElementType; label: string }) {
   const pathname = usePathname();
-  const isActive = pathname === href || (href !== `/${useParams().locale}/dashboard` && pathname.startsWith(href));
+  const params = useParams();
+  const isActive = pathname === href || (href !== `/${params.locale}/dashboard` && pathname.startsWith(href));
 
   return (
     <SidebarMenuItem>
