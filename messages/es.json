@@ -317,7 +317,7 @@
       },
       "createDynamicTabLayout": {
         "title": "Crear un Layout Dinámico con Pestañas",
-        "description": "Genera la estructura completa del layout de la aplicación, incluyendo una barra lateral, una cabecera y un sistema de pestañas dinámicas para la navegación entre páginas."
+        "description": "Genera la estructura de un layout principal profesional y escalable para una aplicación web. El layout debe constar de tres partes principales: 1. Una cabecera (Header) en la parte superior. 2. Una barra de navegación lateral (Sidebar) a la izquierda, que debe ser colapsable. 3. Un área de contenido principal a la derecha. Además, implementa un sistema de pestañas dinámicas (Dynamic Tabs) que aparecerán encima del contenido principal. Cada vez que el usuario navegue a una nueva página, se debe abrir una nueva pestaña, permitiendo una navegación rápida entre vistas. Este sistema debe ser gestionado a través de un hook de React (useTabs) que mantenga el estado de las pestañas abiertas y la pestaña activa. El estilo debe basarse en Tailwind CSS y los componentes de shadcn/ui."
       }
     },
     "executionOrder": {

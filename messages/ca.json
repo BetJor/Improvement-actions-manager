@@ -317,7 +317,7 @@
       },
       "createDynamicTabLayout": {
         "title": "Crear un Layout Dinàmic amb Pestanyes",
-        "description": "Genera l'estructura completa del layout de l'aplicació, incloent una barra lateral, una capçalera i un sistema de pestanyes dinàmiques per a la navegació entre pàgines."
+        "description": "Genera l'estructura d'un layout principal professional i escalable per a una aplicació web. El layout ha de consistir en tres parts principals: 1. Una capçalera (Header) a la part superior. 2. Una barra de navegació lateral (Sidebar) a l'esquerra, que ha de ser col·lapsable. 3. Una àrea de contingut principal a la dreta. A més, implementa un sistema de pestanyes dinàmiques (Dynamic Tabs) que apareixeran a sobre del contingut principal. Cada vegada que l'usuari navegui a una nova pàgina, s'ha d'obrir una nova pestanya, permetent una navegació ràpida entre vistes. Aquest sistema ha de ser gestionat a través d'un hook de React (useTabs) que mantingui l'estat de les pestanyes obertes i la pestanya activa. L'estil s'ha de basar en Tailwind CSS i els components de shadcn/ui."
       }
     },
     "executionOrder": {

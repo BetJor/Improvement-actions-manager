@@ -22,7 +22,7 @@ function LayoutWithTabs({ children }: { children: React.ReactNode }) {
     return (
         <div className="relative flex h-screen w-full flex-col">
             <Header />
-            <div className="flex flex-1 pt-14">
+            <div className="flex flex-1">
                 <AppSidebar t={tSidebar} />
                 <main className="flex-1 flex flex-col bg-background/60 overflow-y-auto">
                     <DynamicTabs />
