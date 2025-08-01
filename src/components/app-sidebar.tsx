@@ -1,3 +1,4 @@
+
 "use client"
 
 import Link from "next/link"
@@ -17,10 +18,10 @@ function SidebarNavLink({ href, icon: Icon, label }: { href: string; icon: React
     <SidebarMenuItem>
         <Link href={href} passHref>
             <SidebarMenuButton asChild isActive={isActive}>
-                <a>
+                <span>
                     <Icon className="h-4 w-4" />
                     <span>{label}</span>
-                </a>
+                </span>
             </SidebarMenuButton>
         </Link>
     </SidebarMenuItem>
