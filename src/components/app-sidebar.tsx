@@ -62,7 +62,8 @@ export function AppSidebar({ t }: { t: any }) {
 
   return (
     <Sidebar collapsible="icon">
-        <SidebarHeader className="flex h-14 items-center justify-between bg-primary px-4 text-primary-foreground sm:h-16">
+        <SidebarHeader className="flex h-14 items-center gap-4 bg-primary px-4 text-primary-foreground sm:h-16">
+            <SidebarTrigger className="text-primary-foreground hover:text-primary-foreground/90" />
             <div className="flex items-center gap-2.5">
                 <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary-foreground/10 transition-transform duration-200 group-data-[collapsible=icon]:-rotate-90">
                     <GanttChartSquare className="h-6 w-6 text-primary-foreground" />
@@ -71,7 +72,6 @@ export function AppSidebar({ t }: { t: any }) {
                     {t("title")}
                 </span>
             </div>
-             <SidebarTrigger className="text-primary-foreground hover:text-primary-foreground/90" />
         </SidebarHeader>
         <SidebarContent>
             <SidebarMenu>
