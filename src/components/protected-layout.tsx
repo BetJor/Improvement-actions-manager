@@ -15,19 +15,16 @@ import { SidebarProvider } from "./ui/sidebar";
 
 function LayoutWithTabs({ children }: { children: React.ReactNode }) {
     const tSidebar = useTranslations("AppSidebar");
-    const { activeTab, tabs } = useTabs();
-    
-    const activeTabContent = tabs.find(tab => tab.id === activeTab)?.content;
 
     return (
         <div className="relative flex h-screen w-full flex-col">
-            <Header className="h"/>
+            <Header />
             <div className="flex flex-1">
                 <AppSidebar t={tSidebar} />
                 <main className="flex-1 flex flex-col bg-background/60 overflow-y-auto">
                     <DynamicTabs />
                     <div className="p-4 lg:p-6 flex-grow">
-                        {activeTabContent || children}
+                        {children}
                     </div>
                 </main>
             </div>
