@@ -60,6 +60,10 @@ export function Header() {
       
       <div className="flex items-center gap-4">
           <SidebarTrigger className="text-primary-foreground hover:text-primary-foreground/90" />
+          <div className="flex items-center gap-2">
+              <GanttChartSquare className="h-7 w-7" />
+              <span className="text-lg font-semibold">{t('title')}</span>
+          </div>
       </div>
 
 
