@@ -29,11 +29,11 @@ const pageComponentMapping: { [key: string]: React.ComponentType<any> } = {
 
 const staticTabsConfig = [
     { path: '/dashboard', title: 'Dashboard', icon: Home, isClosable: false },
-    { path: '/actions', title: 'Accions', icon: ListChecks, isClosable: false },
-    { path: '/settings', title: 'Configuració', icon: Settings, isClosable: false },
-    { path: '/ai-settings', title: 'Configuració IA', icon: Sparkles, isClosable: false },
-    { path: '/prompt-gallery', title: 'Galeria de Prompts', icon: Library, isClosable: false },
-    { path: '/roadmap', title: 'Roadmap', icon: Route, isClosable: false },
+    { path: '/actions', title: 'Accions', icon: ListChecks, isClosable: true },
+    { path: '/settings', title: 'Configuració', icon: Settings, isClosable: true },
+    { path: '/ai-settings', title: 'Configuració IA', icon: Sparkles, isClosable: true },
+    { path: '/prompt-gallery', title: 'Galeria de Prompts', icon: Library, isClosable: true },
+    { path: '/roadmap', title: 'Roadmap', icon: Route, isClosable: true },
 ];
 
 
