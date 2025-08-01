@@ -3,7 +3,7 @@
 
 import Link from "next/link"
 import { usePathname, useParams } from "next/navigation"
-import { Home, ListChecks, Settings, Route, Sparkles, Library, PanelBottom } from "lucide-react"
+import { Home, ListChecks, Settings, Route, Sparkles, Library, PanelLeft } from "lucide-react"
 import {
   Sidebar,
   SidebarContent,
