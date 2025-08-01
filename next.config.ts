@@ -34,6 +34,9 @@ const nextConfig: NextConfig = {
       bodySizeLimit: '2mb',
     },
   },
+  turbopack: {
+    // Add any Turbopack-specific options here if needed in the future.
+  },
 };
 
 export default withIntl(nextConfig);
