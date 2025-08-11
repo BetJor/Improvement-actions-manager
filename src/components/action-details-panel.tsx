@@ -20,12 +20,11 @@ import { Input } from "./ui/input"
 import { formatDistanceToNow } from "date-fns"
 import { es } from "date-fns/locale"
 import { useAuth } from "@/hooks/use-auth"
-import { updateAction, getActionById, uploadFileAndUpdateAction } from "@/lib/data"
+import { updateAction, uploadFileAndUpdateAction } from "@/lib/data"
 import { useToast } from "@/hooks/use-toast"
-import { useState, useEffect, useRef } from "react"
-import type { ActionComment, ActionAttachment } from "@/lib/types"
+import { useState, useRef } from "react"
+import type { ActionComment } from "@/lib/types"
 import { Badge } from "@/components/ui/badge"
-import { cn } from "@/lib/utils"
 import { useParams } from "next/navigation"
 
 
@@ -53,7 +52,7 @@ const DetailRow = ({ icon: Icon, label, value }: DetailRowProps) => {
 
 interface ActionDetailsPanelProps {
   action: ImprovementAction
-  onActionUpdate: (updatedAction: ImprovementAction) => void;
+  onActionUpdate: () => void;
 }
 
 export function ActionDetailsPanel({ action, onActionUpdate }: ActionDetailsPanelProps) {
@@ -92,11 +91,7 @@ export function ActionDetailsPanel({ action, onActionUpdate }: ActionDetailsPane
         description: "El teu comentari s'ha desat correctament.",
       });
       setNewComment("");
-      // Refresh the action data to show the new comment
-      const updatedAction = await getActionById(action.id);
-      if(updatedAction) {
-        onActionUpdate(updatedAction);
-      }
+      onActionUpdate();
     } catch (error) {
       console.error("Error adding comment:", error);
       toast({
@@ -126,10 +121,8 @@ export function ActionDetailsPanel({ action, onActionUpdate }: ActionDetailsPane
         description: `${file.name} s'ha pujat i adjuntat correctament.`,
       });
 
-      const updatedAction = await getActionById(action.id);
-      if (updatedAction) {
-        onActionUpdate(updatedAction);
-      }
+      onActionUpdate();
+
     } catch (error) {
       console.error("Error uploading file:", error);
       toast({

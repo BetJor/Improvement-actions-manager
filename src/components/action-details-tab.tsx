@@ -44,13 +44,11 @@ export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTab
     const [isEditing, setIsEditing] = useState(false)
     const [isSubmitting, setIsSubmitting] = useState(false)
 
+    // Aquest efecte assegura que si la propietat inicial canvia (p.ex. per una navegació SPA),
+    // l'estat local s'actualitza.
     useEffect(() => {
         setAction(initialAction);
     }, [initialAction]);
-
-    const handleActionUpdate = async (updatedActionData: ImprovementAction) => {
-        setAction(updatedActionData);
-    }
     
     const handleEditSubmit = async (formData: any, status?: 'Borrador' | 'Pendiente Análisis') => {
         if (!action) return;
@@ -66,10 +64,8 @@ export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTab
                 title: "Acció actualitzada",
                 description: "L'acció s'ha desat correctament.",
             });
-            // Refresh data after update
-            const updatedAction = await getActionById(action.id);
-            if(updatedAction) onActionUpdate(updatedAction);
             setIsEditing(false); // Exit edit mode
+            router.refresh(); // Refresca les Server-Side props de la pàgina
         } catch (error) {
             console.error("Error updating action:", error);
             toast({
@@ -96,9 +92,7 @@ export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTab
             description: "El pla d'acció s'ha desat correctament.",
           });
     
-          // Refresh data
-          const updatedAction = await getActionById(action.id);
-          if (updatedAction) setAction(updatedAction);
+          router.refresh(); // Refresca les Server-Side props
     
         } catch (error) {
           console.error("Error saving analysis:", error);
@@ -126,9 +120,7 @@ export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTab
             description: "La verificació de la implantació s'ha desat correctament.",
           });
     
-          // Refresh data
-          const updatedAction = await getActionById(action.id);
-          if (updatedAction) setAction(updatedAction);
+          router.refresh(); // Refresca les Server-Side props
     
         } catch (error) {
           console.error("Error saving verification:", error);
@@ -378,7 +370,7 @@ export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTab
 
             {/* Right Sidebar */}
             <aside className="lg:col-span-1">
-                <ActionDetailsPanel action={action} onActionUpdate={handleActionUpdate} />
+                <ActionDetailsPanel action={action} onActionUpdate={() => router.refresh()} />
             </aside>
         </div>
     )
