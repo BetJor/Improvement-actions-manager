@@ -47,7 +47,7 @@ export function Header() {
   const tSidebar = useTranslations('AppSidebar');
   const tDialog = useTranslations('SettingsDialog');
   const { user, logout } = useAuth();
-  const { tabs, activeTab } = useTabs();
+  const { tabs, activeTab, openTab } = useTabs();
   const pathname = usePathname();
   
   const activeTabData = tabs.find(tab => tab.id === activeTab);
@@ -89,11 +89,9 @@ export function Header() {
               <DropdownMenuContent align="end">
                   <DropdownMenuLabel>{user ? user.displayName : t("myAccount")}</DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild>
-                    <Link href="/my-groups">
+                  <DropdownMenuItem onClick={() => openTab({path: '/my-groups', title: 'Els Meus Grups', icon: Users, isClosable: true})}>
                       <Users className="mr-2 h-4 w-4" />
                       <span>{t("myGroups")}</span>
-                    </Link>
                   </DropdownMenuItem>
                   <DialogTrigger asChild>
                     <DropdownMenuItem>{t("settings")}</DropdownMenuItem>

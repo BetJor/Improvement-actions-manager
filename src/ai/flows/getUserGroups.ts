@@ -13,7 +13,7 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
-import { groups as mockGroups, users as mockUsers } from '@/lib/data';
+import { groups as mockGroups, users as mockUsers } from '@/lib/static-data';
 import type { UserGroup } from '@/lib/types';
 
 const GetUserGroupsInputSchema = z.string().describe("The unique ID of the user.");

@@ -20,10 +20,11 @@ import {
 import { Button } from "@/components/ui/button"
 import { ActionStatusBadge } from "./action-status-badge"
 import type { ImprovementAction, ImprovementActionStatus, ImprovementActionType } from "@/lib/types"
-import { ArrowUpDown, ChevronDown } from "lucide-react"
+import { ArrowUpDown, ChevronDown, GanttChartSquare } from "lucide-react"
 import { useTranslations } from "next-intl"
 import Link from "next/link"
 import { useParams } from "next/navigation"
+import { useTabs } from "@/hooks/use-tabs"
 
 interface ActionsTableProps {
   actions: ImprovementAction[]
@@ -34,7 +35,8 @@ type SortKey = keyof ImprovementAction | 'responsible'
 export function ActionsTable({ actions }: ActionsTableProps) {
   const t = useTranslations("ActionsTable")
   const params = useParams()
-  const locale = params.locale
+  const locale = params.locale as string
+  const { openTab } = useTabs();
 
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState<Set<ImprovementActionStatus>>(new Set())
@@ -101,6 +103,16 @@ export function ActionsTable({ actions }: ActionsTableProps) {
         <ArrowUpDown className="ml-2 h-4 w-4" /> : 
         <ArrowUpDown className="ml-2 h-4 w-4" />; 
   };
+
+  const handleOpenAction = (e: React.MouseEvent, action: ImprovementAction) => {
+      e.preventDefault();
+      openTab({
+          path: `/${locale}/actions/${action.id}`,
+          title: `Acció ${action.actionId}`,
+          icon: GanttChartSquare,
+          isClosable: true,
+      });
+  }
 
   return (
     <div className="w-full">
@@ -180,7 +192,7 @@ export function ActionsTable({ actions }: ActionsTableProps) {
                 <TableRow key={action.id}>
                   <TableCell className="font-medium">
                      <Button variant="link" asChild className="p-0 h-auto">
-                        <Link href={`/${locale}/actions/${action.id}`}>{action.actionId}</Link>
+                        <a href={`/${locale}/actions/${action.id}`} onClick={(e) => handleOpenAction(e, action)}>{action.actionId}</a>
                     </Button>
                   </TableCell>
                   <TableCell>{action.title}</TableCell>

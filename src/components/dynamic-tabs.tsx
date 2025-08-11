@@ -10,15 +10,12 @@ export function DynamicTabs() {
   const { tabs, activeTab, setActiveTab, closeTab } = useTabs()
 
   const handleTabClick = (tabId: string) => {
-    console.log(`[DynamicTabs] handleTabClick: S'ha fet clic per activar la pestanya ${tabId}`);
     setActiveTab(tabId);
   }
 
   const handleCloseTab = (e: React.MouseEvent, tabId: string) => {
-    console.log(`[DynamicTabs] handleCloseTab: Iniciant tancament per a ${tabId}`);
     e.preventDefault();
     e.stopPropagation();
-    console.log(`[DynamicTabs] handleCloseTab: e.stopPropagation() cridat per a ${tabId}`);
     closeTab(tabId);
   };
 

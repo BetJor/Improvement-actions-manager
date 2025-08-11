@@ -15,6 +15,9 @@ import { SidebarProvider } from "./ui/sidebar";
 
 function LayoutWithTabs({ children }: { children: React.ReactNode }) {
     const tSidebar = useTranslations("AppSidebar");
+    const { activeTab, tabs } = useTabs();
+    
+    const activeTabContent = tabs.find(tab => tab.id === activeTab)?.content;
 
     return (
         <div className="relative flex h-screen w-full flex-col">
@@ -26,7 +29,7 @@ function LayoutWithTabs({ children }: { children: React.ReactNode }) {
                         <DynamicTabs />
                     </div>
                     <div className="flex-grow">
-                        {children}
+                        {activeTabContent || children}
                     </div>
                 </main>
             </div>
@@ -58,20 +61,18 @@ export function ProtectedLayout({
     return <div className="flex items-center justify-center h-screen">Carregant...</div>;
   }
   
-  if (!user && !pathname.includes('/login')) {
-     return (
-        <NextIntlClientProvider locale={locale} messages={messages}>
-            {children}
-        </NextIntlClientProvider>
-      );
+  const isLoginPage = pathname.includes('/login');
+
+  if (!user && !isLoginPage) {
+     return null; // Don't render anything until redirect happens
   }
 
   const content = (
-      <TabsProvider>
-          <LayoutWithTabs>
-              {children}
-          </LayoutWithTabs>
-      </TabsProvider>
+    <TabsProvider initialContent={children} initialPath={pathname}>
+      <LayoutWithTabs>
+        {isLoginPage ? children : null}
+      </LayoutWithTabs>
+    </TabsProvider>
   )
 
   return (

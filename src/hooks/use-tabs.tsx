@@ -1,9 +1,10 @@
 
 "use client";
 
-import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from './use-auth';
+import { useLocale } from 'next-intl';
 
 // Importa els components de pàgina que vols renderitzar
 import DashboardPage from '@/app/[locale]/dashboard/page';
@@ -14,8 +15,10 @@ import SettingsPage from '@/app/[locale]/settings/page';
 import AiSettingsPage from '@/app/[locale]/ai-settings/page';
 import PromptGalleryPage from '@/app/[locale]/prompt-gallery/page';
 import RoadmapPage from '@/app/[locale]/roadmap/page';
+import MyGroupsPage from '@/app/[locale]/my-groups/page';
 
-import { Home, ListChecks, Settings, Sparkles, Library, Route, FilePlus, GanttChartSquare } from 'lucide-react';
+import { Home, ListChecks, Settings, Sparkles, Library, Route, FilePlus, GanttChartSquare, Users } from 'lucide-react';
+
 
 const pageComponentMapping: { [key: string]: React.ComponentType<any> } = {
     '/dashboard': DashboardPage,
@@ -25,15 +28,29 @@ const pageComponentMapping: { [key: string]: React.ComponentType<any> } = {
     '/ai-settings': AiSettingsPage,
     '/prompt-gallery': PromptGalleryPage,
     '/roadmap': RoadmapPage,
+    '/my-groups': MyGroupsPage,
 };
 
-const staticTabsConfig = [
+const getPageComponent = (path: string): React.ComponentType<any> | undefined => {
+  if (pageComponentMapping[path]) {
+    return pageComponentMapping[path];
+  }
+  const actionDetailRegex = /^\/actions\/[^/]+$/;
+  if (actionDetailRegex.test(path)) {
+    return ActionDetailPage;
+  }
+  return undefined;
+};
+
+
+const staticTabsConfig: Omit<Tab, 'id' | 'content'>[] = [
     { path: '/dashboard', title: 'Dashboard', icon: Home, isClosable: false },
     { path: '/actions', title: 'Accions', icon: ListChecks, isClosable: true },
     { path: '/roadmap', title: 'Roadmap', icon: Route, isClosable: true },
     { path: '/settings', title: 'Configuració', icon: Settings, isClosable: true },
     { path: '/ai-settings', title: 'Configuració IA', icon: Sparkles, isClosable: true },
     { path: '/prompt-gallery', title: 'Galeria de Prompts', icon: Library, isClosable: true },
+    { path: '/my-groups', title: 'Els Meus Grups', icon: Users, isClosable: true },
 ];
 
 
@@ -49,20 +66,66 @@ export interface Tab {
 interface TabsContextType {
     tabs: Tab[];
     activeTab: string | null;
-    openTab: (tabData: Omit<Tab, 'id'>) => void;
+    openTab: (tabData: Omit<Tab, 'id' | 'content'> & { content?: ReactNode }) => void;
     closeTab: (tabId: string) => void;
     setActiveTab: (tabId: string) => void;
 }
 
 const TabsContext = createContext<TabsContextType | undefined>(undefined);
 
-export function TabsProvider({ children }: { children: ReactNode }) {
+export function TabsProvider({ children, initialContent, initialPath }: { children: ReactNode, initialContent: ReactNode, initialPath: string }) {
     const [tabs, setTabs] = useState<Tab[]>([]);
     const [activeTab, setActiveTabState] = useState<string | null>(null);
     const router = useRouter();
     const pathname = usePathname();
+    const locale = useLocale();
     const { user } = useAuth();
     const [lastUser, setLastUser] = useState(user?.uid);
+
+    const getPathKey = (path: string) => {
+        const pathParts = path.split('/').filter(p => p && p !== locale);
+        if (pathParts.length > 1 && pathParts[0] === 'actions') {
+            return `/${pathParts[0]}/[id]`;
+        }
+        return `/${pathParts.join('/') || 'dashboard'}`;
+    }
+
+    const openTab = useCallback((tabData: Omit<Tab, 'id' | 'content'> & { content?: ReactNode }) => {
+        const existingTab = tabs.find(t => t.path === tabData.path);
+        if (existingTab) {
+            if (activeTab !== existingTab.id) {
+                setActiveTabState(existingTab.id);
+            }
+            return;
+        }
+
+        let content = tabData.content;
+        if (!content) {
+            const PageComponent = getPageComponent(tabData.path);
+            if (PageComponent) {
+                 const params = tabData.path.startsWith('/actions/') ? { id: tabData.path.split('/')[2] } : {};
+                 content = <PageComponent params={params} />;
+            }
+        }
+        
+        const newTab: Tab = { ...tabData, id: tabData.path, content: content || <div>Not Found</div> };
+        setTabs(prevTabs => [...prevTabs, newTab]);
+        setActiveTabState(newTab.id);
+    }, [tabs, activeTab]);
+
+    useEffect(() => {
+        if (user && tabs.length === 0) {
+            const pathKey = getPathKey(initialPath);
+            const staticTab = staticTabsConfig.find(t => t.path === pathKey);
+            openTab({
+                path: '/dashboard',
+                title: 'Dashboard',
+                icon: Home,
+                isClosable: false,
+                content: initialContent
+            });
+        }
+    }, [user, initialPath, initialContent, openTab, tabs.length]);
 
 
     useEffect(() => {
@@ -70,144 +133,41 @@ export function TabsProvider({ children }: { children: ReactNode }) {
             setTabs([]);
             setActiveTabState(null);
             setLastUser(user?.uid);
-            router.push('/dashboard');
+            router.push(`/${locale}/dashboard`);
         }
-    }, [user, lastUser, router]);
-
-    const setActiveTab = (tabId: string) => {
-        const tab = tabs.find(t => t.id === tabId);
-        if (tab) {
-            setActiveTabState(tab.id);
-            if (window.location.pathname !== tab.path) {
-                router.push(tab.path);
-            }
-        }
-    };
+    }, [user, lastUser, router, locale]);
     
-    const openTab = (tabData: Omit<Tab, 'id'>) => {
-        const existingTab = tabs.find(t => t.path === tabData.path);
-        if (existingTab) {
-            if (activeTab !== existingTab.id) {
-                setActiveTab(existingTab.id);
-            }
-            return;
-        }
-        
-        const newTab: Tab = { ...tabData, id: tabData.path };
-        setTabs(prevTabs => [...prevTabs, newTab]);
-        setActiveTabState(newTab.id);
-    };
-
     const closeTab = (tabId: string) => {
-        const startTime = performance.now();
-        console.log(`[useTabs] closeTab: Rebuda crida per tancar ${tabId}. Pestanya activa actual: ${activeTab}`);
-        
         const tabToCloseIndex = tabs.findIndex(tab => tab.id === tabId);
+        if (tabToCloseIndex === -1) return;
 
-        if (tabToCloseIndex === -1) {
-            return;
-        }
-        
-        const updatedTabs = tabs.filter(t => t.id !== tabId);
-        
-        let navigationPromise: Promise<void> | null = null;
-        
+        let nextActiveTabId = null;
         if (activeTab === tabId) {
-            let nextActiveTabId: string | null = null;
-            if (updatedTabs.length > 0) {
+            if (tabs.length > 1) {
                 const newIndex = Math.max(0, tabToCloseIndex - 1);
-                nextActiveTabId = updatedTabs[newIndex].id;
-            } else {
-                nextActiveTabId = '/dashboard';
-            }
-            
-            if (nextActiveTabId) {
-                const nextTab = updatedTabs.find(t => t.id === nextActiveTabId) || staticTabsConfig.find(t => t.path === nextActiveTabId);
-                const navStartTime = performance.now();
-                if(nextTab){
-                     navigationPromise = new Promise((resolve) => {
-                        router.push(nextTab.path, { scroll: false });
-                        resolve();
-                    });
-                    setActiveTabState(nextActiveTabId);
-                }
-                const navEndTime = performance.now();
-                 console.log(`[useTabs] closeTab: router.push a '${nextTab?.path}' ha trigat ${(navEndTime - navStartTime).toFixed(2)}ms.`);
+                nextActiveTabId = tabs[newIndex === tabToCloseIndex ? newIndex -1 : newIndex].id;
             }
         }
         
-        setTabs(updatedTabs);
+        setTabs(tabs => tabs.filter(t => t.id !== tabId));
 
-        if (navigationPromise) {
-            navigationPromise.then(() => {
-                const endTime = performance.now();
-                console.log(`[useTabs] closeTab: El procés complet de tancament i navegació ha trigat ${(endTime - startTime).toFixed(2)}ms.`);
-            });
-        } else {
-             const endTime = performance.now();
-             console.log(`[useTabs] closeTab: El procés complet de tancament (sense navegació) ha trigat ${(endTime - startTime).toFixed(2)}ms.`);
+        if (nextActiveTabId) {
+             setActiveTabState(nextActiveTabId);
+        } else if (tabs.length === 1) { // Closing the last tab
+             setActiveTabState(null);
         }
     };
 
-
-    useEffect(() => {
-        const pathWithoutLocale = pathname.split('/').slice(2).join('/');
-        const fullPath = pathWithoutLocale ? `/${pathWithoutLocale}` : '/dashboard';
-
-        const existingTab = tabs.find(t => t.id === fullPath);
-        
-        if (existingTab) {
-            if(activeTab !== existingTab.id) {
-               setActiveTabState(existingTab.id);
-            }
-            return;
-        }
-
-        let tabData: Omit<Tab, 'id'> | null = null;
-        
-        const staticTab = staticTabsConfig.find(t => t.path === fullPath);
-        if (staticTab) {
-            tabData = {
-                path: staticTab.path,
-                title: staticTab.title,
-                icon: staticTab.icon,
-                isClosable: staticTab.isClosable,
-                content: React.createElement(pageComponentMapping[staticTab.path])
-            };
-        } else {
-             const actionIdMatch = fullPath.match(/\/actions\/(.+)/);
-             if (fullPath === '/actions/new') {
-                 tabData = {
-                    path: '/actions/new',
-                    title: 'Nova Acció',
-                    icon: FilePlus,
-                    isClosable: true,
-                    content: React.createElement(NewActionPage)
-                 };
-             } else if (actionIdMatch) {
-                 const id = actionIdMatch[1];
-                 tabData = {
-                    path: `/actions/${id}`,
-                    title: `Acció ${id.substring(0, 6)}...`,
-                    icon: GanttChartSquare,
-                    isClosable: true,
-                    content: React.createElement(ActionDetailPage)
-                 }
-             }
-        }
-        
-        if (tabData) {
-            const newTab: Tab = { ...tabData, id: tabData.path };
-            setTabs(prev => {
-                if (prev.some(t => t.id === newTab.id)) return prev;
-                return [...prev, newTab]
-            });
-            setActiveTabState(newTab.id);
-        }
-    }, [pathname]);
+    const value = {
+        tabs,
+        activeTab,
+        openTab,
+        closeTab,
+        setActiveTab: setActiveTabState,
+    };
 
     return (
-        <TabsContext.Provider value={{ tabs, activeTab, openTab, closeTab, setActiveTab }}>
+        <TabsContext.Provider value={value}>
             {children}
         </TabsContext.Provider>
     );

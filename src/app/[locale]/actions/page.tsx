@@ -5,6 +5,9 @@ import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { PlusCircle } from "lucide-react"
 import { getTranslations } from "next-intl/server"
+import { useTabs } from "@/hooks/use-tabs"
+import { FilePlus } from "lucide-react"
+import { ClientButton } from "./client-button"
 
 export default async function ActionsPage() {
   const t = await getTranslations("ActionsPage");
@@ -14,12 +17,7 @@ export default async function ActionsPage() {
     <div className="flex flex-col gap-4">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold tracking-tight">{t("title")}</h1>
-        <Link href="/actions/new">
-          <Button>
-            <PlusCircle className="mr-2 h-4 w-4" />
-            {t("createAction")}
-          </Button>
-        </Link>
+        <ClientButton />
       </div>
       <p className="text-muted-foreground">
         {t("description")}
