@@ -33,7 +33,22 @@ const pageComponentMapping: { [key: string]: React.ComponentType<any> | undefine
 };
 
 const getPageComponent = (path: string): React.ComponentType<any> | undefined => {
-  const cleanPath = path.split('?')[0]; // Ignore query params
+  const locales = ['ca', 'es'];
+  // Clean the path of query parameters
+  let cleanPath = path.split('?')[0];
+
+  // Remove locale prefix if it exists
+  const pathSegments = cleanPath.split('/').filter(Boolean);
+  if (locales.includes(pathSegments[0])) {
+    // Reconstruct the path without the locale
+    cleanPath = `/${pathSegments.slice(1).join('/')}`;
+  }
+
+  // Handle root case which should map to dashboard
+  if (cleanPath === '/') {
+    cleanPath = '/dashboard';
+  }
+  
   if (pageComponentMapping[cleanPath]) {
     return pageComponentMapping[cleanPath];
   }
@@ -43,6 +58,7 @@ const getPageComponent = (path: string): React.ComponentType<any> | undefined =>
   }
   return undefined;
 };
+
 
 export interface Tab {
     id: string; 
@@ -78,11 +94,7 @@ export function TabsProvider({ children, initialPath }: { children: ReactNode, i
     const locale = useLocale();
 
     const setActiveTab = useCallback((tabId: string) => {
-        const startTime = performance.now();
-        console.log(`[useTabs] setActiveTab: Canviant a pestanya ${tabId}`);
         setActiveTabState(tabId);
-        const endTime = performance.now();
-        console.log(`[useTabs] setActiveTab: setState ha trigat ${(endTime - startTime).toFixed(2)}ms.`);
     }, []);
 
     const openTab = useCallback((tabData: TabInput) => {
@@ -131,16 +143,16 @@ export function TabsProvider({ children, initialPath }: { children: ReactNode, i
         });
     }, [activeTab, setActiveTab]);
     
-    useEffect(() => {
-        if (user && tabs.length === 0 && activeTab === null) {
+     useEffect(() => {
+        if (user && tabs.length === 0) {
             openTab({
-                path: '/dashboard',
+                path: `/${locale}/dashboard`,
                 title: 'Dashboard',
                 icon: Home,
                 isClosable: false,
             });
         }
-    }, [user, tabs.length, activeTab, openTab]);
+    }, [user, tabs.length, locale, openTab]);
 
 
     useEffect(() => {
@@ -152,23 +164,17 @@ export function TabsProvider({ children, initialPath }: { children: ReactNode, i
     }, [user, lastUser]);
     
     const closeTab = (tabId: string) => {
-        const totalStartTime = performance.now();
-        console.log(`[useTabs] closeTab: Rebuda crida per tancar ${tabId}. Pestanya activa actual: ${activeTab}`);
         let nextActiveTabId: string | null = null;
         
         const index = tabs.findIndex(tab => tab.id === tabId);
         if (index === -1) return;
         
-        console.log(`[useTabs] closeTab: La pestanya a tancar es troba a l'índex ${index}.`);
         const newTabs = tabs.filter(t => t.id !== tabId);
-        console.log(`[useTabs] closeTab: Nou array de pestanyes després de filtrar: [${newTabs.map(t => `'${t.id}'`).join(', ')}]`);
 
         if (activeTab === tabId) {
-            console.log(`[useTabs] closeTab: La pestanya tancada era l'activa.`);
             if (newTabs.length > 0) {
                 const newIndex = index === 0 ? 0 : index - 1;
                 nextActiveTabId = newTabs[newIndex].id;
-                console.log(`[useTabs] closeTab: La següent pestanya activa serà: ${nextActiveTabId}`);
             } else {
                 nextActiveTabId = null; // No more tabs
             }
@@ -180,7 +186,7 @@ export function TabsProvider({ children, initialPath }: { children: ReactNode, i
             setActiveTab(nextActiveTabId);
         } else if (newTabs.length === 0) {
             setActiveTabState(null);
-            openTab({ path: '/dashboard', title: 'Dashboard', icon: Home, isClosable: false });
+            openTab({ path: `/${locale}/dashboard`, title: 'Dashboard', icon: Home, isClosable: false });
         }
     };
 
