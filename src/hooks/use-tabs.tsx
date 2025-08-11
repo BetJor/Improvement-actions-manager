@@ -30,10 +30,10 @@ const pageComponentMapping: { [key: string]: React.ComponentType<any> } = {
 const staticTabsConfig = [
     { path: '/dashboard', title: 'Dashboard', icon: Home, isClosable: false },
     { path: '/actions', title: 'Accions', icon: ListChecks, isClosable: true },
+    { path: '/roadmap', title: 'Roadmap', icon: Route, isClosable: true },
     { path: '/settings', title: 'Configuració', icon: Settings, isClosable: true },
     { path: '/ai-settings', title: 'Configuració IA', icon: Sparkles, isClosable: true },
     { path: '/prompt-gallery', title: 'Galeria de Prompts', icon: Library, isClosable: true },
-    { path: '/roadmap', title: 'Roadmap', icon: Route, isClosable: true },
 ];
 
 
@@ -77,14 +77,10 @@ export function TabsProvider({ children }: { children: ReactNode }) {
     const setActiveTab = (tabId: string) => {
         const tab = tabs.find(t => t.id === tabId);
         if (tab) {
-            console.log(`[useTabs] setActiveTab: Canviant a pestanya ${tabId}`);
             setActiveTabState(tab.id);
             if (window.location.pathname !== tab.path) {
-                console.log(`[useTabs] setActiveTab: Navegant a la ruta ${tab.path}`);
                 router.push(tab.path);
             }
-        } else {
-             console.warn(`[useTabs] setActiveTab: S'ha intentat activar una pestanya no existent amb ID ${tabId}`);
         }
     };
     
@@ -103,40 +99,53 @@ export function TabsProvider({ children }: { children: ReactNode }) {
     };
 
     const closeTab = (tabId: string) => {
+        const startTime = performance.now();
         console.log(`[useTabs] closeTab: Rebuda crida per tancar ${tabId}. Pestanya activa actual: ${activeTab}`);
+        
         const tabToCloseIndex = tabs.findIndex(tab => tab.id === tabId);
 
         if (tabToCloseIndex === -1) {
-            console.error(`[useTabs] closeTab: No s'ha trobat la pestanya amb ID ${tabId} per tancar.`);
             return;
         }
         
-        console.log(`[useTabs] closeTab: La pestanya a tancar es troba a l'índex ${tabToCloseIndex}.`);
-        
         const updatedTabs = tabs.filter(t => t.id !== tabId);
-        console.log(`[useTabs] closeTab: Nou array de pestanyes després de filtrar:`, updatedTabs.map(t => t.id));
-
+        
+        let navigationPromise: Promise<void> | null = null;
+        
         if (activeTab === tabId) {
-            console.log(`[useTabs] closeTab: La pestanya tancada era l'activa.`);
-            let nextActiveTab: Tab | undefined;
+            let nextActiveTabId: string | null = null;
             if (updatedTabs.length > 0) {
-                // Prioritza la pestanya de l'esquerra
-                nextActiveTab = updatedTabs[Math.max(0, tabToCloseIndex - 1)];
+                const newIndex = Math.max(0, tabToCloseIndex - 1);
+                nextActiveTabId = updatedTabs[newIndex].id;
+            } else {
+                nextActiveTabId = '/dashboard';
             }
             
-            console.log(`[useTabs] closeTab: La següent pestanya activa serà:`, nextActiveTab?.id || 'cap');
-
-            setTabs(updatedTabs);
-            if (nextActiveTab) {
-                setActiveTab(nextActiveTab.id);
-            } else {
-                console.log(`[useTabs] closeTab: No queden pestanyes, es navega a /dashboard.`);
-                setActiveTabState('/dashboard');
-                router.push('/dashboard');
+            if (nextActiveTabId) {
+                const nextTab = updatedTabs.find(t => t.id === nextActiveTabId) || staticTabsConfig.find(t => t.path === nextActiveTabId);
+                const navStartTime = performance.now();
+                if(nextTab){
+                     navigationPromise = new Promise((resolve) => {
+                        router.push(nextTab.path);
+                        resolve();
+                    });
+                    setActiveTabState(nextActiveTabId);
+                }
+                const navEndTime = performance.now();
+                 console.log(`[useTabs] closeTab: router.push a '${nextTab?.path}' ha trigat ${(navEndTime - navStartTime).toFixed(2)}ms.`);
             }
+        }
+        
+        setTabs(updatedTabs);
+
+        if (navigationPromise) {
+            navigationPromise.then(() => {
+                const endTime = performance.now();
+                console.log(`[useTabs] closeTab: El procés complet de tancament i navegació ha trigat ${(endTime - startTime).toFixed(2)}ms.`);
+            });
         } else {
-            console.log(`[useTabs] closeTab: La pestanya tancada NO era l'activa. Només s'actualitza la llista.`);
-            setTabs(updatedTabs);
+             const endTime = performance.now();
+             console.log(`[useTabs] closeTab: El procés complet de tancament (sense navegació) ha trigat ${(endTime - startTime).toFixed(2)}ms.`);
         }
     };
 
@@ -196,14 +205,6 @@ export function TabsProvider({ children }: { children: ReactNode }) {
             setActiveTabState(newTab.id);
         }
     }, [pathname]);
-
-    useEffect(() => {
-        // Aquest useEffect només s'encarrega de la navegació quan l'activeTab canvia.
-        const activeTabData = tabs.find(t => t.id === activeTab);
-        if (activeTabData && activeTabData.path !== pathname) {
-           // No naveguem aqui per evitar conflictes
-        }
-    }, [activeTab, tabs, pathname, router]);
 
     return (
         <TabsContext.Provider value={{ tabs, activeTab, openTab, closeTab, setActiveTab }}>
