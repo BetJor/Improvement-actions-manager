@@ -25,6 +25,7 @@ import { useToast } from "@/hooks/use-toast"
 import { useAuth } from "@/hooks/use-auth"
 import type { ProposedActionStatus } from "@/lib/types"
 import { useRouter } from "next/navigation"
+import { users } from "@/lib/static-data"
 
 
 interface ActionDetailsTabProps {
