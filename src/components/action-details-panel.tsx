@@ -170,7 +170,7 @@ export function ActionDetailsPanel({ action, onActionUpdate }: ActionDetailsPane
         )}
 
         <Card>
-            <Collapsible defaultOpen={false}>
+            <Collapsible defaultOpen={true}>
                 <CollapsibleTrigger asChild>
                     <div className="flex justify-between items-center p-4 cursor-pointer">
                         <CardTitle className="text-base flex items-center gap-2">
@@ -218,7 +218,7 @@ export function ActionDetailsPanel({ action, onActionUpdate }: ActionDetailsPane
         </Card>
 
         <Card>
-            <Collapsible defaultOpen={false}>
+            <Collapsible defaultOpen={true}>
                 <CollapsibleTrigger asChild>
                     <div className="flex justify-between items-center p-4 cursor-pointer">
                         <CardTitle className="flex items-center gap-2 text-base">
@@ -276,7 +276,7 @@ export function ActionDetailsPanel({ action, onActionUpdate }: ActionDetailsPane
         </Card>
 
         <Card>
-            <Collapsible defaultOpen={false}>
+            <Collapsible defaultOpen={true}>
                 <CollapsibleTrigger asChild>
                     <div className="flex justify-between items-center p-4 cursor-pointer">
                         <CardTitle className="flex items-center gap-2 text-base">
