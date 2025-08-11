@@ -22,9 +22,10 @@ import { ActionStatusBadge } from "./action-status-badge"
 import type { ImprovementAction, ImprovementActionStatus, ImprovementActionType } from "@/lib/types"
 import { ArrowUpDown, ChevronDown, GanttChartSquare } from "lucide-react"
 import { useTranslations } from "next-intl"
-import Link from "next/link"
 import { useParams } from "next/navigation"
 import { useTabs } from "@/hooks/use-tabs"
+import { getActionById, getActionTypes, getCategories, getSubcategories, getAffectedAreas } from "@/lib/data"
+import ActionDetailPage from "@/app/[locale]/actions/[id]/page"
 
 interface ActionsTableProps {
   actions: ImprovementAction[]
@@ -106,11 +107,28 @@ export function ActionsTable({ actions }: ActionsTableProps) {
 
   const handleOpenAction = (e: React.MouseEvent, action: ImprovementAction) => {
       e.preventDefault();
+      
+      const actionLoader = async () => {
+        const actionData = await getActionById(action.id);
+        if (!actionData) {
+            throw new Error("Action not found");
+        }
+        const [types, cats, subcats, areas] = await Promise.all([
+            getActionTypes(),
+            getCategories(),
+            getSubcategories(),
+            getAffectedAreas(),
+        ]);
+        const masterData = { actionTypes: types, categories: cats, subcategories: subcats, affectedAreas: areas };
+        return <ActionDetailPage initialAction={actionData} masterData={masterData} />;
+      };
+
       openTab({
           path: `/${locale}/actions/${action.id}`,
           title: `Acció ${action.actionId}`,
           icon: GanttChartSquare,
           isClosable: true,
+          loader: actionLoader
       });
   }
 

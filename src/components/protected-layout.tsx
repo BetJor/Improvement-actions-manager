@@ -17,7 +17,7 @@ function LayoutWithTabs({ children }: { children: React.ReactNode }) {
     const tSidebar = useTranslations("AppSidebar");
     const { activeTab, tabs } = useTabs();
     
-    const activeTabContent = tabs.find(tab => tab.id === activeTab)?.content;
+    const activeTabObject = tabs.find(tab => tab.id === activeTab);
 
     return (
         <div className="relative flex h-screen w-full flex-col">
@@ -29,7 +29,11 @@ function LayoutWithTabs({ children }: { children: React.ReactNode }) {
                         <DynamicTabs />
                     </div>
                     <div className="flex-grow">
-                        {activeTabContent || children}
+                        {tabs.map(tab => (
+                            <div key={tab.id} style={{ display: tab.id === activeTab ? 'block' : 'none' }} className="h-full">
+                                {tab.content}
+                            </div>
+                        ))}
                     </div>
                 </main>
             </div>
@@ -68,10 +72,12 @@ export function ProtectedLayout({
   }
 
   const content = (
-    <TabsProvider initialContent={children} initialPath={pathname}>
-      <LayoutWithTabs>
-        {isLoginPage ? children : null}
-      </LayoutWithTabs>
+    <TabsProvider initialPath={pathname}>
+      {isLoginPage ? children : 
+        <LayoutWithTabs>
+            {children}
+        </LayoutWithTabs>
+      }
     </TabsProvider>
   )
 
