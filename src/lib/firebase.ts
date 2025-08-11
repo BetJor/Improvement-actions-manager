@@ -9,7 +9,7 @@ import { getStorage } from "firebase/storage";
 const firebaseConfig = {
   "projectId": "improvement-actions-manager",
   "appId": "1:920139375274:web:3c4fd3616765e7480566d3",
-  "storageBucket": "improvement-actions-manager.appspot.com",
+  "storageBucket": "improvement-actions-manager.firebasestorage.app",
   "apiKey": "AIzaSyDb99QMKUYzyWyajTwZ2plmEB1o35g_9H4",
   "authDomain": "improvement-actions-manager.firebaseapp.com",
   "messagingSenderId": "920139375274"
