@@ -91,32 +91,33 @@ export function TabsProvider({ children, initialContent, initialPath }: { childr
     }
 
     const openTab = useCallback((tabData: Omit<Tab, 'id' | 'content'> & { content?: ReactNode }) => {
-        const existingTab = tabs.find(t => t.path === tabData.path);
-        if (existingTab) {
-            if (activeTab !== existingTab.id) {
-                setActiveTabState(existingTab.id);
+        setTabs(prevTabs => {
+            const existingTab = prevTabs.find(t => t.path === tabData.path);
+            if (existingTab) {
+                if (activeTab !== existingTab.id) {
+                    setActiveTabState(existingTab.id);
+                }
+                return prevTabs;
             }
-            return;
-        }
-
-        let content = tabData.content;
-        if (!content) {
-            const PageComponent = getPageComponent(tabData.path);
-            if (PageComponent) {
-                 const params = tabData.path.startsWith('/actions/') ? { id: tabData.path.split('/')[2] } : {};
-                 content = <PageComponent params={params} />;
+    
+            let content = tabData.content;
+            if (!content) {
+                const PageComponent = getPageComponent(tabData.path);
+                if (PageComponent) {
+                     const params = tabData.path.startsWith('/actions/') ? { id: tabData.path.split('/')[2] } : {};
+                     content = <PageComponent params={params} />;
+                }
             }
-        }
-        
-        const newTab: Tab = { ...tabData, id: tabData.path, content: content || <div>Not Found</div> };
-        setTabs(prevTabs => [...prevTabs, newTab]);
-        setActiveTabState(newTab.id);
-    }, [tabs, activeTab]);
-
+            
+            const newTab: Tab = { ...tabData, id: tabData.path, content: content || <div>Not Found</div> };
+            setActiveTabState(newTab.id);
+            return [...prevTabs, newTab];
+        });
+    }, [activeTab]);
+    
     useEffect(() => {
-        if (user && tabs.length === 0) {
-            const pathKey = getPathKey(initialPath);
-            const staticTab = staticTabsConfig.find(t => t.path === pathKey);
+        // Only set the initial tab if the user is logged in and no tabs are open yet.
+        if (user && tabs.length === 0 && !activeTab) {
             openTab({
                 path: '/dashboard',
                 title: 'Dashboard',
@@ -125,7 +126,7 @@ export function TabsProvider({ children, initialContent, initialPath }: { childr
                 content: initialContent
             });
         }
-    }, [user, initialPath, initialContent, openTab, tabs.length]);
+    }, [user, tabs.length, activeTab, initialContent, openTab]);
 
 
     useEffect(() => {
@@ -133,19 +134,20 @@ export function TabsProvider({ children, initialContent, initialPath }: { childr
             setTabs([]);
             setActiveTabState(null);
             setLastUser(user?.uid);
-            router.push(`/${locale}/dashboard`);
+            // No need to push to router here, as the tab state will handle it
         }
-    }, [user, lastUser, router, locale]);
+    }, [user, lastUser, locale]);
     
     const closeTab = (tabId: string) => {
         const tabToCloseIndex = tabs.findIndex(tab => tab.id === tabId);
         if (tabToCloseIndex === -1) return;
 
-        let nextActiveTabId = null;
+        let nextActiveTabId: string | null = null;
         if (activeTab === tabId) {
             if (tabs.length > 1) {
-                const newIndex = Math.max(0, tabToCloseIndex - 1);
-                nextActiveTabId = tabs[newIndex === tabToCloseIndex ? newIndex -1 : newIndex].id;
+                // Find the new active tab, preferring the one to the left
+                const newIndex = tabToCloseIndex === 0 ? 1 : tabToCloseIndex - 1;
+                nextActiveTabId = tabs[newIndex].id;
             }
         }
         
@@ -153,7 +155,7 @@ export function TabsProvider({ children, initialContent, initialPath }: { childr
 
         if (nextActiveTabId) {
              setActiveTabState(nextActiveTabId);
-        } else if (tabs.length === 1) { // Closing the last tab
+        } else if (tabs.length === 1) { // This means we are closing the last tab
              setActiveTabState(null);
         }
     };
