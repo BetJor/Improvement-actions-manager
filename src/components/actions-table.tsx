@@ -22,10 +22,9 @@ import { ActionStatusBadge } from "./action-status-badge"
 import type { ImprovementAction, ImprovementActionStatus, ImprovementActionType } from "@/lib/types"
 import { ArrowUpDown, ChevronDown, GanttChartSquare } from "lucide-react"
 import { useTranslations } from "next-intl"
-import { useParams } from "next/navigation"
 import { useTabs } from "@/hooks/use-tabs"
 import { getActionById, getActionTypes, getCategories, getSubcategories, getAffectedAreas } from "@/lib/data"
-import ActionDetailPage from "@/app/[locale]/actions/[id]/page"
+import { ActionDetailsTab } from "@/components/action-details-tab"
 
 interface ActionsTableProps {
   actions: ImprovementAction[]
@@ -35,8 +34,6 @@ type SortKey = keyof ImprovementAction | 'responsible'
 
 export function ActionsTable({ actions }: ActionsTableProps) {
   const t = useTranslations("ActionsTable")
-  const params = useParams()
-  const locale = params.locale as string
   const { openTab } = useTabs();
 
   const [searchTerm, setSearchTerm] = useState("")
@@ -120,11 +117,11 @@ export function ActionsTable({ actions }: ActionsTableProps) {
             getAffectedAreas(),
         ]);
         const masterData = { actionTypes: types, categories: cats, subcategories: subcats, affectedAreas: areas };
-        return <ActionDetailPage initialAction={actionData} masterData={masterData} />;
+        return <ActionDetailsTab initialAction={actionData} masterData={masterData} />;
       };
 
       openTab({
-          path: `/${locale}/actions/${action.id}`,
+          path: `/actions/${action.id}`,
           title: `Acció ${action.actionId}`,
           icon: GanttChartSquare,
           isClosable: true,
@@ -210,7 +207,7 @@ export function ActionsTable({ actions }: ActionsTableProps) {
                 <TableRow key={action.id}>
                   <TableCell className="font-medium">
                      <Button variant="link" asChild className="p-0 h-auto">
-                        <a href={`/${locale}/actions/${action.id}`} onClick={(e) => handleOpenAction(e, action)}>{action.actionId}</a>
+                        <a href={`/actions/${action.id}`} onClick={(e) => handleOpenAction(e, action)}>{action.actionId}</a>
                     </Button>
                   </TableCell>
                   <TableCell>{action.title}</TableCell>

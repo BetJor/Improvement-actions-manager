@@ -14,7 +14,6 @@ export function DynamicTabs() {
   }
 
   const handleCloseTab = (e: React.MouseEvent, tabId: string) => {
-    e.preventDefault();
     e.stopPropagation();
     closeTab(tabId);
   };

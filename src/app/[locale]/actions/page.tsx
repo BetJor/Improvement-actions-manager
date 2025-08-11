@@ -1,17 +1,41 @@
 
+"use client"
+
+import { useState, useEffect } from "react"
 import { getActions } from "@/lib/data"
 import { ActionsTable } from "@/components/actions-table"
-import { Button } from "@/components/ui/button"
-import Link from "next/link"
-import { PlusCircle } from "lucide-react"
-import { getTranslations } from "next-intl/server"
-import { useTabs } from "@/hooks/use-tabs"
-import { FilePlus } from "lucide-react"
 import { ClientButton } from "./client-button"
+import { useTranslations } from "next-intl"
+import type { ImprovementAction } from "@/lib/types"
+import { Loader2 } from "lucide-react"
 
-export default async function ActionsPage() {
-  const t = await getTranslations("ActionsPage");
-  const actions = await getActions();
+export default function ActionsPage() {
+  const t = useTranslations("ActionsPage");
+  const [actions, setActions] = useState<ImprovementAction[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadData() {
+      setIsLoading(true);
+      try {
+        const fetchedActions = await getActions();
+        setActions(fetchedActions);
+      } catch (error) {
+        console.error("Failed to load actions:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    loadData();
+  }, []);
+
+  if (isLoading) {
+    return (
+      <div className="flex h-full w-full items-center justify-center">
+        <Loader2 className="h-6 w-6 animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-4">
