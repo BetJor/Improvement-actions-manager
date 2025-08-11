@@ -1,10 +1,7 @@
 
-"use client"
-
-import { useEffect, useState, useMemo } from "react"
 import { getActions } from "@/lib/data"
 import type { ImprovementAction } from "@/lib/types"
-import { useTranslations } from "next-intl"
+import { getTranslations } from "next-intl/server"
 import {
   Card,
   CardContent,
@@ -20,7 +17,7 @@ import {
   ChartLegendContent,
 } from "@/components/ui/chart"
 import { Bar, BarChart, XAxis, YAxis, Pie, PieChart, Cell } from "recharts"
-import { Activity, CheckCircle, FileText, ListTodo, Loader2 } from "lucide-react"
+import { Activity, CheckCircle, FileText, ListTodo } from "lucide-react"
 
 
 const COLORS = {
@@ -32,51 +29,32 @@ const COLORS = {
 };
 
 
-export default function DashboardPage() {
-  const t = useTranslations("DashboardPage");
-  const [actions, setActions] = useState<ImprovementAction[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+export default async function DashboardPage() {
+  const t = await getTranslations("DashboardPage");
+  const actions = await getActions();
 
-  useEffect(() => {
-    async function loadActions() {
-      setIsLoading(true);
-      try {
-        const data = await getActions();
-        setActions(data);
-      } catch (error) {
-        console.error("Failed to load actions", error);
-        // Optionally show a toast or error message
-      } finally {
-        setIsLoading(false);
-      }
-    }
-    loadActions();
-  }, []);
+  const stats = {
+    total: actions.length,
+    pending: actions.filter(a => a.status !== 'Finalizada' && a.status !== 'Borrador').length,
+    finalized: actions.filter(a => a.status === 'Finalizada').length,
+    drafts: actions.filter(a => a.status === 'Borrador').length,
+  }
 
-  const stats = useMemo(() => {
-    return {
-      total: actions.length,
-      pending: actions.filter(a => a.status !== 'Finalizada' && a.status !== 'Borrador').length,
-      finalized: actions.filter(a => a.status === 'Finalizada').length,
-      drafts: actions.filter(a => a.status === 'Borrador').length,
-    }
-  }, [actions])
-
-  const statusDistribution = useMemo(() => {
+  const statusDistribution = (() => {
     const counts = actions.reduce((acc, action) => {
       acc[action.status] = (acc[action.status] || 0) + 1
       return acc
     }, {} as Record<string, number>)
     return Object.entries(counts).map(([name, value]) => ({ name, value }))
-  }, [actions])
+  })();
 
-  const typeDistribution = useMemo(() => {
+  const typeDistribution = (() => {
     const counts = actions.reduce((acc, action) => {
       acc[action.type] = (acc[action.type] || 0) + 1
       return acc
     }, {} as Record<string, number>)
     return Object.entries(counts).map(([name, value]) => ({ name, value }))
-  }, [actions])
+  })();
   
   const chartConfig = {
     value: { label: t("chartLabel") },
@@ -86,13 +64,6 @@ export default function DashboardPage() {
     }, {} as any)
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-full">
-        <Loader2 className="mr-2 h-8 w-8 animate-spin" /> Carregant dades...
-      </div>
-    );
-  }
 
   return (
     <div className="flex flex-col gap-4">
