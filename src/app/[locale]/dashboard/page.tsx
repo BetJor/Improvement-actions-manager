@@ -1,10 +1,33 @@
-import { getActions } from "@/lib/data"
-import { getTranslations } from "next-intl/server"
-import { DashboardClient } from "@/components/dashboard-client"
 
-export default async function DashboardPage() {
-  const t = await getTranslations("DashboardPage");
-  const actions = await getActions();
+"use client"
+
+import { useState, useEffect } from 'react';
+import { getActions } from "@/lib/data"
+import { useTranslations } from "next-intl"
+import { DashboardClient } from "@/components/dashboard-client"
+import type { ImprovementAction } from '@/lib/types';
+import { Loader2 } from 'lucide-react';
+
+export default function DashboardPage() {
+  const t = useTranslations("DashboardPage");
+  const [actions, setActions] = useState<ImprovementAction[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadData() {
+      setIsLoading(true);
+      try {
+        const fetchedActions = await getActions();
+        setActions(fetchedActions);
+      } catch (error) {
+        console.error("Failed to load dashboard actions:", error);
+        // Optionally, show a toast notification for the error
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    loadData();
+  }, []);
   
   const translations = {
     title: t("title"),
@@ -21,6 +44,10 @@ export default async function DashboardPage() {
         description: t("actionsByType.description"),
     },
     chartLabel: t("chartLabel"),
+  }
+
+  if (isLoading) {
+    return <div className="flex h-full w-full items-center justify-center"><Loader2 className="h-6 w-6 animate-spin" /></div>
   }
 
   return <DashboardClient actions={actions} t={translations} />
