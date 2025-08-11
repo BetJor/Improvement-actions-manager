@@ -126,7 +126,7 @@ export function TabsProvider({ children }: { children: ReactNode }) {
                 const navStartTime = performance.now();
                 if(nextTab){
                      navigationPromise = new Promise((resolve) => {
-                        router.push(nextTab.path);
+                        router.push(nextTab.path, { scroll: false });
                         resolve();
                     });
                     setActiveTabState(nextActiveTabId);
