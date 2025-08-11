@@ -47,12 +47,16 @@ export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTab
     // Aquest efecte assegura que si la propietat inicial canvia (p.ex. per una navegació SPA),
     // l'estat local s'actualitza.
     useEffect(() => {
-        // Only update state if the initialAction from props is actually different
-        if (JSON.stringify(initialAction) !== JSON.stringify(action)) {
-            setAction(initialAction);
-        }
+        setAction(initialAction);
     }, [initialAction]);
     
+    const handleActionUpdate = async () => {
+        const updatedAction = await getActionById(action.id);
+        if (updatedAction) {
+            setAction(updatedAction);
+        }
+    }
+
     const handleEditSubmit = async (formData: any, status?: 'Borrador' | 'Pendiente Análisis') => {
         if (!action) return;
         setIsSubmitting(true);
@@ -373,7 +377,7 @@ export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTab
 
             {/* Right Sidebar */}
             <aside className="lg:col-span-1">
-                <ActionDetailsPanel action={action} onActionUpdate={() => router.refresh()} />
+                <ActionDetailsPanel action={action} onActionUpdate={handleActionUpdate} />
             </aside>
         </div>
     )
