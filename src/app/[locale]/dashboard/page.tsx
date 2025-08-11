@@ -6,5 +6,22 @@ export default async function DashboardPage() {
   const t = await getTranslations("DashboardPage");
   const actions = await getActions();
   
-  return <DashboardClient actions={actions} t={t} />
+  const translations = {
+    title: t("title"),
+    totalActions: t("totalActions"),
+    activeActions: t("activeActions"),
+    finalizedActions: t("finalizedActions"),
+    drafts: t("drafts"),
+    actionsByStatus: {
+        title: t("actionsByStatus.title"),
+        description: t("actionsByStatus.description"),
+    },
+    actionsByType: {
+        title: t("actionsByType.title"),
+        description: t("actionsByType.description"),
+    },
+    chartLabel: t("chartLabel"),
+  }
+
+  return <DashboardClient actions={actions} t={translations} />
 }

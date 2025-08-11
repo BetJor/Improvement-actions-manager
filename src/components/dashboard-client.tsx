@@ -30,7 +30,22 @@ const COLORS = {
 
 interface DashboardClientProps {
     actions: ImprovementAction[];
-    t: any; // Type for the translation function
+    t: {
+        title: string;
+        totalActions: string;
+        activeActions: string;
+        finalizedActions: string;
+        drafts: string;
+        actionsByStatus: {
+            title: string;
+            description: string;
+        };
+        actionsByType: {
+            title: string;
+            description: string;
+        };
+        chartLabel: string;
+    };
 }
 
 export function DashboardClient({ actions, t }: DashboardClientProps) {
@@ -59,7 +74,7 @@ export function DashboardClient({ actions, t }: DashboardClientProps) {
   })();
   
   const chartConfig = {
-    value: { label: t("chartLabel") },
+    value: { label: t.chartLabel },
     ...Object.keys(COLORS).reduce((acc, key) => {
       acc[key] = { label: key, color: COLORS[key as keyof typeof COLORS] };
       return acc;
@@ -69,11 +84,11 @@ export function DashboardClient({ actions, t }: DashboardClientProps) {
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-3xl font-bold tracking-tight">{t("title")}</h1>
+      <h1 className="text-3xl font-bold tracking-tight">{t.title}</h1>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t("totalActions")}</CardTitle>
+            <CardTitle className="text-sm font-medium">{t.totalActions}</CardTitle>
             <ListTodo className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -82,7 +97,7 @@ export function DashboardClient({ actions, t }: DashboardClientProps) {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t("activeActions")}</CardTitle>
+            <CardTitle className="text-sm font-medium">{t.activeActions}</CardTitle>
             <Activity className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -91,7 +106,7 @@ export function DashboardClient({ actions, t }: DashboardClientProps) {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t("finalizedActions")}</CardTitle>
+            <CardTitle className="text-sm font-medium">{t.finalizedActions}</CardTitle>
             <CheckCircle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -100,7 +115,7 @@ export function DashboardClient({ actions, t }: DashboardClientProps) {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t("drafts")}</CardTitle>
+            <CardTitle className="text-sm font-medium">{t.drafts}</CardTitle>
             <FileText className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -110,8 +125,8 @@ export function DashboardClient({ actions, t }: DashboardClientProps) {
 
         <Card className="col-span-1 lg:col-span-2">
           <CardHeader>
-            <CardTitle>{t("actionsByStatus.title")}</CardTitle>
-            <CardDescription>{t("actionsByStatus.description")}</CardDescription>
+            <CardTitle>{t.actionsByStatus.title}</CardTitle>
+            <CardDescription>{t.actionsByStatus.description}</CardDescription>
           </CardHeader>
           <CardContent>
             <ChartContainer config={chartConfig} className="min-h-[200px] w-full">
@@ -131,8 +146,8 @@ export function DashboardClient({ actions, t }: DashboardClientProps) {
         
         <Card className="col-span-1 lg:col-span-2">
           <CardHeader>
-            <CardTitle>{t("actionsByType.title")}</CardTitle>
-            <CardDescription>{t("actionsByType.description")}</CardDescription>
+            <CardTitle>{t.actionsByType.title}</CardTitle>
+            <CardDescription>{t.actionsByType.description}</CardDescription>
           </CardHeader>
           <CardContent>
             <ChartContainer config={chartConfig} className="min-h-[200px] w-full">
