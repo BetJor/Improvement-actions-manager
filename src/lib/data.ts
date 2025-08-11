@@ -7,7 +7,6 @@ import { collection, getDocs, doc, getDoc, addDoc, query, orderBy, limit, writeB
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { planActionWorkflow } from '@/ai/flows/planActionWorkflow';
 import { users } from './static-data';
-import { a } from 'next-intl/dist/config-a681d451';
 
 export const getActionTypes = async (): Promise<ImprovementActionType[]> => {
   const typesCol = collection(db, 'actionTypes');
