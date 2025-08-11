@@ -60,6 +60,8 @@ export const getActions = async (): Promise<ImprovementAction[]> => {
 }
 
 export const getActionById = async (id: string): Promise<ImprovementAction | null> => {
+    console.log(`[data.ts] getActionById: Iniciant cerca per ID: ${id}`);
+    const startTime = performance.now();
     try {
         const actionDocRef = doc(db, 'actions', id);
         const actionDocSnap = await getDoc(actionDocRef);
@@ -90,8 +92,8 @@ export const getActionById = async (id: string): Promise<ImprovementAction | nul
                     }
                 }
             }
-
-
+            const endTime = performance.now();
+            console.log(`[data.ts] getActionById: Document trobat. Temps: ${(endTime - startTime).toFixed(2)}ms`);
             return { ...data, id: actionDocSnap.id } as ImprovementAction;
         } else {
             console.warn(`Action with Firestore ID ${id} not found.`);

@@ -41,9 +41,15 @@ export default function ActionDetailPage() {
     if (!actionId) return;
 
     async function loadData() {
+      console.log("[ActionDetail] Iniciant càrrega de dades...");
+      const startTime = performance.now();
       setIsLoading(true)
       try {
+        console.log("[ActionDetail] Cridant a getActionById...");
         const actionData = await getActionById(actionId);
+        const actionLoadTime = performance.now();
+        console.log(`[ActionDetail] getActionById ha trigat: ${(actionLoadTime - startTime).toFixed(2)}ms`);
+
 
         if (!actionData) {
           notFound()
@@ -51,6 +57,7 @@ export default function ActionDetailPage() {
         }
         setAction(actionData)
 
+        console.log("[ActionDetail] Cridant a Promise.all per a dades mestres...");
         // Carreguem les dades mestres de manera asíncrona i no bloquegem la UI
         Promise.all([
           getActionTypes(),
@@ -58,6 +65,8 @@ export default function ActionDetailPage() {
           getSubcategories(),
           getAffectedAreas(),
         ]).then(([types, cats, subcats, areas]) => {
+          const masterDataLoadTime = performance.now();
+          console.log(`[ActionDetail] Promise.all (dades mestres) ha trigat: ${(masterDataLoadTime - actionLoadTime).toFixed(2)}ms`);
           setMasterData({
             actionTypes: types,
             categories: cats,
@@ -74,6 +83,8 @@ export default function ActionDetailPage() {
           description: "No s'ha pogut carregar l'acció.",
         })
       } finally {
+        const endTime = performance.now();
+        console.log(`[ActionDetail] Càrrega de dades finalitzada. Temps total (sense dades mestres): ${(endTime - startTime).toFixed(2)}ms`);
         setIsLoading(false)
       }
     }
