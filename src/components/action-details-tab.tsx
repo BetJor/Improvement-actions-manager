@@ -47,7 +47,10 @@ export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTab
     // Aquest efecte assegura que si la propietat inicial canvia (p.ex. per una navegació SPA),
     // l'estat local s'actualitza.
     useEffect(() => {
-        setAction(initialAction);
+        // Only update state if the initialAction from props is actually different
+        if (JSON.stringify(initialAction) !== JSON.stringify(action)) {
+            setAction(initialAction);
+        }
     }, [initialAction]);
     
     const handleEditSubmit = async (formData: any, status?: 'Borrador' | 'Pendiente Análisis') => {
