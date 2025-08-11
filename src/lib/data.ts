@@ -59,47 +59,38 @@ export const getActions = async (): Promise<ImprovementAction[]> => {
 }
 
 export const getActionById = async (id: string): Promise<ImprovementAction | null> => {
-    console.log(`[data.ts] getActionById: Iniciant cerca per ID: ${id}`);
-    const startTime = performance.now();
-    try {
-        const actionDocRef = doc(db, 'actions', id);
-        const actionDocSnap = await getDoc(actionDocRef);
-    
-        if (actionDocSnap.exists()) {
-            const data = actionDocSnap.data();
+    const actionDocRef = doc(db, 'actions', id);
+    const actionDocSnap = await getDoc(actionDocRef);
 
-            // Convert Timestamps to Date for client-side usage
-            if (data.analysis && data.analysis.proposedActions) {
-                data.analysis.proposedActions = data.analysis.proposedActions.map((pa: any) => ({
-                    ...pa,
-                    // Firestore Timestamps need to be converted to Date objects
-                    dueDate: pa.dueDate instanceof Timestamp ? pa.dueDate.toDate() : new Date(pa.dueDate),
-                }));
-            }
-            if (data.comments) {
-                data.comments = data.comments.sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime());
-            }
+    if (actionDocSnap.exists()) {
+        const data = actionDocSnap.data();
 
-            // Populate responsible user info
-            if (data.responsibleGroupId) {
-                const responsibleUser = users.find(u => u.id === data.responsibleGroupId);
-                if(responsibleUser) {
-                    data.responsibleUser = {
-                        id: responsibleUser.id,
-                        name: responsibleUser.name,
-                        avatar: responsibleUser.avatar
-                    }
+        // Convert Timestamps to Date for client-side usage
+        if (data.analysis && data.analysis.proposedActions) {
+            data.analysis.proposedActions = data.analysis.proposedActions.map((pa: any) => ({
+                ...pa,
+                // Firestore Timestamps need to be converted to Date objects
+                dueDate: pa.dueDate instanceof Timestamp ? pa.dueDate.toDate() : new Date(pa.dueDate),
+            }));
+        }
+        if (data.comments) {
+            data.comments = data.comments.sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime());
+        }
+
+        // Populate responsible user info
+        if (data.responsibleGroupId) {
+            const responsibleUser = users.find(u => u.id === data.responsibleGroupId);
+            if(responsibleUser) {
+                data.responsibleUser = {
+                    id: responsibleUser.id,
+                    name: responsibleUser.name,
+                    avatar: responsibleUser.avatar
                 }
             }
-            const endTime = performance.now();
-            console.log(`[data.ts] getActionById: Document trobat. Temps: ${(endTime - startTime).toFixed(2)}ms`);
-            return { ...data, id: actionDocSnap.id } as ImprovementAction;
-        } else {
-            console.warn(`Action with Firestore ID ${id} not found.`);
-            return null;
         }
-    } catch(error) {
-        console.error("Error fetching document by ID:", error);
+        return { ...data, id: actionDocSnap.id } as ImprovementAction;
+    } else {
+        console.warn(`Action with Firestore ID ${id} not found.`);
         return null;
     }
 }
