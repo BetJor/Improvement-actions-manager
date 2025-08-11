@@ -316,8 +316,8 @@
         "description": "Genera tota la funcionalitat d'autenticació d'usuaris amb Firebase, incloent-hi rutes protegides i la pàgina de login."
       },
       "createDynamicTabLayout": {
-        "title": "Crear un Layout Dinàmic amb Pestanyes",
-        "description": "Genera l'estructura d'un layout principal professional i escalable per a una aplicació web. El layout ha de consistir en tres parts principals: 1. Una capçalera (Header) a la part superior. 2. Una barra de navegació lateral (Sidebar) a l'esquerra, que ha de ser col·lapsable. 3. Una àrea de contingut principal a la dreta. A més, implementa un sistema de pestanyes dinàmiques (Dynamic Tabs) que apareixeran a sobre del contingut principal. Cada vegada que l'usuari navegui a una nova pàgina, s'ha d'obrir una nova pestanya, permetent una navegació ràpida entre vistes. Aquest sistema ha de ser gestionat a través d'un hook de React (useTabs) que mantingui l'estat de les pestanyes obertes i la pestanya activa. L'estil s'ha de basar en Tailwind CSS i els components de shadcn/ui."
+        "title": "Crear un Layout amb Pestanyes Dinàmiques (Client-Side)",
+        "description": "Genera un sistema de navegació basat en pestanyes gestionat al client per a una aplicació Next.js, seguint les millors pràctiques d'arquitectura per a evitar conflictes entre Server i Client Components. Aquesta implementació ha de ser robusta i oferir un rendiment òptim."
       }
     },
     "executionOrder": {
