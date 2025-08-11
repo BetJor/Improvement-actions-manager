@@ -11,9 +11,8 @@ import { useTabs } from "@/hooks/use-tabs"
 
 
 function SidebarNavLink({ href, icon: Icon, label, isTab }: { href: string; icon: React.ElementType; label: string, isTab: boolean }) {
-  const pathname = usePathname();
-  const { openTab, setActiveTab, tabs } = useTabs();
-  const isActive = tabs.some(t => t.path === href && t.id === useTabs().activeTab);
+  const { openTab, setActiveTab, tabs, activeTab } = useTabs();
+  const isActive = tabs.some(t => t.path === href && t.id === activeTab);
 
   const handleClick = (e: React.MouseEvent) => {
     if (isTab) {
