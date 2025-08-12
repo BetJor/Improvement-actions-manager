@@ -1,7 +1,7 @@
 
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
   Table,
@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import { Loader2, Pencil, PlusCircle, Trash2 } from "lucide-react"
-import type { MasterDataItem } from "@/lib/types"
+import type { MasterDataItem, ResponsibilityRole } from "@/lib/types"
 import {
   Dialog,
   DialogContent,
@@ -39,6 +39,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useToast } from "@/hooks/use-toast"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select"
+import { Textarea } from "./ui/textarea"
 
 interface MasterDataFormDialogProps {
   isOpen: boolean
@@ -48,11 +49,17 @@ interface MasterDataFormDialogProps {
   title: string
   onSave: (collection: string, item: MasterDataItem) => Promise<void>
   extraColumns?: { key: string; label: string, type: 'select', options: any[] }[]
+  t: (key: string) => string
 }
 
-function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, title, onSave, extraColumns = [] }: MasterDataFormDialogProps) {
+function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, title, onSave, extraColumns = [], t }: MasterDataFormDialogProps) {
   const [formData, setFormData] = useState<MasterDataItem>(item || { name: "" })
   const { toast } = useToast()
+
+  useEffect(() => {
+    setFormData(item || { name: "", type: "Fixed" });
+  }, [item]);
+
 
   const handleSave = async () => {
     if (!formData.name) {
@@ -65,6 +72,80 @@ function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, title, 
     }
     await onSave(collectionName, formData)
     setIsOpen(false)
+  }
+
+  const renderSpecificFields = () => {
+    if (collectionName === 'responsibilityRoles') {
+      const roleData = formData as ResponsibilityRole;
+      return (
+        <>
+          <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="type" className="text-right">Tipus</Label>
+              <Select
+                value={roleData.type}
+                onValueChange={(value) => setFormData({ ...formData, type: value })}
+              >
+                <SelectTrigger className="col-span-3">
+                  <SelectValue placeholder="Selecciona un tipus" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Fixed">Fix</SelectItem>
+                  <SelectItem value="Pattern">Patró</SelectItem>
+                </SelectContent>
+              </Select>
+          </div>
+          {roleData.type === 'Fixed' && (
+             <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="email" className="text-right">Email</Label>
+              <Input
+                id="email"
+                value={roleData.email || ''}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                className="col-span-3"
+                placeholder="p.ex., qualitat@example.com"
+              />
+            </div>
+          )}
+          {roleData.type === 'Pattern' && (
+             <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="emailPattern" className="text-right">Patró Email</Label>
+              <Input
+                id="emailPattern"
+                value={roleData.emailPattern || ''}
+                onChange={(e) => setFormData({ ...formData, emailPattern: e.target.value })}
+                className="col-span-3"
+                placeholder="p.ex., direccio-{{affectedAreaId}}@example.com"
+              />
+            </div>
+          )}
+        </>
+      )
+    }
+     // Default case for other collections like actionTypes, categories, etc.
+     if (extraColumns.length > 0) {
+        return extraColumns.map(col => (
+             <div key={col.key} className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor={col.key} className="text-right">
+                {col.label}
+              </Label>
+              <Select
+                value={formData[col.key]}
+                onValueChange={(value) => setFormData({ ...formData, [col.key]: value })}
+              >
+                <SelectTrigger className="col-span-3">
+                  <SelectValue placeholder={`Selecciona ${col.label.toLowerCase()}`} />
+                </SelectTrigger>
+                <SelectContent>
+                  {col.options.map(option => (
+                    <SelectItem key={option.id} value={option.id}>{option.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          ));
+     }
+
+     return null;
   }
 
   return (
@@ -88,26 +169,7 @@ function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, title, 
               className="col-span-3"
             />
           </div>
-          {extraColumns.map(col => (
-             <div key={col.key} className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor={col.key} className="text-right">
-                {col.label}
-              </Label>
-              <Select
-                value={formData[col.key]}
-                onValueChange={(value) => setFormData({ ...formData, [col.key]: value })}
-              >
-                <SelectTrigger className="col-span-3">
-                  <SelectValue placeholder={`Selecciona ${col.label.toLowerCase()}`} />
-                </SelectTrigger>
-                <SelectContent>
-                  {col.options.map(option => (
-                    <SelectItem key={option.id} value={option.id}>{option.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          ))}
+          {renderSpecificFields()}
         </div>
         <DialogFooter>
           <DialogClose asChild>
@@ -282,6 +344,7 @@ export function MasterDataManager({ data, onSave, onDelete, t, activeTab, setAct
           title={data[activeTab].title.slice(0, -1)}
           onSave={handleSave}
           extraColumns={getExtraColumnsForTab(activeTab)}
+          t={t}
         />
       )}
     </>

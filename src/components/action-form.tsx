@@ -24,7 +24,6 @@ import {
 } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { getPrompt } from "@/lib/data"
-import { groups } from "@/lib/static-data"
 import { useToast } from "@/hooks/use-toast"
 import { useState, useMemo, useEffect, useRef } from "react"
 import { Loader2, Mic, MicOff, Wand2, Save, Send, Ban } from "lucide-react"
@@ -39,25 +38,24 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
-import type { ImprovementAction } from "@/lib/types"
+import type { ImprovementAction, ImprovementActionType, ResponsibilityRole, AffectedArea } from "@/lib/types"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "./ui/card"
 
 const formSchema = z.object({
   title: z.string().min(1, "El títol és requerit."),
   category: z.string().min(1, "La categoria és requerida."),
   subcategory: z.string().min(1, "La subcategoria és requerida."),
-  affectedAreas: z.string().min(1, "Les àrees implicades són requerides."),
+  affectedAreasId: z.string().min(1, "L'àrea implicada és requerida."),
   assignedTo: z.string().min(1, "El camp 'assignat a' és requerit."),
   description: z.string().min(1, "Les observacions són requerides."),
-  type: z.string().min(1, "El tipus d'acció és requerit."),
-  responsibleGroupId: z.string({ required_error: "Has de seleccionar un grup responsable." }),
+  typeId: z.string().min(1, "El tipus d'acció és requerit."),
+  responsibleGroupId: z.string({ required_error: "Has de seleccionar un grup responsable." }).min(1, "Has de seleccionar un grup responsable."),
 })
 
 interface ActionFormProps {
     mode: 'create' | 'edit' | 'view';
     initialData?: ImprovementAction;
     masterData: any;
-    isLoadingMasterData: boolean;
     isSubmitting: boolean;
     onSubmit: (values: any, status?: 'Borrador' | 'Pendiente Análisis') => void;
     onCancel?: () => void;
@@ -68,7 +66,6 @@ export function ActionForm({
     mode,
     initialData,
     masterData,
-    isLoadingMasterData,
     isSubmitting,
     onSubmit,
     onCancel,
@@ -91,10 +88,10 @@ export function ActionForm({
       title: "",
       category: "",
       subcategory: "",
-      affectedAreas: "",
+      affectedAreasId: "",
       assignedTo: "",
       description: "",
-      type: "",
+      typeId: "",
       responsibleGroupId: "",
     },
   })
@@ -114,28 +111,67 @@ export function ActionForm({
             description: initialData.description,
             assignedTo: initialData.assignedTo,
             responsibleGroupId: initialData.responsibleGroupId,
-            // We need to map the name back to the ID for the form
             category: initialData.categoryId,
             subcategory: initialData.subcategoryId,
-            affectedAreas: initialData.affectedAreasId,
-            type: initialData.typeId,
+            affectedAreasId: initialData.affectedAreasId,
+            typeId: initialData.typeId,
         });
     }
   }, [initialData, masterData, form, mode]);
 
 
   const selectedCategoryId = form.watch("category");
+  const selectedActionTypeId = form.watch("typeId");
+  const selectedAffectedAreaId = form.watch("affectedAreasId");
 
   const filteredSubcategories = useMemo(() => {
-    if (!selectedCategoryId || !masterData) return [];
+    if (!selectedCategoryId || !masterData?.subcategories) return [];
     return masterData.subcategories.filter((sc: any) => sc.categoryId === selectedCategoryId);
   }, [selectedCategoryId, masterData]);
   
   useEffect(() => {
-    if (mode === 'create') {
-        form.resetField("subcategory", { defaultValue: "" });
+    if (form.getValues("category") !== initialData?.categoryId) {
+       form.resetField("subcategory", { defaultValue: "" });
     }
-  }, [selectedCategoryId, form, mode]);
+  }, [selectedCategoryId, form, initialData]);
+
+  // Dynamic responsible options logic
+  const responsibleOptions = useMemo(() => {
+    if (!selectedActionTypeId || !selectedAffectedAreaId || !masterData) return [];
+    
+    const actionType: ImprovementActionType | undefined = masterData.actionTypes.find((t: any) => t.id === selectedActionTypeId);
+    if (!actionType?.possibleAnalysisRoles) return [];
+
+    const affectedArea: AffectedArea | undefined = masterData.affectedAreas.find((a: any) => a.id === selectedAffectedAreaId);
+    if (!affectedArea) return [];
+
+    const options: { value: string, label: string }[] = [];
+    
+    actionType.possibleAnalysisRoles.forEach(roleId => {
+      const role: ResponsibilityRole | undefined = masterData.responsibilityRoles.find((r: any) => r.id === roleId);
+      if (role) {
+        if (role.type === 'Fixed' && role.email) {
+          options.push({ value: role.email, label: `${role.name} (${role.email})` });
+        } else if (role.type === 'Pattern' && role.emailPattern) {
+          // Replace placeholder with the actual ID from the affected area
+          const resolvedEmail = role.emailPattern.replace('{{affectedAreaId}}', affectedArea.id!.toLowerCase());
+          options.push({ value: resolvedEmail, label: `${role.name} (${resolvedEmail})` });
+        }
+      }
+    });
+
+    return options;
+  }, [selectedActionTypeId, selectedAffectedAreaId, masterData]);
+
+  useEffect(() => {
+    // Reset responsible person if the options change and the current value is not valid anymore
+    const currentResponsible = form.getValues("responsibleGroupId");
+    if (responsibleOptions.length > 0 && !responsibleOptions.some(opt => opt.value === currentResponsible)) {
+        form.resetField("responsibleGroupId", { defaultValue: "" });
+    }
+  }, [responsibleOptions, form]);
+
+
 
   useEffect(() => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -244,11 +280,7 @@ export function ActionForm({
     form.handleSubmit((values) => onSubmit(values, status))();
   }
   
-  const disableForm = isSubmitting || isLoadingMasterData || mode === 'view';
-
-  if (isLoadingMasterData && mode ==='create') {
-    return <div className="flex items-center gap-2"> <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Carregant dades...</div>
-  }
+  const disableForm = isSubmitting || mode === 'view';
 
   // View mode only shows the description
   if (mode === 'view' && initialData) {
@@ -334,7 +366,7 @@ export function ActionForm({
           <div className="grid md:grid-cols-2 gap-6">
              <FormField
               control={form.control}
-              name="affectedAreas"
+              name="affectedAreasId"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>AA.FF. Implicades</FormLabel>
@@ -423,7 +455,7 @@ export function ActionForm({
           <div className="grid md:grid-cols-2 gap-6">
             <FormField
               control={form.control}
-              name="type"
+              name="typeId"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>{t("form.type.label")}</FormLabel>
@@ -452,15 +484,19 @@ export function ActionForm({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>{t("form.responsible.label")}</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value} disabled={disableForm}>
+                  <Select 
+                    onValueChange={field.onChange} 
+                    value={field.value} 
+                    disabled={disableForm || responsibleOptions.length === 0}
+                  >
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder={t("form.responsible.placeholder")} />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {groups.map(group => (
-                        <SelectItem key={group.id} value={group.id}>{group.name}</SelectItem>
+                      {responsibleOptions.map(opt => (
+                        <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>

@@ -12,6 +12,7 @@ import {
     addMasterDataItem,
     updateMasterDataItem,
     deleteMasterDataItem,
+    getResponsibilityRoles, // Import the new function
 } from "@/lib/data";
 import { useToast } from "@/hooks/use-toast";
 import type { MasterDataItem } from "@/lib/types";
@@ -26,11 +27,12 @@ export default function SettingsPage() {
     const loadData = useCallback(async (currentTab?: string) => {
         setIsLoading(true);
         try {
-            const [actionTypes, categories, subcategories, affectedAreas] = await Promise.all([
+            const [actionTypes, categories, subcategories, affectedAreas, responsibilityRoles] = await Promise.all([
                 getActionTypes(),
                 getCategories(),
                 getSubcategories(),
                 getAffectedAreas(),
+                getResponsibilityRoles(), // Fetch the new data
             ]);
 
             const subcategoriesWithCategoryName = subcategories.map(s => ({
@@ -38,7 +40,6 @@ export default function SettingsPage() {
               categoryName: categories.find(c => c.id === s.categoryId)?.name || ''
             }));
             
-            // Sort by categoryName, then by subcategory name
             subcategoriesWithCategoryName.sort((a, b) => {
               if (a.categoryName < b.categoryName) return -1;
               if (a.categoryName > b.categoryName) return 1;
@@ -49,22 +50,43 @@ export default function SettingsPage() {
 
 
             const data = {
-                actionTypes: { title: t("tabs.actionTypes"), data: actionTypes, columns: [{ key: 'name', label: t('col.name') }] },
-                categories: { title: t("tabs.categories"), data: categories, columns: [{ key: 'name', label: t('col.name') }] },
+                actionTypes: { 
+                    title: t("tabs.actionTypes"), 
+                    data: actionTypes, 
+                    columns: [{ key: 'name', label: t('col.name') }] 
+                },
+                categories: { 
+                    title: t("tabs.categories"), 
+                    data: categories, 
+                    columns: [{ key: 'name', label: t('col.name') }] 
+                },
                 subcategories: { 
                     title: t("tabs.subcategories"), 
                     data: subcategoriesWithCategoryName, 
                     columns: [{ key: 'name', label: t('col.name') }, { key: 'categoryName', label: t('col.category') }] 
                 },
-                affectedAreas: { title: t("tabs.affectedAreas"), data: affectedAreas, columns: [{ key: 'name', label: t('col.name') }] },
-                responsibilityRoles: { title: t("tabs.responsibilityRoles"), data: [], columns: [{ key: 'name', label: t('col.name') }] },
+                affectedAreas: { 
+                    title: t("tabs.affectedAreas"), 
+                    data: affectedAreas, 
+                    columns: [{ key: 'name', label: t('col.name') }] 
+                },
+                responsibilityRoles: { 
+                    title: t("tabs.responsibilityRoles"), 
+                    data: responsibilityRoles, 
+                    columns: [
+                        { key: 'name', label: t('col.name') },
+                        { key: 'type', label: 'Tipus' },
+                        { key: 'email', label: 'Email' },
+                        { key: 'emailPattern', label: 'Patró Email' },
+                    ] 
+                },
             };
             setMasterData(data);
             
-            if (!activeTab && Object.keys(data).length > 0) {
-              setActiveTab(Object.keys(data)[0]);
+            if (!activeTab || !data[activeTab]) {
+                setActiveTab(Object.keys(data)[0]);
             } else if (currentTab) {
-              setActiveTab(currentTab);
+                setActiveTab(currentTab);
             }
 
         } catch (error) {
@@ -126,7 +148,9 @@ export default function SettingsPage() {
                 {t("description")}
             </p>
             {isLoading && !masterData ? (
-                <p>Carregant dades mestres...</p>
+                <div className="flex items-center justify-center h-64">
+                    <Loader2 className="h-8 w-8 animate-spin" />
+                </div>
             ) : masterData ? (
                 <MasterDataManager 
                     data={masterData}

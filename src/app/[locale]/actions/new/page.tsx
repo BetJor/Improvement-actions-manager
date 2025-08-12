@@ -2,15 +2,14 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useForm } from "react-hook-form"
 import { useTranslations } from "next-intl"
 import { useToast } from "@/hooks/use-toast"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/hooks/use-auth"
-import { createAction, getActionTypes, getCategories, getSubcategories, getAffectedAreas, getPrompt } from "@/lib/data"
-import type { ImprovementActionType, ActionCategory, ActionSubcategory, AffectedArea } from "@/lib/types"
+import { createAction, getActionTypes, getCategories, getSubcategories, getAffectedAreas, getResponsibilityRoles } from "@/lib/data"
 import { ActionForm } from "@/components/action-form"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { Loader2 } from "lucide-react"
 
 
 export default function NewActionPage() {
@@ -28,17 +27,19 @@ export default function NewActionPage() {
     async function loadMasterData() {
       try {
         setIsLoadingData(true);
-        const [types, cats, subcats, areas] = await Promise.all([
+        const [types, cats, subcats, areas, roles] = await Promise.all([
           getActionTypes(),
           getCategories(),
           getSubcategories(),
           getAffectedAreas(),
+          getResponsibilityRoles(),
         ]);
         setMasterData({
             actionTypes: types,
             categories: cats,
             subcategories: subcats,
             affectedAreas: areas,
+            responsibilityRoles: roles,
         })
       } catch (error) {
         console.error("Failed to load master data", error);
@@ -105,14 +106,17 @@ export default function NewActionPage() {
           <CardDescription>{t("description")}</CardDescription>
         </CardHeader>
         <CardContent>
+           {isLoadingData ? (
+             <div className="flex items-center justify-center h-64"><Loader2 className="h-8 w-8 animate-spin" /></div>
+           ) : (
             <ActionForm
                 mode="create"
                 masterData={masterData}
-                isLoadingMasterData={isLoadingData}
                 isSubmitting={isSubmitting}
                 onSubmit={onSubmit}
                 t={t}
             />
+           )}
         </CardContent>
       </Card>
   )

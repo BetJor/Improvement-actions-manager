@@ -1,6 +1,7 @@
 
 
-import type { ImprovementAction, User, UserGroup, ImprovementActionType, ActionUserInfo, ActionCategory, ActionSubcategory, AffectedArea, MasterDataItem, WorkflowPlan, GalleryPrompt, ActionAttachment } from './types';
+
+import type { ImprovementAction, User, UserGroup, ImprovementActionType, ActionUserInfo, ActionCategory, ActionSubcategory, AffectedArea, MasterDataItem, WorkflowPlan, GalleryPrompt, ActionAttachment, ResponsibilityRole } from './types';
 import { subDays, format, addDays } from 'date-fns';
 import { db, storage } from './firebase';
 import { collection, getDocs, doc, getDoc, addDoc, query, orderBy, limit, writeBatch, updateDoc, deleteDoc, setDoc, Timestamp, arrayUnion, where } from 'firebase/firestore';
@@ -30,6 +31,12 @@ export const getAffectedAreas = async (): Promise<AffectedArea[]> => {
   const affectedAreasCol = collection(db, 'affectedAreas');
   const snapshot = await getDocs(query(affectedAreasCol, orderBy("name")));
   return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as AffectedArea));
+};
+
+export const getResponsibilityRoles = async (): Promise<ResponsibilityRole[]> => {
+    const rolesCol = collection(db, 'responsibilityRoles');
+    const snapshot = await getDocs(query(rolesCol, orderBy("name")));
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ResponsibilityRole));
 };
 
 
@@ -100,10 +107,10 @@ export interface CreateActionData {
     title: string;
     category: string;
     subcategory: string;
-    affectedAreas: string;
+    affectedAreasId: string;
     assignedTo: string;
     description: string;
-    type: string;
+    typeId: string;
     responsibleGroupId: string;
     creator: ActionUserInfo;
     status: 'Borrador' | 'Pendiente Análisis';
@@ -137,8 +144,8 @@ export async function createAction(data: CreateActionData, masterData: any): Pro
     // Find names from IDs
     const categoryName = masterData.categories.find((c: any) => c.id === data.category)?.name || data.category;
     const subcategoryName = masterData.subcategories.find((s: any) => s.id === data.subcategory)?.name || data.subcategory;
-    const affectedAreaName = masterData.affectedAreas.find((a: any) => a.id === data.affectedAreas)?.name || data.affectedAreas;
-    const typeName = masterData.actionTypes.find((t: any) => t.id === data.type)?.name || data.type;
+    const affectedAreaName = masterData.affectedAreas.find((a: any) => a.id === data.affectedAreasId)?.name || data.affectedAreasId;
+    const typeName = masterData.actionTypes.find((t: any) => t.id === data.typeId)?.name || data.typeId;
 
     const newAction: Omit<ImprovementAction, 'id'> = {
       actionId: newActionId,
@@ -149,10 +156,10 @@ export async function createAction(data: CreateActionData, masterData: any): Pro
       subcategoryId: data.subcategory,
       description: data.description,
       type: typeName,
-      typeId: data.type,
+      typeId: data.typeId,
       status: data.status || 'Borrador',
       affectedAreas: affectedAreaName,
-      affectedAreasId: data.affectedAreas,
+      affectedAreasId: data.affectedAreasId,
       assignedTo: data.assignedTo,
       creator: data.creator,
       responsibleGroupId: data.responsibleGroupId,
@@ -216,10 +223,10 @@ export async function updateAction(actionId: string, data: any, masterData?: any
             categoryId: data.category,
             subcategory: masterData.subcategories.find((s: any) => s.id === data.subcategory)?.name || data.subcategory,
             subcategoryId: data.subcategory,
-            affectedAreas: masterData.affectedAreas.find((a: any) => a.id === data.affectedAreas)?.name || data.affectedAreas,
-            affectedAreasId: data.affectedAreas,
-            type: masterData.actionTypes.find((t: any) => t.id === data.type)?.name || data.type,
-            typeId: data.type,
+            affectedAreas: masterData.affectedAreas.find((a: any) => a.id === data.affectedAreasId)?.name || data.affectedAreasId,
+            affectedAreasId: data.affectedAreasId,
+            type: masterData.actionTypes.find((t: any) => t.id === data.typeId)?.name || data.typeId,
+            typeId: data.typeId,
         };
     } else {
         // If no masterData, we are likely updating other fields like analysis, verification or closure
@@ -241,9 +248,9 @@ export async function updateAction(actionId: string, data: any, masterData?: any
                     description: `${originalAction.description}\n\n--- \nObservacions de tancament no conforme:\n${data.closure.notes}`,
                     category: originalAction.categoryId,
                     subcategory: originalAction.subcategoryId,
-                    affectedAreas: originalAction.affectedAreasId,
+                    affectedAreasId: originalAction.affectedAreasId,
                     assignedTo: originalAction.assignedTo,
-                    type: originalAction.typeId,
+                    typeId: originalAction.typeId,
                     responsibleGroupId: originalAction.responsibleGroupId,
                     creator: data.closure.closureResponsible, // The closer is the creator of the new action
                     status: 'Borrador', // New BIS action starts as a draft
