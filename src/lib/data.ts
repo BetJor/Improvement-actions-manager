@@ -1,7 +1,8 @@
 
 
 
-import type { ImprovementAction, User, UserGroup, ImprovementActionType, ActionUserInfo, ActionCategory, ActionSubcategory, AffectedArea, MasterDataItem, WorkflowPlan, GalleryPrompt, ActionAttachment, ResponsibilityRole } from './types';
+
+import type { ImprovementAction, User, UserGroup, ImprovementActionType, ActionUserInfo, ActionCategory, ActionSubcategory, AffectedArea, MasterDataItem, WorkflowPlan, GalleryPrompt, ActionAttachment, ResponsibilityRole, Center } from './types';
 import { subDays, format, addDays } from 'date-fns';
 import { db, storage } from './firebase';
 import { collection, getDocs, doc, getDoc, addDoc, query, orderBy, limit, writeBatch, updateDoc, deleteDoc, setDoc, Timestamp, arrayUnion, where } from 'firebase/firestore';
@@ -38,6 +39,34 @@ export const getResponsibilityRoles = async (): Promise<ResponsibilityRole[]> =>
     const snapshot = await getDocs(query(rolesCol, orderBy("name")));
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ResponsibilityRole));
 };
+
+
+// Function to get Centers from a simulated REST API
+export const getCenters = async (): Promise<Center[]> => {
+  // In a real-world scenario, you would fetch this data from a REST API.
+  // For now, we'll return mock data.
+  // Example:
+  // try {
+  //   const response = await fetch('https://api.example.com/centers');
+  //   if (!response.ok) {
+  //     throw new Error('Network response was not ok');
+  //   }
+  //   const data = await response.json();
+  //   return data;
+  // } catch (error) {
+  //   console.error("Failed to fetch centers:", error);
+  //   return [];
+  // }
+  
+  const mockCenters: Center[] = [
+    { id: 'bcn', name: 'Centre de Barcelona' },
+    { id: 'mad', name: 'Centre de Madrid' },
+    { id: 'val', name: 'Centre de València' },
+    { id: 'sev', name: 'Centre de Sevilla' },
+  ];
+
+  return Promise.resolve(mockCenters);
+}
 
 
 // Funció per obtenir les dades de Firestore
@@ -108,6 +137,7 @@ export interface CreateActionData {
     category: string;
     subcategory: string;
     affectedAreasId: string;
+    centerId?: string;
     assignedTo: string;
     description: string;
     typeId: string;
@@ -145,6 +175,7 @@ export async function createAction(data: CreateActionData, masterData: any): Pro
     const categoryName = masterData.categories.find((c: any) => c.id === data.category)?.name || data.category;
     const subcategoryName = masterData.subcategories.find((s: any) => s.id === data.subcategory)?.name || data.subcategory;
     const affectedAreaName = masterData.affectedAreas.find((a: any) => a.id === data.affectedAreasId)?.name || data.affectedAreasId;
+    const centerName = masterData.centers.find((c: any) => c.id === data.centerId)?.name || data.centerId;
     const typeName = masterData.actionTypes.find((t: any) => t.id === data.typeId)?.name || data.typeId;
 
     const newAction: Omit<ImprovementAction, 'id'> = {
@@ -160,6 +191,8 @@ export async function createAction(data: CreateActionData, masterData: any): Pro
       status: data.status || 'Borrador',
       affectedAreas: affectedAreaName,
       affectedAreasId: data.affectedAreasId,
+      center: centerName,
+      centerId: data.centerId,
       assignedTo: data.assignedTo,
       creator: data.creator,
       responsibleGroupId: data.responsibleGroupId,
@@ -225,6 +258,8 @@ export async function updateAction(actionId: string, data: any, masterData?: any
             subcategoryId: data.subcategory,
             affectedAreas: masterData.affectedAreas.find((a: any) => a.id === data.affectedAreasId)?.name || data.affectedAreasId,
             affectedAreasId: data.affectedAreasId,
+            center: masterData.centers.find((c: any) => c.id === data.centerId)?.name || data.centerId,
+            centerId: data.centerId,
             type: masterData.actionTypes.find((t: any) => t.id === data.typeId)?.name || data.typeId,
             typeId: data.typeId,
         };
@@ -241,6 +276,7 @@ export async function updateAction(actionId: string, data: any, masterData?: any
                     categories: await getCategories(),
                     subcategories: await getSubcategories(),
                     affectedAreas: await getAffectedAreas(),
+                    centers: await getCenters(),
                     actionTypes: await getActionTypes(),
                 }
                 const bisActionData: CreateActionData = {
@@ -249,6 +285,7 @@ export async function updateAction(actionId: string, data: any, masterData?: any
                     category: originalAction.categoryId,
                     subcategory: originalAction.subcategoryId,
                     affectedAreasId: originalAction.affectedAreasId,
+                    centerId: originalAction.centerId,
                     assignedTo: originalAction.assignedTo,
                     typeId: originalAction.typeId,
                     responsibleGroupId: originalAction.responsibleGroupId,

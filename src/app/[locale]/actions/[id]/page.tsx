@@ -1,5 +1,5 @@
 
-import { getActionById, getActionTypes, getCategories, getSubcategories, getAffectedAreas } from "@/lib/data"
+import { getActionById, getActionTypes, getCategories, getSubcategories, getAffectedAreas, getCenters } from "@/lib/data"
 import { notFound } from "next/navigation"
 import { ActionDetailsTab } from "@/components/action-details-tab"
 
@@ -16,11 +16,12 @@ export default async function ActionDetailPage({ params }: { params: { id: strin
     notFound();
   }
 
-  const [types, cats, subcats, areas] = await Promise.all([
+  const [types, cats, subcats, areas, centers] = await Promise.all([
     getActionTypes(),
     getCategories(),
     getSubcategories(),
     getAffectedAreas(),
+    getCenters(),
   ]);
 
   const masterData = {
@@ -28,6 +29,7 @@ export default async function ActionDetailPage({ params }: { params: { id: strin
     categories: cats,
     subcategories: subcats,
     affectedAreas: areas,
+    centers: centers,
   };
 
 

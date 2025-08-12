@@ -18,6 +18,8 @@ export interface ResponsibilityRole extends MasterDataItem {
     email?: string; // e.g., "calidad.global@example.com"
 }
 
+export interface Center extends MasterDataItem {}
+
 
 export type ImprovementActionStatus = 'Borrador' | 'Pendiente Análisis' | 'Pendiente Comprobación' | 'Pendiente de Cierre' | 'Finalizada';
 
@@ -122,6 +124,8 @@ export interface ImprovementAction {
   typeId: string;
   affectedAreas: string; 
   affectedAreasId: string;
+  center?: string;
+  centerId?: string;
   assignedTo: string;
   
   status: ImprovementActionStatus;

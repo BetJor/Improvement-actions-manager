@@ -38,7 +38,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
-import type { ImprovementAction, ImprovementActionType, ResponsibilityRole, AffectedArea } from "@/lib/types"
+import type { ImprovementAction, ImprovementActionType, ResponsibilityRole, AffectedArea, Center } from "@/lib/types"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "./ui/card"
 
 const formSchema = z.object({
@@ -46,6 +46,7 @@ const formSchema = z.object({
   category: z.string().min(1, "La categoria és requerida."),
   subcategory: z.string().min(1, "La subcategoria és requerida."),
   affectedAreasId: z.string().min(1, "L'àrea implicada és requerida."),
+  centerId: z.string().optional(),
   assignedTo: z.string({ required_error: "Has de seleccionar un grup responsable." }).min(1, "Has de seleccionar un grup responsable."),
   description: z.string().min(1, "Les observacions són requerides."),
   typeId: z.string().min(1, "El tipus d'acció és requerit."),
@@ -88,6 +89,7 @@ export function ActionForm({
       category: "",
       subcategory: "",
       affectedAreasId: "",
+      centerId: "",
       assignedTo: "",
       description: "",
       typeId: "",
@@ -111,6 +113,7 @@ export function ActionForm({
             category: initialData.categoryId,
             subcategory: initialData.subcategoryId,
             affectedAreasId: initialData.affectedAreasId,
+            centerId: initialData.centerId,
             typeId: initialData.typeId,
         });
     }
@@ -388,12 +391,34 @@ export function ActionForm({
           </div>
           
           <div className="grid md:grid-cols-2 gap-6">
+             <FormField
+              control={form.control}
+              name="centerId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Centre</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value} disabled={disableForm}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecciona un centre" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {masterData?.centers.map((center: any) => (
+                        <SelectItem key={center.id} value={center.id}>{center.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             <FormField
               control={form.control}
               name="affectedAreasId"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>AA.FF. Implicades</FormLabel>
+                  <FormLabel>Àrea Funcional Implicada</FormLabel>
                   <Select onValueChange={field.onChange} value={field.value} disabled={disableForm}>
                     <FormControl>
                       <SelectTrigger>
@@ -410,36 +435,37 @@ export function ActionForm({
                 </FormItem>
               )}
             />
-            <FormField
-              control={form.control}
-              name="assignedTo"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Assignat A</FormLabel>
-                   <Select 
-                    onValueChange={field.onChange} 
-                    value={field.value} 
-                    disabled={disableForm || responsibleOptions.length === 0}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder={t("form.responsible.placeholder")} />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {responsibleOptions.map(opt => (
-                        <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormDescription>
-                    {t("form.responsible.description")}
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
           </div>
+          
+          <FormField
+            control={form.control}
+            name="assignedTo"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Assignat A</FormLabel>
+                  <Select 
+                  onValueChange={field.onChange} 
+                  value={field.value} 
+                  disabled={disableForm || responsibleOptions.length === 0}
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder={t("form.responsible.placeholder")} />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {responsibleOptions.map(opt => (
+                      <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormDescription>
+                  {t("form.responsible.description")}
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
           <FormField
             control={form.control}
