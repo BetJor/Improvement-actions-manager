@@ -26,6 +26,7 @@ import { useState, useRef } from "react"
 import type { ActionComment } from "@/lib/types"
 import { Badge } from "@/components/ui/badge"
 import { useParams } from "next/navigation"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip"
 
 
 interface DetailRowProps {
@@ -316,10 +317,19 @@ export function ActionDetailsPanel({ action, onActionUpdate }: ActionDetailsPane
                             {(action.attachments && action.attachments.length > 0) ? (
                                 action.attachments.map((file) => (
                                 <div key={file.id} className="flex items-center justify-between rounded-lg border bg-muted/30 p-2">
-                                    <div className="flex items-center gap-2 truncate">
-                                        <Paperclip className="h-4 w-4 shrink-0" />
-                                        <span className="truncate text-sm">{file.fileName}</span>
-                                    </div>
+                                    <TooltipProvider>
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <div className="flex items-center gap-2 truncate">
+                                                    <Paperclip className="h-4 w-4 shrink-0" />
+                                                    <span className="truncate text-sm">{file.fileName}</span>
+                                                </div>
+                                            </TooltipTrigger>
+                                            <TooltipContent>
+                                                <p>{file.fileName}</p>
+                                            </TooltipContent>
+                                        </Tooltip>
+                                    </TooltipProvider>
                                     <Button variant="ghost" size="icon" asChild>
                                         <a href={file.fileUrl} target="_blank" rel="noopener noreferrer" download={file.fileName}>
                                             <Download className="h-4 w-4" />
