@@ -80,9 +80,10 @@ import {
           key: "phase6",
           title: "Fase 6: Rols i Permisos d'Usuari",
           duration: "Estimat: 3-4 dies",
-          completed_tasks: [],
+          completed_tasks: [
+            "Definir una estructura de dades a Firestore per a rols i permisos."
+          ],
           pending_tasks: [
-            "Pendent: Definir una estructura de dades a Firestore per a rols i permisos.",
             "Pendent: Crear un mecanisme per a assignar rols als usuaris (p. ex., en un panell d'administració).",
             "Pendent: Protegir rutes i components de la interfície segons el rol de l'usuari."
           ]
@@ -151,3 +152,5 @@ import {
       </div>
     )
   }
+
+    
