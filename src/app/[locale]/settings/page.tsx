@@ -16,6 +16,7 @@ import {
 } from "@/lib/data";
 import { useToast } from "@/hooks/use-toast";
 import type { MasterDataItem } from "@/lib/types";
+import { Loader2 } from "lucide-react";
 
 export default function SettingsPage() {
     const t = useTranslations("SettingsPage");
