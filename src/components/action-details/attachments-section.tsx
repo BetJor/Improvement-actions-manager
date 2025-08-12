@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { Paperclip, Upload, Download, Loader2, ChevronDown } from "lucide-react"
+import { Badge } from "../ui/badge"
 
 interface AttachmentsSectionProps {
   action: ImprovementAction
@@ -71,9 +72,12 @@ export function AttachmentsSection({ action, onActionUpdate }: AttachmentsSectio
               <Paperclip className="h-5 w-5" />
               {t('title')}
             </CardTitle>
-            <Button variant="ghost" size="icon" className="data-[state=open]:rotate-180">
-              <ChevronDown className="h-4 w-4 transition-transform" />
-            </Button>
+             <div className="flex items-center gap-2">
+                <Badge variant="secondary">{(action.attachments || []).length}</Badge>
+                <Button variant="ghost" size="icon" className="data-[state=open]:rotate-180">
+                    <ChevronDown className="h-4 w-4 transition-transform" />
+                </Button>
+            </div>
           </div>
         </CollapsibleTrigger>
         <CollapsibleContent>
