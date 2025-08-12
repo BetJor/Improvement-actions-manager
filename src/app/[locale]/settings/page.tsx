@@ -21,6 +21,7 @@ export default function SettingsPage() {
     const { toast } = useToast();
     const [masterData, setMasterData] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [activeTab, setActiveTab] = useState<string>("");
 
     const loadData = async () => {
         setIsLoading(true);
@@ -32,7 +33,7 @@ export default function SettingsPage() {
                 getAffectedAreas(),
             ]);
 
-            setMasterData({
+            const data = {
                 actionTypes: { title: t("tabs.actionTypes"), data: actionTypes, columns: [{ key: 'name', label: t('col.name') }] },
                 categories: { title: t("tabs.categories"), data: categories, columns: [{ key: 'name', label: t('col.name') }] },
                 subcategories: { 
@@ -41,7 +42,13 @@ export default function SettingsPage() {
                     columns: [{ key: 'name', label: t('col.name') }, { key: 'categoryName', label: t('col.category') }] 
                 },
                 affectedAreas: { title: t("tabs.affectedAreas"), data: affectedAreas, columns: [{ key: 'name', label: t('col.name') }] },
-            });
+            };
+            setMasterData(data);
+            
+            if (!activeTab && Object.keys(data).length > 0) {
+              setActiveTab(Object.keys(data)[0]);
+            }
+
         } catch (error) {
             console.error("Failed to load master data:", error);
             toast({
@@ -63,7 +70,7 @@ export default function SettingsPage() {
             const { id, ...dataToSave } = item;
             // Neteja categoryName abans de guardar
             if ('categoryName' in dataToSave) {
-                delete dataToSave.categoryName;
+                delete (dataToSave as any).categoryName;
             }
 
             if (id) {
@@ -106,6 +113,8 @@ export default function SettingsPage() {
                     onSave={handleSave}
                     onDelete={handleDelete}
                     t={t}
+                    activeTab={activeTab}
+                    setActiveTab={setActiveTab}
                 />
             ) : (
                 <p>No s'han pogut carregar les dades.</p>

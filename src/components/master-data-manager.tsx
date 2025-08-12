@@ -200,10 +200,11 @@ interface MasterDataManagerProps {
   onSave: (collectionName: string, item: MasterDataItem) => Promise<void>;
   onDelete: (collectionName: string, itemId: string) => Promise<void>;
   t: (key: string) => string;
+  activeTab: string;
+  setActiveTab: (value: string) => void;
 }
 
-export function MasterDataManager({ data, onSave, onDelete, t }: MasterDataManagerProps) {
-  const [activeTab, setActiveTab] = useState(Object.keys(data)[0]);
+export function MasterDataManager({ data, onSave, onDelete, t, activeTab, setActiveTab }: MasterDataManagerProps) {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [currentItem, setCurrentItem] = useState<MasterDataItem | null>(null);
 
@@ -228,7 +229,7 @@ export function MasterDataManager({ data, onSave, onDelete, t }: MasterDataManag
   };
   
   const getExtraColumnsForTab = (tabKey: string) => {
-    if (tabKey === 'subcategories') {
+    if (tabKey === 'subcategories' && data.categories) {
       return [{
         key: 'categoryId',
         label: t('col.category'),
