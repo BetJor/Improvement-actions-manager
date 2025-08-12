@@ -46,10 +46,10 @@ const formSchema = z.object({
   category: z.string().min(1, "La categoria és requerida."),
   subcategory: z.string().min(1, "La subcategoria és requerida."),
   affectedAreasId: z.string().min(1, "L'àrea implicada és requerida."),
-  assignedTo: z.string().min(1, "El camp 'assignat a' és requerit."),
+  assignedTo: z.string({ required_error: "Has de seleccionar un grup responsable." }).min(1, "Has de seleccionar un grup responsable."),
   description: z.string().min(1, "Les observacions són requerides."),
   typeId: z.string().min(1, "El tipus d'acció és requerit."),
-  responsibleGroupId: z.string({ required_error: "Has de seleccionar un grup responsable." }).min(1, "Has de seleccionar un grup responsable."),
+  responsibleGroupId: z.string().min(1, "El camp 'responsable' és requerit."),
 })
 
 interface ActionFormProps {
@@ -154,7 +154,7 @@ export function ActionForm({
           options.push({ value: role.email, label: `${role.name} (${role.email})` });
         } else if (role.type === 'Pattern' && role.emailPattern) {
           // Replace placeholder with the actual ID from the affected area
-          const resolvedEmail = role.emailPattern.replace('{{affectedAreaId}}', affectedArea.id!.toLowerCase());
+          const resolvedEmail = role.emailPattern.replace('{{affectedArea.id}}', affectedArea.id!.toLowerCase());
           options.push({ value: resolvedEmail, label: `${role.name} (${resolvedEmail})` });
         }
       }
@@ -165,9 +165,9 @@ export function ActionForm({
 
   useEffect(() => {
     // Reset responsible person if the options change and the current value is not valid anymore
-    const currentResponsible = form.getValues("responsibleGroupId");
+    const currentResponsible = form.getValues("assignedTo");
     if (responsibleOptions.length > 0 && !responsibleOptions.some(opt => opt.value === currentResponsible)) {
-        form.resetField("responsibleGroupId", { defaultValue: "" });
+        form.resetField("assignedTo", { defaultValue: "" });
     }
   }, [responsibleOptions, form]);
 
@@ -302,6 +302,33 @@ export function ActionForm({
     <>
       <Form {...form}>
         <form onSubmit={(e) => e.preventDefault()} className="space-y-6">
+          
+          <FormField
+            control={form.control}
+            name="typeId"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t("form.type.label")}</FormLabel>
+                <Select onValueChange={field.onChange} value={field.value} disabled={disableForm}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder={t("form.type.placeholder")} />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {masterData?.actionTypes.map((type: any) => (
+                      <SelectItem key={type.id} value={type.id}>{type.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormDescription>
+                  {t("form.type.description")}
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
           <FormField
             control={form.control}
             name="title"
@@ -364,7 +391,7 @@ export function ActionForm({
           </div>
           
           <div className="grid md:grid-cols-2 gap-6">
-             <FormField
+            <FormField
               control={form.control}
               name="affectedAreasId"
               render={({ field }) => (
@@ -392,14 +419,44 @@ export function ActionForm({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Assignat A</FormLabel>
-                  <FormControl>
-                    <Input placeholder="p. ex., Direcció del Centre" {...field} disabled={disableForm} />
-                  </FormControl>
+                   <Select 
+                    onValueChange={field.onChange} 
+                    value={field.value} 
+                    disabled={disableForm || responsibleOptions.length === 0}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder={t("form.responsible.placeholder")} />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {responsibleOptions.map(opt => (
+                        <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormDescription>
+                    {t("form.responsible.description")}
+                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
             />
           </div>
+
+          <FormField
+            control={form.control}
+            name="responsibleGroupId"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t("form.responsible.label")}</FormLabel>
+                <FormControl>
+                  <Input placeholder="p. ex., Direcció del Centre" {...field} disabled={disableForm} />
+                </FormControl>
+                 <FormMessage />
+              </FormItem>
+            )}
+          />
 
           <FormField
             control={form.control}
@@ -451,63 +508,6 @@ export function ActionForm({
               </FormItem>
             )}
           />
-          
-          <div className="grid md:grid-cols-2 gap-6">
-            <FormField
-              control={form.control}
-              name="typeId"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t("form.type.label")}</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value} disabled={disableForm}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder={t("form.type.placeholder")} />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {masterData?.actionTypes.map((type: any) => (
-                        <SelectItem key={type.id} value={type.id}>{type.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormDescription>
-                    {t("form.type.description")}
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="responsibleGroupId"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t("form.responsible.label")}</FormLabel>
-                  <Select 
-                    onValueChange={field.onChange} 
-                    value={field.value} 
-                    disabled={disableForm || responsibleOptions.length === 0}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder={t("form.responsible.placeholder")} />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {responsibleOptions.map(opt => (
-                        <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormDescription>
-                    {t("form.responsible.description")}
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
           
           {mode === 'create' && (
             <div className="flex gap-2">
