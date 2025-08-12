@@ -13,7 +13,7 @@ import {
     addMasterDataItem,
     updateMasterDataItem,
     deleteMasterDataItem,
-    getResponsibilityRoles, // Import the new function
+    getResponsibilityRoles,
 } from "@/lib/data";
 import { useToast } from "@/hooks/use-toast";
 import type { MasterDataItem } from "@/lib/types";
@@ -34,7 +34,7 @@ export default function SettingsPage() {
                 getCategories(),
                 getSubcategories(),
                 getAffectedAreas(),
-                getResponsibilityRoles(), // Fetch the new data
+                getResponsibilityRoles(),
             ]);
 
             const subcategoriesWithCategoryName = subcategories.map(s => ({
@@ -50,12 +50,23 @@ export default function SettingsPage() {
               return 0;
             });
 
+            const actionTypesWithRoles = actionTypes.map(at => {
+                const roleNames = (at.possibleAnalysisRoles || [])
+                    .map(roleId => responsibilityRoles.find(r => r.id === roleId)?.name)
+                    .filter(Boolean)
+                    .join(', ');
+                return { ...at, rolesList: roleNames };
+            });
+
 
             const data = {
                 actionTypes: { 
                     title: t("tabs.actionTypes"), 
-                    data: actionTypes, 
-                    columns: [{ key: 'name', label: t('col.name') }] 
+                    data: actionTypesWithRoles, 
+                    columns: [
+                        { key: 'name', label: t('col.name') },
+                        { key: 'rolesList', label: "Rols per a l'Anàlisi" }
+                    ] 
                 },
                 categories: { 
                     title: t("tabs.categories"), 
@@ -115,6 +126,9 @@ export default function SettingsPage() {
             const { id, ...dataToSave } = item;
             if ('categoryName' in dataToSave) {
                 delete (dataToSave as any).categoryName;
+            }
+             if ('rolesList' in dataToSave) {
+                delete (dataToSave as any).rolesList;
             }
 
             if (id) {

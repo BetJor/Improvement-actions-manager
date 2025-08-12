@@ -116,7 +116,7 @@ function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, title, 
                         {responsibilityRoles.map((role) => (
                              <DropdownMenuCheckboxItem
                                 key={role.id}
-                                checked={actionTypeData.possibleAnalysisRoles?.includes(role.id)}
+                                checked={actionTypeData.possibleAnalysisRoles?.includes(role.id!)}
                                 onCheckedChange={() => handleRoleSelection(role.id!)}
                              >
                                 {role.name}
@@ -250,7 +250,6 @@ function MasterDataTable({ data, columns, onEdit, onDelete, t, isLoading }: Mast
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="w-[100px]">ID</TableHead>
             {columns.map(col => <TableHead key={col.key}>{col.label}</TableHead>)}
             <TableHead className="text-right">{t("col.actions")}</TableHead>
           </TableRow>
@@ -258,20 +257,19 @@ function MasterDataTable({ data, columns, onEdit, onDelete, t, isLoading }: Mast
         <TableBody>
           {isLoading ? (
              <TableRow>
-              <TableCell colSpan={columns.length + 2} className="h-24 text-center">
+              <TableCell colSpan={columns.length + 1} className="h-24 text-center">
                 <Loader2 className="mx-auto h-6 w-6 animate-spin" />
               </TableCell>
             </TableRow>
           ) : data.length > 0 ? (
             data.map((item) => (
               <TableRow key={item.id}>
-                <TableCell className="font-medium">{item.id}</TableCell>
                 {columns.map(col => (
-                    <TableCell key={`${item.id}-${col.key}`}>
+                    <TableCell key={`${item.id}-${col.key}`} className="py-2 align-top">
                        {item[col.key]}
                     </TableCell>
                 ))}
-                <TableCell className="text-right">
+                <TableCell className="text-right py-2 align-top">
                   <Button variant="ghost" size="icon" onClick={() => onEdit(item)}>
                     <Pencil className="h-4 w-4" />
                   </Button>
@@ -299,7 +297,7 @@ function MasterDataTable({ data, columns, onEdit, onDelete, t, isLoading }: Mast
             ))
           ) : (
             <TableRow>
-              <TableCell colSpan={columns.length + 2} className="h-24 text-center">
+              <TableCell colSpan={columns.length + 1} className="h-24 text-center">
                 No hi ha dades per mostrar.
               </TableCell>
             </TableRow>
