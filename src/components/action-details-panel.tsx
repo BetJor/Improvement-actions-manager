@@ -312,30 +312,21 @@ export function ActionDetailsPanel({ action, onActionUpdate }: ActionDetailsPane
                                 />
                             </label>
                         </div> 
-                        <div className="flex justify-end min-h-[40px]">
+                        <div className="space-y-2">
                             {(action.attachments && action.attachments.length > 0) ? (
-                                <div className="group relative flex h-10 items-center justify-end">
-                                {action.attachments.map((file, index) => (
-                                    <div
-                                        key={file.id}
-                                        className="file-item group-hover:ml-0"
-                                        style={{
-                                            zIndex: action.attachments!.length - index,
-                                            marginLeft: index > 0 ? '-24px' : '0',
-                                        }}
-                                    >
-                                        <div className="flex items-center gap-2 rounded-full border bg-background p-2 shadow-sm transition-all duration-300 group-hover:max-w-xs group-hover:rounded-md group-hover:pr-3">
-                                            <Paperclip className="h-5 w-5 shrink-0" />
-                                            <span className="truncate text-sm font-medium opacity-0 transition-opacity group-hover:opacity-100">{file.fileName}</span>
-                                            <Button variant="ghost" size="icon" asChild className="opacity-0 group-hover:opacity-100">
-                                                <a href={file.fileUrl} target="_blank" rel="noopener noreferrer" download={file.fileName}>
-                                                    <Download className="h-4 w-4" />
-                                                </a>
-                                            </Button>
-                                        </div>
+                                action.attachments.map((file) => (
+                                <div key={file.id} className="flex items-center justify-between rounded-lg border bg-muted/30 p-2">
+                                    <div className="flex items-center gap-2 truncate">
+                                        <Paperclip className="h-4 w-4 shrink-0" />
+                                        <span className="truncate text-sm">{file.fileName}</span>
                                     </div>
-                                ))}
+                                    <Button variant="ghost" size="icon" asChild>
+                                        <a href={file.fileUrl} target="_blank" rel="noopener noreferrer" download={file.fileName}>
+                                            <Download className="h-4 w-4" />
+                                        </a>
+                                    </Button>
                                 </div>
+                                ))
                             ) : (
                                 <p className="text-sm text-muted-foreground text-center py-4 w-full">{t('attachments.noAttachments')}</p>
                             )}
