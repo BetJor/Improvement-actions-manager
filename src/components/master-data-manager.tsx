@@ -199,10 +199,10 @@ interface MasterDataManagerProps {
   };
   onSave: (collectionName: string, item: MasterDataItem) => Promise<void>;
   onDelete: (collectionName: string, itemId: string) => Promise<void>;
+  t: (key: string) => string;
 }
 
-export function MasterDataManager({ data, onSave, onDelete }: MasterDataManagerProps) {
-  const t = useTranslations("SettingsPage");
+export function MasterDataManager({ data, onSave, onDelete, t }: MasterDataManagerProps) {
   const [activeTab, setActiveTab] = useState(Object.keys(data)[0]);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [currentItem, setCurrentItem] = useState<MasterDataItem | null>(null);
@@ -248,8 +248,8 @@ export function MasterDataManager({ data, onSave, onDelete }: MasterDataManagerP
           ))}
         </TabsList>
         {Object.keys(data).map(key => (
-          <TabsContent key={key} value={key}>
-            <div className="flex justify-end mb-4">
+          <TabsContent key={key} value={key} forceMount>
+             <div className="flex justify-end mb-4">
               <Button onClick={handleAddNew}>
                 <PlusCircle className="mr-2 h-4 w-4" /> {t("addNew")}
               </Button>

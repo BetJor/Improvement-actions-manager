@@ -105,6 +105,7 @@ export default function SettingsPage() {
                     data={masterData}
                     onSave={handleSave}
                     onDelete={handleDelete}
+                    t={t}
                 />
             ) : (
                 <p>No s'han pogut carregar les dades.</p>
