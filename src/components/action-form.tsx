@@ -49,7 +49,6 @@ const formSchema = z.object({
   assignedTo: z.string({ required_error: "Has de seleccionar un grup responsable." }).min(1, "Has de seleccionar un grup responsable."),
   description: z.string().min(1, "Les observacions són requerides."),
   typeId: z.string().min(1, "El tipus d'acció és requerit."),
-  responsibleGroupId: z.string().min(1, "El camp 'responsable' és requerit."),
 })
 
 interface ActionFormProps {
@@ -92,7 +91,6 @@ export function ActionForm({
       assignedTo: "",
       description: "",
       typeId: "",
-      responsibleGroupId: "",
     },
   })
 
@@ -110,7 +108,6 @@ export function ActionForm({
             title: initialData.title,
             description: initialData.description,
             assignedTo: initialData.assignedTo,
-            responsibleGroupId: initialData.responsibleGroupId,
             category: initialData.categoryId,
             subcategory: initialData.subcategoryId,
             affectedAreasId: initialData.affectedAreasId,
@@ -443,20 +440,6 @@ export function ActionForm({
               )}
             />
           </div>
-
-          <FormField
-            control={form.control}
-            name="responsibleGroupId"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{t("form.responsible.label")}</FormLabel>
-                <FormControl>
-                  <Input placeholder="p. ex., Direcció del Centre" {...field} disabled={disableForm} />
-                </FormControl>
-                 <FormMessage />
-              </FormItem>
-            )}
-          />
 
           <FormField
             control={form.control}
