@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useTranslations } from "next-intl";
 import { MasterDataManager } from "@/components/master-data-manager";
 import {
@@ -23,7 +23,7 @@ export default function SettingsPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [activeTab, setActiveTab] = useState<string>("");
 
-    const loadData = async () => {
+    const loadData = useCallback(async (currentTab?: string) => {
         setIsLoading(true);
         try {
             const [actionTypes, categories, subcategories, affectedAreas] = await Promise.all([
@@ -47,6 +47,8 @@ export default function SettingsPage() {
             
             if (!activeTab && Object.keys(data).length > 0) {
               setActiveTab(Object.keys(data)[0]);
+            } else if (currentTab) {
+              setActiveTab(currentTab);
             }
 
         } catch (error) {
@@ -59,7 +61,7 @@ export default function SettingsPage() {
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [activeTab, toast, t]);
     
     useEffect(() => {
         loadData();
@@ -68,7 +70,6 @@ export default function SettingsPage() {
     const handleSave = async (collectionName: string, item: MasterDataItem) => {
         try {
             const { id, ...dataToSave } = item;
-            // Neteja categoryName abans de guardar
             if ('categoryName' in dataToSave) {
                 delete (dataToSave as any).categoryName;
             }
@@ -80,7 +81,7 @@ export default function SettingsPage() {
                 await addMasterDataItem(collectionName, dataToSave);
                 toast({ title: "Element creat", description: "L'element s'ha creat correctament." });
             }
-            await loadData(); // Refresh data
+            await loadData(collectionName);
         } catch (error) {
             console.error(`Error saving item in ${collectionName}:`, error);
             toast({ variant: "destructive", title: "Error en desar", description: "No s'ha pogut desar l'element." });
@@ -91,7 +92,7 @@ export default function SettingsPage() {
         try {
             await deleteMasterDataItem(collectionName, itemId);
             toast({ title: "Element eliminat", description: "L'element s'ha eliminat correctament." });
-            await loadData(); // Refresh data
+            await loadData(collectionName);
         } catch (error) {
             console.error(`Error deleting item from ${collectionName}:`, error);
             toast({ variant: "destructive", title: "Error en eliminar", description: "No s'ha pogut eliminar l'element." });
@@ -105,7 +106,7 @@ export default function SettingsPage() {
             <p className="text-muted-foreground">
                 {t("description")}
             </p>
-            {isLoading ? (
+            {isLoading && !masterData ? (
                 <p>Carregant dades mestres...</p>
             ) : masterData ? (
                 <MasterDataManager 
@@ -115,6 +116,7 @@ export default function SettingsPage() {
                     t={t}
                     activeTab={activeTab}
                     setActiveTab={setActiveTab}
+                    isLoading={isLoading}
                 />
             ) : (
                 <p>No s'han pogut carregar les dades.</p>

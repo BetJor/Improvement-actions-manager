@@ -12,7 +12,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
-import { Pencil, PlusCircle, Trash2 } from "lucide-react"
+import { Loader2, Pencil, PlusCircle, Trash2 } from "lucide-react"
 import type { MasterDataItem } from "@/lib/types"
 import {
   Dialog,
@@ -39,7 +39,6 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useToast } from "@/hooks/use-toast"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select"
-import { useTranslations } from "next-intl"
 
 interface MasterDataFormDialogProps {
   isOpen: boolean
@@ -127,9 +126,10 @@ interface MasterDataTableProps {
   onEdit: (item: MasterDataItem) => void;
   onDelete: (item: MasterDataItem) => void;
   t: (key: string) => string;
+  isLoading: boolean;
 }
 
-function MasterDataTable({ data, columns, onEdit, onDelete, t }: MasterDataTableProps) {
+function MasterDataTable({ data, columns, onEdit, onDelete, t, isLoading }: MasterDataTableProps) {
   return (
     <div className="rounded-md border">
       <Table>
@@ -141,7 +141,13 @@ function MasterDataTable({ data, columns, onEdit, onDelete, t }: MasterDataTable
           </TableRow>
         </TableHeader>
         <TableBody>
-          {data.length > 0 ? (
+          {isLoading ? (
+             <TableRow>
+              <TableCell colSpan={columns.length + 2} className="h-24 text-center">
+                <Loader2 className="mx-auto h-6 w-6 animate-spin" />
+              </TableCell>
+            </TableRow>
+          ) : data.length > 0 ? (
             data.map((item) => (
               <TableRow key={item.id}>
                 <TableCell className="font-medium">{item.id}</TableCell>
@@ -202,9 +208,10 @@ interface MasterDataManagerProps {
   t: (key: string) => string;
   activeTab: string;
   setActiveTab: (value: string) => void;
+  isLoading: boolean;
 }
 
-export function MasterDataManager({ data, onSave, onDelete, t, activeTab, setActiveTab }: MasterDataManagerProps) {
+export function MasterDataManager({ data, onSave, onDelete, t, activeTab, setActiveTab, isLoading }: MasterDataManagerProps) {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [currentItem, setCurrentItem] = useState<MasterDataItem | null>(null);
 
@@ -249,7 +256,7 @@ export function MasterDataManager({ data, onSave, onDelete, t, activeTab, setAct
           ))}
         </TabsList>
         {Object.keys(data).map(key => (
-          <TabsContent key={key} value={key} forceMount>
+          <TabsContent key={key} value={key}>
              <div className="flex justify-end mb-4">
               <Button onClick={handleAddNew}>
                 <PlusCircle className="mr-2 h-4 w-4" /> {t("addNew")}
@@ -261,6 +268,7 @@ export function MasterDataManager({ data, onSave, onDelete, t, activeTab, setAct
               onEdit={handleEdit}
               onDelete={handleDelete}
               t={t}
+              isLoading={isLoading}
             />
           </TabsContent>
         ))}
