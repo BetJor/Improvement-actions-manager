@@ -20,7 +20,7 @@ import { Input } from "./ui/input"
 import { formatDistanceToNow } from "date-fns"
 import { es } from "date-fns/locale"
 import { useAuth } from "@/hooks/use-auth"
-import { updateAction, uploadFileAndUpdateAction } from "@/lib/data"
+import { updateAction, uploadFileAndUpdateAction, getActionById } from "@/lib/data"
 import { useToast } from "@/hooks/use-toast"
 import { useState, useRef } from "react"
 import type { ActionComment } from "@/lib/types"
@@ -52,7 +52,7 @@ const DetailRow = ({ icon: Icon, label, value }: DetailRowProps) => {
 
 interface ActionDetailsPanelProps {
   action: ImprovementAction
-  onActionUpdate: () => void;
+  onActionUpdate: (updatedAction: ImprovementAction) => void;
 }
 
 export function ActionDetailsPanel({ action, onActionUpdate }: ActionDetailsPanelProps) {
@@ -91,7 +91,8 @@ export function ActionDetailsPanel({ action, onActionUpdate }: ActionDetailsPane
         description: "El teu comentari s'ha desat correctament.",
       });
       setNewComment("");
-      onActionUpdate();
+      const updatedAction = await getActionById(action.id);
+      if (updatedAction) onActionUpdate(updatedAction);
     } catch (error) {
       console.error("Error adding comment:", error);
       toast({
@@ -121,7 +122,9 @@ export function ActionDetailsPanel({ action, onActionUpdate }: ActionDetailsPane
         description: `${file.name} s'ha pujat i adjuntat correctament.`,
       });
 
-      onActionUpdate();
+      // Fetch the updated action and pass it to the parent
+      const updatedAction = await getActionById(action.id);
+      if (updatedAction) onActionUpdate(updatedAction);
 
     } catch (error) {
       console.error("Error uploading file:", error);
@@ -276,12 +279,9 @@ export function ActionDetailsPanel({ action, onActionUpdate }: ActionDetailsPane
                             <Paperclip className="h-5 w-5" />
                             {t('attachments.title')}
                         </CardTitle>
-                        <div className="flex items-center gap-2">
-                            <Badge variant="secondary">{(action.attachments || []).length}</Badge>
-                            <Button variant="ghost" size="icon" className="data-[state=open]:rotate-180">
-                                <ChevronDown className="h-4 w-4 transition-transform" />
-                            </Button>
-                        </div>
+                         <Button variant="ghost" size="icon" className="data-[state=open]:rotate-180">
+                            <ChevronDown className="h-4 w-4 transition-transform" />
+                        </Button>
                     </div>
                 </CollapsibleTrigger>
                 <CollapsibleContent>
@@ -312,24 +312,33 @@ export function ActionDetailsPanel({ action, onActionUpdate }: ActionDetailsPane
                                 />
                             </label>
                         </div> 
-                        <div className="space-y-2">
-                             {(action.attachments || []).length > 0 ? (
-                                action.attachments.map(file => (
-                                  <div key={file.id} className="flex items-center justify-between p-2 border rounded-md">
-                                      <div className="flex items-center gap-2 overflow-hidden">
-                                          <Paperclip className="h-4 w-4 shrink-0" />
-                                          <span className="text-sm font-medium truncate" title={file.fileName}>{file.fileName}</span>
-                                      </div>
-                                      <Button variant="ghost" size="icon" asChild>
-                                          <a href={file.fileUrl} target="_blank" rel="noopener noreferrer" download={file.fileName}>
-                                              <Download className="h-4 w-4" />
-                                          </a>
-                                      </Button>
-                                  </div>
-                               ))
-                             ) : (
-                                <p className="text-sm text-muted-foreground text-center py-4">{t('attachments.noAttachments')}</p>
-                             )}
+                        <div className="flex justify-end min-h-[40px]">
+                            {(action.attachments && action.attachments.length > 0) ? (
+                                <div className="group relative flex h-10 items-center justify-end">
+                                {action.attachments.map((file, index) => (
+                                    <div
+                                        key={file.id}
+                                        className="file-item group-hover:ml-0"
+                                        style={{
+                                            zIndex: action.attachments!.length - index,
+                                            marginLeft: index > 0 ? '-24px' : '0',
+                                        }}
+                                    >
+                                        <div className="flex items-center gap-2 rounded-full border bg-background p-2 shadow-sm transition-all duration-300 group-hover:max-w-xs group-hover:rounded-md group-hover:pr-3">
+                                            <Paperclip className="h-5 w-5 shrink-0" />
+                                            <span className="truncate text-sm font-medium opacity-0 transition-opacity group-hover:opacity-100">{file.fileName}</span>
+                                            <Button variant="ghost" size="icon" asChild className="opacity-0 group-hover:opacity-100">
+                                                <a href={file.fileUrl} target="_blank" rel="noopener noreferrer" download={file.fileName}>
+                                                    <Download className="h-4 w-4" />
+                                                </a>
+                                            </Button>
+                                        </div>
+                                    </div>
+                                ))}
+                                </div>
+                            ) : (
+                                <p className="text-sm text-muted-foreground text-center py-4 w-full">{t('attachments.noAttachments')}</p>
+                            )}
                         </div>
                     </CardContent>
                 </CollapsibleContent>
