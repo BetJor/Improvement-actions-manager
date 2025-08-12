@@ -1,12 +1,22 @@
 
 
+
 export interface MasterDataItem {
   id?: string;
   name: string;
   [key: string]: any; // Permet altres propietats
 }
     
-export interface ImprovementActionType extends MasterDataItem {}
+export interface ImprovementActionType extends MasterDataItem {
+  possibleAnalysisRoles?: string[]; // IDs from ResponsibilityRole collection
+}
+
+export interface ResponsibilityRole extends MasterDataItem {
+    type: 'Pattern' | 'Fixed';
+    emailPattern?: string; // e.g., "direccion-{{affectedArea.id}}@example.com"
+    email?: string; // e.g., "calidad.global@example.com"
+}
+
 
 export type ImprovementActionStatus = 'Borrador' | 'Pendiente Análisis' | 'Pendiente Comprobación' | 'Pendiente de Cierre' | 'Finalizada';
 

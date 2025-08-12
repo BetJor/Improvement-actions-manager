@@ -236,7 +236,8 @@
       "actionTypes": "Tipos de Acción",
       "categories": "Categorías",
       "subcategories": "Subcategorías",
-      "affectedAreas": "Áreas Afectadas"
+      "affectedAreas": "Áreas Afectadas",
+      "responsibilityRoles": "Roles de Responsabilidad"
     },
     "col": {
       "name": "Nombre",

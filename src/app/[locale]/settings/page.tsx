@@ -57,6 +57,7 @@ export default function SettingsPage() {
                     columns: [{ key: 'name', label: t('col.name') }, { key: 'categoryName', label: t('col.category') }] 
                 },
                 affectedAreas: { title: t("tabs.affectedAreas"), data: affectedAreas, columns: [{ key: 'name', label: t('col.name') }] },
+                responsibilityRoles: { title: t("tabs.responsibilityRoles"), data: [], columns: [{ key: 'name', label: t('col.name') }] },
             };
             setMasterData(data);
             
@@ -79,8 +80,11 @@ export default function SettingsPage() {
     }, [activeTab, toast, t]);
     
     useEffect(() => {
-        loadData();
-    }, []);
+        if(!masterData) {
+            loadData();
+        }
+    }, [loadData, masterData]);
+
 
     const handleSave = async (collectionName: string, item: MasterDataItem) => {
         try {
