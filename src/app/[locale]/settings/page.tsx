@@ -33,12 +33,27 @@ export default function SettingsPage() {
                 getAffectedAreas(),
             ]);
 
+            const subcategoriesWithCategoryName = subcategories.map(s => ({
+              ...s, 
+              categoryName: categories.find(c => c.id === s.categoryId)?.name || ''
+            }));
+            
+            // Sort by categoryName, then by subcategory name
+            subcategoriesWithCategoryName.sort((a, b) => {
+              if (a.categoryName < b.categoryName) return -1;
+              if (a.categoryName > b.categoryName) return 1;
+              if (a.name < b.name) return -1;
+              if (a.name > b.name) return 1;
+              return 0;
+            });
+
+
             const data = {
                 actionTypes: { title: t("tabs.actionTypes"), data: actionTypes, columns: [{ key: 'name', label: t('col.name') }] },
                 categories: { title: t("tabs.categories"), data: categories, columns: [{ key: 'name', label: t('col.name') }] },
                 subcategories: { 
                     title: t("tabs.subcategories"), 
-                    data: subcategories.map(s => ({...s, categoryName: categories.find(c => c.id === s.categoryId)?.name || ''})), 
+                    data: subcategoriesWithCategoryName, 
                     columns: [{ key: 'name', label: t('col.name') }, { key: 'categoryName', label: t('col.category') }] 
                 },
                 affectedAreas: { title: t("tabs.affectedAreas"), data: affectedAreas, columns: [{ key: 'name', label: t('col.name') }] },
