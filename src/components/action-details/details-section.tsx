@@ -41,7 +41,7 @@ export function DetailsSection({ action }: DetailsSectionProps) {
 
   return (
     <Card>
-      <Collapsible defaultOpen={true}>
+      <Collapsible>
         <CollapsibleTrigger asChild>
           <div className="flex justify-between items-center p-4 cursor-pointer">
             <CardTitle className="text-base flex items-center gap-2">

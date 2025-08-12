@@ -65,7 +65,7 @@ export function AttachmentsSection({ action, onActionUpdate }: AttachmentsSectio
 
   return (
     <Card>
-      <Collapsible defaultOpen={true}>
+      <Collapsible>
         <CollapsibleTrigger asChild>
           <div className="flex justify-between items-center p-4 cursor-pointer">
             <CardTitle className="flex items-center gap-2 text-base">
