@@ -1,4 +1,5 @@
 
+
 "use client"
 
 import { useState, useEffect } from "react"
@@ -12,7 +13,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
-import { Loader2, Pencil, PlusCircle, Trash2 } from "lucide-react"
+import { Loader2, Pencil, PlusCircle, Trash2, Check, ChevronsUpDown } from "lucide-react"
 import type { MasterDataItem, ResponsibilityRole } from "@/lib/types"
 import {
   Dialog,
@@ -40,6 +41,11 @@ import { Label } from "@/components/ui/label"
 import { useToast } from "@/hooks/use-toast"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select"
 import { Textarea } from "./ui/textarea"
+import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover"
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "./ui/command"
+import { cn } from "@/lib/utils"
+import { Checkbox } from "./ui/checkbox"
+import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "./ui/dropdown-menu"
 
 interface MasterDataFormDialogProps {
   isOpen: boolean
@@ -49,16 +55,22 @@ interface MasterDataFormDialogProps {
   title: string
   onSave: (collection: string, item: MasterDataItem) => Promise<void>
   extraColumns?: { key: string; label: string, type: 'select', options: any[] }[]
+  responsibilityRoles: ResponsibilityRole[];
   t: (key: string) => string
 }
 
-function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, title, onSave, extraColumns = [], t }: MasterDataFormDialogProps) {
+function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, title, onSave, extraColumns = [], responsibilityRoles = [], t }: MasterDataFormDialogProps) {
   const [formData, setFormData] = useState<MasterDataItem>(item || { name: "" })
   const { toast } = useToast()
 
   useEffect(() => {
-    setFormData(item || { name: "", type: "Fixed" });
-  }, [item]);
+    const defaultData: MasterDataItem = {
+        name: "",
+        ...(collectionName === 'responsibilityRoles' && { type: "Fixed" }),
+        ...(collectionName === 'actionTypes' && { possibleAnalysisRoles: [] }),
+    };
+    setFormData(item || defaultData);
+  }, [item, collectionName]);
 
 
   const handleSave = async () => {
@@ -75,6 +87,47 @@ function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, title, 
   }
 
   const renderSpecificFields = () => {
+    if (collectionName === 'actionTypes') {
+        const actionTypeData = formData as any; // Cast to access possibleAnalysisRoles
+
+        const handleRoleSelection = (roleId: string) => {
+            const currentRoles = actionTypeData.possibleAnalysisRoles || [];
+            const newRoles = currentRoles.includes(roleId)
+                ? currentRoles.filter((id: string) => id !== roleId)
+                : [...currentRoles, roleId];
+            setFormData({ ...formData, possibleAnalysisRoles: newRoles });
+        };
+        
+        return (
+            <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="roles" className="text-right">Rols per a l'Anàlisi</Label>
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <Button variant="outline" className="col-span-3 justify-between">
+                            {(actionTypeData.possibleAnalysisRoles?.length > 0
+                                ? `${actionTypeData.possibleAnalysisRoles.length} seleccionats`
+                                : "Selecciona rols")}
+                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent className="w-[300px]">
+                        <DropdownMenuLabel>Rols de Responsabilitat</DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        {responsibilityRoles.map((role) => (
+                             <DropdownMenuCheckboxItem
+                                key={role.id}
+                                checked={actionTypeData.possibleAnalysisRoles?.includes(role.id)}
+                                onCheckedChange={() => handleRoleSelection(role.id!)}
+                             >
+                                {role.name}
+                            </DropdownMenuCheckboxItem>
+                        ))}
+                    </DropdownMenuContent>
+                </DropdownMenu>
+            </div>
+        )
+    }
+
     if (collectionName === 'responsibilityRoles') {
       const roleData = formData as ResponsibilityRole;
       return (
@@ -344,6 +397,7 @@ export function MasterDataManager({ data, onSave, onDelete, t, activeTab, setAct
           title={data[activeTab].title.slice(0, -1)}
           onSave={handleSave}
           extraColumns={getExtraColumnsForTab(activeTab)}
+          responsibilityRoles={data.responsibilityRoles?.data || []}
           t={t}
         />
       )}
