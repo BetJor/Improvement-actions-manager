@@ -44,11 +44,10 @@ import {
             "Desenvolupar el formulari per a crear noves accions de millora.",
             "Implementar la pàgina de detall per a cada acció de millora.",
             "Implementar formularis d'Anàlisi i Verificació per interactuar amb el workflow.",
-            "Implementar sistema de comentaris en les accions."
+            "Implementar sistema de comentaris en les accions.",
+            "Implementar la pujada de fitxers adjunts (integració amb Firebase Storage)."
           ],
-          pending_tasks: [
-            "Pendent: Implementar la pujada de fitxers adjunts (integració amb Firebase Storage). NOTA: Funcionalitat bloquejada fins que un administrador activi el Billing a la consola de Google Cloud per poder crear un bucket de Storage."
-          ]
+          pending_tasks: []
         },
         {
           key: "phase4",
