@@ -14,6 +14,7 @@ export const PlanActionWorkflowInputSchema = z.object({
   actionId: z.string(),
   actionType: z.string().describe("The type of the improvement action (e.g., 'No Conformitat', 'Reclamació de Client')."),
   category: z.string().describe("The category of the action (e.g., 'Seguretat i Salut Laboral')."),
+  affectedAreaName: z.string().describe("The name of the area affected by the action."),
   responsibleGroupId: z.string().describe("The primary responsible group ID for the action."),
   creationDate: z.string().describe("The creation date of the action in dd/MM/yyyy format."),
 });

@@ -173,6 +173,7 @@ export async function createAction(data: CreateActionData, masterData: any): Pro
             actionId: newActionId,
             actionType: typeName,
             category: categoryName,
+            affectedAreaName: affectedAreaName,
             responsibleGroupId: data.responsibleGroupId,
             creationDate: creationDate,
         });

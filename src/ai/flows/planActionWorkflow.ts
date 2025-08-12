@@ -39,16 +39,24 @@ const plannerPrompt = ai.definePrompt({
             - Plan de Acción: Due 45 days after creation.
             - Verificación de Implantación: Due 75 days after creation.
             - Cierre de la Acción: Due 90 days after creation.
-            The responsible party for all these steps is the 'responsibleGroupId' from the input.
+            The responsible party for all these steps is the 'responsibleGroupId' from the input, unless specified otherwise.
 
-        2.  **Regulatory/Client Complaint Workflow:** 
+        2.  **Dynamic Analysis Responsibility for 'No Conformitat':**
+            - If the action Type is 'No Conformitat', the responsible for the 'Análisis de Causas' step must be determined by the 'affectedAreaName'.
+            - Use the following mapping:
+                - 'Departament de Logística': 'director-logistica@example.com'
+                - 'Planta de Producció': 'director-produccio@example.com'
+                - 'Oficines Centrals': 'director-oficines@example.com'
+            - For any other 'affectedAreaName' or 'actionType', the responsible for 'Análisis de Causas' is the default 'responsibleGroupId'.
+
+        3.  **Regulatory/Client Complaint Workflow:** 
             - If the action Type is 'No Conformitat', 'Reclamació de Client', or 'Auditoria Externa', an additional initial step is required.
             - **Step Name:** 'Análisis de Impacto Regulatorio'.
             - **Responsible Party:** 'Comitè de Riscos'.
             - **Due Date:** 7 days after the creation date.
             - All other standard steps are pushed back by 15 days from their original due dates.
 
-        3.  **Safety Workflow:**
+        4.  **Safety Workflow:**
             - If the action Category is 'Seguretat i Salut Laboral', an additional verification step is required at the end.
             - **Step Name:** 'Verificación de Seguridad por Comité'.
             - **Responsible Party:** 'Comitè de Seguretat i Salut'.
@@ -58,7 +66,7 @@ const plannerPrompt = ai.definePrompt({
 
         - Today's date is {{currentDate}}. The action was created on {{creationDate}}.
         - The ID for the action is {{actionId}}.
-        - The primary responsible group is {{responsibleGroupId}}.
+        - The primary responsible group is {{responsibleGroupId}}. The affected area is {{affectedAreaName}}.
         - Based on the rules above, generate a complete, ordered list of all required workflow steps.
         - Calculate all due dates accurately based on the creation date.
         - Generate a unique ID for this workflow plan, maybe combining the actionId and a timestamp.
@@ -67,6 +75,7 @@ const plannerPrompt = ai.definePrompt({
         **Action Details:**
         - Type: {{actionType}}
         - Category: {{category}}
+        - Affected Area: {{affectedAreaName}}
     `,
 });
 
