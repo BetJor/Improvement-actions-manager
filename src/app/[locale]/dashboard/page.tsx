@@ -47,8 +47,11 @@ export default function DashboardPage() {
         action.analysis?.proposedActions?.some(
           (pa) => pa.responsibleUserId === user.id
         ) || false;
+
+      // Condition 3: User is the verification responsible
+      const isVerificationResponsible = action.analysis?.verificationResponsibleUserId === user.id;
   
-      return isMainResponsible || isProposedActionResponsible;
+      return isMainResponsible || isProposedActionResponsible || isVerificationResponsible;
     });
   }, [actions, user]);
 
