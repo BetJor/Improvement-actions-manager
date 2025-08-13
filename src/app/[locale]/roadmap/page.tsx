@@ -9,7 +9,7 @@ import {
     CardTitle,
   } from "@/components/ui/card"
 import { useTranslations } from "next-intl"
-import { CheckCircle2, CircleDot } from "lucide-react"
+import { CheckCircle2, CircleDot, Wrench } from "lucide-react"
 
   
 export default function RoadmapPage() {
@@ -47,7 +47,10 @@ export default function RoadmapPage() {
             "Implementar la pàgina de detall per a cada acció de millora.",
             "Implementar formularis d'Anàlisi i Verificació per interactuar amb el workflow.",
             "Implementar sistema de comentaris en les accions.",
-            "Implementar la pujada de fitxers adjunts (integració amb Firebase Storage)."
+            "Implementar la pujada de fitxers adjunts (integració amb Firebase Storage).",
+            "Refactoritzar la gestió de dades per a un estat global sincronitzat (`useActionState`).",
+            "Implementar un sistema de subscripció (seguiment) a les accions de millora.",
+            "Personalitzar i simplificar el Dashboard eliminant ginys de gràfics."
           ],
           pending_tasks: []
         },
@@ -79,7 +82,19 @@ export default function RoadmapPage() {
         },
         {
           key: "phase6",
-          title: "Fase 6: Rols i Permisos d'Usuari",
+          title: "Fase 6: Estabilitat i Correcció d'Errors",
+          icon: Wrench,
+          duration: "Continu",
+          completed_tasks: [
+            "Solucionar errors de traducció (`MISSING_MESSAGE`) per a una experiència multillenguatge robusta.",
+            "Resoldre errors de compilació de Next.js (JSX a fitxers .ts).",
+            "Corregir errors d'execució i bucles infinits relacionats amb la gestió de l'estat."
+          ],
+          pending_tasks: []
+        },
+        {
+          key: "phase7",
+          title: "Fase 7: Rols i Permisos d'Usuari",
           duration: "Estimat: 3-4 dies",
           completed_tasks: [
             "Definir una estructura de dades a Firestore per a rols i permisos."
@@ -87,16 +102,6 @@ export default function RoadmapPage() {
           pending_tasks: [
             "Pendent: Crear un mecanisme per a assignar rols als usuaris (p. ex., en un panell d'administració).",
             "Pendent: Protegir rutes i components de la interfície segons el rol de l'usuari."
-          ]
-        },
-        {
-          key: "phase7",
-          title: "Fase 7: Subscripcions i Notificacions",
-          duration: "Estimat: 3-4 dies",
-          completed_tasks: [],
-          pending_tasks: [
-            "Pendent: Implementar un sistema de subscripció a les accions de millora.",
-            "Pendent: Configurar l'enviament de notificacions (p. ex., per email) quan hi hagi actualitzacions rellevants (nous comentaris, canvis d'estat)."
           ]
         },
         {
@@ -126,7 +131,7 @@ export default function RoadmapPage() {
                     {timeline.map((phase, index) => (
                       <div key={index} className="relative pl-10">
                          <div className="absolute left-0 top-1 flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground">
-                            <span className="font-bold">{index + 1}</span>
+                            {phase.icon ? <phase.icon className="h-5 w-5" /> : <span className="font-bold">{index + 1}</span>}
                          </div>
                         <h3 className="text-xl font-semibold">{phase.title}</h3>
                         <p className="text-sm text-muted-foreground mb-4">{phase.duration}</p>
@@ -155,3 +160,4 @@ export default function RoadmapPage() {
   }
 
     
+
