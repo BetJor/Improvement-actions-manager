@@ -166,7 +166,7 @@ export function DashboardClient({ actions: initialActions, assignedActions: init
                         variant="ghost"
                         size="icon"
                         onClick={(e) => handleUnfollowFromDashboard(action.id, e)}
-                        title={isFollowingAssigned(action.id) ? t("followedActions.unfollow") : "Seguir acció"}
+                        title={isFollowingAssigned(action.id) ? "Deixar de seguir" : "Seguir acció"}
                       >
                         <Star className={cn("h-4 w-4", isFollowingAssigned(action.id) ? "text-yellow-400 fill-yellow-400" : "text-muted-foreground")} />
                       </Button>
@@ -198,7 +198,7 @@ export function DashboardClient({ actions: initialActions, assignedActions: init
                         variant="ghost"
                         size="icon"
                         onClick={(e) => handleUnfollowFromDashboard(action.id, e)}
-                        title={t("followedActions.unfollow")}
+                        title={"Deixar de seguir"}
                       >
                         <Star className={cn("h-4 w-4 text-yellow-400 fill-yellow-400")} />
                       </Button>
