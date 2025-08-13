@@ -15,7 +15,7 @@
     },
     "myPendingActions": {
       "title": "Les Meves Accions Pendents",
-      "description": "Accions que requereixen la teva atenció.",
+      "description": "Accions que requereixen la teva atenció immediata per a avançar.",
       "noActions": "No tens cap acció pendent. Bona feina!",
       "col": {
         "id": "ID",
@@ -23,8 +23,17 @@
         "status": "Estat"
       }
     },
+    "participatingActions": {
+      "title": "Accions on Participo",
+      "description": "Un historial de totes les accions en les que estàs o has estat involucrat/da.",
+      "noActions": "No participes en cap acció.",
+      "col": {
+        "id": "ID",
+        "title": "Títol",
+        "status": "Estat",
+        "myRole": "El Meu Rol"
+      }
+    },
     "chartLabel": "Accions"
   }
 }
-
-    

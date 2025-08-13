@@ -43,6 +43,7 @@ import { Button } from "./ui/button"
 import { useTabs } from "@/hooks/use-tabs"
 import { getActionById, getActionTypes, getCategories, getCenters, getResponsibilityRoles, getSubcategories, getAffectedAreas } from "@/lib/data"
 import { ActionDetailsTab } from "./action-details-tab"
+import { Badge } from './ui/badge';
 
 const COLORS = {
   Borrador: "hsl(var(--chart-5))",
@@ -55,10 +56,11 @@ const COLORS = {
 interface DashboardClientProps {
     actions: ImprovementAction[];
     assignedActions: ImprovementAction[];
+    participatingActions: (ImprovementAction & { userRoles: string[] })[];
     t: any;
 }
 
-const defaultLayout = ["stats", "pendingActions", "charts"];
+const defaultLayout = ["stats", "pendingActions", "participatingActions", "charts"];
 
 function SortableItem({ id, children }: { id: string, children: React.ReactNode }) {
     const {
@@ -76,7 +78,7 @@ function SortableItem({ id, children }: { id: string, children: React.ReactNode 
     
     return (
       <div ref={setNodeRef} style={style} className="relative">
-        <Button variant="ghost" size="icon" {...attributes} {...listeners} className="absolute top-2 right-2 cursor-grab h-8 w-8 text-muted-foreground">
+        <Button variant="ghost" size="icon" {...attributes} {...listeners} className="absolute top-2 right-2 cursor-grab h-8 w-8 text-muted-foreground z-10">
            <GripVertical className="h-5 w-5" />
         </Button>
         {children}
@@ -85,7 +87,7 @@ function SortableItem({ id, children }: { id: string, children: React.ReactNode 
 }
 
 
-export function DashboardClient({ actions, assignedActions, t }: DashboardClientProps) {
+export function DashboardClient({ actions, assignedActions, participatingActions, t }: DashboardClientProps) {
   const { openTab } = useTabs();
   const { user, updateDashboardLayout } = useAuth();
   const [items, setItems] = useState<string[]>(user?.dashboardLayout || defaultLayout);
@@ -196,6 +198,29 @@ export function DashboardClient({ actions, assignedActions, t }: DashboardClient
         </CardContent>
       </Card>
     ),
+    participatingActions: (
+      <Card className="col-span-full">
+        <CardHeader><CardTitle>{t.participatingActions.title}</CardTitle><CardDescription>{t.participatingActions.description}</CardDescription></CardHeader>
+        <CardContent>
+          <Table><TableHeader><TableRow><TableHead>{t.participatingActions.col.id}</TableHead><TableHead>{t.participatingActions.col.title}</TableHead><TableHead>{t.participatingActions.col.status}</TableHead><TableHead>{t.participatingActions.col.myRole}</TableHead></TableRow></TableHeader>
+            <TableBody>
+              {participatingActions.length > 0 ? (
+                participatingActions.map((action) => (
+                  <TableRow key={action.id}>
+                    <TableCell><Button variant="link" asChild className="p-0 h-auto"><a href={`/actions/${action.id}`} onClick={(e) => handleOpenAction(e, action)}>{action.actionId}</a></Button></TableCell>
+                    <TableCell>{action.title}</TableCell>
+                    <TableCell><ActionStatusBadge status={action.status} /></TableCell>
+                    <TableCell><div className="flex flex-wrap gap-1">{action.userRoles.map(role => <Badge key={role} variant="secondary">{role}</Badge>)}</div></TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow><TableCell colSpan={4} className="text-center h-24">{t.participatingActions.noActions}</TableCell></TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+    ),
     charts: (
         <div className="grid gap-4 md:grid-cols-2">
             <Card>
@@ -225,9 +250,11 @@ export function DashboardClient({ actions, assignedActions, t }: DashboardClient
         <SortableContext items={items} strategy={verticalListSortingStrategy}>
             <div className="flex flex-col gap-6">
                 {items.map(id => (
-                    <SortableItem key={id} id={id}>
-                        {widgets[id]}
-                    </SortableItem>
+                    widgets[id] ? (
+                        <SortableItem key={id} id={id}>
+                            {widgets[id]}
+                        </SortableItem>
+                    ) : null
                 ))}
             </div>
         </SortableContext>

@@ -13,9 +13,9 @@
       "title": "Acciones por Tipo",
       "description": "Desglose de acciones según su tipo designado."
     },
-     "myPendingActions": {
+    "myPendingActions": {
       "title": "Mis Acciones Pendientes",
-      "description": "Acciones que requieren tu atención.",
+      "description": "Acciones que requieren tu atención inmediata para avanzar.",
       "noActions": "No tienes ninguna acción pendiente. ¡Buen trabajo!",
       "col": {
         "id": "ID",
@@ -23,8 +23,17 @@
         "status": "Estado"
       }
     },
+    "participatingActions": {
+      "title": "Acciones donde Participo",
+      "description": "Un historial de todas las acciones en las que estás o has estado involucrado/a.",
+      "noActions": "No participas en ninguna acción.",
+      "col": {
+        "id": "ID",
+        "title": "Título",
+        "status": "Estado",
+        "myRole": "Mi Rol"
+      }
+    },
     "chartLabel": "Acciones"
   }
 }
-
-    

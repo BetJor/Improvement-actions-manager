@@ -37,27 +37,19 @@ export default function DashboardPage() {
     const isUserTurnToAct = (action: ImprovementAction): boolean => {
       switch (action.status) {
         case 'Pendiente Análisis':
-          // The main responsible for the action group needs to act.
           return user.email === action.responsibleGroupId;
         
         case 'Pendiente Comprobación':
-          // The designated verification responsible needs to act.
-          // First, check if any proposed action is still pending.
           const hasPendingProposedActions = action.analysis?.proposedActions?.some(pa => pa.status === 'Pendent');
           if (hasPendingProposedActions) {
-            // It's the turn of the responsible for the proposed action
             return action.analysis?.proposedActions.some(pa => pa.responsibleUserId === user.id && pa.status === 'Pendent') || false;
           }
-          // If all proposed actions are done, it's the verification responsible's turn.
           return user.id === action.analysis?.verificationResponsibleUserId;
 
         case 'Pendiente de Cierre':
-          // The original creator of the action needs to close it.
           return user.id === action.creator.id;
         
         default:
-          // For other statuses like 'Borrador' or 'Finalizada', no one needs to act.
-          // Also check for pending proposed actions for active but not yet verifying statuses
            if (action.status !== 'Borrador' && action.status !== 'Finalizada') {
               return action.analysis?.proposedActions?.some(pa => pa.responsibleUserId === user.id && pa.status === 'Pendent') || false;
            }
@@ -66,6 +58,27 @@ export default function DashboardPage() {
     };
   
     return actions.filter(action => isUserTurnToAct(action));
+  }, [actions, user]);
+
+  const participatingActions = useMemo(() => {
+    if (!user || !actions) return [];
+
+    return actions
+      .filter(action => action.status !== 'Borrador')
+      .map(action => {
+        let roles: string[] = [];
+        if (action.creator.id === user.id) roles.push("Creador/a");
+        if (action.responsibleGroupId === user.email) roles.push("Responsable Principal");
+        if (action.analysis?.proposedActions?.some(pa => pa.responsibleUserId === user.id)) roles.push("Responsable Tasca");
+        if (action.analysis?.verificationResponsibleUserId === user.id) roles.push("Verificador/a");
+        
+        if (roles.length > 0) {
+          return { ...action, userRoles: roles };
+        }
+        return null;
+      })
+      .filter(Boolean) as (ImprovementAction & { userRoles: string[] })[];
+
   }, [actions, user]);
 
 
@@ -93,6 +106,17 @@ export default function DashboardPage() {
             status: t("myPendingActions.col.status"),
         }
     },
+    participatingActions: {
+        title: t("participatingActions.title"),
+        description: t("participatingActions.description"),
+        noActions: t("participatingActions.noActions"),
+        col: {
+            id: t("participatingActions.col.id"),
+            title: t("participatingActions.col.title"),
+            status: t("participatingActions.col.status"),
+            myRole: t("participatingActions.col.myRole"),
+        }
+    },
     chartLabel: t("chartLabel"),
   }
 
@@ -100,7 +124,10 @@ export default function DashboardPage() {
     return <div className="flex h-full w-full items-center justify-center"><Loader2 className="h-6 w-6 animate-spin" /></div>
   }
 
-  return <DashboardClient actions={actions} assignedActions={assignedActions} t={translations} />
+  return <DashboardClient 
+    actions={actions} 
+    assignedActions={assignedActions}
+    participatingActions={participatingActions}
+    t={translations} 
+  />
 }
-
-    
