@@ -34,29 +34,40 @@ export default function DashboardPage() {
   const assignedActions = useMemo(() => {
     if (!user || !actions) return [];
   
-    return actions.filter(action => {
-      // The action must not be in a final or draft state
-      const isActionActive = action.status !== 'Borrador' && action.status !== 'Finalizada';
-      if (!isActionActive) return false;
-  
-      // Condition 1: User is the main responsible for the entire action
-      const isMainResponsible = action.responsibleGroupId === user.email;
-  
-      // Condition 2: User is responsible for at least one of the proposed actions
-      const isProposedActionResponsible = 
-        action.analysis?.proposedActions?.some(
-          (pa) => pa.responsibleUserId === user.id
-        ) || false;
+    const isUserTurnToAct = (action: ImprovementAction): boolean => {
+      switch (action.status) {
+        case 'Pendiente Análisis':
+          // The main responsible for the action group needs to act.
+          return user.email === action.responsibleGroupId;
+        
+        case 'Pendiente Comprobación':
+          // The designated verification responsible needs to act.
+          // First, check if any proposed action is still pending.
+          const hasPendingProposedActions = action.analysis?.proposedActions?.some(pa => pa.status === 'Pendent');
+          if (hasPendingProposedActions) {
+            // It's the turn of the responsible for the proposed action
+            return action.analysis?.proposedActions.some(pa => pa.responsibleUserId === user.id && pa.status === 'Pendent') || false;
+          }
+          // If all proposed actions are done, it's the verification responsible's turn.
+          return user.id === action.analysis?.verificationResponsibleUserId;
 
-      // Condition 3: User is the verification responsible
-      const isVerificationResponsible = action.analysis?.verificationResponsibleUserId === user.id;
+        case 'Pendiente de Cierre':
+          // The original creator of the action needs to close it.
+          return user.id === action.creator.id;
+        
+        default:
+          // For other statuses like 'Borrador' or 'Finalizada', no one needs to act.
+          // Also check for pending proposed actions for active but not yet verifying statuses
+           if (action.status !== 'Borrador' && action.status !== 'Finalizada') {
+              return action.analysis?.proposedActions?.some(pa => pa.responsibleUserId === user.id && pa.status === 'Pendent') || false;
+           }
+          return false;
+      }
+    };
   
-      // Condition 4: User is the creator and the action is pending closure
-      const isCreatorPendingClosure = action.status === 'Pendiente de Cierre' && action.creator.id === user.id;
-
-      return isMainResponsible || isProposedActionResponsible || isVerificationResponsible || isCreatorPendingClosure;
-    });
+    return actions.filter(action => isUserTurnToAct(action));
   }, [actions, user]);
+
 
   const translations = {
     title: t("title"),
