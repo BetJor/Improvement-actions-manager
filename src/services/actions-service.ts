@@ -1,8 +1,8 @@
 
-import { collection, doc, getDoc, getDocs, addDoc, updateDoc, query, orderBy, limit, arrayUnion, Timestamp } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, addDoc, updateDoc, query, orderBy, limit, arrayUnion, Timestamp, runTransaction } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { format } from 'date-fns';
-import type { ImprovementAction, ActionUserInfo } from '@/lib/types';
+import type { ImprovementAction, ProposedAction } from '@/lib/types';
 import { planActionWorkflow } from '@/ai/flows/planActionWorkflow';
 import { getUsers } from './users-service';
 import { getCategories, getSubcategories, getAffectedAreas, getCenters, getActionTypes } from './master-data-service';
@@ -69,7 +69,7 @@ export const getActionById = async (id: string): Promise<ImprovementAction | nul
 
         // Populate responsible user info
         if (data.responsibleGroupId) {
-            const responsibleUser = users.find(u => u.id === data.responsibleGroupId);
+            const responsibleUser = users.find(u => u.email === data.responsibleGroupId);
             if(responsibleUser) {
                 data.responsibleUser = {
                     id: responsibleUser.id,
@@ -90,7 +90,7 @@ export async function createAction(data: CreateActionData, masterData: any): Pro
     const actionsCol = collection(db, 'actions');
   
     // 1. Get the last actionId to generate the new one
-    const lastActionQuery = query(actionsCol, orderBy("actionId", "desc"), limit(1));
+    const lastActionQuery = query(actionsCol, orderBy("creationDate", "desc"), limit(1));
     const lastActionSnapshot = await getDocs(lastActionQuery);
     
     let newActionIdNumber = 1;
@@ -138,16 +138,8 @@ export async function createAction(data: CreateActionData, masterData: any): Pro
       implementationDueDate: '',
       closureDueDate: '',
     };
-
-    // Only add traceability fields if they exist to avoid 'undefined' error
-    if (data.originalActionId) {
-        newAction.originalActionId = data.originalActionId;
-    }
-    if (data.originalActionTitle) {
-        newAction.originalActionTitle = data.originalActionTitle;
-    }
   
-    // 3. Add the new document to Firestore
+    // Add the new document to Firestore
     const docRef = await addDoc(actionsCol, newAction);
 
     // 4. Plan the workflow using the new Genkit flow
@@ -182,6 +174,28 @@ export async function updateAction(actionId: string, data: any, masterData?: any
     const actionDocRef = doc(db, 'actions', actionId);
     
     let dataToUpdate: any = {};
+
+    if (data.updateProposedActionStatus) {
+        // Use a transaction to safely update one element of the array
+        await runTransaction(db, async (transaction) => {
+            const actionDoc = await transaction.get(actionDocRef);
+            if (!actionDoc.exists()) {
+                throw "Document does not exist!";
+            }
+            const currentAction = actionDoc.data() as ImprovementAction;
+            const proposedActions = currentAction.analysis?.proposedActions || [];
+            
+            const updatedProposedActions = proposedActions.map(pa => {
+                if (pa.id === data.updateProposedActionStatus.proposedActionId) {
+                    return { ...pa, status: data.updateProposedActionStatus.status };
+                }
+                return pa;
+            });
+            
+            transaction.update(actionDocRef, { "analysis.proposedActions": updatedProposedActions });
+        });
+        return; // Exit after transaction
+    }
 
     if (data.newComment) {
         // Handle adding a new comment

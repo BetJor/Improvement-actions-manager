@@ -15,7 +15,7 @@ import { AnalysisSection } from "@/components/analysis-section"
 import { VerificationSection } from "@/components/verification-section"
 import { ClosureSection } from "@/components/closure-section"
 import { ActionDetailsPanel } from "@/components/action-details-panel"
-import { Loader2, FileEdit } from "lucide-react"
+import { Loader2, FileEdit, Edit } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Separator } from "@/components/ui/separator"
@@ -26,6 +26,7 @@ import { useToast } from "@/hooks/use-toast"
 import { useAuth } from "@/hooks/use-auth"
 import type { ProposedActionStatus } from "@/lib/types"
 import { useRouter } from "next/navigation"
+import { UpdateActionStatusDialog } from "./update-action-status-dialog"
 
 
 interface ActionDetailsTabProps {
@@ -44,6 +45,9 @@ export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTab
     const [isEditing, setIsEditing] = useState(false)
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [users, setUsers] = useState<User[]>([]);
+    const [isStatusDialogOpen, setIsStatusDialogOpen] = useState(false);
+    const [selectedProposedAction, setSelectedProposedAction] = useState<any>(null);
+
 
     useEffect(() => {
       async function loadUsers() {
@@ -81,7 +85,7 @@ export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTab
                 description: "L'acció s'ha desat correctament.",
             });
             setIsEditing(false); // Exit edit mode
-            router.refresh(); // Refresca les Server-Side props de la pàgina
+            await handleActionUpdate(); // Refresh data
         } catch (error) {
             console.error("Error updating action:", error);
             toast({
@@ -108,7 +112,7 @@ export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTab
             description: "El pla d'acció s'ha desat correctament.",
           });
     
-          router.refresh(); // Refresca les Server-Side props
+          await handleActionUpdate();
     
         } catch (error) {
           console.error("Error saving analysis:", error);
@@ -136,7 +140,7 @@ export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTab
             description: "La verificació de la implantació s'ha desat correctament.",
           });
     
-          router.refresh(); // Refresca les Server-Side props
+          await handleActionUpdate();
     
         } catch (error) {
           console.error("Error saving verification:", error);
@@ -189,6 +193,28 @@ export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTab
             setIsSubmitting(false);
         }
     };
+    
+    const handleUpdateProposedActionStatus = async (proposedActionId: string, newStatus: ProposedActionStatus) => {
+        setIsSubmitting(true);
+        try {
+            await updateAction(action.id, {
+                updateProposedActionStatus: {
+                    proposedActionId,
+                    status: newStatus,
+                }
+            });
+            toast({
+                title: "Estat actualitzat",
+                description: "L'estat de l'acció proposada s'ha actualitzat.",
+            });
+            await handleActionUpdate();
+        } catch (error) {
+            console.error("Error updating proposed action status:", error);
+            toast({ variant: "destructive", title: "Error en actualitzar l'estat." });
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
 
     const isAnalysisTabDisabled = action?.status === 'Borrador';
     const isVerificationTabDisabled = action?.status === 'Borrador' || action?.status === 'Pendiente Análisis';
@@ -203,24 +229,25 @@ export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTab
             case 'Pendiente Comprobación':
                 return user.id === action.analysis?.verificationResponsibleUserId;
             case 'Pendiente de Cierre':
-                // Assuming the verifier is also the closer for now. This could be a separate role.
                 return user.id === action.analysis?.verificationResponsibleUserId;
             default:
-                return false; // No direct action for other states in this logic
+                return false;
         }
     })();
 
     const getStatusColorClass = (status?: ProposedActionStatus) => {
-      if (!status) return "";
+      if (!status) return "border-gray-300";
       switch (status) {
+        case "Pendent":
+          return "border-gray-400";
         case "Implementada":
-          return "border-green-500 border-2";
+          return "border-green-500";
         case "Implementada Parcialment":
-          return "border-yellow-500 border-2";
+          return "border-yellow-500";
         case "No Implementada":
-          return "border-red-500 border-2";
+          return "border-red-500";
         default:
-          return "";
+          return "border-gray-300";
       }
     };
 
@@ -308,11 +335,31 @@ export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTab
                                         <h3 className="font-semibold text-lg mb-4">{t('proposedAction')}</h3>
                                         <div className="space-y-4">
                                             {action.analysis.proposedActions.map((pa) => (
-                                                <div key={pa.id} className="p-4 border rounded-lg">
-                                                    <p className="font-medium">{pa.description}</p>
-                                                    <p className="text-sm text-muted-foreground mt-1">
-                                                        Responsable: {users.find(u => u.id === pa.responsibleUserId)?.name || pa.responsibleUserId} | Data Venciment: {format(new Date(pa.dueDate), "dd/MM/yyyy")}
-                                                    </p>
+                                                <div key={pa.id} className={cn("p-4 border-l-4 rounded-lg bg-muted/30", getStatusColorClass(pa.status))}>
+                                                    <div className="flex justify-between items-start">
+                                                        <div className="flex-1">
+                                                            <p className="font-medium">{pa.description}</p>
+                                                            <p className="text-sm text-muted-foreground mt-1">
+                                                                Responsable: {users.find(u => u.id === pa.responsibleUserId)?.name || pa.responsibleUserId} | Data Venciment: {format(new Date(pa.dueDate), "dd/MM/yyyy")}
+                                                            </p>
+                                                             <p className="text-sm text-muted-foreground mt-1">
+                                                                Estat: <span className="font-semibold">{pa.status || 'Pendent'}</span>
+                                                            </p>
+                                                        </div>
+                                                        {user?.id === pa.responsibleUserId && action.status !== 'Finalizada' && (
+                                                          <Button
+                                                            variant="outline"
+                                                            size="sm"
+                                                            onClick={() => {
+                                                              setSelectedProposedAction(pa);
+                                                              setIsStatusDialogOpen(true);
+                                                            }}
+                                                          >
+                                                            <Edit className="mr-2 h-3 w-3" />
+                                                            Actualitzar Estat
+                                                          </Button>
+                                                        )}
+                                                    </div>
                                                 </div>
                                             ))}
                                         </div>
@@ -421,8 +468,16 @@ export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTab
             <aside className="lg:col-span-1">
                 <ActionDetailsPanel action={action} onActionUpdate={handleActionUpdate} />
             </aside>
+
+            {isStatusDialogOpen && selectedProposedAction && (
+                <UpdateActionStatusDialog
+                    isOpen={isStatusDialogOpen}
+                    setIsOpen={setIsStatusDialogOpen}
+                    proposedAction={selectedProposedAction}
+                    onSave={handleUpdateProposedActionStatus}
+                    isSubmitting={isSubmitting}
+                />
+            )}
         </div>
     )
 }
-
-    

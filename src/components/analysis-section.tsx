@@ -42,6 +42,7 @@ const analysisSchema = z.object({
       description: z.string().min(1, "La descripció és requerida."),
       responsibleUserId: z.string().min(1, "El responsable és requerit."),
       dueDate: z.date({ required_error: "La data de venciment és requerida." }),
+      status: z.enum(["Pendent", "Implementada", "Implementada Parcialment", "No Implementada"]).default("Pendent"),
     })
   ).min(1, "S'ha de proposar almenys una acció."),
   verificationResponsibleUserId: z.string().min(1, "El responsable de verificació és requerit."),
@@ -76,7 +77,7 @@ export function AnalysisSection({ action, user, isSubmitting, onSave }: Analysis
     resolver: zodResolver(analysisSchema),
     defaultValues: {
       causes: action.analysis?.causes || "",
-      proposedActions: action.analysis?.proposedActions.map(pa => ({...pa, dueDate: new Date(pa.dueDate)})) || [],
+      proposedActions: action.analysis?.proposedActions.map(pa => ({...pa, dueDate: new Date(pa.dueDate), status: pa.status || 'Pendent'})) || [],
       verificationResponsibleUserId: action.analysis?.verificationResponsibleUserId || "",
     },
   })
@@ -175,6 +176,7 @@ export function AnalysisSection({ action, user, isSubmitting, onSave }: Analysis
         description: action.description,
         responsibleUserId: '', // User must select this
         dueDate: new Date(), // Defaults to today, user must change
+        status: 'Pendent' as const
       }));
       replace(newActions);
     }
@@ -356,7 +358,7 @@ export function AnalysisSection({ action, user, isSubmitting, onSave }: Analysis
                 type="button"
                 variant="outline"
                 size="sm"
-                onClick={() => append({ description: "", responsibleUserId: "", dueDate: new Date() })}
+                onClick={() => append({ description: "", responsibleUserId: "", dueDate: new Date(), status: 'Pendent' })}
               >
                 <PlusCircle className="mr-2 h-4 w-4" />
                 {t("proposedActions.add")}
@@ -425,5 +427,3 @@ export function AnalysisSection({ action, user, isSubmitting, onSave }: Analysis
     </>
   )
 }
-
-    

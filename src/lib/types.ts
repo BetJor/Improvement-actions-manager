@@ -72,7 +72,7 @@ export interface WorkflowPlan {
   steps: WorkflowStep[];
 }
 
-export type ProposedActionStatus = 'Implementada' | 'Implementada Parcialment' | 'No Implementada';
+export type ProposedActionStatus = 'Pendent' | 'Implementada' | 'Implementada Parcialment' | 'No Implementada';
 
 export interface ProposedAction {
   id: string;
