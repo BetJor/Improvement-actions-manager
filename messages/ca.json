@@ -17,7 +17,8 @@
     "settings": "Configuració",
     "aiSettings": "Configuració IA",
     "roadmap": "Roadmap",
-    "promptGallery": "Galeria de Prompts"
+    "promptGallery": "Galeria de Prompts",
+    "userManagement": "Gestió d'Usuaris"
   },
   "ActionsPage": {
     "title": "Accions de Millora",
@@ -342,6 +343,18 @@
                 "description": "Un cop l'estructura i la seguretat estan llestes, pots començar a afegir les pàgines de contingut."
             }
         }
+    }
+  },
+  "UserManagementPage": {
+    "title": "Gestió d'Usuaris",
+    "description": "Administra els usuaris de l'aplicació, assigna rols i gestiona permisos.",
+    "addNewUser": "Afegir Nou Usuari",
+    "col": {
+      "avatar": "Avatar",
+      "name": "Nom",
+      "email": "Correu Electrònic",
+      "role": "Rol",
+      "actions": "Accions"
     }
   }
 }

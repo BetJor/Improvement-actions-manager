@@ -17,6 +17,7 @@ import PromptGalleryPage from '@/app/[locale]/prompt-gallery/page';
 import RoadmapPage from '@/app/[locale]/roadmap/page';
 import MyGroupsPage from '@/app/[locale]/my-groups/page';
 import ActionDetailPage from '@/app/[locale]/actions/[id]/page';
+import UserManagementPage from '@/app/[locale]/user-management/page';
 import { getActionById, getActionTypes, getCategories, getSubcategories, getAffectedAreas } from '@/lib/data';
 
 import { Home, ListChecks, Settings, Sparkles, Library, Route, Users } from 'lucide-react';
@@ -30,6 +31,7 @@ const pageComponentMapping: { [key: string]: React.ComponentType<any> | undefine
     '/prompt-gallery': PromptGalleryPage,
     '/roadmap': RoadmapPage,
     '/my-groups': MyGroupsPage,
+    '/user-management': UserManagementPage,
 };
 
 const getPageComponent = (path: string): React.ComponentType<any> | undefined => {

@@ -55,6 +55,7 @@ export function AppSidebar({ t }: { t: any }) {
     { href: `/${locale}/settings`, icon: Settings, label: t("settings"), isTab: true },
     { href: `/${locale}/ai-settings`, icon: Sparkles, label: t("aiSettings"), isTab: true },
     { href: `/${locale}/prompt-gallery`, icon: Library, label: t("promptGallery"), isTab: true },
+    { href: `/${locale}/user-management`, icon: Users, label: t("userManagement"), isTab: true },
   ]
 
   const aboutNavItems = [

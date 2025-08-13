@@ -17,7 +17,8 @@
     "settings": "Configuración",
     "aiSettings": "Configuración IA",
     "roadmap": "Roadmap",
-    "promptGallery": "Galería de Prompts"
+    "promptGallery": "Galería de Prompts",
+    "userManagement": "Gestión de Usuarios"
   },
   "ActionsPage": {
     "title": "Acciones de Mejora",
@@ -342,6 +343,18 @@
                 "description": "Una vez la estructura y la seguridad están listas, puedes empezar a añadir las páginas de contenido."
             }
         }
+    }
+  },
+  "UserManagementPage": {
+    "title": "Gestión de Usuarios",
+    "description": "Administra los usuarios de la aplicación, asigna roles y gestiona permisos.",
+    "addNewUser": "Añadir Nuevo Usuario",
+    "col": {
+      "avatar": "Avatar",
+      "name": "Nombre",
+      "email": "Correo Electrónico",
+      "role": "Rol",
+      "actions": "Acciones"
     }
   }
 }
