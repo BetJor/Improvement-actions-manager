@@ -62,6 +62,16 @@ interface ActionFormProps {
     t: (key: string, ...args: any) => string;
 }
 
+const ReadOnlyField = ({ label, value }: { label: string, value?: string }) => {
+    if (!value) return null;
+    return (
+        <div className="grid gap-1.5">
+            <Label className="text-muted-foreground">{label}</Label>
+            <p className="text-sm font-medium">{value}</p>
+        </div>
+    )
+}
+
 export function ActionForm({
     mode,
     initialData,
@@ -282,19 +292,33 @@ export function ActionForm({
   
   const disableForm = isSubmitting || mode === 'view';
 
-  // View mode only shows the description
   if (mode === 'view' && initialData) {
     return (
-      <Card>
-        <CardHeader>
-            <CardTitle>{t("form.description.label")}</CardTitle>
-        </CardHeader>
-        <CardContent>
-            <p className="text-muted-foreground whitespace-pre-wrap">
-                {initialData.description}
-            </p>
-        </CardContent>
-      </Card>
+        <div className="space-y-6">
+            <Card>
+                <CardHeader>
+                    <CardTitle>Detalls de l'Acció</CardTitle>
+                </CardHeader>
+                <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+                    <ReadOnlyField label="Tipus d'Acció" value={initialData.type} />
+                    <ReadOnlyField label="Categoria" value={initialData.category} />
+                    <ReadOnlyField label="Subcategoria" value={initialData.subcategory} />
+                    <ReadOnlyField label="Àrea Funcional Implicada" value={initialData.affectedAreas} />
+                    <ReadOnlyField label="Centre" value={initialData.center} />
+                    <ReadOnlyField label="Assignat A (Responsable Anàlisi)" value={initialData.assignedTo} />
+                </CardContent>
+            </Card>
+            <Card>
+                <CardHeader>
+                    <CardTitle>{t("form.description.label")}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <p className="text-muted-foreground whitespace-pre-wrap">
+                        {initialData.description}
+                    </p>
+                </CardContent>
+            </Card>
+        </div>
     )
   }
 
@@ -571,5 +595,3 @@ export function ActionForm({
     </>
   )
 }
-
-    
