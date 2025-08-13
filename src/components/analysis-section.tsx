@@ -6,8 +6,7 @@ import { useForm, useFieldArray, Controller } from "react-hook-form"
 import * as z from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useTranslations } from "next-intl"
-import { getPrompt } from "@/lib/data"
-import { users } from "@/lib/static-data"
+import { getPrompt, getUsers } from "@/lib/data"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Input } from "@/components/ui/input"
@@ -61,6 +60,9 @@ export function AnalysisSection({ action, user, isSubmitting, onSave }: Analysis
   const t = useTranslations("ActionDetailPage.analysis")
   const { toast } = useToast()
 
+  const [users, setUsers] = useState<User[]>([]);
+  const [isLoadingUsers, setIsLoadingUsers] = useState(true);
+
   // States for AI and Mic functionality
   const [isRecording, setIsRecording] = useState(false);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
@@ -83,6 +85,22 @@ export function AnalysisSection({ action, user, isSubmitting, onSave }: Analysis
     control: form.control,
     name: "proposedActions",
   })
+
+  useEffect(() => {
+    async function loadData() {
+        setIsLoadingUsers(true);
+        try {
+            const fetchedUsers = await getUsers();
+            setUsers(fetchedUsers);
+        } catch (error) {
+            console.error("Failed to load users for analysis section", error);
+            toast({ variant: "destructive", title: "Error", description: "No s'han pogut carregar els usuaris." });
+        } finally {
+            setIsLoadingUsers(false);
+        }
+    }
+    loadData();
+  }, [toast]);
 
   useEffect(() => {
     async function checkPrompts() {
@@ -182,6 +200,10 @@ export function AnalysisSection({ action, user, isSubmitting, onSave }: Analysis
     onSave(analysisData)
   }
 
+  if (isLoadingUsers) {
+    return <div className="flex justify-center items-center h-48"><Loader2 className="h-6 w-6 animate-spin"/></div>
+  }
+
   return (
     <>
     <Card>
@@ -274,7 +296,7 @@ export function AnalysisSection({ action, user, isSubmitting, onSave }: Analysis
                                     </FormControl>
                                     <SelectContent>
                                         {users.map((user) => (
-                                            <SelectItem key={user.id} value={user.id}>{user.name}</SelectItem>
+                                            <SelectItem key={user.id} value={user.id!}>{user.name}</SelectItem>
                                         ))}
                                     </SelectContent>
                                 </Select>
@@ -355,7 +377,7 @@ export function AnalysisSection({ action, user, isSubmitting, onSave }: Analysis
                         </FormControl>
                         <SelectContent>
                             {users.map((user) => (
-                                <SelectItem key={user.id} value={user.id}>{user.name}</SelectItem>
+                                <SelectItem key={user.id} value={user.id!}>{user.name}</SelectItem>
                             ))}
                         </SelectContent>
                     </Select>

@@ -6,8 +6,8 @@ import { useForm } from "react-hook-form"
 import * as z from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useTranslations } from "next-intl"
-import { getActionById, updateAction } from "@/lib/data"
-import type { ImprovementAction } from "@/lib/types"
+import { getActionById, updateAction, getUsers } from "@/lib/data"
+import type { ImprovementAction, User } from "@/lib/types"
 import { ActionForm } from "@/components/action-form"
 import { Button } from "@/components/ui/button"
 import { AnalysisSection } from "@/components/analysis-section"
@@ -25,7 +25,6 @@ import { useToast } from "@/hooks/use-toast"
 import { useAuth } from "@/hooks/use-auth"
 import type { ProposedActionStatus } from "@/lib/types"
 import { useRouter } from "next/navigation"
-import { users } from "@/lib/static-data"
 
 
 interface ActionDetailsTabProps {
@@ -43,6 +42,15 @@ export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTab
     const [action, setAction] = useState<ImprovementAction>(initialAction);
     const [isEditing, setIsEditing] = useState(false)
     const [isSubmitting, setIsSubmitting] = useState(false)
+    const [users, setUsers] = useState<User[]>([]);
+
+    useEffect(() => {
+      async function loadUsers() {
+        const fetchedUsers = await getUsers();
+        setUsers(fetchedUsers);
+      }
+      loadUsers();
+    }, []);
 
     // Aquest efecte assegura que si la propietat inicial canvia (p.ex. per una navegació SPA),
     // l'estat local s'actualitza.
@@ -235,7 +243,6 @@ export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTab
                                 mode={isEditing ? 'edit' : 'view'}
                                 initialData={action}
                                 masterData={masterData}
-                                isLoadingMasterData={!masterData}
                                 isSubmitting={isSubmitting}
                                 onSubmit={handleEditSubmit}
                                 onCancel={() => setIsEditing(false)}

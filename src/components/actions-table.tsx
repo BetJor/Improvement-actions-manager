@@ -1,7 +1,7 @@
 
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import {
   Table,
   TableHeader,
@@ -19,11 +19,11 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Button } from "@/components/ui/button"
 import { ActionStatusBadge } from "./action-status-badge"
-import type { ImprovementAction, ImprovementActionStatus, ImprovementActionType } from "@/lib/types"
+import type { ImprovementAction, ImprovementActionStatus, ImprovementActionType, User } from "@/lib/types"
 import { ArrowUpDown, ChevronDown, GanttChartSquare } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useTabs } from "@/hooks/use-tabs"
-import { getActionById, getActionTypes, getCategories, getSubcategories, getAffectedAreas } from "@/lib/data"
+import { getActionById, getActionTypes, getCategories, getSubcategories, getAffectedAreas, getUsers } from "@/lib/data"
 import { ActionDetailsTab } from "@/components/action-details-tab"
 
 interface ActionsTableProps {
@@ -40,7 +40,7 @@ export function ActionsTable({ actions }: ActionsTableProps) {
   const [statusFilter, setStatusFilter] = useState<Set<ImprovementActionStatus>>(new Set())
   const [typeFilter, setTypeFilter] = useState<Set<ImprovementActionType>>(new Set())
   const [sortConfig, setSortConfig] = useState<{ key: SortKey; direction: 'asc' | 'desc' } | null>(null)
-
+  
   const allStatuses = useMemo(() => Array.from(new Set(actions.map(a => a.status))), [actions])
   const allTypes = useMemo(() => Array.from(new Set(actions.map(a => a.type))), [actions])
 

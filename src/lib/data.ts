@@ -2,13 +2,14 @@
 
 
 
+
 import type { ImprovementAction, User, UserGroup, ImprovementActionType, ActionUserInfo, ActionCategory, ActionSubcategory, AffectedArea, MasterDataItem, WorkflowPlan, GalleryPrompt, ActionAttachment, ResponsibilityRole, Center } from './types';
 import { subDays, format, addDays } from 'date-fns';
 import { db, storage } from './firebase';
 import { collection, getDocs, doc, getDoc, addDoc, query, orderBy, limit, writeBatch, updateDoc, deleteDoc, setDoc, Timestamp, arrayUnion, where } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { planActionWorkflow } from '@/ai/flows/planActionWorkflow';
-import { users } from './static-data';
+import { users as mockUsers } from './static-data';
 
 export const getActionTypes = async (): Promise<ImprovementActionType[]> => {
   const typesCol = collection(db, 'actionTypes');
@@ -74,6 +75,8 @@ export const getActions = async (): Promise<ImprovementAction[]> => {
     const actionsCol = collection(db, 'actions');
     const actionsSnapshot = await getDocs(query(actionsCol, orderBy("actionId", "desc")));
 
+    const users = await getUsers();
+
     return actionsSnapshot.docs.map(doc => {
         const data = doc.data();
 
@@ -86,10 +89,13 @@ export const getActions = async (): Promise<ImprovementAction[]> => {
                 return pa;
             });
         }
+
+        const responsibleUser = users.find(u => u.id === data.responsibleGroupId);
         
         return { 
           id: doc.id,
           ...data,
+          responsibleUser: responsibleUser ? { id: responsibleUser.id, name: responsibleUser.name, avatar: responsibleUser.avatar } : undefined,
         } as ImprovementAction;
     });
 }
@@ -97,6 +103,7 @@ export const getActions = async (): Promise<ImprovementAction[]> => {
 export const getActionById = async (id: string): Promise<ImprovementAction | null> => {
     const actionDocRef = doc(db, 'actions', id);
     const actionDocSnap = await getDoc(actionDocRef);
+    const users = await getUsers();
 
     if (actionDocSnap.exists()) {
         const data = actionDocSnap.data();
@@ -141,7 +148,6 @@ export interface CreateActionData {
     assignedTo: string;
     description: string;
     typeId: string;
-    responsibleGroupId: string;
     creator: ActionUserInfo;
     status: 'Borrador' | 'Pendiente Análisis';
     originalActionId?: string; // The Firestore ID
@@ -195,7 +201,7 @@ export async function createAction(data: CreateActionData, masterData: any): Pro
       centerId: data.centerId,
       assignedTo: data.assignedTo,
       creator: data.creator,
-      responsibleGroupId: data.responsibleGroupId,
+      responsibleGroupId: data.assignedTo,
       creationDate: creationDate,
       analysisDueDate: '', 
       implementationDueDate: '',
@@ -214,7 +220,7 @@ export async function createAction(data: CreateActionData, masterData: any): Pro
             actionType: typeName,
             category: categoryName,
             affectedAreaName: affectedAreaName,
-            responsibleGroupId: data.responsibleGroupId,
+            responsibleGroupId: data.assignedTo,
             creationDate: creationDate,
         });
 
@@ -251,7 +257,7 @@ export async function updateAction(actionId: string, data: any, masterData?: any
             title: data.title,
             description: data.description,
             assignedTo: data.assignedTo,
-            responsibleGroupId: data.responsibleGroupId,
+            responsibleGroupId: data.assignedTo,
             category: masterData.categories.find((c: any) => c.id === data.category)?.name || data.category,
             categoryId: data.category,
             subcategory: masterData.subcategories.find((s: any) => s.id === data.subcategory)?.name || data.subcategory,
@@ -288,7 +294,6 @@ export async function updateAction(actionId: string, data: any, masterData?: any
                     centerId: originalAction.centerId,
                     assignedTo: originalAction.assignedTo,
                     typeId: originalAction.typeId,
-                    responsibleGroupId: originalAction.responsibleGroupId,
                     creator: data.closure.closureResponsible, // The closer is the creator of the new action
                     status: 'Borrador', // New BIS action starts as a draft
                     originalActionId: originalAction.id,
@@ -414,4 +419,30 @@ export async function uploadFileAndUpdateAction(actionId: string, file: File, us
   await updateDoc(actionDocRef, {
     attachments: arrayUnion(newAttachment),
   });
+}
+
+// --- CRUD for Users ---
+export async function getUsers(): Promise<User[]> {
+  const usersCol = collection(db, 'users');
+  const snapshot = await getDocs(query(usersCol, orderBy("name")));
+  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
+}
+
+export async function addUser(user: Omit<User, 'id'>): Promise<string> {
+    // Note: In a real app, you'd likely create the user in Firebase Auth first,
+    // and use the resulting UID as the document ID here.
+    const collectionRef = collection(db, 'users');
+    const docRef = await addDoc(collectionRef, user);
+    return docRef.id;
+}
+
+export async function updateUser(userId: string, user: Partial<Omit<User, 'id'>>): Promise<void> {
+    const docRef = doc(db, 'users', userId);
+    await updateDoc(docRef, user);
+}
+
+export async function deleteUser(userId: string): Promise<void> {
+    // Note: In a real app, you should also handle deleting the user from Firebase Auth.
+    const docRef = doc(db, 'users', userId);
+    await deleteDoc(docRef);
 }
