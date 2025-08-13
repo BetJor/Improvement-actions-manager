@@ -226,6 +226,14 @@ export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTab
             setIsSubmitting(false);
         }
     };
+    
+    if (!action) {
+        return (
+            <div className="flex h-full w-full items-center justify-center">
+                <Loader2 className="h-6 w-6 animate-spin" />
+            </div>
+        );
+    }
 
     const isAnalysisTabDisabled = action?.status === 'Borrador';
     const isVerificationTabDisabled = action?.status === 'Borrador' || action?.status === 'Pendiente Análisis';
