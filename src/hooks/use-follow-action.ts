@@ -5,7 +5,6 @@ import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { toggleFollowAction } from "@/lib/data";
 import type { ImprovementAction } from "@/lib/types";
-import { useTranslations } from "next-intl";
 import React from "react";
 
 export function useFollowAction(
@@ -14,7 +13,6 @@ export function useFollowAction(
 ) {
     const { user } = useAuth();
     const { toast } = useToast();
-    const t = useTranslations("Actions.table.follow");
 
     const handleToggleFollow = async (actionId: string, e?: React.MouseEvent) => {
         e?.stopPropagation();
@@ -37,16 +35,12 @@ export function useFollowAction(
             })
         );
         
-        toast({
-            title: isNowFollowing ? t("follow") : t("unfollow"),
-            description: `Ara ${isNowFollowing ? 'segueixes' : 'no segueixes'} aquesta acció.`,
-        });
-
         try {
             await toggleFollowAction(actionId, user.id);
         } catch (error) {
             console.error("Failed to toggle follow status", error);
-            toast({
+            // Optionally, show a toast on error
+             toast({
                 variant: "destructive",
                 title: "Error",
                 description: "No s'ha pogut actualitzar l'estat de seguiment.",
@@ -55,6 +49,7 @@ export function useFollowAction(
             setActions(prevActions => 
                 prevActions.map(action => {
                     if (action.id === actionId) {
+                        // Revert to the original follower state by finding it in the initial actions array
                         return { ...action, followers: actions.find(a => a.id === actionId)?.followers };
                     }
                     return action;
