@@ -127,8 +127,8 @@ export function DashboardClient({ actions, assignedActions }: DashboardClientPro
   const widgets: { [key: string]: React.ReactNode } = {
     pendingActions: (
       <Card className="col-span-full xl:col-span-2">
-        <CardHeader><CardTitle>{t("myPendingActions.title")}</CardTitle><CardDescription>{t("myPendingActions.description")}</CardDescription></CardHeader>
-        <CardContent>
+        <CardHeader><CardTitle>{t("myPendingActions.title")}</CardTitle><CardDescription className="min-h-[40px]">{t("myPendingActions.description")}</CardDescription></CardHeader>
+        <CardContent className="min-h-[120px]">
             {assignedActions.length > 0 ? (
                 <div className="space-y-4">
                     {assignedActions.map(action => (
@@ -157,8 +157,8 @@ export function DashboardClient({ actions, assignedActions }: DashboardClientPro
     ),
     followedActions: (
       <Card className="col-span-full xl:col-span-2">
-        <CardHeader><CardTitle>{t("followedActions.title")}</CardTitle><CardDescription>{t("followedActions.description")}</CardDescription></CardHeader>
-        <CardContent>
+        <CardHeader><CardTitle>{t("followedActions.title")}</CardTitle><CardDescription className="min-h-[40px]">{t("followedActions.description")}</CardDescription></CardHeader>
+        <CardContent className="min-h-[120px]">
             {followedActions.length > 0 ? (
                 <div className="space-y-4">
                     {followedActions.map(action => (
