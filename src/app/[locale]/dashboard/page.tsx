@@ -11,12 +11,13 @@ import { useAuth } from '@/hooks/use-auth';
 
 export default function DashboardPage() {
   const t = useTranslations("Dashboard");
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [actions, setActions] = useState<ImprovementAction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     async function loadData() {
+      if (authLoading) return; // Wait for auth to be ready
       setIsLoading(true);
       try {
         const fetchedActions = await getActions();
@@ -28,7 +29,7 @@ export default function DashboardPage() {
       }
     }
     loadData();
-  }, []);
+  }, [authLoading]);
   
   const assignedActions = useMemo(() => {
     if (!user || !actions) return [];
@@ -67,7 +68,7 @@ export default function DashboardPage() {
     chartLabel: t("chartLabel"),
   }
 
-  if (isLoading) {
+  if (isLoading || authLoading) {
     return <div className="flex h-full w-full items-center justify-center"><Loader2 className="h-6 w-6 animate-spin" /></div>
   }
 

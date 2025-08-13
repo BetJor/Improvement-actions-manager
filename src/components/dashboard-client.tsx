@@ -1,6 +1,25 @@
 
 "use client"
 
+import React, { useState, useMemo, useEffect } from 'react';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import { useAuth } from '@/hooks/use-auth';
 import type { ImprovementAction } from "@/lib/types"
 import {
   Card,
@@ -17,14 +36,13 @@ import {
   ChartLegendContent,
 } from "@/components/ui/chart"
 import { Bar, BarChart, XAxis, YAxis, Pie, PieChart, Cell } from "recharts"
-import { Activity, CheckCircle, FileText, ListTodo, GanttChartSquare } from "lucide-react"
+import { Activity, CheckCircle, FileText, ListTodo, GanttChartSquare, GripVertical } from "lucide-react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "./ui/table"
 import { ActionStatusBadge } from "./action-status-badge"
 import { Button } from "./ui/button"
 import { useTabs } from "@/hooks/use-tabs"
 import { getActionById, getActionTypes, getCategories, getCenters, getResponsibilityRoles, getSubcategories, getAffectedAreas } from "@/lib/data"
 import { ActionDetailsTab } from "./action-details-tab"
-
 
 const COLORS = {
   Borrador: "hsl(var(--chart-5))",
@@ -37,220 +55,183 @@ const COLORS = {
 interface DashboardClientProps {
     actions: ImprovementAction[];
     assignedActions: ImprovementAction[];
-    t: {
-        title: string;
-        totalActions: string;
-        activeActions: string;
-        finalizedActions: string;
-        drafts: string;
-        actionsByStatus: {
-            title: string;
-            description: string;
-        };
-        actionsByType: {
-            title: string;
-            description: string;
-        };
-        myPendingActions: {
-          title: string;
-          description: string;
-          noActions: string;
-          col: {
-            id: string;
-            title: string;
-            status: string;
-          }
-        };
-        chartLabel: string;
-    };
+    t: any;
 }
+
+const defaultLayout = ["stats", "pendingActions", "charts"];
+
+function SortableItem({ id, children }: { id: string, children: React.ReactNode }) {
+    const {
+      attributes,
+      listeners,
+      setNodeRef,
+      transform,
+      transition,
+    } = useSortable({id});
+    
+    const style = {
+      transform: CSS.Transform.toString(transform),
+      transition,
+    };
+    
+    return (
+      <div ref={setNodeRef} style={style} className="relative">
+        <Button variant="ghost" size="icon" {...attributes} {...listeners} className="absolute top-2 right-2 cursor-grab h-8 w-8 text-muted-foreground">
+           <GripVertical className="h-5 w-5" />
+        </Button>
+        {children}
+      </div>
+    );
+}
+
 
 export function DashboardClient({ actions, assignedActions, t }: DashboardClientProps) {
   const { openTab } = useTabs();
+  const { user, updateDashboardLayout } = useAuth();
+  const [items, setItems] = useState<string[]>(user?.dashboardLayout || defaultLayout);
+  
+  useEffect(() => {
+    // Sync with user layout if it changes (e.g. on login)
+    setItems(user?.dashboardLayout || defaultLayout);
+  }, [user?.dashboardLayout]);
+
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  function handleDragEnd(event: DragEndEvent) {
+    const {active, over} = event;
+    
+    if (over && active.id !== over.id) {
+      setItems((currentItems) => {
+        const oldIndex = currentItems.indexOf(active.id as string);
+        const newIndex = currentItems.indexOf(over.id as string);
+        const newOrder = arrayMove(currentItems, oldIndex, newIndex);
+        
+        // Persist the new order
+        updateDashboardLayout(newOrder);
+
+        return newOrder;
+      });
+    }
+  }
+
+  const handleOpenAction = (e: React.MouseEvent, action: ImprovementAction) => {
+    e.preventDefault();
+    const actionLoader = async () => {
+      const actionData = await getActionById(action.id);
+      if (!actionData) throw new Error("Action not found");
+      const [types, cats, subcats, areas, centers, roles] = await Promise.all([
+          getActionTypes(), getCategories(), getSubcategories(), getAffectedAreas(), getCenters(), getResponsibilityRoles(),
+      ]);
+      const masterData = { actionTypes: types, categories: cats, subcategories: subcats, affectedAreas: areas, centers: centers, responsibilityRoles: roles };
+      return <ActionDetailsTab initialAction={actionData} masterData={masterData} />;
+    };
+    openTab({ path: `/actions/${action.id}`, title: `Acció ${action.actionId}`, icon: GanttChartSquare, isClosable: true, loader: actionLoader });
+  }
 
   const stats = {
     total: actions.length,
     pending: actions.filter(a => a.status !== 'Finalizada' && a.status !== 'Borrador').length,
     finalized: actions.filter(a => a.status === 'Finalizada').length,
     drafts: actions.filter(a => a.status === 'Borrador').length,
-  }
+  };
 
-  const statusDistribution = (() => {
+  const statusDistribution = useMemo(() => {
     const counts = actions.reduce((acc, action) => {
       acc[action.status] = (acc[action.status] || 0) + 1
       return acc
     }, {} as Record<string, number>)
     return Object.entries(counts).map(([name, value]) => ({ name, value }))
-  })();
+  }, [actions]);
 
-  const typeDistribution = (() => {
+  const typeDistribution = useMemo(() => {
     const counts = actions.reduce((acc, action) => {
       acc[action.type] = (acc[action.type] || 0) + 1
       return acc
     }, {} as Record<string, number>)
     return Object.entries(counts).map(([name, value]) => ({ name, value }))
-  })();
+  }, [actions]);
   
-  const chartConfig = {
+  const chartConfig = useMemo(() => ({
     value: { label: t.chartLabel },
     ...Object.keys(COLORS).reduce((acc, key) => {
       acc[key] = { label: key, color: COLORS[key as keyof typeof COLORS] };
       return acc;
     }, {} as any)
+  }), [t.chartLabel]);
+
+  const widgets: { [key: string]: React.ReactNode } = {
+    stats: (
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <Card><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">{t.totalActions}</CardTitle><ListTodo className="h-4 w-4 text-muted-foreground" /></CardHeader><CardContent><div className="text-2xl font-bold">{stats.total}</div></CardContent></Card>
+        <Card><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">{t.activeActions}</CardTitle><Activity className="h-4 w-4 text-muted-foreground" /></CardHeader><CardContent><div className="text-2xl font-bold">{stats.pending}</div></CardContent></Card>
+        <Card><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">{t.finalizedActions}</CardTitle><CheckCircle className="h-4 w-4 text-muted-foreground" /></CardHeader><CardContent><div className="text-2xl font-bold">{stats.finalized}</div></CardContent></Card>
+        <Card><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">{t.drafts}</CardTitle><FileText className="h-4 w-4 text-muted-foreground" /></CardHeader><CardContent><div className="text-2xl font-bold">{stats.drafts}</div></CardContent></Card>
+      </div>
+    ),
+    pendingActions: (
+      <Card className="col-span-full">
+        <CardHeader><CardTitle>{t.myPendingActions.title}</CardTitle><CardDescription>{t.myPendingActions.description}</CardDescription></CardHeader>
+        <CardContent>
+          <Table><TableHeader><TableRow><TableHead>{t.myPendingActions.col.id}</TableHead><TableHead>{t.myPendingActions.col.title}</TableHead><TableHead>{t.myPendingActions.col.status}</TableHead></TableRow></TableHeader>
+            <TableBody>
+              {assignedActions.length > 0 ? (
+                assignedActions.map((action) => (
+                  <TableRow key={action.id}>
+                    <TableCell><Button variant="link" asChild className="p-0 h-auto"><a href={`/actions/${action.id}`} onClick={(e) => handleOpenAction(e, action)}>{action.actionId}</a></Button></TableCell>
+                    <TableCell>{action.title}</TableCell>
+                    <TableCell><ActionStatusBadge status={action.status} /></TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow><TableCell colSpan={3} className="text-center h-24">{t.myPendingActions.noActions}</TableCell></TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+    ),
+    charts: (
+        <div className="grid gap-4 md:grid-cols-2">
+            <Card>
+            <CardHeader><CardTitle>{t.actionsByStatus.title}</CardTitle><CardDescription>{t.actionsByStatus.description}</CardDescription></CardHeader>
+            <CardContent>
+                <ChartContainer config={chartConfig} className="min-h-[200px] w-full">
+                <BarChart data={statusDistribution} layout="vertical" margin={{ left: 20 }}><XAxis type="number" hide /><YAxis dataKey="name" type="category" tickLine={false} axisLine={false} width={150} /><ChartTooltip content={<ChartTooltipContent />} /><Bar dataKey="value" layout="vertical" radius={5}>{statusDistribution.map((entry, index) => (<Cell key={`cell-${index}`} fill={COLORS[entry.name as keyof typeof COLORS] || '#8884d8'} />))}</Bar></BarChart>
+                </ChartContainer>
+            </CardContent>
+            </Card>
+            <Card>
+            <CardHeader><CardTitle>{t.actionsByType.title}</CardTitle><CardDescription>{t.actionsByType.description}</CardDescription></CardHeader>
+            <CardContent>
+                <ChartContainer config={chartConfig} className="min-h-[200px] w-full">
+                <PieChart><ChartTooltip content={<ChartTooltipContent />} /><Pie data={typeDistribution} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} fill="hsl(var(--primary))" label>{typeDistribution.map((entry, index) => <Cell key={`cell-${index}`} fill={`hsl(var(--chart-${index + 1}))`} />)}</Pie><ChartLegend content={<ChartLegendContent nameKey="name" />} /></PieChart>
+                </ChartContainer>
+            </CardContent>
+            </Card>
+        </div>
+    ),
   };
-
-  const handleOpenAction = (e: React.MouseEvent, action: ImprovementAction) => {
-      e.preventDefault();
-      
-      const actionLoader = async () => {
-        const actionData = await getActionById(action.id);
-        if (!actionData) {
-            throw new Error("Action not found");
-        }
-        const [types, cats, subcats, areas, centers, roles] = await Promise.all([
-            getActionTypes(),
-            getCategories(),
-            getSubcategories(),
-            getAffectedAreas(),
-            getCenters(),
-            getResponsibilityRoles(),
-        ]);
-        const masterData = { actionTypes: types, categories: cats, subcategories: subcats, affectedAreas: areas, centers: centers, responsibilityRoles: roles };
-        return <ActionDetailsTab initialAction={actionData} masterData={masterData} />;
-      };
-
-      openTab({
-          path: `/actions/${action.id}`,
-          title: `Acció ${action.actionId}`,
-          icon: GanttChartSquare,
-          isClosable: true,
-          loader: actionLoader
-      });
-  }
 
   return (
     <div className="flex flex-col gap-6">
       <h1 className="text-3xl font-bold tracking-tight">{t.title}</h1>
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t.totalActions}</CardTitle>
-            <ListTodo className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.total}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t.activeActions}</CardTitle>
-            <Activity className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.pending}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t.finalizedActions}</CardTitle>
-            <CheckCircle className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.finalized}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t.drafts}</CardTitle>
-            <FileText className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.drafts}</div>
-          </CardContent>
-        </Card>
-      </div>
-
-       <Card className="col-span-full">
-          <CardHeader>
-            <CardTitle>{t.myPendingActions.title}</CardTitle>
-            <CardDescription>{t.myPendingActions.description}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>{t.myPendingActions.col.id}</TableHead>
-                  <TableHead>{t.myPendingActions.col.title}</TableHead>
-                  <TableHead>{t.myPendingActions.col.status}</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {assignedActions.length > 0 ? (
-                  assignedActions.map((action) => (
-                    <TableRow key={action.id}>
-                      <TableCell>
-                        <Button variant="link" asChild className="p-0 h-auto">
-                            <a href={`/actions/${action.id}`} onClick={(e) => handleOpenAction(e, action)}>{action.actionId}</a>
-                        </Button>
-                      </TableCell>
-                      <TableCell>{action.title}</TableCell>
-                      <TableCell><ActionStatusBadge status={action.status} /></TableCell>
-                    </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={3} className="text-center h-24">
-                      {t.myPendingActions.noActions}
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-
-      <div className="grid gap-4 md:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>{t.actionsByStatus.title}</CardTitle>
-            <CardDescription>{t.actionsByStatus.description}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ChartContainer config={chartConfig} className="min-h-[200px] w-full">
-              <BarChart data={statusDistribution} layout="vertical" margin={{ left: 20 }}>
-                <XAxis type="number" hide />
-                <YAxis dataKey="name" type="category" tickLine={false} axisLine={false} width={150} />
-                <ChartTooltip content={<ChartTooltipContent />} />
-                <Bar dataKey="value" layout="vertical" radius={5}>
-                  {statusDistribution.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[entry.name as keyof typeof COLORS] || '#8884d8'} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ChartContainer>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader>
-            <CardTitle>{t.actionsByType.title}</CardTitle>
-            <CardDescription>{t.actionsByType.description}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ChartContainer config={chartConfig} className="min-h-[200px] w-full">
-              <PieChart>
-                <ChartTooltip content={<ChartTooltipContent />} />
-                <Pie data={typeDistribution} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} fill="hsl(var(--primary))" label>
-                    {
-                      typeDistribution.map((entry, index) => <Cell key={`cell-${index}`} fill={`hsl(var(--chart-${index + 1}))`} />)
-                    }
-                </Pie>
-                <ChartLegend content={<ChartLegendContent nameKey="name" />} />
-              </PieChart>
-            </ChartContainer>
-          </CardContent>
-        </Card>
-      </div>
+      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+        <SortableContext items={items} strategy={verticalListSortingStrategy}>
+            <div className="flex flex-col gap-6">
+                {items.map(id => (
+                    <SortableItem key={id} id={id}>
+                        {widgets[id]}
+                    </SortableItem>
+                ))}
+            </div>
+        </SortableContext>
+      </DndContext>
     </div>
   )
 }

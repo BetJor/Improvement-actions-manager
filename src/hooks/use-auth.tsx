@@ -7,7 +7,7 @@ import { auth, firebaseApp } from '@/lib/firebase';
 import { usePathname, useRouter } from 'next/navigation';
 import { useLocale } from 'next-intl';
 import type { User } from '@/lib/types';
-import { getUserById } from '@/lib/data';
+import { getUserById, updateUser } from '@/lib/data';
 
 interface AuthContextType {
   user: User | null;
@@ -18,6 +18,7 @@ interface AuthContextType {
   stopImpersonating: () => void;
   signInWithGoogle: () => Promise<void>;
   logout: () => Promise<void>;
+  updateDashboardLayout: (layout: string[]) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -35,11 +36,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const loadFullUser = useCallback(async (fbUser: FirebaseUser | null) => {
     if (fbUser) {
-        // Check for impersonation first
         const impersonationData = sessionStorage.getItem(IMPERSONATION_KEY);
         if (impersonationData) {
             const { impersonatedUser, originalUser } = JSON.parse(impersonationData);
-            // Ensure the original user stored is the same as the current firebase user
             if (originalUser?.id === fbUser.uid) {
                 setUser(impersonatedUser);
                 setFirebaseUser(fbUser);
@@ -47,12 +46,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 setLoading(false);
                 return;
             } else {
-                // If not, clear the session storage as it's invalid
                 sessionStorage.removeItem(IMPERSONATION_KEY);
             }
         }
         
-        // No impersonation or invalid, load the normal user
         const fullUserDetails = await getUserById(fbUser.uid);
         setUser(fullUserDetails);
         setFirebaseUser(fbUser);
@@ -89,7 +86,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = async () => {
     try {
-      stopImpersonating(); // Ensure impersonation is cleared on logout
+      await stopImpersonating(); 
       await signOut(auth);
       router.push(`/${locale}/login`);
     } catch (error) {
@@ -106,17 +103,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }));
       setUser(userToImpersonate);
       setIsImpersonating(true);
-      window.location.reload(); // Refresh to apply context everywhere
+      window.location.reload(); 
     } else {
       console.error("Only admins can impersonate users.");
     }
   };
 
-  const stopImpersonating = () => {
+  const stopImpersonating = useCallback(async () => {
     sessionStorage.removeItem(IMPERSONATION_KEY);
     setIsImpersonating(false);
-    loadFullUser(auth.currentUser); // Reload the original user data
-    window.location.reload();
+    await loadFullUser(auth.currentUser); 
+    // No full reload here, just reload the user data
+    // to avoid losing state on other parts of the app
+  }, [loadFullUser]);
+  
+  const updateDashboardLayout = async (layout: string[]) => {
+      if (!user) return;
+      try {
+        await updateUser(user.id, { dashboardLayout: layout });
+        setUser({ ...user, dashboardLayout: layout }); // Update local state
+      } catch (error) {
+        console.error("Failed to update dashboard layout:", error);
+      }
   };
 
   return (
@@ -128,7 +136,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         impersonateUser,
         stopImpersonating,
         signInWithGoogle, 
-        logout 
+        logout,
+        updateDashboardLayout
     }}>
       {children}
     </AuthContext.Provider>

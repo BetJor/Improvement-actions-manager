@@ -27,6 +27,7 @@ export interface User {
   role?: 'Creator' | 'Responsible' | 'Director' | 'Committee' | 'Admin';
   avatar: string;
   email: string;
+  dashboardLayout?: string[];
 };
 
 export interface UserGroup {
