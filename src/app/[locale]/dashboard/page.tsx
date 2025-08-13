@@ -33,12 +33,23 @@ export default function DashboardPage() {
   
   const assignedActions = useMemo(() => {
     if (!user || !actions) return [];
-    
-    return actions.filter(action => 
-      action.responsibleGroupId === user.email && 
-      action.status !== 'Borrador' && 
-      action.status !== 'Finalizada'
-    );
+  
+    return actions.filter(action => {
+      // The action must not be in a final or draft state
+      const isActionActive = action.status !== 'Borrador' && action.status !== 'Finalizada';
+      if (!isActionActive) return false;
+  
+      // Condition 1: User is the main responsible for the entire action
+      const isMainResponsible = action.responsibleGroupId === user.email;
+  
+      // Condition 2: User is responsible for at least one of the proposed actions
+      const isProposedActionResponsible = 
+        action.analysis?.proposedActions?.some(
+          (pa) => pa.responsibleUserId === user.id
+        ) || false;
+  
+      return isMainResponsible || isProposedActionResponsible;
+    });
   }, [actions, user]);
 
   const translations = {
