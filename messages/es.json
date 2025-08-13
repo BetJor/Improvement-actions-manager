@@ -1,4 +1,3 @@
-
 {
   "Header": {
     "title": "Acciones de Mejora",
@@ -191,10 +190,10 @@
       "saveButton": "Guardar y Cerrar Acción"
     },
     "tabs": {
-        "details": "Detalles",
-        "causesAndProposedAction": "Causas y Acción Propuesta",
-        "implementationVerification": "Verificación de Implantación",
-        "actionClosure": "Cierre de la Acción"
+      "details": "Detalles",
+      "causesAndProposedAction": "Causas y Acción Propuesta",
+      "implementationVerification": "Verificación de Implantación",
+      "actionClosure": "Cierre de la Acción"
     },
     "comments": {
       "title": "Comentarios",
@@ -221,7 +220,7 @@
     "catalan": "Catalán",
     "spanish": "Español"
   },
-    "MyGroupsPage": {
+  "MyGroupsPage": {
     "title": "Mis Grupos",
     "description": "Estos son los grupos a los que perteneces.",
     "col": {
@@ -323,26 +322,26 @@
       }
     },
     "executionOrder": {
-        "title": "Orden de Ejecución Recomendado",
-        "description": "Para construir una aplicación de forma eficiente, te recomendamos ejecutar los prompts en la siguiente secuencia:",
-        "steps": {
-            "layout": {
-                "title": "1. Crear un Layout Dinámico con Pestañas",
-                "description": "Establece el esqueleto visual y la estructura base (menú lateral, cabecera y sistema de pestañas). Es el prerrequisito para todo lo demás."
-            },
-            "i18n": {
-                "title": "2. Integrar Soporte Multilenguaje",
-                "description": "Configura las rutas y traducciones al principio para evitar tener que refactorizar todos los enlaces más adelante."
-            },
-            "auth": {
-                "title": "3. Integrar Login con Google",
-                "description": "Añade la gestión de usuarios y protege las rutas para asegurar que solo los usuarios autenticados accedan a la aplicación."
-            },
-            "roadmap": {
-                "title": "4. Crear Página de Roadmap",
-                "description": "Una vez la estructura y la seguridad están listas, puedes empezar a añadir las páginas de contenido."
-            }
+      "title": "Orden de Ejecución Recomendado",
+      "description": "Para construir una aplicación de forma eficiente, te recomendamos ejecutar los prompts en la siguiente secuencia:",
+      "steps": {
+        "layout": {
+          "title": "1. Crear un Layout Dinámico con Pestañas",
+          "description": "Establece el esqueleto visual y la estructura base (menú lateral, cabecera y sistema de pestañas). Es el prerrequisito para todo lo demás."
+        },
+        "i18n": {
+          "title": "2. Integrar Soporte Multilenguaje",
+          "description": "Configura las rutas y traducciones al principio para evitar tener que refactorizar todos los enlaces más adelante."
+        },
+        "auth": {
+          "title": "3. Integrar Login con Google",
+          "description": "Añade la gestión de usuarios y protege las rutas para asegurar que solo los usuarios autenticados accedan a la aplicación."
+        },
+        "roadmap": {
+          "title": "4. Crear Página de Roadmap",
+          "description": "Una vez la estructura y la seguridad están listas, puedes empezar a añadir las páginas de contenido."
         }
+      }
     }
   },
   "UserManagementPage": {
@@ -355,6 +354,34 @@
       "email": "Correo Electrónico",
       "role": "Rol",
       "actions": "Acciones"
+    }
+  },
+  "BacklogPage": {
+    "title": "Backlog de Tareas",
+    "description": "Tareas de desarrollo pendientes de priorizar y planificar.",
+    "col": {
+      "id": "ID",
+      "title": "Título",
+      "description": "Descripción",
+      "priority": "Prioridad"
+    }
+  },
+  "RoadmapPage": {
+    "title": "Roadmap del Proyecto",
+    "description": "Una visión general de las fases completadas y las tareas pendientes del proyecto.",
+    "completed": {
+      "title": "Fases Completadas",
+      "description": "Las grandes metas de desarrollo que ya se han alcanzado."
+    },
+    "backlog": {
+      "title": "Backlog y Próximos Pasos",
+      "description": "Tareas pendientes de priorizar y planificar.",
+      "col": {
+        "id": "ID",
+        "title": "Título",
+        "description": "Descripción",
+        "priority": "Prioridad"
+      }
     }
   }
 }

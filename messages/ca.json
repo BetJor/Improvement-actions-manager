@@ -1,4 +1,3 @@
-
 {
   "Header": {
     "title": "Accions de Millora",
@@ -191,10 +190,10 @@
       "saveButton": "Guardar i Tancar Acció"
     },
     "tabs": {
-        "details": "Detalls",
-        "causesAndProposedAction": "Causes i Acció Proposada",
-        "implementationVerification": "Verificació d'Implantació",
-        "actionClosure": "Tancament de l'Acció"
+      "details": "Detalls",
+      "causesAndProposedAction": "Causes i Acció Proposada",
+      "implementationVerification": "Verificació d'Implantació",
+      "actionClosure": "Tancament de l'Acció"
     },
     "comments": {
       "title": "Comentaris",
@@ -323,26 +322,26 @@
       }
     },
     "executionOrder": {
-        "title": "Ordre d'Execució Recomanat",
-        "description": "Per a construir una aplicació de manera eficient, et recomanem executar els prompts en la següent seqüència:",
-        "steps": {
-            "layout": {
-                "title": "1. Crear un Layout Dinàmic amb Pestanyes",
-                "description": "Estableix l'esquelet visual i l'estructura base (menú lateral, capçalera i sistema de pestanyes). És el prerequisit per a tota la resta."
-            },
-            "i18n": {
-                "title": "2. Integrar Suport Multillenguatge",
-                "description": "Configura les rutes i traduccions al principi per a evitar haver de refactoritzar tots els enllaços més endavant."
-            },
-            "auth": {
-                "title": "3. Integrar Login amb Google",
-                "description": "Afegeix la gestió d'usuaris i protegeix les rutes per a assegurar que només els usuaris autenticats accedeixin a l'aplicació."
-            },
-            "roadmap": {
-                "title": "4. Crear Pàgina de Roadmap",
-                "description": "Un cop l'estructura i la seguretat estan llestes, pots començar a afegir les pàgines de contingut."
-            }
+      "title": "Ordre d'Execució Recomanat",
+      "description": "Per a construir una aplicació de manera eficient, et recomanem executar els prompts en la següent seqüència:",
+      "steps": {
+        "layout": {
+          "title": "1. Crear un Layout Dinàmic amb Pestanyes",
+          "description": "Estableix l'esquelet visual i l'estructura base (menú lateral, capçalera i sistema de pestanyes). És el prerequisit per a tota la resta."
+        },
+        "i18n": {
+          "title": "2. Integrar Suport Multillenguatge",
+          "description": "Configura les rutes i traduccions al principi per a evitar haver de refactoritzar tots els enllaços més endavant."
+        },
+        "auth": {
+          "title": "3. Integrar Login amb Google",
+          "description": "Afegeix la gestió d'usuaris i protegeix les rutes per a assegurar que només els usuaris autenticats accedeixin a l'aplicació."
+        },
+        "roadmap": {
+          "title": "4. Crear Pàgina de Roadmap",
+          "description": "Un cop l'estructura i la seguretat estan llestes, pots començar a afegir les pàgines de contingut."
         }
+      }
     }
   },
   "UserManagementPage": {
@@ -355,6 +354,34 @@
       "email": "Correu Electrònic",
       "role": "Rol",
       "actions": "Accions"
+    }
+  },
+  "BacklogPage": {
+    "title": "Backlog de Tasques",
+    "description": "Tasques de desenvolupament pendents de prioritzar i planificar.",
+    "col": {
+      "id": "ID",
+      "title": "Títol",
+      "description": "Descripció",
+      "priority": "Prioritat"
+    }
+  },
+  "RoadmapPage": {
+    "title": "Roadmap del Projecte",
+    "description": "Una visió general de les fases completades i les tasques pendents del projecte.",
+    "completed": {
+      "title": "Fases Completades",
+      "description": "Les grans fites de desenvolupament que ja s'han assolit."
+    },
+    "backlog": {
+      "title": "Backlog i Propers Passos",
+      "description": "Tasques pendents de prioritzar i planificar.",
+      "col": {
+        "id": "ID",
+        "title": "Títol",
+        "description": "Descripció",
+        "priority": "Prioritat"
+      }
     }
   }
 }
