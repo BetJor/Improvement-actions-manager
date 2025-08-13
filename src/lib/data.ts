@@ -55,10 +55,10 @@ export const getCenters = async (): Promise<Center[]> => {
   // }
   
   const mockCenters: Center[] = [
-    { id: 'bcn', name: 'Centre de Barcelona' },
-    { id: 'mad', name: 'Centre de Madrid' },
-    { id: 'val', name: 'Centre de València' },
-    { id: 'sev', name: 'Centre de Sevilla' },
+    { id: 'bcn', name: 'Barcelona' },
+    { id: 'mad', name: 'Madrid' },
+    { id: 'val', name: 'València' },
+    { id: 'sev', name: 'Sevilla' },
   ];
 
   return Promise.resolve(mockCenters);

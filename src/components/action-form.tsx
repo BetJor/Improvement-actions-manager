@@ -122,7 +122,7 @@ export function ActionForm({
 
   const selectedCategoryId = form.watch("category");
   const selectedActionTypeId = form.watch("typeId");
-  const selectedAffectedAreaId = form.watch("affectedAreasId");
+  const selectedCenterId = form.watch("centerId");
 
   const filteredSubcategories = useMemo(() => {
     if (!selectedCategoryId || !masterData?.subcategories) return [];
@@ -137,13 +137,10 @@ export function ActionForm({
 
   // Dynamic responsible options logic
   const responsibleOptions = useMemo(() => {
-    if (!selectedActionTypeId || !selectedAffectedAreaId || !masterData) return [];
+    if (!selectedActionTypeId || !masterData) return [];
     
     const actionType: ImprovementActionType | undefined = masterData.actionTypes.find((t: any) => t.id === selectedActionTypeId);
     if (!actionType?.possibleAnalysisRoles) return [];
-
-    const affectedArea: AffectedArea | undefined = masterData.affectedAreas.find((a: any) => a.id === selectedAffectedAreaId);
-    if (!affectedArea) return [];
 
     const options: { value: string, label: string }[] = [];
     
@@ -152,16 +149,19 @@ export function ActionForm({
       if (role) {
         if (role.type === 'Fixed' && role.email) {
           options.push({ value: role.email, label: `${role.name} (${role.email})` });
-        } else if (role.type === 'Pattern' && role.emailPattern) {
-          // Replace placeholder with the actual ID from the affected area
-          const resolvedEmail = role.emailPattern.replace('{{affectedArea.id}}', affectedArea.id!.toLowerCase());
-          options.push({ value: resolvedEmail, label: `${role.name} (${resolvedEmail})` });
+        } else if (role.type === 'Pattern' && role.emailPattern && selectedCenterId) {
+          // Replace placeholder with the actual ID from the selected center
+          const center: Center | undefined = masterData.centers.find((c: any) => c.id === selectedCenterId);
+          if (center) {
+            const resolvedEmail = role.emailPattern.replace('{{center.id}}', center.id!.toLowerCase());
+            options.push({ value: resolvedEmail, label: `${role.name} (${resolvedEmail})` });
+          }
         }
       }
     });
 
     return options;
-  }, [selectedActionTypeId, selectedAffectedAreaId, masterData]);
+  }, [selectedActionTypeId, selectedCenterId, masterData]);
 
   useEffect(() => {
     // Reset responsible person if the options change and the current value is not valid anymore
@@ -571,3 +571,5 @@ export function ActionForm({
     </>
   )
 }
+
+    

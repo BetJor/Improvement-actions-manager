@@ -167,7 +167,7 @@ function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, title, 
                 value={roleData.emailPattern || ''}
                 onChange={(e) => setFormData({ ...formData, emailPattern: e.target.value })}
                 className="col-span-3"
-                placeholder="p.ex., direccio-{{affectedAreaId}}@example.com"
+                placeholder="p.ex., direccio-{{center.id}}@example.com"
               />
             </div>
           )}
@@ -402,3 +402,5 @@ export function MasterDataManager({ data, onSave, onDelete, t, activeTab, setAct
     </>
   )
 }
+
+    
