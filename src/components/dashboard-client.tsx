@@ -69,18 +69,6 @@ function SortableItem({ id, children }: { id: string, children: React.ReactNode 
     );
 }
 
-const StatCard = ({ title, value, icon: Icon }: { title: string, value: number, icon: React.ElementType }) => (
-    <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{title}</CardTitle>
-            <Icon className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-            <div className="text-2xl font-bold">{value}</div>
-        </CardContent>
-    </Card>
-);
-
 export function DashboardClient({ actions, assignedActions }: DashboardClientProps) {
   const t = useTranslations("Dashboard");
   const { openTab } = useTabs();
@@ -93,14 +81,6 @@ export function DashboardClient({ actions, assignedActions }: DashboardClientPro
     if (!user || !actions) return [];
     return actions.filter(action => action.followers?.includes(user.id));
   }, [actions, user]);
-
-  const stats = useMemo(() => {
-      const total = actions.length;
-      const finalized = actions.filter(a => a.status === 'Finalizada').length;
-      const drafts = actions.filter(a => a.status === 'Borrador').length;
-      const active = total - finalized - drafts;
-      return { total, active, finalized, drafts };
-  }, [actions]);
 
 
   useEffect(() => {
@@ -210,13 +190,7 @@ export function DashboardClient({ actions, assignedActions }: DashboardClientPro
   return (
     <div className="flex flex-col gap-6">
       <h1 className="text-3xl font-bold tracking-tight">{t("title")}</h1>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <StatCard title={t("totalActions")} value={stats.total} icon={Inbox} />
-            <StatCard title={t("activeActions")} value={stats.active} icon={FolderClock} />
-            <StatCard title={t("finalizedActions")} value={stats.finalized} icon={CheckCircle} />
-            <StatCard title={t("drafts")} value={stats.drafts} icon={FileText} />
-        </div>
-        <div className="grid gap-4 grid-cols-1 lg:grid-cols-2 xl:grid-cols-4">
+        <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
                 <SortableContext items={items.filter(id => widgets[id])} strategy={verticalListSortingStrategy}>
                     {items.map(id => (
