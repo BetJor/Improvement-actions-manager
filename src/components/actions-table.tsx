@@ -23,7 +23,7 @@ import type { ImprovementAction, ImprovementActionStatus, ImprovementActionType,
 import { ArrowUpDown, ChevronDown, GanttChartSquare } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useTabs } from "@/hooks/use-tabs"
-import { getActionById, getActionTypes, getCategories, getSubcategories, getAffectedAreas, getCenters, getUsers } from "@/lib/data"
+import { getActionById, getActionTypes, getCategories, getSubcategories, getAffectedAreas, getCenters, getResponsibilityRoles, getUsers } from "@/lib/data"
 import { ActionDetailsTab } from "@/components/action-details-tab"
 
 interface ActionsTableProps {
@@ -110,14 +110,15 @@ export function ActionsTable({ actions }: ActionsTableProps) {
         if (!actionData) {
             throw new Error("Action not found");
         }
-        const [types, cats, subcats, areas, centers] = await Promise.all([
+        const [types, cats, subcats, areas, centers, roles] = await Promise.all([
             getActionTypes(),
             getCategories(),
             getSubcategories(),
             getAffectedAreas(),
             getCenters(),
+            getResponsibilityRoles(),
         ]);
-        const masterData = { actionTypes: types, categories: cats, subcategories: subcats, affectedAreas: areas, centers: centers };
+        const masterData = { actionTypes: types, categories: cats, subcategories: subcats, affectedAreas: areas, centers: centers, responsibilityRoles: roles };
         return <ActionDetailsTab initialAction={actionData} masterData={masterData} />;
       };
 

@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Link as LinkIcon, ExternalLink, GanttChartSquare } from "lucide-react"
 import { useTabs } from "@/hooks/use-tabs"
-import { getActionById, getActionTypes, getCategories, getSubcategories, getAffectedAreas, getCenters } from "@/lib/data"
+import { getActionById, getActionTypes, getCategories, getSubcategories, getAffectedAreas, getCenters, getResponsibilityRoles } from "@/lib/data"
 import { ActionDetailsTab } from "../action-details-tab"
 
 
@@ -29,14 +29,15 @@ export function LinkedActionSection({ action }: LinkedActionSectionProps) {
       if (!actionData) {
           throw new Error("Action not found");
       }
-      const [types, cats, subcats, areas, centers] = await Promise.all([
+      const [types, cats, subcats, areas, centers, roles] = await Promise.all([
           getActionTypes(),
           getCategories(),
           getSubcategories(),
           getAffectedAreas(),
           getCenters(),
+          getResponsibilityRoles(),
       ]);
-      const masterData = { actionTypes: types, categories: cats, subcategories: subcats, affectedAreas: areas, centers: centers };
+      const masterData = { actionTypes: types, categories: cats, subcategories: subcats, affectedAreas: areas, centers: centers, responsibilityRoles: roles };
       return <ActionDetailsTab initialAction={actionData} masterData={masterData} />;
     };
 
