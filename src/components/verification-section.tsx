@@ -48,9 +48,9 @@ export function VerificationSection({ action, user, isSubmitting, onSave }: Veri
       ...values,
       isEffective: true, // This could be another field in the form
       verificationResponsible: {
-        id: user.uid,
-        name: user.displayName || "Usuari desconegut",
-        avatar: user.photoURL || undefined,
+        id: user.id,
+        name: user.name || "Usuari desconegut",
+        avatar: user.avatar || undefined,
       },
       verificationDate: new Date().toISOString(),
     }
