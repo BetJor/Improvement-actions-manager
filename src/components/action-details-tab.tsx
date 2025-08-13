@@ -1,4 +1,5 @@
 
+
 "use client"
 
 import { useState, useEffect } from "react"
@@ -157,9 +158,9 @@ export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTab
                 closure: {
                     ...closureData,
                     closureResponsible: {
-                        id: user.uid,
-                        name: user.displayName || 'Unknown User',
-                        avatar: user.photoURL || undefined,
+                        id: user.id,
+                        name: user.name || 'Unknown User',
+                        avatar: user.avatar || undefined,
                     },
                     date: new Date().toISOString(),
                 },
@@ -189,11 +190,26 @@ export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTab
         }
     };
 
-
     const isAnalysisTabDisabled = action?.status === 'Borrador';
     const isVerificationTabDisabled = action?.status === 'Borrador' || action?.status === 'Pendiente Análisis';
     const isClosureTabDisabled = action?.status === 'Borrador' || action?.status === 'Pendiente Análisis' || action?.status === 'Pendiente Comprobación';
   
+    const isUserAuthorizedForCurrentStep = (() => {
+        if (!user || !action) return false;
+        
+        switch (action.status) {
+            case 'Pendiente Análisis':
+                return user.email === action.responsibleGroupId;
+            case 'Pendiente Comprobación':
+                return user.id === action.analysis?.verificationResponsibleUserId;
+            case 'Pendiente de Cierre':
+                // Assuming the verifier is also the closer for now. This could be a separate role.
+                return user.id === action.analysis?.verificationResponsibleUserId;
+            default:
+                return false; // No direct action for other states in this logic
+        }
+    })();
+
     const getStatusColorClass = (status?: ProposedActionStatus) => {
       if (!status) return "";
       switch (status) {
@@ -207,6 +223,18 @@ export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTab
           return "";
       }
     };
+
+    const renderReadOnlyContent = (titleKey: string, descriptionKey: string, content: React.ReactNode) => (
+        <Card>
+            <CardHeader>
+                <CardTitle>{titleKey}</CardTitle>
+                <CardDescription>{descriptionKey}</CardDescription>
+            </CardHeader>
+            <CardContent>
+                {content}
+            </CardContent>
+        </Card>
+    );
 
     return (
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
@@ -252,7 +280,7 @@ export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTab
                     </TabsContent>
 
                     <TabsContent value="analysis" className="mt-4">
-                        {action.status === 'Pendiente Análisis' && user ? (
+                        {action.status === 'Pendiente Análisis' && isUserAuthorizedForCurrentStep && user ? (
                             <AnalysisSection
                                 action={action}
                                 user={user}
@@ -300,13 +328,13 @@ export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTab
                             </Card>
                         ) : (
                             <div className="text-center text-muted-foreground py-10">
-                            <p>L'anàlisi es podrà realitzar un cop l'acció estigui en estat 'Pendent d'Anàlisi'.</p>
+                            <p>L'anàlisi es podrà realitzar un cop l'acció estigui en estat 'Pendent d'Anàlisi' i siguis el responsable assignat.</p>
                             </div>
                         )}
                     </TabsContent>
 
                     <TabsContent value="verification" className="mt-4">
-                        {action.status === 'Pendiente Comprobación' && user && action.analysis ? (
+                        {action.status === 'Pendiente Comprobación' && isUserAuthorizedForCurrentStep && user && action.analysis ? (
                             <VerificationSection
                                 action={action}
                                 user={user}
@@ -347,13 +375,13 @@ export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTab
                             </Card>
                         ) : (
                             <div className="text-center text-muted-foreground py-10">
-                                <p>La verificació es podrà realitzar un cop s'hagi completat l'anàlisi de causes.</p>
+                                <p>La verificació es podrà realitzar un cop s'hagi completat l'anàlisi de causes i siguis el responsable assignat.</p>
                             </div>
                         )}
                     </TabsContent>
 
                     <TabsContent value="closure" className="mt-4">
-                        {action.status === 'Pendiente de Cierre' && user ? (
+                        {action.status === 'Pendiente de Cierre' && isUserAuthorizedForCurrentStep && user ? (
                             <ClosureSection
                             isSubmitting={isSubmitting}
                             onSave={handleClosureSave}
@@ -380,8 +408,8 @@ export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTab
                             </CardContent>
                             </Card>
                         ) : (
-                            <div className="text-center text-muted-foreground py-10">
-                                <p>El tancament es podrà realitzar un cop s'hagi completat la verificació.</p>
+                             <div className="text-center text-muted-foreground py-10">
+                                <p>El tancament es podrà realitzar un cop s'hagi completat la verificació i siguis el responsable assignat.</p>
                             </div>
                         )}
                     </TabsContent>
