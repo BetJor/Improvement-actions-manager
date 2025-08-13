@@ -23,11 +23,11 @@ import type { ImprovementAction, ImprovementActionStatus, ImprovementActionType,
 import { ArrowUpDown, ChevronDown, GanttChartSquare, Star } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useTabs } from "@/hooks/use-tabs"
-import { getActionById, getActionTypes, getCategories, getSubcategories, getAffectedAreas, getCenters, getResponsibilityRoles, getUsers, toggleFollowAction } from "@/lib/data"
+import { getActionById, getActionTypes, getCategories, getSubcategories, getAffectedAreas, getCenters, getResponsibilityRoles, getUsers } from "@/lib/data"
 import { ActionDetailsTab } from "@/components/action-details-tab"
 import { useAuth } from "@/hooks/use-auth"
 import { cn } from "@/lib/utils"
-import { useToast } from "@/hooks/use-toast"
+import { useFollowAction } from "@/hooks/use-follow-action"
 
 interface ActionsTableProps {
   actions: ImprovementAction[]
@@ -39,9 +39,10 @@ export function ActionsTable({ actions: initialActions }: ActionsTableProps) {
   const t = useTranslations("Actions.table")
   const { openTab } = useTabs();
   const { user } = useAuth();
-  const { toast } = useToast();
-
+  
   const [actions, setActions] = useState(initialActions);
+  const { handleToggleFollow, isFollowing } = useFollowAction(actions, setActions);
+  
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState<Set<ImprovementActionStatus>>(new Set())
   const [typeFilter, setTypeFilter] = useState<Set<ImprovementActionType>>(new Set())
@@ -141,58 +142,6 @@ export function ActionsTable({ actions: initialActions }: ActionsTableProps) {
       });
   }
 
-  const handleToggleFollow = async (actionId: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (!user) return;
-
-    // Determine the current state before any updates
-    const isCurrentlyFollowing = actions.find(a => a.id === actionId)?.followers?.includes(user.id) ?? false;
-    const isNowFollowing = !isCurrentlyFollowing;
-
-    // Optimistically update the UI first for a responsive feel
-    setActions(prevActions => {
-        return prevActions.map(action => {
-            if (action.id === actionId) {
-                const newFollowers = isNowFollowing
-                    ? [...(action.followers || []), user.id]
-                    : action.followers?.filter(id => id !== user.id);
-                return { ...action, followers: newFollowers };
-            }
-            return action;
-        });
-    });
-
-    // Show the correct toast message immediately
-    toast({
-        title: isNowFollowing ? "Seguint" : "Deixant de seguir",
-        description: `Ara ${isNowFollowing ? 'segueixes' : 'no segueixes'} aquesta acció.`,
-    });
-
-    try {
-        // Then, update the backend
-        await toggleFollowAction(actionId, user.id);
-    } catch (error) {
-        console.error("Failed to toggle follow status", error);
-        toast({
-            variant: "destructive",
-            title: "Error",
-            description: "No s'ha pogut actualitzar l'estat de seguiment.",
-        });
-        // Revert the optimistic UI update on error
-        setActions(prevActions => {
-            return prevActions.map(action => {
-                if (action.id === actionId) {
-                    const revertedFollowers = isCurrentlyFollowing
-                        ? [...(action.followers || []), user.id]
-                        : action.followers?.filter(id => id !== user.id);
-                    return { ...action, followers: revertedFollowers };
-                }
-                return action;
-            });
-        });
-    }
-  };
-
 
   return (
     <div className="w-full">
@@ -269,18 +218,16 @@ export function ActionsTable({ actions: initialActions }: ActionsTableProps) {
           </TableHeader>
           <TableBody>
             {filteredAndSortedActions.length > 0 ? (
-              filteredAndSortedActions.map(action => {
-                const isFollowing = user ? action.followers?.includes(user.id) : false;
-                return (
+              filteredAndSortedActions.map(action => (
                 <TableRow key={action.id}>
                    <TableCell>
                       <Button
                         variant="ghost"
                         size="icon"
                         onClick={(e) => handleToggleFollow(action.id, e)}
-                        title={isFollowing ? t("follow.unfollow") : t("follow.follow")}
+                        title={isFollowing(action.id) ? t("follow.unfollow") : t("follow.follow")}
                       >
-                        <Star className={cn("h-4 w-4", isFollowing ? "text-yellow-400 fill-yellow-400" : "text-muted-foreground")} />
+                        <Star className={cn("h-4 w-4", isFollowing(action.id) ? "text-yellow-400 fill-yellow-400" : "text-muted-foreground")} />
                       </Button>
                     </TableCell>
                   <TableCell className="font-medium">
@@ -296,7 +243,7 @@ export function ActionsTable({ actions: initialActions }: ActionsTableProps) {
                   <TableCell>{action.responsibleUser?.name || action.responsibleGroupId}</TableCell>
                   <TableCell>{action.implementationDueDate}</TableCell>
                 </TableRow>
-              )})
+              ))
             ) : (
               <TableRow>
                 <TableCell colSpan={7} className="h-24 text-center">

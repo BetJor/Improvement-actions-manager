@@ -45,7 +45,7 @@ import { getActionById, getActionTypes, getCategories, getCenters, getResponsibi
 import { ActionDetailsTab } from "./action-details-tab"
 import { Badge } from './ui/badge';
 import { cn } from '@/lib/utils';
-import { useToast } from '@/hooks/use-toast';
+import { useFollowAction } from '@/hooks/use-follow-action';
 
 const COLORS = {
   Borrador: "hsl(var(--chart-5))",
@@ -62,7 +62,7 @@ interface DashboardClientProps {
     t: any;
 }
 
-const defaultLayout = ["pendingActions", "followedActions"];
+const defaultLayout = ["pendingActions", "followedActions", "charts"];
 
 function SortableItem({ id, children }: { id: string, children: React.ReactNode }) {
     const {
@@ -89,21 +89,36 @@ function SortableItem({ id, children }: { id: string, children: React.ReactNode 
 }
 
 
-export function DashboardClient({ actions, assignedActions, initialFollowedActions, t }: DashboardClientProps) {
+export function DashboardClient({ actions: initialActions, assignedActions: initialAssignedActions, initialFollowedActions, t }: DashboardClientProps) {
   const { openTab } = useTabs();
   const { user, updateDashboardLayout } = useAuth();
   const [items, setItems] = useState<string[]>(user?.dashboardLayout || defaultLayout);
-  const [followedActions, setFollowedActions] = useState(initialFollowedActions);
-  const { toast } = useToast();
   
+  const [allActions, setAllActions] = useState(initialActions);
+  const [assignedActions, setAssignedActions] = useState(initialAssignedActions);
+  const [followedActions, setFollowedActions] = useState(initialFollowedActions);
+
+  const { handleToggleFollow: handleFollowAssigned, isFollowing: isFollowingAssigned } = useFollowAction(assignedActions, setAssignedActions);
+  const { handleToggleFollow: handleFollowGeneral, isFollowing: isFollowingGeneral } = useFollowAction(allActions, setAllActions);
+
   useEffect(() => {
     // Sync with user layout if it changes (e.g. on login)
     setItems(user?.dashboardLayout || defaultLayout);
   }, [user?.dashboardLayout]);
 
   useEffect(() => {
+    setAllActions(initialActions);
+    setAssignedActions(initialAssignedActions);
     setFollowedActions(initialFollowedActions);
-  }, [initialFollowedActions]);
+  }, [initialActions, initialAssignedActions, initialFollowedActions]);
+  
+  useEffect(() => {
+    // When the list of all actions is updated (e.g. an action is followed/unfollowed elsewhere),
+    // update the followedActions list.
+    if(user) {
+        setFollowedActions(allActions.filter(a => a.followers?.includes(user.id)));
+    }
+  }, [allActions, user]);
 
 
   const sensors = useSensors(
@@ -145,20 +160,20 @@ export function DashboardClient({ actions, assignedActions, initialFollowedActio
   }
 
   const statusDistribution = useMemo(() => {
-    const counts = actions.reduce((acc, action) => {
+    const counts = allActions.reduce((acc, action) => {
       acc[action.status] = (acc[action.status] || 0) + 1
       return acc
     }, {} as Record<string, number>)
     return Object.entries(counts).map(([name, value]) => ({ name, value }))
-  }, [actions]);
+  }, [allActions]);
 
   const typeDistribution = useMemo(() => {
-    const counts = actions.reduce((acc, action) => {
+    const counts = allActions.reduce((acc, action) => {
       acc[action.type] = (acc[action.type] || 0) + 1
       return acc
     }, {} as Record<string, number>)
     return Object.entries(counts).map(([name, value]) => ({ name, value }))
-  }, [actions]);
+  }, [allActions]);
   
   const chartConfig = useMemo(() => ({
     value: { label: t.chartLabel },
@@ -168,31 +183,11 @@ export function DashboardClient({ actions, assignedActions, initialFollowedActio
     }, {} as any)
   }), [t.chartLabel]);
 
-  const handleToggleFollow = async (actionId: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (!user) return;
-  
-    // Optimistically remove from the followed list
-    setFollowedActions(prevActions => prevActions.filter(action => action.id !== actionId));
-  
-    toast({
-        title: "Deixant de seguir",
-        description: "Has deixat de seguir aquesta acció.",
-    });
-  
-    try {
-        await toggleFollowAction(actionId, user.id);
-    } catch (error) {
-        console.error("Failed to toggle follow status", error);
-        toast({
-            variant: "destructive",
-            title: "Error",
-            description: "No s'ha pogut actualitzar l'estat de seguiment.",
-        });
-        // On error, refresh the list from the server to revert the change
-        const refreshedFollowedActions = await getFollowedActions(user.id);
-        setFollowedActions(refreshedFollowedActions);
-    }
+  const handleUnfollowFromDashboard = (actionId: string, e: React.MouseEvent) => {
+    // This function will be used by both tables, so it needs to update both lists.
+    handleFollowGeneral(actionId, e);
+    handleFollowAssigned(actionId, e);
+    setFollowedActions(prev => prev.filter(action => action.id !== actionId));
   };
 
 
@@ -201,18 +196,28 @@ export function DashboardClient({ actions, assignedActions, initialFollowedActio
       <Card className="col-span-full">
         <CardHeader><CardTitle>{t.myPendingActions.title}</CardTitle><CardDescription>{t.myPendingActions.description}</CardDescription></CardHeader>
         <CardContent>
-          <Table><TableHeader><TableRow><TableHead>{t.myPendingActions.col.id}</TableHead><TableHead>{t.myPendingActions.col.title}</TableHead><TableHead>{t.myPendingActions.col.status}</TableHead></TableRow></TableHeader>
+          <Table><TableHeader><TableRow><TableHead className="w-12"></TableHead><TableHead>{t.myPendingActions.col.id}</TableHead><TableHead>{t.myPendingActions.col.title}</TableHead><TableHead>{t.myPendingActions.col.status}</TableHead></TableRow></TableHeader>
             <TableBody>
               {assignedActions.length > 0 ? (
                 assignedActions.map((action) => (
                   <TableRow key={action.id}>
+                    <TableCell>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={(e) => handleUnfollowFromDashboard(action.id, e)}
+                        title={isFollowingAssigned(action.id) ? t.followedActions.unfollow : "Seguir acció"}
+                      >
+                        <Star className={cn("h-4 w-4", isFollowingAssigned(action.id) ? "text-yellow-400 fill-yellow-400" : "text-muted-foreground")} />
+                      </Button>
+                    </TableCell>
                     <TableCell><Button variant="link" asChild className="p-0 h-auto"><a href={`/actions/${action.id}`} onClick={(e) => handleOpenAction(e, action)}>{action.actionId}</a></Button></TableCell>
                     <TableCell>{action.title}</TableCell>
                     <TableCell><ActionStatusBadge status={action.status} /></TableCell>
                   </TableRow>
                 ))
               ) : (
-                <TableRow><TableCell colSpan={3} className="text-center h-24">{t.myPendingActions.noActions}</TableCell></TableRow>
+                <TableRow><TableCell colSpan={4} className="text-center h-24">{t.myPendingActions.noActions}</TableCell></TableRow>
               )}
             </TableBody>
           </Table>
@@ -232,7 +237,7 @@ export function DashboardClient({ actions, assignedActions, initialFollowedActio
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={(e) => handleToggleFollow(action.id, e)}
+                        onClick={(e) => handleUnfollowFromDashboard(action.id, e)}
                         title={t.followedActions.unfollow}
                       >
                         <Star className={cn("h-4 w-4 text-yellow-400 fill-yellow-400")} />

@@ -15,7 +15,7 @@ import { AnalysisSection } from "@/components/analysis-section"
 import { VerificationSection } from "@/components/verification-section"
 import { ClosureSection } from "@/components/closure-section"
 import { ActionDetailsPanel } from "@/components/action-details-panel"
-import { Loader2, FileEdit, Edit } from "lucide-react"
+import { Loader2, FileEdit, Edit, Star } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Separator } from "@/components/ui/separator"
@@ -27,6 +27,7 @@ import { useAuth } from "@/hooks/use-auth"
 import type { ProposedActionStatus } from "@/lib/types"
 import { useRouter } from "next/navigation"
 import { UpdateActionStatusDialog } from "./update-action-status-dialog"
+import { useFollowAction } from "@/hooks/use-follow-action"
 
 
 interface ActionDetailsTabProps {
@@ -37,6 +38,7 @@ interface ActionDetailsTabProps {
 export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTabProps) {
     const t = useTranslations("Actions.detail")
     const tForm = useTranslations("Actions.new")
+    const tActionsTable = useTranslations("Actions.table")
     const { toast } = useToast()
     const router = useRouter();
     const { user } = useAuth()
@@ -47,6 +49,15 @@ export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTab
     const [users, setUsers] = useState<User[]>([]);
     const [isStatusDialogOpen, setIsStatusDialogOpen] = useState(false);
     const [selectedProposedAction, setSelectedProposedAction] = useState<any>(null);
+    
+    const { isFollowing, handleToggleFollow } = useFollowAction(
+      action ? [action] : [],
+      (updatedActions) => {
+        if (updatedActions.length > 0) {
+          setAction(updatedActions[0]);
+        }
+      }
+    );
 
 
     useEffect(() => {
@@ -57,8 +68,8 @@ export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTab
       loadUsers();
     }, []);
 
-    // Aquest efecte assegura que si la propietat inicial canvia (p.ex. per una navegació SPA),
-    // l'estat local s'actualitza.
+    // This effect ensures that if the initial prop changes (e.g., due to SPA navigation),
+    // the local state is updated.
     useEffect(() => {
         setAction(initialAction);
     }, [initialAction]);
@@ -179,7 +190,7 @@ export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTab
             });
     
             // Redirect or refresh
-            router.push('/actions');
+            router.push("/actions");
             router.refresh();
     
         } catch (error) {
@@ -268,8 +279,17 @@ export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTab
       
             {/* Main Content */}
             <div className="lg:col-span-3 flex flex-col gap-6">
-                <header>
+                <header className="flex items-center gap-4">
                     <h1 className="text-3xl font-bold tracking-tight">{action.actionId}: {action.title}</h1>
+                     <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={(e) => handleToggleFollow(action.id, e)}
+                        title={isFollowing(action.id) ? tActionsTable("follow.unfollow") : tActionsTable("follow.follow")}
+                        className="h-8 w-8"
+                      >
+                        <Star className={cn("h-5 w-5", isFollowing(action.id) ? "text-yellow-400 fill-yellow-400" : "text-muted-foreground")} />
+                      </Button>
                 </header>
 
                 <Tabs defaultValue="details" className="w-full">
