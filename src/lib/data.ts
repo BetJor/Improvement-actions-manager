@@ -445,6 +445,33 @@ export async function getUsers(): Promise<User[]> {
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
 }
 
+export async function getUserById(userId: string): Promise<User | null> {
+    const userDocRef = doc(db, 'users', userId);
+    const userDocSnap = await getDoc(userDocRef);
+
+    if (userDocSnap.exists()) {
+        return { id: userDocSnap.id, ...userDocSnap.data() } as User;
+    }
+    // If user is not in 'users' collection, maybe they just signed up
+    // We can create a basic user profile for them
+    const authUser = auth.currentUser;
+    if (authUser && authUser.uid === userId) {
+        const newUser: User = {
+            id: authUser.uid,
+            name: authUser.displayName || 'Nou Usuari',
+            email: authUser.email || '',
+            role: 'Creator', // Default role
+            avatar: authUser.photoURL || `https://i.pravatar.cc/150?u=${authUser.uid}`
+        };
+        await setDoc(userDocRef, newUser);
+        return newUser;
+    }
+
+    console.warn(`User with ID ${userId} not found in Firestore.`);
+    return null;
+}
+
+
 export async function addUser(user: Omit<User, 'id'>): Promise<string> {
     // Note: In a real app, you'd likely create the user in Firebase Auth first,
     // and use the resulting UID as the document ID here.

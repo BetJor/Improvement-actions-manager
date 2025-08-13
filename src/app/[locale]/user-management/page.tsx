@@ -19,7 +19,7 @@ import {
 import { useTranslations } from "next-intl"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Loader2, Pencil, PlusCircle, Trash2 } from "lucide-react";
+import { Loader2, Pencil, PlusCircle, Trash2, LogIn } from "lucide-react";
 import { useEffect, useState, useCallback } from "react";
 import type { User } from "@/lib/types";
 import { getUsers, addUser, updateUser, deleteUser } from "@/lib/data";
@@ -36,10 +36,13 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import { useAuth } from "@/hooks/use-auth"
+
 
 export default function UserManagementPage() {
   const t = useTranslations("UserManagement")
   const { toast } = useToast();
+  const { user: currentUser, isAdmin, impersonateUser } = useAuth();
   const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -99,6 +102,14 @@ export default function UserManagementPage() {
         toast({ variant: "destructive", title: "Error", description: "No s'ha pogut desar l'usuari." });
     }
   };
+  
+  const handleImpersonate = (userToImpersonate: User) => {
+    impersonateUser(userToImpersonate);
+    toast({
+      title: "Suplantació iniciada",
+      description: `Ara estàs actuant com ${userToImpersonate.name}.`,
+    });
+  };
 
 
   return (
@@ -146,6 +157,11 @@ export default function UserManagementPage() {
                         <TableCell className="text-muted-foreground">{user.email}</TableCell>
                         <TableCell>{user.role}</TableCell>
                         <TableCell className="text-right">
+                             {isAdmin && currentUser?.id !== user.id && (
+                                <Button variant="ghost" size="icon" onClick={() => handleImpersonate(user)} title={`Impersonar ${user.name}`}>
+                                    <LogIn className="h-4 w-4" />
+                                </Button>
+                            )}
                             <Button variant="ghost" size="icon" onClick={() => handleEdit(user)}>
                                 <Pencil className="h-4 w-4" />
                             </Button>
