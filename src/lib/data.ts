@@ -1,8 +1,3 @@
-
-
-
-
-
 import type { ImprovementAction, User, UserGroup, ImprovementActionType, ActionUserInfo, ActionCategory, ActionSubcategory, AffectedArea, MasterDataItem, WorkflowPlan, GalleryPrompt, ActionAttachment, ResponsibilityRole, Center } from './types';
 import { subDays, format, addDays } from 'date-fns';
 import { db, storage } from './firebase';
@@ -423,9 +418,24 @@ export async function uploadFileAndUpdateAction(actionId: string, file: File, us
 
 // --- CRUD for Users ---
 export async function getUsers(): Promise<User[]> {
-  const usersCol = collection(db, 'users');
-  const snapshot = await getDocs(query(usersCol, orderBy("name")));
-  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
+    const usersCol = collection(db, 'users');
+    let snapshot = await getDocs(query(usersCol, orderBy("name")));
+
+    // If the collection is empty, populate it from static data
+    if (snapshot.empty) {
+        console.log("Users collection is empty. Populating from static data...");
+        const batch = writeBatch(db);
+        mockUsers.forEach(user => {
+            const docRef = doc(usersCol, user.id); // Use the static ID
+            batch.set(docRef, user);
+        });
+        await batch.commit();
+        // Re-fetch the data after populating
+        snapshot = await getDocs(query(usersCol, orderBy("name")));
+        console.log("Users collection populated.");
+    }
+
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
 }
 
 export async function addUser(user: Omit<User, 'id'>): Promise<string> {
