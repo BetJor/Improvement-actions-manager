@@ -1,7 +1,7 @@
 
 import type { ImprovementAction, User, UserGroup, ImprovementActionType, ActionUserInfo, ActionCategory, ActionSubcategory, AffectedArea, MasterDataItem, WorkflowPlan, GalleryPrompt, ActionAttachment, ResponsibilityRole, Center } from './types';
 import { subDays, format, addDays } from 'date-fns';
-import { db, storage } from './firebase';
+import { db, storage, auth } from './firebase';
 import { collection, getDocs, doc, getDoc, addDoc, query, orderBy, limit, writeBatch, updateDoc, deleteDoc, setDoc, Timestamp, arrayUnion, where } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { planActionWorkflow } from '@/ai/flows/planActionWorkflow';
@@ -490,3 +490,5 @@ export async function deleteUser(userId: string): Promise<void> {
     const docRef = doc(db, 'users', userId);
     await deleteDoc(docRef);
 }
+
+    
