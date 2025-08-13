@@ -37,12 +37,12 @@ import { getActionById, getActionTypes, getCategories, getCenters, getResponsibi
 import { ActionDetailsTab } from "./action-details-tab"
 import { cn } from '@/lib/utils';
 import { useFollowAction } from '@/hooks/use-follow-action';
+import { useTranslations } from 'next-intl';
 
 interface DashboardClientProps {
     actions: ImprovementAction[];
     assignedActions: ImprovementAction[];
     initialFollowedActions: ImprovementAction[];
-    t: any;
 }
 
 const defaultLayout = ["pendingActions", "followedActions"];
@@ -72,7 +72,8 @@ function SortableItem({ id, children }: { id: string, children: React.ReactNode 
 }
 
 
-export function DashboardClient({ actions: initialActions, assignedActions: initialAssignedActions, initialFollowedActions, t }: DashboardClientProps) {
+export function DashboardClient({ actions: initialActions, assignedActions: initialAssignedActions, initialFollowedActions }: DashboardClientProps) {
+  const t = useTranslations("Dashboard");
   const { openTab } = useTabs();
   const { user, updateDashboardLayout } = useAuth();
   const [items, setItems] = useState<string[]>(user?.dashboardLayout || defaultLayout);
@@ -153,9 +154,9 @@ export function DashboardClient({ actions: initialActions, assignedActions: init
   const widgets: { [key: string]: React.ReactNode } = {
     pendingActions: (
       <Card className="col-span-full">
-        <CardHeader><CardTitle>{t.myPendingActions.title}</CardTitle><CardDescription>{t.myPendingActions.description}</CardDescription></CardHeader>
+        <CardHeader><CardTitle>{t("myPendingActions.title")}</CardTitle><CardDescription>{t("myPendingActions.description")}</CardDescription></CardHeader>
         <CardContent>
-          <Table><TableHeader><TableRow><TableHead className="w-12"></TableHead><TableHead>{t.myPendingActions.col.id}</TableHead><TableHead>{t.myPendingActions.col.title}</TableHead><TableHead>{t.myPendingActions.col.status}</TableHead></TableRow></TableHeader>
+          <Table><TableHeader><TableRow><TableHead className="w-12"></TableHead><TableHead>{t("myPendingActions.col.id")}</TableHead><TableHead>{t("myPendingActions.col.title")}</TableHead><TableHead>{t("myPendingActions.col.status")}</TableHead></TableRow></TableHeader>
             <TableBody>
               {assignedActions.length > 0 ? (
                 assignedActions.map((action) => (
@@ -165,7 +166,7 @@ export function DashboardClient({ actions: initialActions, assignedActions: init
                         variant="ghost"
                         size="icon"
                         onClick={(e) => handleUnfollowFromDashboard(action.id, e)}
-                        title={isFollowingAssigned(action.id) ? t.followedActions.unfollow : "Seguir acció"}
+                        title={isFollowingAssigned(action.id) ? t("followedActions.unfollow") : "Seguir acció"}
                       >
                         <Star className={cn("h-4 w-4", isFollowingAssigned(action.id) ? "text-yellow-400 fill-yellow-400" : "text-muted-foreground")} />
                       </Button>
@@ -176,7 +177,7 @@ export function DashboardClient({ actions: initialActions, assignedActions: init
                   </TableRow>
                 ))
               ) : (
-                <TableRow><TableCell colSpan={4} className="text-center h-24">{t.myPendingActions.noActions}</TableCell></TableRow>
+                <TableRow><TableCell colSpan={4} className="text-center h-24">{t("myPendingActions.noActions")}</TableCell></TableRow>
               )}
             </TableBody>
           </Table>
@@ -185,9 +186,9 @@ export function DashboardClient({ actions: initialActions, assignedActions: init
     ),
     followedActions: (
       <Card className="col-span-full">
-        <CardHeader><CardTitle>{t.followedActions.title}</CardTitle><CardDescription>{t.followedActions.description}</CardDescription></CardHeader>
+        <CardHeader><CardTitle>{t("followedActions.title")}</CardTitle><CardDescription>{t("followedActions.description")}</CardDescription></CardHeader>
         <CardContent>
-          <Table><TableHeader><TableRow><TableHead className="w-12"></TableHead><TableHead>{t.followedActions.col.id}</TableHead><TableHead>{t.followedActions.col.title}</TableHead><TableHead>{t.followedActions.col.status}</TableHead></TableRow></TableHeader>
+          <Table><TableHeader><TableRow><TableHead className="w-12"></TableHead><TableHead>{t("followedActions.col.id")}</TableHead><TableHead>{t("followedActions.col.title")}</TableHead><TableHead>{t("followedActions.col.status")}</TableHead></TableRow></TableHeader>
             <TableBody>
               {followedActions.length > 0 ? (
                 followedActions.map((action) => (
@@ -197,7 +198,7 @@ export function DashboardClient({ actions: initialActions, assignedActions: init
                         variant="ghost"
                         size="icon"
                         onClick={(e) => handleUnfollowFromDashboard(action.id, e)}
-                        title={t.followedActions.unfollow}
+                        title={t("followedActions.unfollow")}
                       >
                         <Star className={cn("h-4 w-4 text-yellow-400 fill-yellow-400")} />
                       </Button>
@@ -208,7 +209,7 @@ export function DashboardClient({ actions: initialActions, assignedActions: init
                   </TableRow>
                 ))
               ) : (
-                <TableRow><TableCell colSpan={4} className="text-center h-24">{t.followedActions.noActions}</TableCell></TableRow>
+                <TableRow><TableCell colSpan={4} className="text-center h-24">{t("followedActions.noActions")}</TableCell></TableRow>
               )}
             </TableBody>
           </Table>
@@ -219,7 +220,7 @@ export function DashboardClient({ actions: initialActions, assignedActions: init
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-3xl font-bold tracking-tight">{t.title}</h1>
+      <h1 className="text-3xl font-bold tracking-tight">{t("title")}</h1>
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
         <SortableContext items={items.filter(id => widgets[id])} strategy={verticalListSortingStrategy}>
             <div className="flex flex-col gap-6">

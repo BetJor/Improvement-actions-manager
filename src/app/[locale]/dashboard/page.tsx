@@ -10,7 +10,6 @@ import { Loader2 } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 
 export default function DashboardPage() {
-  const t = useTranslations("Dashboard");
   const { user, loading: authLoading } = useAuth();
   const [actions, setActions] = useState<ImprovementAction[]>([]);
   const [followedActions, setFollowedActions] = useState<ImprovementAction[]>([]);
@@ -65,32 +64,6 @@ export default function DashboardPage() {
     return actions.filter(action => isUserTurnToAct(action));
   }, [actions, user]);
 
-  const translations = {
-    title: t("title"),
-    myPendingActions: {
-        title: t("myPendingActions.title"),
-        description: t("myPendingActions.description"),
-        noActions: t("myPendingActions.noActions"),
-        col: {
-            id: t("myPendingActions.col.id"),
-            title: t("myPendingActions.col.title"),
-            status: t("myPendingActions.col.status"),
-        }
-    },
-    followedActions: {
-        title: t("followedActions.title"),
-        description: t("followedActions.description"),
-        noActions: t("followedActions.noActions"),
-        unfollow: t("followedActions.unfollow"),
-        col: {
-            id: t("followedActions.col.id"),
-            title: t("followedActions.col.title"),
-            status: t("followedActions.col.status"),
-            myRole: t("followedActions.col.myRole"),
-        }
-    },
-  }
-
   if (isLoading || authLoading) {
     return <div className="flex h-full w-full items-center justify-center"><Loader2 className="h-6 w-6 animate-spin" /></div>
   }
@@ -99,6 +72,5 @@ export default function DashboardPage() {
     actions={actions} 
     assignedActions={assignedActions}
     initialFollowedActions={followedActions}
-    t={translations} 
   />
 }
