@@ -10,7 +10,7 @@ interface ActionStateContextType {
     actions: ImprovementAction[];
     isLoading: boolean;
     error: Error | null;
-    setActionState: React.Dispatch<React.SetStateAction<ImprovementAction[]>>;
+    setActions: React.Dispatch<React.SetStateAction<ImprovementAction[]>>;
 }
 
 const ActionStateContext = createContext<ActionStateContextType | undefined>(undefined);
@@ -22,8 +22,7 @@ export function ActionStateProvider({ children }: { children: ReactNode }) {
     const { user } = useAuth();
 
     useEffect(() => {
-        // Only fetch if there's a user and actions haven't been loaded yet.
-        if (user && actions.length === 0) {
+        if (user) {
             setIsLoading(true);
             getActions()
                 .then(fetchedActions => {
@@ -37,18 +36,14 @@ export function ActionStateProvider({ children }: { children: ReactNode }) {
                 .finally(() => {
                     setIsLoading(false);
                 });
-        } else if (!user) {
-            // Clear actions on logout
+        } else {
             setActions([]);
             setIsLoading(false);
-        } else {
-             // Actions are already loaded, no need to fetch again, just stop loading.
-             setIsLoading(false);
         }
-    }, [user, actions.length]);
+    }, [user]);
 
     return (
-        <ActionStateContext.Provider value={{ actions, isLoading, error, setActionState: setActions }}>
+        <ActionStateContext.Provider value={{ actions, isLoading, error, setActions }}>
             {children}
         </ActionStateContext.Provider>
     );

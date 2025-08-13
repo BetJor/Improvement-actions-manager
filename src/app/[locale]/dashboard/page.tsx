@@ -13,7 +13,7 @@ import type { ImprovementAction } from '@/lib/types';
 export default function DashboardPage() {
   const t = useTranslations('Dashboard');
   const { user, loading: authLoading } = useAuth();
-  const { actions, isLoading, setActions } = useActionState();
+  const { actions, isLoading } = useActionState();
 
   const assignedActions = useMemo(() => {
     if (!user || !actions) return [];
@@ -44,11 +44,6 @@ export default function DashboardPage() {
     return actions.filter(action => isUserTurnToAct(action));
   }, [actions, user]);
 
-  const followedActions = useMemo(() => {
-    if (!user || !actions) return [];
-    return actions.filter(action => action.followers?.includes(user.id));
-  }, [actions, user]);
-
 
   if (isLoading || authLoading) {
     return <div className="flex h-full w-full items-center justify-center"><Loader2 className="h-6 w-6 animate-spin" /></div>
@@ -57,7 +52,5 @@ export default function DashboardPage() {
   return <DashboardClient 
     actions={actions} 
     assignedActions={assignedActions}
-    initialFollowedActions={followedActions}
-    setActions={setActions}
   />
 }

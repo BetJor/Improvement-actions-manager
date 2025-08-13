@@ -9,7 +9,7 @@ import { Loader2 } from "lucide-react"
 
 export default function ActionsPage() {
   const t = useTranslations("Actions.page");
-  const { actions, isLoading, setActions } = useActionState();
+  const { actions, isLoading } = useActionState();
 
   if (isLoading) {
     return (
@@ -28,7 +28,7 @@ export default function ActionsPage() {
       <p className="text-muted-foreground">
         {t("description")}
       </p>
-      <ActionsTable actions={actions} setActions={setActions} />
+      <ActionsTable actions={actions} />
     </div>
   )
 }

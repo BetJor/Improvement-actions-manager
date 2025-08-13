@@ -42,8 +42,6 @@ import { useTranslations } from 'next-intl';
 interface DashboardClientProps {
     actions: ImprovementAction[];
     assignedActions: ImprovementAction[];
-    initialFollowedActions: ImprovementAction[];
-    setActions: React.Dispatch<React.SetStateAction<ImprovementAction[]>>;
 }
 
 const defaultLayout = ["pendingActions", "followedActions"];
@@ -73,29 +71,23 @@ function SortableItem({ id, children }: { id: string, children: React.ReactNode 
 }
 
 
-export function DashboardClient({ actions, assignedActions, initialFollowedActions, setActions }: DashboardClientProps) {
+export function DashboardClient({ actions, assignedActions }: DashboardClientProps) {
   const t = useTranslations("Dashboard");
   const { openTab } = useTabs();
   const { user, updateDashboardLayout } = useAuth();
   const [items, setItems] = useState<string[]>(user?.dashboardLayout || defaultLayout);
   
-  const [followedActions, setFollowedActions] = useState(initialFollowedActions);
+  const { handleToggleFollow, isFollowing } = useFollowAction();
 
-  const { handleToggleFollow, isFollowing } = useFollowAction(actions, setActions);
-
-  useEffect(() => {
-    // Sync with user layout if it changes (e.g. on login)
-    setItems(user?.dashboardLayout || defaultLayout);
-  }, [user?.dashboardLayout]);
-
-  useEffect(() => {
-    // When the list of all actions is updated (e.g. an action is followed/unfollowed elsewhere),
-    // update the followedActions list.
-    if(user) {
-        setFollowedActions(actions.filter(a => a.followers?.includes(user.id)));
-    }
+  const followedActions = useMemo(() => {
+    if (!user || !actions) return [];
+    return actions.filter(action => action.followers?.includes(user.id));
   }, [actions, user]);
 
+
+  useEffect(() => {
+    setItems(user?.dashboardLayout || defaultLayout);
+  }, [user?.dashboardLayout]);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -113,7 +105,6 @@ export function DashboardClient({ actions, assignedActions, initialFollowedActio
         const newIndex = currentItems.indexOf(over.id as string);
         const newOrder = arrayMove(currentItems, oldIndex, newIndex);
         
-        // Persist the new order
         if(user) updateDashboardLayout(newOrder);
 
         return newOrder;
@@ -134,11 +125,6 @@ export function DashboardClient({ actions, assignedActions, initialFollowedActio
     };
     openTab({ path: `/actions/${action.id}`, title: `Acció ${action.actionId}`, icon: GanttChartSquare, isClosable: true, loader: actionLoader });
   }
-
-  const handleUnfollowFromDashboard = (actionId: string, e: React.MouseEvent) => {
-    handleToggleFollow(actionId, e);
-  };
-
 
   const widgets: { [key: string]: React.ReactNode } = {
     pendingActions: (
@@ -186,7 +172,7 @@ export function DashboardClient({ actions, assignedActions, initialFollowedActio
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={(e) => handleUnfollowFromDashboard(action.id, e)}
+                        onClick={(e) => handleToggleFollow(action.id, e)}
                         title={"Deixar de seguir"}
                       >
                         <Star className={cn("h-4 w-4 text-yellow-400 fill-yellow-400")} />

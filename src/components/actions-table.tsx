@@ -31,20 +31,19 @@ import { useFollowAction } from "@/hooks/use-follow-action"
 
 interface ActionsTableProps {
   actions: ImprovementAction[];
-  setActions: React.Dispatch<React.SetStateAction<ImprovementAction[]>>;
 }
 
 type SortKey = keyof ImprovementAction | 'responsible'
 
-export function ActionsTable({ actions, setActions }: ActionsTableProps) {
+export function ActionsTable({ actions }: ActionsTableProps) {
   const t = useTranslations("Actions.table")
   const { openTab } = useTabs();
   
-  const { handleToggleFollow, isFollowing } = useFollowAction(actions, setActions);
+  const { handleToggleFollow, isFollowing } = useFollowAction();
   
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState<Set<ImprovementActionStatus>>(new Set())
-  const [typeFilter, setTypeFilter] = useState<Set<ImprovementActionType>>(new Set())
+  const [typeFilter, setTypeFilter] = useState<Set<string>>(new Set())
   const [sortConfig, setSortConfig] = useState<{ key: SortKey; direction: 'asc' | 'desc' } | null>(null)
   
 

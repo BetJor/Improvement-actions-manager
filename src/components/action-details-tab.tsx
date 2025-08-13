@@ -43,7 +43,7 @@ export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTab
     const { toast } = useToast()
     const router = useRouter();
     const { user } = useAuth()
-    const { setActionState: setGlobalActionState } = useActionState();
+    const { actions, setActions } = useActionState();
 
     const [action, setAction] = useState<ImprovementAction | null>(initialAction);
     const [isEditing, setIsEditing] = useState(false)
@@ -52,7 +52,7 @@ export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTab
     const [isStatusDialogOpen, setIsStatusDialogOpen] = useState(false);
     const [selectedProposedAction, setSelectedProposedAction] = useState<any>(null);
     
-    const { handleToggleFollow, isFollowing } = useFollowAction(action, setAction, setGlobalActionState);
+    const { handleToggleFollow, isFollowing } = useFollowAction();
 
 
     useEffect(() => {
@@ -63,18 +63,16 @@ export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTab
       loadUsers();
     }, []);
 
-    // This effect ensures that if the initial prop changes (e.g., due to SPA navigation),
-    // the local state is updated.
     useEffect(() => {
-        setAction(initialAction);
-    }, [initialAction]);
+        const updatedAction = actions.find(a => a.id === initialAction.id);
+        setAction(updatedAction || initialAction);
+    }, [actions, initialAction]);
     
     const handleActionUpdate = async () => {
         if (!action) return;
-        const updatedAction = await getActionById(action.id);
-        if (updatedAction) {
-            setAction(updatedAction);
-            setGlobalActionState(prev => prev.map(a => a.id === updatedAction.id ? updatedAction : a));
+        const updatedActionData = await getActionById(action.id);
+        if (updatedActionData) {
+            setActions(prev => prev.map(a => a.id === updatedActionData.id ? updatedActionData : a));
         }
     }
 
@@ -88,8 +86,8 @@ export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTab
             }
             
             await updateAction(action.id, dataToUpdate, masterData, status);
-            setIsEditing(false); // Exit edit mode
-            await handleActionUpdate(); // Refresh data
+            setIsEditing(false);
+            await handleActionUpdate();
         } catch (error) {
             console.error("Error updating action:", error);
             toast({
@@ -108,7 +106,7 @@ export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTab
         try {
           await updateAction(action.id, {
             analysis: analysisData,
-            status: "Pendiente Comprobación", // Move to next state
+            status: "Pendiente Comprobación",
           });
     
           await handleActionUpdate();
@@ -131,7 +129,7 @@ export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTab
         try {
           await updateAction(action.id, {
             verification: verificationData,
-            status: "Pendiente de Cierre", // Move to next state
+            status: "Pendiente de Cierre",
           });
     
           await handleActionUpdate();
@@ -165,7 +163,6 @@ export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTab
                 status: 'Finalizada',
             });
             
-            // Redirect or refresh
             router.push("/actions");
             router.refresh();
     
@@ -258,7 +255,6 @@ export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTab
     return (
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
       
-            {/* Main Content */}
             <div className="lg:col-span-3 flex flex-col gap-6">
                 <header className="flex items-center gap-4">
                     <h1 className="text-3xl font-bold tracking-tight">{action.actionId}: {action.title}</h1>
@@ -465,7 +461,6 @@ export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTab
                 </Tabs>
             </div>
 
-            {/* Right Sidebar */}
             <aside className="lg:col-span-1">
                 <ActionDetailsPanel action={action} onActionUpdate={handleActionUpdate} />
             </aside>
