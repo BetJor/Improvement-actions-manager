@@ -43,21 +43,14 @@ export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTab
     const router = useRouter();
     const { user } = useAuth()
 
-    const [action, setAction] = useState<ImprovementAction>(initialAction);
+    const [action, setAction] = useState<ImprovementAction | null>(initialAction);
     const [isEditing, setIsEditing] = useState(false)
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [users, setUsers] = useState<User[]>([]);
     const [isStatusDialogOpen, setIsStatusDialogOpen] = useState(false);
     const [selectedProposedAction, setSelectedProposedAction] = useState<any>(null);
     
-    const { isFollowing, handleToggleFollow } = useFollowAction(
-      action ? [action] : [],
-      (updatedActions) => {
-        if (updatedActions.length > 0) {
-          setAction(updatedActions[0]);
-        }
-      }
-    );
+    const { handleToggleFollow, isFollowing } = useFollowAction(action, setAction);
 
 
     useEffect(() => {
@@ -75,6 +68,7 @@ export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTab
     }, [initialAction]);
     
     const handleActionUpdate = async () => {
+        if (!action) return;
         const updatedAction = await getActionById(action.id);
         if (updatedAction) {
             setAction(updatedAction);
@@ -91,10 +85,6 @@ export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTab
             }
             
             await updateAction(action.id, dataToUpdate, masterData, status);
-            toast({
-                title: "Acció actualitzada",
-                description: "L'acció s'ha desat correctament.",
-            });
             setIsEditing(false); // Exit edit mode
             await handleActionUpdate(); // Refresh data
         } catch (error) {
@@ -118,11 +108,6 @@ export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTab
             status: "Pendiente Comprobación", // Move to next state
           });
     
-          toast({
-            title: "Anàlisi desada",
-            description: "El pla d'acció s'ha desat correctament.",
-          });
-    
           await handleActionUpdate();
     
         } catch (error) {
@@ -144,11 +129,6 @@ export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTab
           await updateAction(action.id, {
             verification: verificationData,
             status: "Pendiente de Cierre", // Move to next state
-          });
-    
-          toast({
-            title: "Verificació desada",
-            description: "La verificació de la implantació s'ha desat correctament.",
           });
     
           await handleActionUpdate();
@@ -182,13 +162,6 @@ export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTab
                 status: 'Finalizada',
             });
             
-            toast({
-                title: 'Acció Tancada',
-                description: closureData.isCompliant 
-                    ? "L'acció s'ha tancat correctament." 
-                    : "S'ha tancat l'acció i s'ha generat una nova acció BIS.",
-            });
-    
             // Redirect or refresh
             router.push("/actions");
             router.refresh();
@@ -206,6 +179,7 @@ export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTab
     };
     
     const handleUpdateProposedActionStatus = async (proposedActionId: string, newStatus: ProposedActionStatus) => {
+        if (!action) return;
         setIsSubmitting(true);
         try {
             await updateAction(action.id, {
@@ -213,10 +187,6 @@ export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTab
                     proposedActionId,
                     status: newStatus,
                 }
-            });
-            toast({
-                title: "Estat actualitzat",
-                description: "L'estat de l'acció proposada s'ha actualitzat.",
             });
             await handleActionUpdate();
         } catch (error) {
@@ -293,7 +263,7 @@ export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTab
                         variant="ghost"
                         size="icon"
                         onClick={(e) => handleToggleFollow(action.id, e)}
-                        title={isFollowing(action.id) ? tActionsTable("follow.unfollow") : tActionsTable("follow.follow")}
+                        title={isFollowing(action.id) ? "Deixar de seguir" : "Seguir acció"}
                         className="h-8 w-8"
                       >
                         <Star className={cn("h-5 w-5", isFollowing(action.id) ? "text-yellow-400 fill-yellow-400" : "text-muted-foreground")} />
