@@ -191,9 +191,9 @@ export function AnalysisSection({ action, user, isSubmitting, onSave }: Analysis
             id: pa.id || crypto.randomUUID(),
         })),
         analysisResponsible: {
-            id: user.uid,
-            name: user.displayName || "Usuari desconegut",
-            avatar: user.photoURL || undefined,
+            id: user.id,
+            name: user.name || "Usuari desconegut",
+            avatar: user.avatar || undefined,
         },
         analysisDate: new Date().toISOString(),
     }
@@ -425,3 +425,5 @@ export function AnalysisSection({ action, user, isSubmitting, onSave }: Analysis
     </>
   )
 }
+
+    
