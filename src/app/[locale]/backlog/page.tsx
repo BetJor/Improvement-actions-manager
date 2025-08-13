@@ -1,3 +1,5 @@
+"use client";
+
 import {
     Card,
     CardContent,
@@ -13,7 +15,7 @@ import {
     TableHeader,
     TableRow,
   } from "@/components/ui/table"
-  import { getTranslations } from "next-intl/server"
+  import { useTranslations } from "next-intl"
   
   const backlogItems = [
     {
@@ -31,8 +33,8 @@ import {
     // Future tasks will be added here
   ]
   
-  export default async function BacklogPage() {
-    const t = await getTranslations("Backlog")
+  export default function BacklogPage() {
+    const t = useTranslations("Backlog")
   
     return (
       <Card>
@@ -65,5 +67,3 @@ import {
       </Card>
     )
   }
-
-    
