@@ -23,10 +23,10 @@
         "status": "Estat"
       }
     },
-    "participatingActions": {
-      "title": "Accions on Participo",
-      "description": "Un historial de totes les accions en les que estàs o has estat involucrat/da.",
-      "noActions": "No participes en cap acció.",
+    "followedActions": {
+      "title": "Accions en Seguiment",
+      "description": "Un recull de les accions que has marcat per a seguir de prop.",
+      "noActions": "No estàs seguint cap acció. Fes clic a la icona d'estrella per a començar.",
       "col": {
         "id": "ID",
         "title": "Títol",

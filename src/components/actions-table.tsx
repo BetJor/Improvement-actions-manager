@@ -20,11 +20,14 @@ import {
 import { Button } from "@/components/ui/button"
 import { ActionStatusBadge } from "./action-status-badge"
 import type { ImprovementAction, ImprovementActionStatus, ImprovementActionType, User } from "@/lib/types"
-import { ArrowUpDown, ChevronDown, GanttChartSquare } from "lucide-react"
+import { ArrowUpDown, ChevronDown, GanttChartSquare, Star } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useTabs } from "@/hooks/use-tabs"
-import { getActionById, getActionTypes, getCategories, getSubcategories, getAffectedAreas, getCenters, getResponsibilityRoles, getUsers } from "@/lib/data"
+import { getActionById, getActionTypes, getCategories, getSubcategories, getAffectedAreas, getCenters, getResponsibilityRoles, getUsers, toggleFollowAction } from "@/lib/data"
 import { ActionDetailsTab } from "@/components/action-details-tab"
+import { useAuth } from "@/hooks/use-auth"
+import { cn } from "@/lib/utils"
+import { useToast } from "@/hooks/use-toast"
 
 interface ActionsTableProps {
   actions: ImprovementAction[]
@@ -32,15 +35,22 @@ interface ActionsTableProps {
 
 type SortKey = keyof ImprovementAction | 'responsible'
 
-export function ActionsTable({ actions }: ActionsTableProps) {
+export function ActionsTable({ actions: initialActions }: ActionsTableProps) {
   const t = useTranslations("Actions.table")
   const { openTab } = useTabs();
+  const { user } = useAuth();
+  const { toast } = useToast();
 
+  const [actions, setActions] = useState(initialActions);
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState<Set<ImprovementActionStatus>>(new Set())
   const [typeFilter, setTypeFilter] = useState<Set<ImprovementActionType>>(new Set())
   const [sortConfig, setSortConfig] = useState<{ key: SortKey; direction: 'asc' | 'desc' } | null>(null)
   
+  useEffect(() => {
+    setActions(initialActions);
+  }, [initialActions]);
+
   const allStatuses = useMemo(() => Array.from(new Set(actions.map(a => a.status))), [actions])
   const allTypes = useMemo(() => Array.from(new Set(actions.map(a => a.type))), [actions])
 
@@ -131,6 +141,43 @@ export function ActionsTable({ actions }: ActionsTableProps) {
       });
   }
 
+  const handleToggleFollow = async (actionId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!user) return;
+
+    try {
+        await toggleFollowAction(actionId, user.id);
+        
+        // Optimistically update the UI
+        setActions(prevActions => {
+            return prevActions.map(action => {
+                if (action.id === actionId) {
+                    const isFollowing = action.followers?.includes(user.id);
+                    const newFollowers = isFollowing
+                        ? action.followers?.filter(id => id !== user.id)
+                        : [...(action.followers || []), user.id];
+                    return { ...action, followers: newFollowers };
+                }
+                return action;
+            });
+        });
+
+        const isNowFollowing = actions.find(a => a.id === actionId)?.followers?.includes(user.id);
+        toast({
+            title: isNowFollowing ? "Seguint" : "Deixant de seguir",
+            description: `Ara ${isNowFollowing ? 'segueixes' : 'no segueixes'} aquesta acció.`,
+        });
+
+    } catch (error) {
+        console.error("Failed to toggle follow status", error);
+        toast({
+            variant: "destructive",
+            title: "Error",
+            description: "No s'ha pogut actualitzar l'estat de seguiment.",
+        });
+    }
+  };
+
   return (
     <div className="w-full">
       <div className="flex items-center py-4 gap-2">
@@ -195,6 +242,7 @@ export function ActionsTable({ actions }: ActionsTableProps) {
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="w-12"></TableHead>
               <TableHead><Button variant="ghost" onClick={() => requestSort('actionId')}>{t("col.id")} {getSortIcon('actionId')}</Button></TableHead>
               <TableHead><Button variant="ghost" onClick={() => requestSort('title')}>{t("col.title")} {getSortIcon('title')}</Button></TableHead>
               <TableHead><Button variant="ghost" onClick={() => requestSort('status')}>{t("col.status")} {getSortIcon('status')}</Button></TableHead>
@@ -205,8 +253,20 @@ export function ActionsTable({ actions }: ActionsTableProps) {
           </TableHeader>
           <TableBody>
             {filteredAndSortedActions.length > 0 ? (
-              filteredAndSortedActions.map(action => (
+              filteredAndSortedActions.map(action => {
+                const isFollowing = user ? action.followers?.includes(user.id) : false;
+                return (
                 <TableRow key={action.id}>
+                   <TableCell>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={(e) => handleToggleFollow(action.id, e)}
+                        title={isFollowing ? t("follow.unfollow") : t("follow.follow")}
+                      >
+                        <Star className={cn("h-4 w-4", isFollowing ? "text-yellow-400 fill-yellow-400" : "text-muted-foreground")} />
+                      </Button>
+                    </TableCell>
                   <TableCell className="font-medium">
                      <Button variant="link" asChild className="p-0 h-auto">
                         <a href={`/actions/${action.id}`} onClick={(e) => handleOpenAction(e, action)}>{action.actionId}</a>
@@ -220,10 +280,10 @@ export function ActionsTable({ actions }: ActionsTableProps) {
                   <TableCell>{action.responsibleUser?.name || action.responsibleGroupId}</TableCell>
                   <TableCell>{action.implementationDueDate}</TableCell>
                 </TableRow>
-              ))
+              )})
             ) : (
               <TableRow>
-                <TableCell colSpan={6} className="h-24 text-center">
+                <TableCell colSpan={7} className="h-24 text-center">
                   {t("noResults")}
                 </TableCell>
               </TableRow>

@@ -1,3 +1,4 @@
+
 {
   "Actions": {
     "page": {
@@ -62,6 +63,10 @@
         "type": "Tipo",
         "responsible": "Responsable",
         "dueDate": "Fecha Vencimiento"
+      },
+       "follow": {
+        "follow": "Seguir acción",
+        "unfollow": "Dejar de seguir la acción"
       }
     },
     "detail": {

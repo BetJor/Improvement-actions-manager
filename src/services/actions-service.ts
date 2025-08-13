@@ -1,5 +1,5 @@
 
-import { collection, doc, getDoc, getDocs, addDoc, updateDoc, query, orderBy, limit, arrayUnion, Timestamp, runTransaction } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, addDoc, updateDoc, query, orderBy, limit, arrayUnion, Timestamp, runTransaction, arrayRemove, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { format } from 'date-fns';
 import type { ImprovementAction, ProposedAction } from '@/lib/types';
@@ -137,6 +137,7 @@ export async function createAction(data: CreateActionData, masterData: any): Pro
       analysisDueDate: '', 
       implementationDueDate: '',
       closureDueDate: '',
+      followers: [],
     };
   
     // Add the new document to Firestore
@@ -260,4 +261,36 @@ export async function updateAction(actionId: string, data: any, masterData?: any
     }
 
     await updateDoc(actionDocRef, dataToUpdate);
+}
+
+export async function toggleFollowAction(actionId: string, userId: string): Promise<void> {
+    const actionDocRef = doc(db, 'actions', actionId);
+    
+    await runTransaction(db, async (transaction) => {
+        const actionDoc = await transaction.get(actionDocRef);
+        if (!actionDoc.exists()) {
+            throw "Document does not exist!";
+        }
+        
+        const currentFollowers = actionDoc.data().followers || [];
+        if (currentFollowers.includes(userId)) {
+            // Unfollow
+            transaction.update(actionDocRef, { followers: arrayRemove(userId) });
+        } else {
+            // Follow
+            transaction.update(actionDocRef, { followers: arrayUnion(userId) });
+        }
+    });
+}
+
+export async function getFollowedActions(userId: string): Promise<ImprovementAction[]> {
+    const actionsCol = collection(db, 'actions');
+    const q = query(actionsCol, where("followers", "array-contains", userId), orderBy("actionId", "desc"));
+    
+    const querySnapshot = await getDocs(q);
+    
+    return querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+    } as ImprovementAction));
 }

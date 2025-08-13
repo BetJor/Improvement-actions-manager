@@ -56,11 +56,11 @@ const COLORS = {
 interface DashboardClientProps {
     actions: ImprovementAction[];
     assignedActions: ImprovementAction[];
-    participatingActions: (ImprovementAction & { userRoles: string[] })[];
+    followedActions: ImprovementAction[];
     t: any;
 }
 
-const defaultLayout = ["pendingActions", "participatingActions", "charts"];
+const defaultLayout = ["pendingActions", "followedActions"];
 
 function SortableItem({ id, children }: { id: string, children: React.ReactNode }) {
     const {
@@ -87,7 +87,7 @@ function SortableItem({ id, children }: { id: string, children: React.ReactNode 
 }
 
 
-export function DashboardClient({ actions, assignedActions, participatingActions, t }: DashboardClientProps) {
+export function DashboardClient({ actions, assignedActions, followedActions, t }: DashboardClientProps) {
   const { openTab } = useTabs();
   const { user, updateDashboardLayout } = useAuth();
   const [items, setItems] = useState<string[]>(user?.dashboardLayout || defaultLayout);
@@ -115,7 +115,7 @@ export function DashboardClient({ actions, assignedActions, participatingActions
         const newOrder = arrayMove(currentItems, oldIndex, newIndex);
         
         // Persist the new order
-        updateDashboardLayout(newOrder);
+        if(user) updateDashboardLayout(newOrder);
 
         return newOrder;
       });
@@ -183,23 +183,22 @@ export function DashboardClient({ actions, assignedActions, participatingActions
         </CardContent>
       </Card>
     ),
-    participatingActions: (
+    followedActions: (
       <Card className="col-span-full">
-        <CardHeader><CardTitle>{t.participatingActions.title}</CardTitle><CardDescription>{t.participatingActions.description}</CardDescription></CardHeader>
+        <CardHeader><CardTitle>{t.followedActions.title}</CardTitle><CardDescription>{t.followedActions.description}</CardDescription></CardHeader>
         <CardContent>
-          <Table><TableHeader><TableRow><TableHead>{t.participatingActions.col.id}</TableHead><TableHead>{t.participatingActions.col.title}</TableHead><TableHead>{t.participatingActions.col.status}</TableHead><TableHead>{t.participatingActions.col.myRole}</TableHead></TableRow></TableHeader>
+          <Table><TableHeader><TableRow><TableHead>{t.followedActions.col.id}</TableHead><TableHead>{t.followedActions.col.title}</TableHead><TableHead>{t.followedActions.col.status}</TableHead></TableRow></TableHeader>
             <TableBody>
-              {participatingActions.length > 0 ? (
-                participatingActions.map((action) => (
+              {followedActions.length > 0 ? (
+                followedActions.map((action) => (
                   <TableRow key={action.id}>
                     <TableCell><Button variant="link" asChild className="p-0 h-auto"><a href={`/actions/${action.id}`} onClick={(e) => handleOpenAction(e, action)}>{action.actionId}</a></Button></TableCell>
                     <TableCell>{action.title}</TableCell>
                     <TableCell><ActionStatusBadge status={action.status} /></TableCell>
-                    <TableCell><div className="flex flex-wrap gap-1">{action.userRoles.map(role => <Badge key={role} variant="secondary">{role}</Badge>)}</div></TableCell>
                   </TableRow>
                 ))
               ) : (
-                <TableRow><TableCell colSpan={4} className="text-center h-24">{t.participatingActions.noActions}</TableCell></TableRow>
+                <TableRow><TableCell colSpan={3} className="text-center h-24">{t.followedActions.noActions}</TableCell></TableRow>
               )}
             </TableBody>
           </Table>

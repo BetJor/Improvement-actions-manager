@@ -1,3 +1,4 @@
+
 {
   "Actions": {
     "page": {
@@ -62,6 +63,10 @@
         "type": "Tipus",
         "responsible": "Responsable",
         "dueDate": "Data Venciment"
+      },
+      "follow": {
+        "follow": "Seguir acció",
+        "unfollow": "Deixar de seguir l'acció"
       }
     },
     "detail": {

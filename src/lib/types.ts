@@ -138,6 +138,9 @@ export interface ImprovementAction {
   originalActionId?: string; // The Firestore ID of the original action
   originalActionTitle?: string;
 
+  // Followers
+  followers?: string[]; // Array of user IDs
+
   // Optional detailed sections
   analysis?: {
     causes: string;

@@ -23,10 +23,10 @@
         "status": "Estado"
       }
     },
-    "participatingActions": {
-      "title": "Acciones donde Participo",
-      "description": "Un historial de todas las acciones en las que estás o has estado involucrado/a.",
-      "noActions": "No participas en ninguna acción.",
+    "followedActions": {
+      "title": "Acciones en Seguimiento",
+      "description": "Una recopilación de las acciones que has marcado para seguir de cerca.",
+      "noActions": "No estás siguiendo ninguna acción. Haz clic en el icono de estrella para empezar.",
       "col": {
         "id": "ID",
         "title": "Título",

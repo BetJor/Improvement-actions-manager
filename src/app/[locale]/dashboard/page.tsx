@@ -2,7 +2,7 @@
 "use client"
 
 import { useState, useEffect, useMemo } from 'react';
-import { getActions } from "@/lib/data"
+import { getActions, getFollowedActions } from "@/lib/data"
 import { useTranslations } from "next-intl"
 import { DashboardClient } from "@/components/dashboard-client"
 import type { ImprovementAction } from '@/lib/types';
@@ -13,15 +13,20 @@ export default function DashboardPage() {
   const t = useTranslations("Dashboard");
   const { user, loading: authLoading } = useAuth();
   const [actions, setActions] = useState<ImprovementAction[]>([]);
+  const [followedActions, setFollowedActions] = useState<ImprovementAction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     async function loadData() {
-      if (authLoading) return; // Wait for auth to be ready
+      if (authLoading || !user) return; // Wait for auth to be ready
       setIsLoading(true);
       try {
-        const fetchedActions = await getActions();
+        const [fetchedActions, fetchedFollowedActions] = await Promise.all([
+            getActions(),
+            getFollowedActions(user.id)
+        ]);
         setActions(fetchedActions);
+        setFollowedActions(fetchedFollowedActions);
       } catch (error) {
         console.error("Failed to load dashboard actions:", error);
       } finally {
@@ -29,7 +34,7 @@ export default function DashboardPage() {
       }
     }
     loadData();
-  }, [authLoading]);
+  }, [authLoading, user]);
   
   const assignedActions = useMemo(() => {
     if (!user || !actions) return [];
@@ -60,28 +65,6 @@ export default function DashboardPage() {
     return actions.filter(action => isUserTurnToAct(action));
   }, [actions, user]);
 
-  const participatingActions = useMemo(() => {
-    if (!user || !actions) return [];
-
-    return actions
-      .filter(action => action.status !== 'Borrador')
-      .map(action => {
-        let roles: string[] = [];
-        if (action.creator.id === user.id) roles.push("Creador/a");
-        if (action.responsibleGroupId === user.email) roles.push("Responsable Principal");
-        if (action.analysis?.proposedActions?.some(pa => pa.responsibleUserId === user.id)) roles.push("Responsable Tasca");
-        if (action.analysis?.verificationResponsibleUserId === user.id) roles.push("Verificador/a");
-        
-        if (roles.length > 0) {
-          return { ...action, userRoles: roles };
-        }
-        return null;
-      })
-      .filter(Boolean) as (ImprovementAction & { userRoles: string[] })[];
-
-  }, [actions, user]);
-
-
   const translations = {
     title: t("title"),
     totalActions: t("totalActions"),
@@ -106,15 +89,15 @@ export default function DashboardPage() {
             status: t("myPendingActions.col.status"),
         }
     },
-    participatingActions: {
-        title: t("participatingActions.title"),
-        description: t("participatingActions.description"),
-        noActions: t("participatingActions.noActions"),
+    followedActions: {
+        title: t("followedActions.title"),
+        description: t("followedActions.description"),
+        noActions: t("followedActions.noActions"),
         col: {
-            id: t("participatingActions.col.id"),
-            title: t("participatingActions.col.title"),
-            status: t("participatingActions.col.status"),
-            myRole: t("participatingActions.col.myRole"),
+            id: t("followedActions.col.id"),
+            title: t("followedActions.col.title"),
+            status: t("followedActions.col.status"),
+            myRole: t("followedActions.col.myRole"),
         }
     },
     chartLabel: t("chartLabel"),
@@ -127,7 +110,7 @@ export default function DashboardPage() {
   return <DashboardClient 
     actions={actions} 
     assignedActions={assignedActions}
-    participatingActions={participatingActions}
+    followedActions={followedActions}
     t={translations} 
   />
 }
