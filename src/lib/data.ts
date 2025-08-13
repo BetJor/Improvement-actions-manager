@@ -1,3 +1,4 @@
+
 import type { ImprovementAction, User, UserGroup, ImprovementActionType, ActionUserInfo, ActionCategory, ActionSubcategory, AffectedArea, MasterDataItem, WorkflowPlan, GalleryPrompt, ActionAttachment, ResponsibilityRole, Center } from './types';
 import { subDays, format, addDays } from 'date-fns';
 import { db, storage } from './firebase';
@@ -201,9 +202,15 @@ export async function createAction(data: CreateActionData, masterData: any): Pro
       analysisDueDate: '', 
       implementationDueDate: '',
       closureDueDate: '',
-      originalActionId: data.originalActionId,
-      originalActionTitle: data.originalActionTitle,
     };
+
+    // Only add traceability fields if they exist to avoid 'undefined' error
+    if (data.originalActionId) {
+        newAction.originalActionId = data.originalActionId;
+    }
+    if (data.originalActionTitle) {
+        newAction.originalActionTitle = data.originalActionTitle;
+    }
   
     // 3. Add the new document to Firestore
     const docRef = await addDoc(actionsCol, newAction);
