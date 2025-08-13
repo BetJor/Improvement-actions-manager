@@ -13,6 +13,18 @@
       "title": "Accions per Tipus",
       "description": "Desglossament d'accions segons el seu tipus designat."
     },
+    "myPendingActions": {
+      "title": "Les Meves Accions Pendents",
+      "description": "Accions que requereixen la teva atenció.",
+      "noActions": "No tens cap acció pendent. Bona feina!",
+      "col": {
+        "id": "ID",
+        "title": "Títol",
+        "status": "Estat"
+      }
+    },
     "chartLabel": "Accions"
   }
 }
+
+    

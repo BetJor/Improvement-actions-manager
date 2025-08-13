@@ -17,7 +17,13 @@ import {
   ChartLegendContent,
 } from "@/components/ui/chart"
 import { Bar, BarChart, XAxis, YAxis, Pie, PieChart, Cell } from "recharts"
-import { Activity, CheckCircle, FileText, ListTodo } from "lucide-react"
+import { Activity, CheckCircle, FileText, ListTodo, GanttChartSquare } from "lucide-react"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "./ui/table"
+import { ActionStatusBadge } from "./action-status-badge"
+import { Button } from "./ui/button"
+import { useTabs } from "@/hooks/use-tabs"
+import { getActionById, getActionTypes, getCategories, getCenters, getResponsibilityRoles, getSubcategories } from "@/lib/data"
+import { ActionDetailsTab } from "./action-details-tab"
 
 
 const COLORS = {
@@ -30,6 +36,7 @@ const COLORS = {
 
 interface DashboardClientProps {
     actions: ImprovementAction[];
+    assignedActions: ImprovementAction[];
     t: {
         title: string;
         totalActions: string;
@@ -44,11 +51,22 @@ interface DashboardClientProps {
             title: string;
             description: string;
         };
+        myPendingActions: {
+          title: string;
+          description: string;
+          noActions: string;
+          col: {
+            id: string;
+            title: string;
+            status: string;
+          }
+        };
         chartLabel: string;
     };
 }
 
-export function DashboardClient({ actions, t }: DashboardClientProps) {
+export function DashboardClient({ actions, assignedActions, t }: DashboardClientProps) {
+  const { openTab } = useTabs();
 
   const stats = {
     total: actions.length,
@@ -81,6 +99,34 @@ export function DashboardClient({ actions, t }: DashboardClientProps) {
     }, {} as any)
   };
 
+  const handleOpenAction = (e: React.MouseEvent, action: ImprovementAction) => {
+      e.preventDefault();
+      
+      const actionLoader = async () => {
+        const actionData = await getActionById(action.id);
+        if (!actionData) {
+            throw new Error("Action not found");
+        }
+        const [types, cats, subcats, areas, centers, roles] = await Promise.all([
+            getActionTypes(),
+            getCategories(),
+            getSubcategories(),
+            getAffectedAreas(),
+            getCenters(),
+            getResponsibilityRoles(),
+        ]);
+        const masterData = { actionTypes: types, categories: cats, subcategories: subcats, affectedAreas: areas, centers: centers, responsibilityRoles: roles };
+        return <ActionDetailsTab initialAction={actionData} masterData={masterData} />;
+      };
+
+      openTab({
+          path: `/actions/${action.id}`,
+          title: `Acció ${action.actionId}`,
+          icon: GanttChartSquare,
+          isClosable: true,
+          loader: actionLoader
+      });
+  }
 
   return (
     <div className="flex flex-col gap-6">
@@ -122,8 +168,49 @@ export function DashboardClient({ actions, t }: DashboardClientProps) {
             <div className="text-2xl font-bold">{stats.drafts}</div>
           </CardContent>
         </Card>
+      </div>
 
-        <Card className="col-span-1 lg:col-span-2">
+       <Card className="col-span-full">
+          <CardHeader>
+            <CardTitle>{t.myPendingActions.title}</CardTitle>
+            <CardDescription>{t.myPendingActions.description}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>{t.myPendingActions.col.id}</TableHead>
+                  <TableHead>{t.myPendingActions.col.title}</TableHead>
+                  <TableHead>{t.myPendingActions.col.status}</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {assignedActions.length > 0 ? (
+                  assignedActions.map((action) => (
+                    <TableRow key={action.id}>
+                      <TableCell>
+                        <Button variant="link" asChild className="p-0 h-auto">
+                            <a href={`/actions/${action.id}`} onClick={(e) => handleOpenAction(e, action)}>{action.actionId}</a>
+                        </Button>
+                      </TableCell>
+                      <TableCell>{action.title}</TableCell>
+                      <TableCell><ActionStatusBadge status={action.status} /></TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={3} className="text-center h-24">
+                      {t.myPendingActions.noActions}
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+
+      <div className="grid gap-4 md:grid-cols-2">
+        <Card>
           <CardHeader>
             <CardTitle>{t.actionsByStatus.title}</CardTitle>
             <CardDescription>{t.actionsByStatus.description}</CardDescription>
@@ -144,7 +231,7 @@ export function DashboardClient({ actions, t }: DashboardClientProps) {
           </CardContent>
         </Card>
         
-        <Card className="col-span-1 lg:col-span-2">
+        <Card>
           <CardHeader>
             <CardTitle>{t.actionsByType.title}</CardTitle>
             <CardDescription>{t.actionsByType.description}</CardDescription>
@@ -167,3 +254,5 @@ export function DashboardClient({ actions, t }: DashboardClientProps) {
     </div>
   )
 }
+
+    

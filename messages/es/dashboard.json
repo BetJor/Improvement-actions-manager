@@ -13,6 +13,18 @@
       "title": "Acciones por Tipo",
       "description": "Desglose de acciones según su tipo designado."
     },
+     "myPendingActions": {
+      "title": "Mis Acciones Pendientes",
+      "description": "Acciones que requieren tu atención.",
+      "noActions": "No tienes ninguna acción pendiente. ¡Buen trabajo!",
+      "col": {
+        "id": "ID",
+        "title": "Título",
+        "status": "Estado"
+      }
+    },
     "chartLabel": "Acciones"
   }
 }
+
+    
