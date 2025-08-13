@@ -32,7 +32,7 @@ import {
   ]
   
   export default async function BacklogPage() {
-    const t = await getTranslations("BacklogPage")
+    const t = await getTranslations("Backlog")
   
     return (
       <Card>
@@ -65,3 +65,5 @@ import {
       </Card>
     )
   }
+
+    

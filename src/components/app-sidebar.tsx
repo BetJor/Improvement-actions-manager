@@ -3,7 +3,7 @@
 
 import Link from "next/link"
 import { usePathname, useParams } from "next/navigation"
-import { Home, ListChecks, Settings, Route, Sparkles, Library, GanttChartSquare, Users } from "lucide-react"
+import { Home, ListChecks, Settings, Route, Sparkles, Library, GanttChartSquare, Users, BarChart3 } from "lucide-react"
 import { useAuth } from "@/hooks/use-auth"
 import { cn } from "@/lib/utils"
 import { Sidebar, SidebarContent, SidebarHeader, SidebarMenu, SidebarMenuItem, SidebarMenuButton, useSidebar } from "./ui/sidebar"
@@ -49,6 +49,7 @@ export function AppSidebar({ t }: { t: any }) {
   const mainNavItems = [
     { href: `/${locale}/dashboard`, icon: Home, label: t("Common.AppSidebar.dashboard"), isTab: true },
     { href: `/${locale}/actions`, icon: ListChecks, label: t("Common.AppSidebar.actions"), isTab: true },
+    { href: `/${locale}/reports`, icon: BarChart3, label: t("Common.AppSidebar.reports"), isTab: true },
   ]
   
   const adminNavItems = [
@@ -60,6 +61,7 @@ export function AppSidebar({ t }: { t: any }) {
 
   const aboutNavItems = [
     { href: `/${locale}/roadmap`, icon: Route, label: t("Common.AppSidebar.roadmap"), isTab: true },
+    { href: `/${locale}/backlog`, icon: GanttChartSquare, label: t("Common.AppSidebar.backlog"), isTab: true },
   ]
 
   return (

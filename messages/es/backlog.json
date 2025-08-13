@@ -1,0 +1,14 @@
+{
+  "Backlog": {
+    "title": "Backlog del Proyecto",
+    "description": "Tareas pendientes de priorizar y planificar para futuras iteraciones de desarrollo.",
+    "col": {
+      "id": "ID",
+      "title": "Título",
+      "description": "Descripción",
+      "priority": "Prioridad"
+    }
+  }
+}
+
+    

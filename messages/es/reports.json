@@ -1,0 +1,20 @@
+
+{
+  "Reports": {
+    "title": "Informes",
+    "description": "Visualización gráfica de los datos de las acciones de mejora.",
+    "actionsByStatus": {
+      "title": "Acciones por Estado",
+      "description": "Distribución de acciones en diferentes estados del flujo de trabajo."
+    },
+    "actionsByType": {
+      "title": "Acciones por Tipo",
+      "description": "Desglose de acciones según su tipología."
+    },
+    "actionsByCategory": {
+        "title": "Acciones por Categoría",
+        "description": "Distribución de acciones según la categoría a la que pertenecen."
+    },
+    "chartLabel": "Acciones"
+  }
+}

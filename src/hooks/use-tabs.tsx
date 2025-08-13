@@ -15,12 +15,14 @@ import SettingsPage from '@/app/[locale]/settings/page';
 import AiSettingsPage from '@/app/[locale]/ai-settings/page';
 import PromptGalleryPage from '@/app/[locale]/prompt-gallery/page';
 import RoadmapPage from '@/app/[locale]/roadmap/page';
+import BacklogPage from '@/app/[locale]/backlog/page';
 import MyGroupsPage from '@/app/[locale]/my-groups/page';
 import ActionDetailPage from '@/app/[locale]/actions/[id]/page';
 import UserManagementPage from '@/app/[locale]/user-management/page';
+import ReportsPage from '@/app/[locale]/reports/page';
 import { getActionById, getActionTypes, getCategories, getSubcategories, getAffectedAreas } from '@/lib/data';
 
-import { Home, ListChecks, Settings, Sparkles, Library, Route, Users } from 'lucide-react';
+import { Home, ListChecks, Settings, Sparkles, Library, Route, Users, BarChart3, GanttChartSquare } from 'lucide-react';
 
 const pageComponentMapping: { [key: string]: React.ComponentType<any> | undefined } = {
     '/dashboard': DashboardPage,
@@ -30,6 +32,8 @@ const pageComponentMapping: { [key: string]: React.ComponentType<any> | undefine
     '/ai-settings': AiSettingsPage,
     '/prompt-gallery': PromptGalleryPage,
     '/roadmap': RoadmapPage,
+    '/backlog': BacklogPage,
+    '/reports': ReportsPage,
     '/my-groups': MyGroupsPage,
     '/user-management': UserManagementPage,
 };

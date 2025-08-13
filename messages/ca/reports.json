@@ -1,0 +1,20 @@
+
+{
+  "Reports": {
+    "title": "Informes",
+    "description": "Visualització gràfica de les dades de les accions de millora.",
+    "actionsByStatus": {
+      "title": "Accions per Estat",
+      "description": "Distribució d'accions en diferents estats del flux de treball."
+    },
+    "actionsByType": {
+      "title": "Accions per Tipus",
+      "description": "Desglossament d'accions segons la seva tipologia."
+    },
+    "actionsByCategory": {
+        "title": "Accions per Categoria",
+        "description": "Distribució d'accions segons la categoria a la qual pertanyen."
+    },
+    "chartLabel": "Accions"
+  }
+}

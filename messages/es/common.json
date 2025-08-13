@@ -1,3 +1,4 @@
+
 {
   "Common": {
     "Header": {
@@ -13,10 +14,12 @@
       "toggleNotifications": "Activar/desactivar notificaciones",
       "dashboard": "Panel de Control",
       "actions": "Acciones",
+      "reports": "Informes",
       "myGroups": "Mis Grupos",
       "settings": "Configuración",
       "aiSettings": "Configuración IA",
       "roadmap": "Roadmap",
+      "backlog": "Backlog",
       "promptGallery": "Galería de Prompts",
       "userManagement": "Gestión de Usuarios"
     },
