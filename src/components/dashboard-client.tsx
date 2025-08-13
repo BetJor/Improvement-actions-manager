@@ -28,9 +28,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import { GanttChartSquare, GripVertical, Star } from "lucide-react"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "./ui/table"
-import { ActionStatusBadge } from "./action-status-badge"
+import { GanttChartSquare, GripVertical, Star, CheckCircle, FileText, FolderClock, Inbox } from "lucide-react"
 import { Button } from "./ui/button"
 import { useTabs } from "@/hooks/use-tabs"
 import { getActionById, getActionTypes, getCategories, getCenters, getResponsibilityRoles, getSubcategories, getAffectedAreas, toggleFollowAction, getFollowedActions } from "@/lib/data"
@@ -38,6 +36,7 @@ import { ActionDetailsTab } from "./action-details-tab"
 import { cn } from '@/lib/utils';
 import { useFollowAction } from '@/hooks/use-follow-action';
 import { useTranslations } from 'next-intl';
+import { ActionStatusBadge } from './action-status-badge';
 
 interface DashboardClientProps {
     actions: ImprovementAction[];
@@ -70,6 +69,17 @@ function SortableItem({ id, children }: { id: string, children: React.ReactNode 
     );
 }
 
+const StatCard = ({ title, value, icon: Icon }: { title: string, value: number, icon: React.ElementType }) => (
+    <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">{title}</CardTitle>
+            <Icon className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+            <div className="text-2xl font-bold">{value}</div>
+        </CardContent>
+    </Card>
+);
 
 export function DashboardClient({ actions, assignedActions }: DashboardClientProps) {
   const t = useTranslations("Dashboard");
@@ -83,6 +93,14 @@ export function DashboardClient({ actions, assignedActions }: DashboardClientPro
     if (!user || !actions) return [];
     return actions.filter(action => action.followers?.includes(user.id));
   }, [actions, user]);
+
+  const stats = useMemo(() => {
+      const total = actions.length;
+      const finalized = actions.filter(a => a.status === 'Finalizada').length;
+      const drafts = actions.filter(a => a.status === 'Borrador').length;
+      const active = total - finalized - drafts;
+      return { total, active, finalized, drafts };
+  }, [actions]);
 
 
   useEffect(() => {
@@ -128,66 +146,62 @@ export function DashboardClient({ actions, assignedActions }: DashboardClientPro
 
   const widgets: { [key: string]: React.ReactNode } = {
     pendingActions: (
-      <Card className="col-span-full">
+      <Card className="col-span-full xl:col-span-2">
         <CardHeader><CardTitle>{t("myPendingActions.title")}</CardTitle><CardDescription>{t("myPendingActions.description")}</CardDescription></CardHeader>
         <CardContent>
-          <Table><TableHeader><TableRow><TableHead className="w-12"></TableHead><TableHead>{t("myPendingActions.col.id")}</TableHead><TableHead>{t("myPendingActions.col.title")}</TableHead><TableHead>{t("myPendingActions.col.status")}</TableHead></TableRow></TableHeader>
-            <TableBody>
-              {assignedActions.length > 0 ? (
-                assignedActions.map((action) => (
-                  <TableRow key={action.id}>
-                    <TableCell>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={(e) => handleToggleFollow(action.id, e)}
-                        title={isFollowing(action.id) ? "Deixar de seguir" : "Seguir acció"}
-                      >
-                        <Star className={cn("h-4 w-4", isFollowing(action.id) ? "text-yellow-400 fill-yellow-400" : "text-muted-foreground")} />
-                      </Button>
-                    </TableCell>
-                    <TableCell><Button variant="link" asChild className="p-0 h-auto"><a href={`/actions/${action.id}`} onClick={(e) => handleOpenAction(e, action)}>{action.actionId}</a></Button></TableCell>
-                    <TableCell>{action.title}</TableCell>
-                    <TableCell><ActionStatusBadge status={action.status} /></TableCell>
-                  </TableRow>
-                ))
-              ) : (
-                <TableRow><TableCell colSpan={4} className="text-center h-24">{t("myPendingActions.noActions")}</TableCell></TableRow>
-              )}
-            </TableBody>
-          </Table>
+            {assignedActions.length > 0 ? (
+                <div className="space-y-4">
+                    {assignedActions.map(action => (
+                        <div key={action.id} className="flex items-center gap-4">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={(e) => handleToggleFollow(action.id, e)}
+                              title={isFollowing(action.id) ? "Deixar de seguir" : "Seguir acció"}
+                            >
+                              <Star className={cn("h-5 w-5", isFollowing(action.id) ? "text-yellow-400 fill-yellow-400" : "text-muted-foreground")} />
+                            </Button>
+                            <div className="grid gap-1 flex-1">
+                                <a href={`/actions/${action.id}`} onClick={(e) => handleOpenAction(e, action)} className="font-semibold hover:underline">{action.title}</a>
+                                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                    <span>{action.actionId}</span>
+                                    <ActionStatusBadge status={action.status}/>
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            ) : (<p className="text-sm text-muted-foreground text-center py-10">{t("myPendingActions.noActions")}</p>)}
         </CardContent>
       </Card>
     ),
     followedActions: (
-      <Card className="col-span-full">
+      <Card className="col-span-full xl:col-span-2">
         <CardHeader><CardTitle>{t("followedActions.title")}</CardTitle><CardDescription>{t("followedActions.description")}</CardDescription></CardHeader>
         <CardContent>
-          <Table><TableHeader><TableRow><TableHead className="w-12"></TableHead><TableHead>{t("followedActions.col.id")}</TableHead><TableHead>{t("followedActions.col.title")}</TableHead><TableHead>{t("followedActions.col.status")}</TableHead></TableRow></TableHeader>
-            <TableBody>
-              {followedActions.length > 0 ? (
-                followedActions.map((action) => (
-                  <TableRow key={action.id}>
-                    <TableCell>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={(e) => handleToggleFollow(action.id, e)}
-                        title={"Deixar de seguir"}
-                      >
-                        <Star className={cn("h-4 w-4 text-yellow-400 fill-yellow-400")} />
-                      </Button>
-                    </TableCell>
-                    <TableCell><Button variant="link" asChild className="p-0 h-auto"><a href={`/actions/${action.id}`} onClick={(e) => handleOpenAction(e, action)}>{action.actionId}</a></Button></TableCell>
-                    <TableCell>{action.title}</TableCell>
-                    <TableCell><ActionStatusBadge status={action.status} /></TableCell>
-                  </TableRow>
-                ))
-              ) : (
-                <TableRow><TableCell colSpan={4} className="text-center h-24">{t("followedActions.noActions")}</TableCell></TableRow>
-              )}
-            </TableBody>
-          </Table>
+            {followedActions.length > 0 ? (
+                <div className="space-y-4">
+                    {followedActions.map(action => (
+                        <div key={action.id} className="flex items-center gap-4">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={(e) => handleToggleFollow(action.id, e)}
+                              title={"Deixar de seguir"}
+                            >
+                              <Star className={cn("h-5 w-5 text-yellow-400 fill-yellow-400")} />
+                            </Button>
+                            <div className="grid gap-1 flex-1">
+                               <a href={`/actions/${action.id}`} onClick={(e) => handleOpenAction(e, action)} className="font-semibold hover:underline">{action.title}</a>
+                               <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                    <span>{action.actionId}</span>
+                                    <ActionStatusBadge status={action.status}/>
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            ) : (<p className="text-sm text-muted-foreground text-center py-10">{t("followedActions.noActions")}</p>)}
         </CardContent>
       </Card>
     ),
@@ -196,19 +210,25 @@ export function DashboardClient({ actions, assignedActions }: DashboardClientPro
   return (
     <div className="flex flex-col gap-6">
       <h1 className="text-3xl font-bold tracking-tight">{t("title")}</h1>
-      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-        <SortableContext items={items.filter(id => widgets[id])} strategy={verticalListSortingStrategy}>
-            <div className="flex flex-col gap-6">
-                {items.map(id => (
-                    widgets[id] ? (
-                        <SortableItem key={id} id={id}>
-                            {widgets[id]}
-                        </SortableItem>
-                    ) : null
-                ))}
-            </div>
-        </SortableContext>
-      </DndContext>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <StatCard title={t("totalActions")} value={stats.total} icon={Inbox} />
+            <StatCard title={t("activeActions")} value={stats.active} icon={FolderClock} />
+            <StatCard title={t("finalizedActions")} value={stats.finalized} icon={CheckCircle} />
+            <StatCard title={t("drafts")} value={stats.drafts} icon={FileText} />
+        </div>
+        <div className="grid gap-4 grid-cols-1 lg:grid-cols-2 xl:grid-cols-4">
+            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                <SortableContext items={items.filter(id => widgets[id])} strategy={verticalListSortingStrategy}>
+                    {items.map(id => (
+                        widgets[id] ? (
+                            <SortableItem key={id} id={id}>
+                                {widgets[id]}
+                            </SortableItem>
+                        ) : null
+                    ))}
+                </SortableContext>
+            </DndContext>
+        </div>
     </div>
   )
 }
