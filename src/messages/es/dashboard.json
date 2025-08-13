@@ -1,0 +1,36 @@
+{
+  "Dashboard": {
+    "title": "Panel de Control",
+    "actionsByStatus": {
+      "title": "Acciones por Estado",
+      "description": "Distribución de acciones en diferentes estados del flujo de trabajo."
+    },
+    "actionsByType": {
+      "title": "Acciones por Tipo",
+      "description": "Desglose de acciones según su tipo designado."
+    },
+    "myPendingActions": {
+      "title": "Mis Acciones Pendientes",
+      "description": "Acciones que requieren tu atención inmediata para avanzar.",
+      "noActions": "No tienes ninguna acción pendiente. ¡Buen trabajo!",
+      "col": {
+        "id": "ID",
+        "title": "Título",
+        "status": "Estado"
+      }
+    },
+    "followedActions": {
+      "title": "Acciones en Seguimiento",
+      "description": "Una recopilación de las acciones que has marcado para seguir de cerca.",
+      "noActions": "No estás siguiendo ninguna acción. Haz clic en el icono de estrella para empezar.",
+      "unfollow": "Dejar de seguir la acción",
+      "col": {
+        "id": "ID",
+        "title": "Título",
+        "status": "Estado",
+        "myRole": "Mi Rol"
+      }
+    },
+    "chartLabel": "Acciones"
+  }
+}

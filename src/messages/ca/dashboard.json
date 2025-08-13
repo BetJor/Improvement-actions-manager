@@ -1,0 +1,36 @@
+{
+  "Dashboard": {
+    "title": "Panell de Control",
+    "actionsByStatus": {
+      "title": "Accions per Estat",
+      "description": "Distribució d'accions en diferents estats del flux de treball."
+    },
+    "actionsByType": {
+      "title": "Accions per Tipus",
+      "description": "Desglossament d'accions segons el seu tipus designat."
+    },
+    "myPendingActions": {
+      "title": "Les Meves Accions Pendents",
+      "description": "Accions que requereixen la teva atenció immediata per a avançar.",
+      "noActions": "No tens cap acció pendent. Bona feina!",
+      "col": {
+        "id": "ID",
+        "title": "Títol",
+        "status": "Estat"
+      }
+    },
+    "followedActions": {
+      "title": "Accions en Seguiment",
+      "description": "Un recull de les accions que has marcat per a seguir de prop.",
+      "noActions": "No estàs seguint cap acció. Fes clic a la icona d'estrella per a començar.",
+      "unfollow": "Deixar de seguir l'acció",
+      "col": {
+        "id": "ID",
+        "title": "Títol",
+        "status": "Estat",
+        "myRole": "El Meu Rol"
+      }
+    },
+    "chartLabel": "Accions"
+  }
+}

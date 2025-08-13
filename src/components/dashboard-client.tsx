@@ -36,14 +36,16 @@ import {
   ChartLegendContent,
 } from "@/components/ui/chart"
 import { Bar, BarChart, XAxis, YAxis, Pie, PieChart, Cell } from "recharts"
-import { Activity, CheckCircle, FileText, ListTodo, GanttChartSquare, GripVertical } from "lucide-react"
+import { Activity, CheckCircle, FileText, ListTodo, GanttChartSquare, GripVertical, Star } from "lucide-react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "./ui/table"
 import { ActionStatusBadge } from "./action-status-badge"
 import { Button } from "./ui/button"
 import { useTabs } from "@/hooks/use-tabs"
-import { getActionById, getActionTypes, getCategories, getCenters, getResponsibilityRoles, getSubcategories, getAffectedAreas } from "@/lib/data"
+import { getActionById, getActionTypes, getCategories, getCenters, getResponsibilityRoles, getSubcategories, getAffectedAreas, toggleFollowAction, getFollowedActions } from "@/lib/data"
 import { ActionDetailsTab } from "./action-details-tab"
 import { Badge } from './ui/badge';
+import { cn } from '@/lib/utils';
+import { useToast } from '@/hooks/use-toast';
 
 const COLORS = {
   Borrador: "hsl(var(--chart-5))",
@@ -56,7 +58,7 @@ const COLORS = {
 interface DashboardClientProps {
     actions: ImprovementAction[];
     assignedActions: ImprovementAction[];
-    followedActions: ImprovementAction[];
+    initialFollowedActions: ImprovementAction[];
     t: any;
 }
 
@@ -87,15 +89,21 @@ function SortableItem({ id, children }: { id: string, children: React.ReactNode 
 }
 
 
-export function DashboardClient({ actions, assignedActions, followedActions, t }: DashboardClientProps) {
+export function DashboardClient({ actions, assignedActions, initialFollowedActions, t }: DashboardClientProps) {
   const { openTab } = useTabs();
   const { user, updateDashboardLayout } = useAuth();
   const [items, setItems] = useState<string[]>(user?.dashboardLayout || defaultLayout);
+  const [followedActions, setFollowedActions] = useState(initialFollowedActions);
+  const { toast } = useToast();
   
   useEffect(() => {
     // Sync with user layout if it changes (e.g. on login)
     setItems(user?.dashboardLayout || defaultLayout);
   }, [user?.dashboardLayout]);
+
+  useEffect(() => {
+    setFollowedActions(initialFollowedActions);
+  }, [initialFollowedActions]);
 
 
   const sensors = useSensors(
@@ -160,6 +168,34 @@ export function DashboardClient({ actions, assignedActions, followedActions, t }
     }, {} as any)
   }), [t.chartLabel]);
 
+  const handleToggleFollow = async (actionId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!user) return;
+  
+    // Optimistically remove from the followed list
+    setFollowedActions(prevActions => prevActions.filter(action => action.id !== actionId));
+  
+    toast({
+        title: "Deixant de seguir",
+        description: "Has deixat de seguir aquesta acció.",
+    });
+  
+    try {
+        await toggleFollowAction(actionId, user.id);
+    } catch (error) {
+        console.error("Failed to toggle follow status", error);
+        toast({
+            variant: "destructive",
+            title: "Error",
+            description: "No s'ha pogut actualitzar l'estat de seguiment.",
+        });
+        // On error, refresh the list from the server to revert the change
+        const refreshedFollowedActions = await getFollowedActions(user.id);
+        setFollowedActions(refreshedFollowedActions);
+    }
+  };
+
+
   const widgets: { [key: string]: React.ReactNode } = {
     pendingActions: (
       <Card className="col-span-full">
@@ -187,18 +223,28 @@ export function DashboardClient({ actions, assignedActions, followedActions, t }
       <Card className="col-span-full">
         <CardHeader><CardTitle>{t.followedActions.title}</CardTitle><CardDescription>{t.followedActions.description}</CardDescription></CardHeader>
         <CardContent>
-          <Table><TableHeader><TableRow><TableHead>{t.followedActions.col.id}</TableHead><TableHead>{t.followedActions.col.title}</TableHead><TableHead>{t.followedActions.col.status}</TableHead></TableRow></TableHeader>
+          <Table><TableHeader><TableRow><TableHead className="w-12"></TableHead><TableHead>{t.followedActions.col.id}</TableHead><TableHead>{t.followedActions.col.title}</TableHead><TableHead>{t.followedActions.col.status}</TableHead></TableRow></TableHeader>
             <TableBody>
               {followedActions.length > 0 ? (
                 followedActions.map((action) => (
                   <TableRow key={action.id}>
+                    <TableCell>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={(e) => handleToggleFollow(action.id, e)}
+                        title={t.followedActions.unfollow}
+                      >
+                        <Star className={cn("h-4 w-4 text-yellow-400 fill-yellow-400")} />
+                      </Button>
+                    </TableCell>
                     <TableCell><Button variant="link" asChild className="p-0 h-auto"><a href={`/actions/${action.id}`} onClick={(e) => handleOpenAction(e, action)}>{action.actionId}</a></Button></TableCell>
                     <TableCell>{action.title}</TableCell>
                     <TableCell><ActionStatusBadge status={action.status} /></TableCell>
                   </TableRow>
                 ))
               ) : (
-                <TableRow><TableCell colSpan={3} className="text-center h-24">{t.followedActions.noActions}</TableCell></TableRow>
+                <TableRow><TableCell colSpan={4} className="text-center h-24">{t.followedActions.noActions}</TableCell></TableRow>
               )}
             </TableBody>
           </Table>

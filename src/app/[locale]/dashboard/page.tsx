@@ -67,10 +67,6 @@ export default function DashboardPage() {
 
   const translations = {
     title: t("title"),
-    totalActions: t("totalActions"),
-    activeActions: t("activeActions"),
-    finalizedActions: t("finalizedActions"),
-    drafts: t("drafts"),
     actionsByStatus: {
         title: t("actionsByStatus.title"),
         description: t("actionsByStatus.description"),
@@ -93,6 +89,7 @@ export default function DashboardPage() {
         title: t("followedActions.title"),
         description: t("followedActions.description"),
         noActions: t("followedActions.noActions"),
+        unfollow: t("followedActions.unfollow"),
         col: {
             id: t("followedActions.col.id"),
             title: t("followedActions.col.title"),
@@ -110,7 +107,7 @@ export default function DashboardPage() {
   return <DashboardClient 
     actions={actions} 
     assignedActions={assignedActions}
-    followedActions={followedActions}
+    initialFollowedActions={followedActions}
     t={translations} 
   />
 }
