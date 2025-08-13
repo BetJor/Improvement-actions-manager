@@ -285,12 +285,18 @@ export async function toggleFollowAction(actionId: string, userId: string): Prom
 
 export async function getFollowedActions(userId: string): Promise<ImprovementAction[]> {
     const actionsCol = collection(db, 'actions');
-    const q = query(actionsCol, where("followers", "array-contains", userId), orderBy("actionId", "desc"));
+    // Removing the orderBy clause to avoid needing a composite index
+    const q = query(actionsCol, where("followers", "array-contains", userId));
     
     const querySnapshot = await getDocs(q);
     
-    return querySnapshot.docs.map(doc => ({
+    const actions = querySnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
     } as ImprovementAction));
+
+    // Sort in-memory after fetching
+    actions.sort((a, b) => b.actionId.localeCompare(a.actionId));
+
+    return actions;
 }
