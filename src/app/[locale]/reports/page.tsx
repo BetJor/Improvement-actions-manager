@@ -1,39 +1,30 @@
-
-"use client"
-
-import { useState, useEffect } from 'react';
-import { getActions, getTranslations } from "@/lib/data"
-import type { ImprovementAction } from '@/lib/types';
-import { Loader2 } from 'lucide-react';
+import { getActions } from "@/lib/data"
+import { getTranslations } from "next-intl/server"
 import { ReportsClient } from '@/components/reports-client';
 
 
-export default function ReportsPage() {
-  const [actions, setActions] = useState<ImprovementAction[]>([]);
-  const [translations, setTranslations] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(true);
+export default async function ReportsPage() {
+  const [actions, t] = await Promise.all([
+    getActions(),
+    getTranslations('Reports')
+  ]);
 
-  useEffect(() => {
-    async function loadData() {
-      setIsLoading(true);
-      try {
-        const [fetchedActions, t] = await Promise.all([
-          getActions(),
-          getTranslations('Reports')
-        ]);
-        setActions(fetchedActions);
-        setTranslations(t);
-      } catch (error) {
-        console.error("Failed to load report data:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    }
-    loadData();
-  }, []);
-
-  if (isLoading || !translations) {
-    return <div className="flex h-full w-full items-center justify-center"><Loader2 className="h-6 w-6 animate-spin" /></div>
+  const translations = {
+    title: t("title"),
+    description: t("description"),
+    actionsByStatus: {
+      title: t("actionsByStatus.title"),
+      description: t("actionsByStatus.description"),
+    },
+    actionsByType: {
+      title: t("actionsByType.title"),
+      description: t("actionsByType.description"),
+    },
+    actionsByCategory: {
+      title: t("actionsByCategory.title"),
+      description: t("actionsByCategory.description"),
+    },
+    chartLabel: t("chartLabel"),
   }
 
   return <ReportsClient 
