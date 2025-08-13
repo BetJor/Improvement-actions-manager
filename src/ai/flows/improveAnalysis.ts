@@ -9,7 +9,7 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
-import { getPrompt } from '@/lib/data';
+import { getPrompt } from '@/services/ai-service';
 
 const SuggestAnalysisInputSchema = z.object({
   observations: z.string().describe("The initial observations of the improvement action."),
