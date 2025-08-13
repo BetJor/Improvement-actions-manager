@@ -22,7 +22,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from ".
 import { ActionStatusBadge } from "./action-status-badge"
 import { Button } from "./ui/button"
 import { useTabs } from "@/hooks/use-tabs"
-import { getActionById, getActionTypes, getCategories, getCenters, getResponsibilityRoles, getSubcategories } from "@/lib/data"
+import { getActionById, getActionTypes, getCategories, getCenters, getResponsibilityRoles, getSubcategories, getAffectedAreas } from "@/lib/data"
 import { ActionDetailsTab } from "./action-details-tab"
 
 
@@ -254,5 +254,3 @@ export function DashboardClient({ actions, assignedActions, t }: DashboardClient
     </div>
   )
 }
-
-    
