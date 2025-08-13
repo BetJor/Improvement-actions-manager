@@ -1,9 +1,21 @@
+
 import { collection, doc, getDoc, getDocs, addDoc, updateDoc, query, orderBy, limit, arrayUnion, Timestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { format } from 'date-fns';
-import type { ImprovementAction, ActionUserInfo, CreateActionData } from '@/lib/types';
+import type { ImprovementAction, ActionUserInfo } from '@/lib/types';
 import { planActionWorkflow } from '@/ai/flows/planActionWorkflow';
-import { getUsers, getCategories, getSubcategories, getAffectedAreas, getCenters, getActionTypes } from './master-data-service';
+import { getUsers } from './users-service';
+import { getCategories, getSubcategories, getAffectedAreas, getCenters, getActionTypes } from './master-data-service';
+
+interface CreateActionData extends Omit<ImprovementAction, 'id' | 'actionId' | 'status' | 'creationDate' | 'category' | 'subcategory' | 'type' | 'affectedAreas' | 'center' | 'analysisDueDate' | 'implementationDueDate' | 'closureDueDate'> {
+  status: 'Borrador' | 'Pendiente Análisis';
+  category: string; // ID
+  subcategory: string; // ID
+  typeId: string;
+  affectedAreasId: string;
+  centerId?: string;
+}
+
 
 // Funció per obtenir les dades de Firestore
 export const getActions = async (): Promise<ImprovementAction[]> => {
