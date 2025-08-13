@@ -1,33 +1,15 @@
 
 "use client"
 
-import { useState, useEffect } from "react"
-import { getActions } from "@/lib/data"
+import { useActionState } from "@/hooks/use-action-state";
 import { ActionsTable } from "@/components/actions-table"
 import { ClientButton } from "./client-button"
 import { useTranslations } from "next-intl"
-import type { ImprovementAction } from "@/lib/types"
 import { Loader2 } from "lucide-react"
 
 export default function ActionsPage() {
   const t = useTranslations("Actions.page");
-  const [actions, setActions] = useState<ImprovementAction[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    async function loadData() {
-      setIsLoading(true);
-      try {
-        const fetchedActions = await getActions();
-        setActions(fetchedActions);
-      } catch (error) {
-        console.error("Failed to load actions:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    }
-    loadData();
-  }, []);
+  const { actions, isLoading, setActions } = useActionState();
 
   if (isLoading) {
     return (
@@ -46,7 +28,7 @@ export default function ActionsPage() {
       <p className="text-muted-foreground">
         {t("description")}
       </p>
-      <ActionsTable actions={actions} />
+      <ActionsTable actions={actions} setActions={setActions} />
     </div>
   )
 }

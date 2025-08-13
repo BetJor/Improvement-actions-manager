@@ -1,40 +1,20 @@
 
 "use client"
 
-import { useState, useEffect, useMemo } from 'react';
-import { getActions, getFollowedActions } from "@/lib/data"
+import { useMemo } from 'react';
+import { useActionState } from "@/hooks/use-action-state";
 import { useTranslations } from "next-intl"
 import { DashboardClient } from "@/components/dashboard-client"
-import type { ImprovementAction } from '@/lib/types';
 import { Loader2 } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
+import type { ImprovementAction } from '@/lib/types';
+
 
 export default function DashboardPage() {
+  const t = useTranslations('Dashboard');
   const { user, loading: authLoading } = useAuth();
-  const [actions, setActions] = useState<ImprovementAction[]>([]);
-  const [followedActions, setFollowedActions] = useState<ImprovementAction[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const { actions, isLoading, setActions } = useActionState();
 
-  useEffect(() => {
-    async function loadData() {
-      if (authLoading || !user) return; // Wait for auth to be ready
-      setIsLoading(true);
-      try {
-        const [fetchedActions, fetchedFollowedActions] = await Promise.all([
-            getActions(),
-            getFollowedActions(user.id)
-        ]);
-        setActions(fetchedActions);
-        setFollowedActions(fetchedFollowedActions);
-      } catch (error) {
-        console.error("Failed to load dashboard actions:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    }
-    loadData();
-  }, [authLoading, user]);
-  
   const assignedActions = useMemo(() => {
     if (!user || !actions) return [];
   
@@ -64,6 +44,12 @@ export default function DashboardPage() {
     return actions.filter(action => isUserTurnToAct(action));
   }, [actions, user]);
 
+  const followedActions = useMemo(() => {
+    if (!user || !actions) return [];
+    return actions.filter(action => action.followers?.includes(user.id));
+  }, [actions, user]);
+
+
   if (isLoading || authLoading) {
     return <div className="flex h-full w-full items-center justify-center"><Loader2 className="h-6 w-6 animate-spin" /></div>
   }
@@ -72,5 +58,6 @@ export default function DashboardPage() {
     actions={actions} 
     assignedActions={assignedActions}
     initialFollowedActions={followedActions}
+    setActions={setActions}
   />
 }

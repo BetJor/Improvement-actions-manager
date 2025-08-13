@@ -28,6 +28,7 @@ import type { ProposedActionStatus } from "@/lib/types"
 import { useRouter } from "next/navigation"
 import { UpdateActionStatusDialog } from "./update-action-status-dialog"
 import { useFollowAction } from "@/hooks/use-follow-action"
+import { useActionState } from "@/hooks/use-action-state"
 
 
 interface ActionDetailsTabProps {
@@ -42,6 +43,7 @@ export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTab
     const { toast } = useToast()
     const router = useRouter();
     const { user } = useAuth()
+    const { setActionState: setGlobalActionState } = useActionState();
 
     const [action, setAction] = useState<ImprovementAction | null>(initialAction);
     const [isEditing, setIsEditing] = useState(false)
@@ -50,7 +52,7 @@ export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTab
     const [isStatusDialogOpen, setIsStatusDialogOpen] = useState(false);
     const [selectedProposedAction, setSelectedProposedAction] = useState<any>(null);
     
-    const { handleToggleFollow, isFollowing } = useFollowAction(action, setAction);
+    const { handleToggleFollow, isFollowing } = useFollowAction(action, setAction, setGlobalActionState);
 
 
     useEffect(() => {
@@ -72,6 +74,7 @@ export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTab
         const updatedAction = await getActionById(action.id);
         if (updatedAction) {
             setAction(updatedAction);
+            setGlobalActionState(prev => prev.map(a => a.id === updatedAction.id ? updatedAction : a));
         }
     }
 
@@ -149,7 +152,7 @@ export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTab
         if (!action || !user) return;
         setIsSubmitting(true);
         try {
-            await updateAction(action.id, {
+            const closedAction = await updateAction(action.id, {
                 closure: {
                     ...closureData,
                     closureResponsible: {

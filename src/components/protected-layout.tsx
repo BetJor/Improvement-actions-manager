@@ -11,6 +11,7 @@ import { useTranslations, NextIntlClientProvider, AbstractIntlMessages } from "n
 import { TabsProvider, useTabs } from "@/hooks/use-tabs";
 import { DynamicTabs } from "./dynamic-tabs";
 import { SidebarProvider } from "./ui/sidebar";
+import { ActionStateProvider } from "@/hooks/use-action-state";
 
 
 function LayoutWithTabs({ children }: { children: React.ReactNode }) {
@@ -72,13 +73,15 @@ export function ProtectedLayout({
   }
 
   const content = (
-    <TabsProvider initialPath={pathname}>
-      {isLoginPage ? children : 
-        <LayoutWithTabs>
-            {children}
-        </LayoutWithTabs>
-      }
-    </TabsProvider>
+    <ActionStateProvider>
+        <TabsProvider initialPath={pathname}>
+        {isLoginPage ? children : 
+            <LayoutWithTabs>
+                {children}
+            </LayoutWithTabs>
+        }
+        </TabsProvider>
+    </ActionStateProvider>
   )
 
   return (

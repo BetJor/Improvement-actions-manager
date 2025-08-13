@@ -43,6 +43,7 @@ interface DashboardClientProps {
     actions: ImprovementAction[];
     assignedActions: ImprovementAction[];
     initialFollowedActions: ImprovementAction[];
+    setActions: React.Dispatch<React.SetStateAction<ImprovementAction[]>>;
 }
 
 const defaultLayout = ["pendingActions", "followedActions"];
@@ -72,18 +73,15 @@ function SortableItem({ id, children }: { id: string, children: React.ReactNode 
 }
 
 
-export function DashboardClient({ actions: initialActions, assignedActions: initialAssignedActions, initialFollowedActions }: DashboardClientProps) {
+export function DashboardClient({ actions, assignedActions, initialFollowedActions, setActions }: DashboardClientProps) {
   const t = useTranslations("Dashboard");
   const { openTab } = useTabs();
   const { user, updateDashboardLayout } = useAuth();
   const [items, setItems] = useState<string[]>(user?.dashboardLayout || defaultLayout);
   
-  const [allActions, setAllActions] = useState(initialActions);
-  const [assignedActions, setAssignedActions] = useState(initialAssignedActions);
   const [followedActions, setFollowedActions] = useState(initialFollowedActions);
 
-  const { handleToggleFollow: handleFollowAssigned, isFollowing: isFollowingAssigned } = useFollowAction(assignedActions, setAssignedActions);
-  const { handleToggleFollow: handleFollowGeneral, isFollowing: isFollowingGeneral } = useFollowAction(allActions, setAllActions);
+  const { handleToggleFollow, isFollowing } = useFollowAction(actions, setActions);
 
   useEffect(() => {
     // Sync with user layout if it changes (e.g. on login)
@@ -91,18 +89,12 @@ export function DashboardClient({ actions: initialActions, assignedActions: init
   }, [user?.dashboardLayout]);
 
   useEffect(() => {
-    setAllActions(initialActions);
-    setAssignedActions(initialAssignedActions);
-    setFollowedActions(initialFollowedActions);
-  }, [initialActions, initialAssignedActions, initialFollowedActions]);
-  
-  useEffect(() => {
     // When the list of all actions is updated (e.g. an action is followed/unfollowed elsewhere),
     // update the followedActions list.
     if(user) {
-        setFollowedActions(allActions.filter(a => a.followers?.includes(user.id)));
+        setFollowedActions(actions.filter(a => a.followers?.includes(user.id)));
     }
-  }, [allActions, user]);
+  }, [actions, user]);
 
 
   const sensors = useSensors(
@@ -144,10 +136,7 @@ export function DashboardClient({ actions: initialActions, assignedActions: init
   }
 
   const handleUnfollowFromDashboard = (actionId: string, e: React.MouseEvent) => {
-    // This function will be used by both tables, so it needs to update both lists.
-    handleFollowGeneral(actionId, e);
-    handleFollowAssigned(actionId, e);
-    setFollowedActions(prev => prev.filter(action => action.id !== actionId));
+    handleToggleFollow(actionId, e);
   };
 
 
@@ -165,10 +154,10 @@ export function DashboardClient({ actions: initialActions, assignedActions: init
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={(e) => handleUnfollowFromDashboard(action.id, e)}
-                        title={isFollowingAssigned(action.id) ? "Deixar de seguir" : "Seguir acció"}
+                        onClick={(e) => handleToggleFollow(action.id, e)}
+                        title={isFollowing(action.id) ? "Deixar de seguir" : "Seguir acció"}
                       >
-                        <Star className={cn("h-4 w-4", isFollowingAssigned(action.id) ? "text-yellow-400 fill-yellow-400" : "text-muted-foreground")} />
+                        <Star className={cn("h-4 w-4", isFollowing(action.id) ? "text-yellow-400 fill-yellow-400" : "text-muted-foreground")} />
                       </Button>
                     </TableCell>
                     <TableCell><Button variant="link" asChild className="p-0 h-auto"><a href={`/actions/${action.id}`} onClick={(e) => handleOpenAction(e, action)}>{action.actionId}</a></Button></TableCell>

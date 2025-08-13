@@ -171,7 +171,7 @@ export async function createAction(data: CreateActionData, masterData: any): Pro
 
 
 // Function to update an existing action
-export async function updateAction(actionId: string, data: any, masterData?: any, status?: 'Borrador' | 'Pendiente Análisis'): Promise<void> {
+export async function updateAction(actionId: string, data: any, masterData?: any, status?: 'Borrador' | 'Pendiente Análisis'): Promise<ImprovementAction | null> {
     const actionDocRef = doc(db, 'actions', actionId);
     
     let dataToUpdate: any = {};
@@ -195,14 +195,12 @@ export async function updateAction(actionId: string, data: any, masterData?: any
             
             transaction.update(actionDocRef, { "analysis.proposedActions": updatedProposedActions });
         });
-        return; // Exit after transaction
-    }
-
-    if (data.newComment) {
+    } else if (data.newComment) {
         // Handle adding a new comment
         dataToUpdate = {
             comments: arrayUnion(data.newComment)
         };
+        await updateDoc(actionDocRef, dataToUpdate);
     } else if (masterData) {
         // Handle editing a draft
         dataToUpdate = {
@@ -221,6 +219,7 @@ export async function updateAction(actionId: string, data: any, masterData?: any
             type: masterData.actionTypes.find((t: any) => t.id === data.typeId)?.name || data.typeId,
             typeId: data.typeId,
         };
+         await updateDoc(actionDocRef, dataToUpdate);
     } else {
         // If no masterData, we are likely updating other fields like analysis, verification or closure
         dataToUpdate = { ...data };
@@ -254,13 +253,15 @@ export async function updateAction(actionId: string, data: any, masterData?: any
                 await createAction(bisActionData, allMasterData);
             }
         }
+         await updateDoc(actionDocRef, dataToUpdate);
     }
 
     if (status) {
-        dataToUpdate.status = status;
+        await updateDoc(actionDocRef, {status: status});
     }
 
-    await updateDoc(actionDocRef, dataToUpdate);
+    const updatedDoc = await getActionById(actionId);
+    return updatedDoc;
 }
 
 export async function toggleFollowAction(actionId: string, userId: string): Promise<void> {
@@ -286,7 +287,7 @@ export async function toggleFollowAction(actionId: string, userId: string): Prom
 export async function getFollowedActions(userId: string): Promise<ImprovementAction[]> {
     if (!userId) return [];
     const actionsCol = collection(db, 'actions');
-    const q = query(actionsCol, where("followers", "array-contains", userId));
+    const q = query(actionsCol, where("followers", "array-contains", userId), orderBy("actionId", "desc"));
     
     const querySnapshot = await getDocs(q);
     
@@ -294,8 +295,6 @@ export async function getFollowedActions(userId: string): Promise<ImprovementAct
         id: doc.id,
         ...doc.data()
     } as ImprovementAction));
-
-    actions.sort((a, b) => b.actionId.localeCompare(a.actionId));
 
     return actions;
 }

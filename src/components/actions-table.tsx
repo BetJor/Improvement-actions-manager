@@ -30,17 +30,16 @@ import { cn } from "@/lib/utils"
 import { useFollowAction } from "@/hooks/use-follow-action"
 
 interface ActionsTableProps {
-  actions: ImprovementAction[]
+  actions: ImprovementAction[];
+  setActions: React.Dispatch<React.SetStateAction<ImprovementAction[]>>;
 }
 
 type SortKey = keyof ImprovementAction | 'responsible'
 
-export function ActionsTable({ actions: initialActions }: ActionsTableProps) {
+export function ActionsTable({ actions, setActions }: ActionsTableProps) {
   const t = useTranslations("Actions.table")
   const { openTab } = useTabs();
-  const { user } = useAuth();
   
-  const [actions, setActions] = useState(initialActions);
   const { handleToggleFollow, isFollowing } = useFollowAction(actions, setActions);
   
   const [searchTerm, setSearchTerm] = useState("")
@@ -48,9 +47,6 @@ export function ActionsTable({ actions: initialActions }: ActionsTableProps) {
   const [typeFilter, setTypeFilter] = useState<Set<ImprovementActionType>>(new Set())
   const [sortConfig, setSortConfig] = useState<{ key: SortKey; direction: 'asc' | 'desc' } | null>(null)
   
-  useEffect(() => {
-    setActions(initialActions);
-  }, [initialActions]);
 
   const allStatuses = useMemo(() => Array.from(new Set(actions.map(a => a.status))), [actions])
   const allTypes = useMemo(() => Array.from(new Set(actions.map(a => a.type))), [actions])
