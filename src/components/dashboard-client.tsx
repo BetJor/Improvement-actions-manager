@@ -28,32 +28,15 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import {
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-  ChartLegend,
-  ChartLegendContent,
-} from "@/components/ui/chart"
-import { Bar, BarChart, XAxis, YAxis, Pie, PieChart, Cell } from "recharts"
-import { Activity, CheckCircle, FileText, ListTodo, GanttChartSquare, GripVertical, Star } from "lucide-react"
+import { GanttChartSquare, GripVertical, Star } from "lucide-react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "./ui/table"
 import { ActionStatusBadge } from "./action-status-badge"
 import { Button } from "./ui/button"
 import { useTabs } from "@/hooks/use-tabs"
 import { getActionById, getActionTypes, getCategories, getCenters, getResponsibilityRoles, getSubcategories, getAffectedAreas, toggleFollowAction, getFollowedActions } from "@/lib/data"
 import { ActionDetailsTab } from "./action-details-tab"
-import { Badge } from './ui/badge';
 import { cn } from '@/lib/utils';
 import { useFollowAction } from '@/hooks/use-follow-action';
-
-const COLORS = {
-  Borrador: "hsl(var(--chart-5))",
-  "Pendiente Análisis": "hsl(var(--chart-4))",
-  "Pendiente Comprobación": "hsl(var(--chart-2))",
-  "Pendiente de Cierre": "hsl(var(--chart-3))",
-  Finalizada: "hsl(var(--chart-1))",
-};
 
 interface DashboardClientProps {
     actions: ImprovementAction[];
@@ -62,7 +45,7 @@ interface DashboardClientProps {
     t: any;
 }
 
-const defaultLayout = ["pendingActions", "followedActions", "charts"];
+const defaultLayout = ["pendingActions", "followedActions"];
 
 function SortableItem({ id, children }: { id: string, children: React.ReactNode }) {
     const {
@@ -159,30 +142,6 @@ export function DashboardClient({ actions: initialActions, assignedActions: init
     openTab({ path: `/actions/${action.id}`, title: `Acció ${action.actionId}`, icon: GanttChartSquare, isClosable: true, loader: actionLoader });
   }
 
-  const statusDistribution = useMemo(() => {
-    const counts = allActions.reduce((acc, action) => {
-      acc[action.status] = (acc[action.status] || 0) + 1
-      return acc
-    }, {} as Record<string, number>)
-    return Object.entries(counts).map(([name, value]) => ({ name, value }))
-  }, [allActions]);
-
-  const typeDistribution = useMemo(() => {
-    const counts = allActions.reduce((acc, action) => {
-      acc[action.type] = (acc[action.type] || 0) + 1
-      return acc
-    }, {} as Record<string, number>)
-    return Object.entries(counts).map(([name, value]) => ({ name, value }))
-  }, [allActions]);
-  
-  const chartConfig = useMemo(() => ({
-    value: { label: t.chartLabel },
-    ...Object.keys(COLORS).reduce((acc, key) => {
-      acc[key] = { label: key, color: COLORS[key as keyof typeof COLORS] };
-      return acc;
-    }, {} as any)
-  }), [t.chartLabel]);
-
   const handleUnfollowFromDashboard = (actionId: string, e: React.MouseEvent) => {
     // This function will be used by both tables, so it needs to update both lists.
     handleFollowGeneral(actionId, e);
@@ -256,33 +215,13 @@ export function DashboardClient({ actions: initialActions, assignedActions: init
         </CardContent>
       </Card>
     ),
-    charts: (
-        <div className="grid gap-4 md:grid-cols-2">
-            <Card>
-            <CardHeader><CardTitle>{t.actionsByStatus.title}</CardTitle><CardDescription>{t.actionsByStatus.description}</CardDescription></CardHeader>
-            <CardContent>
-                <ChartContainer config={chartConfig} className="min-h-[200px] w-full">
-                <BarChart data={statusDistribution} layout="vertical" margin={{ left: 20 }}><XAxis type="number" hide /><YAxis dataKey="name" type="category" tickLine={false} axisLine={false} width={150} /><ChartTooltip content={<ChartTooltipContent />} /><Bar dataKey="value" layout="vertical" radius={5}>{statusDistribution.map((entry, index) => (<Cell key={`cell-${index}`} fill={COLORS[entry.name as keyof typeof COLORS] || '#8884d8'} />))}</Bar></BarChart>
-                </ChartContainer>
-            </CardContent>
-            </Card>
-            <Card>
-            <CardHeader><CardTitle>{t.actionsByType.title}</CardTitle><CardDescription>{t.actionsByType.description}</CardDescription></CardHeader>
-            <CardContent>
-                <ChartContainer config={chartConfig} className="min-h-[200px] w-full">
-                <PieChart><ChartTooltip content={<ChartTooltipContent />} /><Pie data={typeDistribution} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} fill="hsl(var(--primary))" label>{typeDistribution.map((entry, index) => <Cell key={`cell-${index}`} fill={`hsl(var(--chart-${index + 1}))`} />)}</Pie><ChartLegend content={<ChartLegendContent nameKey="name" />} /></PieChart>
-                </ChartContainer>
-            </CardContent>
-            </Card>
-        </div>
-    ),
   };
 
   return (
     <div className="flex flex-col gap-6">
       <h1 className="text-3xl font-bold tracking-tight">{t.title}</h1>
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-        <SortableContext items={items} strategy={verticalListSortingStrategy}>
+        <SortableContext items={items.filter(id => widgets[id])} strategy={verticalListSortingStrategy}>
             <div className="flex flex-col gap-6">
                 {items.map(id => (
                     widgets[id] ? (

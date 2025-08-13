@@ -1,14 +1,6 @@
 {
   "Dashboard": {
     "title": "Panel de Control",
-    "actionsByStatus": {
-      "title": "Acciones por Estado",
-      "description": "Distribución de acciones en diferentes estados del flujo de trabajo."
-    },
-    "actionsByType": {
-      "title": "Acciones por Tipo",
-      "description": "Desglose de acciones según su tipo designado."
-    },
     "myPendingActions": {
       "title": "Mis Acciones Pendientes",
       "description": "Acciones que requieren tu atención inmediata para avanzar.",
@@ -30,7 +22,6 @@
         "status": "Estado",
         "myRole": "Mi Rol"
       }
-    },
-    "chartLabel": "Acciones"
+    }
   }
 }

@@ -1,14 +1,6 @@
 {
   "Dashboard": {
     "title": "Panell de Control",
-    "actionsByStatus": {
-      "title": "Accions per Estat",
-      "description": "Distribució d'accions en diferents estats del flux de treball."
-    },
-    "actionsByType": {
-      "title": "Accions per Tipus",
-      "description": "Desglossament d'accions segons el seu tipus designat."
-    },
     "myPendingActions": {
       "title": "Les Meves Accions Pendents",
       "description": "Accions que requereixen la teva atenció immediata per a avançar.",
@@ -30,7 +22,6 @@
         "status": "Estat",
         "myRole": "El Meu Rol"
       }
-    },
-    "chartLabel": "Accions"
+    }
   }
 }

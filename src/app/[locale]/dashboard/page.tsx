@@ -67,14 +67,6 @@ export default function DashboardPage() {
 
   const translations = {
     title: t("title"),
-    actionsByStatus: {
-        title: t("actionsByStatus.title"),
-        description: t("actionsByStatus.description"),
-    },
-    actionsByType: {
-        title: t("actionsByType.title"),
-        description: t("actionsByType.description"),
-    },
     myPendingActions: {
         title: t("myPendingActions.title"),
         description: t("myPendingActions.description"),
@@ -97,7 +89,6 @@ export default function DashboardPage() {
             myRole: t("followedActions.col.myRole"),
         }
     },
-    chartLabel: t("chartLabel"),
   }
 
   if (isLoading || authLoading) {
