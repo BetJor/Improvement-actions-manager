@@ -289,6 +289,13 @@ export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTab
                                             ))}
                                         </div>
                                     </div>
+                                     <Separator />
+                                    <div>
+                                        <h3 className="font-semibold text-lg mb-2">{t('analysis.verificationResponsible.label')}</h3>
+                                        <p className="text-muted-foreground">
+                                            {users.find(u => u.id === action.analysis?.verificationResponsibleUserId)?.name || action.analysis?.verificationResponsibleUserId || 'No assignat'}
+                                        </p>
+                                    </div>
                                 </CardContent>
                             </Card>
                         ) : (
@@ -389,3 +396,5 @@ export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTab
         </div>
     )
 }
+
+    
