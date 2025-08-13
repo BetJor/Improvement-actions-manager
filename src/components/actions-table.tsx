@@ -145,29 +145,32 @@ export function ActionsTable({ actions: initialActions }: ActionsTableProps) {
     e.stopPropagation();
     if (!user) return;
 
+    // Determine the current state before any updates
+    const isCurrentlyFollowing = actions.find(a => a.id === actionId)?.followers?.includes(user.id) ?? false;
+    const isNowFollowing = !isCurrentlyFollowing;
+
+    // Optimistically update the UI first for a responsive feel
+    setActions(prevActions => {
+        return prevActions.map(action => {
+            if (action.id === actionId) {
+                const newFollowers = isNowFollowing
+                    ? [...(action.followers || []), user.id]
+                    : action.followers?.filter(id => id !== user.id);
+                return { ...action, followers: newFollowers };
+            }
+            return action;
+        });
+    });
+
+    // Show the correct toast message immediately
+    toast({
+        title: isNowFollowing ? "Seguint" : "Deixant de seguir",
+        description: `Ara ${isNowFollowing ? 'segueixes' : 'no segueixes'} aquesta acció.`,
+    });
+
     try {
+        // Then, update the backend
         await toggleFollowAction(actionId, user.id);
-        
-        // Optimistically update the UI
-        setActions(prevActions => {
-            return prevActions.map(action => {
-                if (action.id === actionId) {
-                    const isFollowing = action.followers?.includes(user.id);
-                    const newFollowers = isFollowing
-                        ? action.followers?.filter(id => id !== user.id)
-                        : [...(action.followers || []), user.id];
-                    return { ...action, followers: newFollowers };
-                }
-                return action;
-            });
-        });
-
-        const isNowFollowing = actions.find(a => a.id === actionId)?.followers?.includes(user.id);
-        toast({
-            title: isNowFollowing ? "Seguint" : "Deixant de seguir",
-            description: `Ara ${isNowFollowing ? 'segueixes' : 'no segueixes'} aquesta acció.`,
-        });
-
     } catch (error) {
         console.error("Failed to toggle follow status", error);
         toast({
@@ -175,8 +178,21 @@ export function ActionsTable({ actions: initialActions }: ActionsTableProps) {
             title: "Error",
             description: "No s'ha pogut actualitzar l'estat de seguiment.",
         });
+        // Revert the optimistic UI update on error
+        setActions(prevActions => {
+            return prevActions.map(action => {
+                if (action.id === actionId) {
+                    const revertedFollowers = isCurrentlyFollowing
+                        ? [...(action.followers || []), user.id]
+                        : action.followers?.filter(id => id !== user.id);
+                    return { ...action, followers: revertedFollowers };
+                }
+                return action;
+            });
+        });
     }
   };
+
 
   return (
     <div className="w-full">
