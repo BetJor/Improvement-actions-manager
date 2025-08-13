@@ -1,0 +1,174 @@
+{
+  "Actions": {
+    "page": {
+      "title": "Accions de Millora",
+      "description": "Aquí pots trobar totes les accions de millora. Utilitza els filtres per acotar la teva cerca.",
+      "createAction": "Crear Acció"
+    },
+    "new": {
+      "title": "Crear Nova Acció de Millora",
+      "description": "Omple el formulari següent per crear una nova acció. Començarà en estat 'Esorrany'.",
+      "form": {
+        "title": {
+          "label": "Assumpte",
+          "placeholder": "p. ex., Optimització del procés de facturació"
+        },
+        "description": {
+          "label": "Observacions",
+          "placeholder": "Descriu la no conformitat o l'àrea de millora..."
+        },
+        "type": {
+          "label": "Tipus d'Acció",
+          "placeholder": "Selecciona un tipus d'acció",
+          "description": "Categoritza l'acció de millora."
+        },
+        "responsible": {
+          "label": "Persona Responsable",
+          "placeholder": "Selecciona una persona responsable",
+          "description": "Assigna la persona encarregada de l'anàlisi."
+        },
+        "submit": "Crear Acció",
+        "saveAsDraft": "Desar Esborrany",
+        "sendForAnalysis": "Enviar per a Anàlisi",
+        "toast": {
+          "title": "Acció Creada",
+          "description": "La nova acció de millora s'ha creat correctament."
+        },
+        "mic": {
+          "toggle": "Activar/desactivar el micròfon"
+        },
+        "improve": {
+          "button": "Millorar text amb IA"
+        },
+        "suggestion": {
+          "title": "Suggeriment de l'IA",
+          "description": "L'assistent ha generat la següent descripció. Vols acceptar aquests canvis?",
+          "improvedDescription": "Descripció millorada",
+          "accept": "Acceptar Suggeriment",
+          "cancel": "Cancel·lar"
+        },
+        "cancel": "Cancel·lar"
+      }
+    },
+    "table": {
+      "filterPlaceholder": "Filtra per títol, ID o responsable...",
+      "status": "Estat",
+      "type": "Tipus",
+      "noResults": "No s'han trobat resultats.",
+      "col": {
+        "id": "ID",
+        "title": "Títol",
+        "status": "Estat",
+        "type": "Tipus",
+        "responsible": "Responsable",
+        "dueDate": "Data Venciment"
+      }
+    },
+    "detail": {
+      "editDraft": "Editar Esborrany",
+      "performAnalysis": "Fer Anàlisi",
+      "verifyImplementation": "Verificar Implantació",
+      "closeAction": "Tancar Acció",
+      "causesAndProposedAction": "Causes i Acció Proposada",
+      "causesAnalysis": "Anàlisi de les Causes",
+      "proposedAction": "Acció Proposada",
+      "analysisPerformedBy": "Anàlisi realitzat per {name} el {date}",
+      "verificationPerformedBy": "Verificació realitzada per {name} el {date}",
+      "implementationVerification": "Comprovació de la Implantació",
+      "followUpAndNotes": "Seguiment i Anotacions",
+      "actionClosure": "Tancament de l'Acció",
+      "details": "Detalls",
+      "status": "Estat",
+      "type": "Tipus",
+      "creator": "Creador/a",
+      "responsible": "Responsable",
+      "creationDate": "Data Creació",
+      "analysisDue": "Venciment Anàlisi",
+      "implementationDue": "Venciment Implantació",
+      "closureDue": "Venciment Tancament",
+      "workflowPlan": {
+        "title": "Pla de Treball",
+        "description": "Aquest és el pla de treball generat automàticament per a aquesta acció."
+      },
+      "editingTitle": "Editant Acció de Millora",
+      "editingDescription": "Estàs modificant els detalls d'aquesta acció. Desa els canvis quan hagis acabat.",
+      "viewingDescription": "Visualitzant els detalls de l'acció. Per a modificar, fes clic a 'Editar'.",
+      "analysis": {
+        "title": "Anàlisi de Causes i Pla d'Acció",
+        "description": "Realitza l'anàlisi de les causes arrel i defineix les accions a emprendre.",
+        "causes": {
+          "label": "Anàlisi de les Causes",
+          "placeholder": "Descriu l'anàlisi realitzat per a identificar les causes arrel del problema..."
+        },
+        "proposedActions": {
+          "title": "Accions Proposades",
+          "description": "Descripció de l'acció",
+          "descriptionPlaceholder": "p. ex., Revisar i actualitzar el procediment P-01",
+          "responsible": "Responsable",
+          "responsiblePlaceholder": "Selecciona un usuari",
+          "dueDate": "Data Venciment",
+          "dueDatePlaceholder": "Selecciona una data",
+          "add": "Afegir Acció"
+        },
+        "verificationResponsible": {
+          "label": "Responsable de la Verificació",
+          "placeholder": "Selecciona l'usuari que verificarà l'eficàcia"
+        },
+        "saveButton": "Desar Anàlisi i Avançar",
+        "mic": {
+          "toggle": "Activar/desactivar el micròfon"
+        },
+        "improve": {
+          "button": "Generar Anàlisi amb IA"
+        },
+        "suggestion": {
+          "title": "Suggeriment de l'IA",
+          "description": "L'assistent ha generat el següent anàlisi i pla d'acció. Vols acceptar aquests canvis?",
+          "suggestedAnalysis": "Anàlisi de Causes Suggerit",
+          "suggestedActions": "Accions Correctives Suggerides",
+          "accept": "Acceptar i Omplir Formulari",
+          "cancel": "Cancel·lar"
+        }
+      },
+      "verification": {
+        "title": "Verificació de la Implantació",
+        "description": "Comprova si les accions proposades s'han implantat i si han estat eficaces.",
+        "notesLabel": "Observacions Generals",
+        "notesPlaceholder": "Afegeix aquí les teves observacions sobre el procés de verificació...",
+        "statusOfActions": "Estat de les Accions Proposades",
+        "saveButton": "Desar Verificació i Avançar",
+        "status": {
+          "implemented": "Implementada",
+          "partiallyImplemented": "Implementada Parcialment",
+          "notImplemented": "No Implementada"
+        }
+      },
+      "closure": {
+        "title": "Tancament de l'Acció",
+        "description": "Finalitza l'acció de millora registrant les conclusions finals.",
+        "notesLabel": "Observacions del Tancament",
+        "notesPlaceholder": "Descriu el resultat final, lliçons apreses, etc.",
+        "isCompliantLabel": "El resultat final és conforme?",
+        "isCompliantDescription": "Si es marca com a 'No Conforme', es generarà automàticament una nova acció (BIS) per a continuar el seguiment.",
+        "saveButton": "Guardar i Tancar Acció"
+      },
+      "tabs": {
+        "details": "Detalls",
+        "causesAndProposedAction": "Causes i Acció Proposada",
+        "implementationVerification": "Verificació d'Implantació",
+        "actionClosure": "Tancament de l'Acció"
+      },
+      "comments": {
+        "title": "Comentaris",
+        "addCommentPlaceholder": "Afegeix un comentari...",
+        "noComments": "Encara no hi ha comentaris."
+      },
+      "attachments": {
+        "title": "Adjunts",
+        "clickToUpload": "Fes clic per a pujar",
+        "dragAndDrop": "o arrossega i deixa anar",
+        "noAttachments": "Encara no hi ha fitxers adjunts."
+      }
+    }
+  }
+}

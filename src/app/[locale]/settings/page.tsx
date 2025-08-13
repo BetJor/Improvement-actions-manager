@@ -20,7 +20,7 @@ import type { MasterDataItem } from "@/lib/types";
 import { Loader2 } from "lucide-react";
 
 export default function SettingsPage() {
-    const t = useTranslations("SettingsPage");
+    const t = useTranslations("Settings");
     const { toast } = useToast();
     const [masterData, setMasterData] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(true);

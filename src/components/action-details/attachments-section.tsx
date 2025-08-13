@@ -21,7 +21,7 @@ interface AttachmentsSectionProps {
 }
 
 export function AttachmentsSection({ action, onActionUpdate }: AttachmentsSectionProps) {
-  const t = useTranslations("ActionDetailPage.attachments")
+  const t = useTranslations("Actions.detail.attachments")
   const { user } = useAuth()
   const { toast } = useToast()
   

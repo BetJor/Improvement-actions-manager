@@ -47,19 +47,19 @@ export function AppSidebar({ t }: { t: any }) {
   if (!user) return null;
 
   const mainNavItems = [
-    { href: `/${locale}/dashboard`, icon: Home, label: t("dashboard"), isTab: true },
-    { href: `/${locale}/actions`, icon: ListChecks, label: t("actions"), isTab: true },
+    { href: `/${locale}/dashboard`, icon: Home, label: t("AppSidebar.dashboard"), isTab: true },
+    { href: `/${locale}/actions`, icon: ListChecks, label: t("AppSidebar.actions"), isTab: true },
   ]
   
   const adminNavItems = [
-    { href: `/${locale}/settings`, icon: Settings, label: t("settings"), isTab: true },
-    { href: `/${locale}/ai-settings`, icon: Sparkles, label: t("aiSettings"), isTab: true },
-    { href: `/${locale}/prompt-gallery`, icon: Library, label: t("promptGallery"), isTab: true },
-    { href: `/${locale}/user-management`, icon: Users, label: t("userManagement"), isTab: true },
+    { href: `/${locale}/settings`, icon: Settings, label: t("AppSidebar.settings"), isTab: true },
+    { href: `/${locale}/ai-settings`, icon: Sparkles, label: t("AppSidebar.aiSettings"), isTab: true },
+    { href: `/${locale}/prompt-gallery`, icon: Library, label: t("AppSidebar.promptGallery"), isTab: true },
+    { href: `/${locale}/user-management`, icon: Users, label: t("AppSidebar.userManagement"), isTab: true },
   ]
 
   const aboutNavItems = [
-    { href: `/${locale}/roadmap`, icon: Route, label: t("roadmap"), isTab: true },
+    { href: `/${locale}/roadmap`, icon: Route, label: t("AppSidebar.roadmap"), isTab: true },
   ]
 
   return (

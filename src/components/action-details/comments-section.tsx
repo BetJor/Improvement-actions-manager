@@ -23,7 +23,7 @@ interface CommentsSectionProps {
 }
 
 export function CommentsSection({ action, onActionUpdate }: CommentsSectionProps) {
-  const t = useTranslations("ActionDetailPage.comments")
+  const t = useTranslations("Actions.detail.comments")
   const { user } = useAuth()
   const { toast } = useToast()
 

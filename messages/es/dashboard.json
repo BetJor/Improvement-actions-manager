@@ -1,0 +1,18 @@
+{
+  "Dashboard": {
+    "title": "Panel de Control",
+    "totalActions": "Acciones Totales",
+    "activeActions": "Acciones Activas",
+    "finalizedActions": "Acciones Finalizadas",
+    "drafts": "Borradores",
+    "actionsByStatus": {
+      "title": "Acciones por Estado",
+      "description": "Distribución de acciones en diferentes estados del flujo de trabajo."
+    },
+    "actionsByType": {
+      "title": "Acciones por Tipo",
+      "description": "Desglose de acciones según su tipo designado."
+    },
+    "chartLabel": "Acciones"
+  }
+}

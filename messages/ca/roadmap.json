@@ -1,0 +1,20 @@
+{
+  "Roadmap": {
+    "title": "Roadmap del Projecte",
+    "description": "Una visió general de les fases completades i les tasques pendents del projecte.",
+    "completed": {
+      "title": "Fases Completades",
+      "description": "Les grans fites de desenvolupament que ja s'han assolit."
+    },
+    "backlog": {
+      "title": "Backlog i Propers Passos",
+      "description": "Tasques pendents de prioritzar i planificar.",
+      "col": {
+        "id": "ID",
+        "title": "Títol",
+        "description": "Descripció",
+        "priority": "Prioritat"
+      }
+    }
+  }
+}

@@ -10,7 +10,7 @@ import type { ImprovementAction } from "@/lib/types"
 import { Loader2 } from "lucide-react"
 
 export default function ActionsPage() {
-  const t = useTranslations("ActionsPage");
+  const t = useTranslations("Actions.page");
   const [actions, setActions] = useState<ImprovementAction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 

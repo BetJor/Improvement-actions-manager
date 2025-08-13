@@ -33,8 +33,8 @@ interface ActionDetailsTabProps {
 }
 
 export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTabProps) {
-    const t = useTranslations("ActionDetailPage")
-    const tForm = useTranslations("NewActionPage")
+    const t = useTranslations("Actions.detail")
+    const tForm = useTranslations("Actions.new")
     const { toast } = useToast()
     const router = useRouter();
     const { user } = useAuth()

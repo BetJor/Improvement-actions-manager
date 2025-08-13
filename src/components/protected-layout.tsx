@@ -14,7 +14,7 @@ import { SidebarProvider } from "./ui/sidebar";
 
 
 function LayoutWithTabs({ children }: { children: React.ReactNode }) {
-    const tSidebar = useTranslations("AppSidebar");
+    const t = useTranslations();
     const { activeTab, tabs } = useTabs();
     
     const activeTabObject = tabs.find(tab => tab.id === activeTab);
@@ -23,7 +23,7 @@ function LayoutWithTabs({ children }: { children: React.ReactNode }) {
         <div className="relative flex h-screen w-full flex-col">
             <Header />
             <div className="flex flex-1 overflow-hidden">
-                <AppSidebar t={tSidebar} />
+                <AppSidebar t={t} />
                 <main className="flex-1 flex flex-col bg-background/60 overflow-y-auto p-4 sm:p-6">
                     <div className="mb-6">
                         <DynamicTabs />

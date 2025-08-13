@@ -1,0 +1,20 @@
+{
+  "Roadmap": {
+    "title": "Roadmap del Proyecto",
+    "description": "Una visión general de las fases completadas y las tareas pendientes del proyecto.",
+    "completed": {
+      "title": "Fases Completadas",
+      "description": "Las grandes metas de desarrollo que ya se han alcanzado."
+    },
+    "backlog": {
+      "title": "Backlog y Próximos Pasos",
+      "description": "Tareas pendientes de priorizar y planificar.",
+      "col": {
+        "id": "ID",
+        "title": "Título",
+        "description": "Descripción",
+        "priority": "Prioridad"
+      }
+    }
+  }
+}

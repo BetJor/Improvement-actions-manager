@@ -13,7 +13,7 @@ import { Loader2 } from "lucide-react"
 
 
 export default function NewActionPage() {
-  const t = useTranslations("NewActionPage")
+  const t = useTranslations("Actions.new")
   const { toast } = useToast()
   const router = useRouter()
   const { user } = useAuth()

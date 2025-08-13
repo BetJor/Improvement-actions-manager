@@ -11,7 +11,7 @@ import {
 import { Label } from "@/components/ui/label";
 
 export function LanguageSwitcher() {
-  const t = useTranslations("LanguageSwitcher");
+  const t = useTranslations("Common.LanguageSwitcher");
   const locale = useLocale();
 
   const onSelectChange = (value: string) => {

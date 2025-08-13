@@ -7,7 +7,7 @@ import { useTranslations } from "next-intl";
 
 export function ClientButton() {
     const { openTab } = useTabs();
-    const t = useTranslations("ActionsPage");
+    const t = useTranslations("Actions.page");
 
     const handleNewAction = () => {
         openTab({

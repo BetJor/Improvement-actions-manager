@@ -129,7 +129,7 @@ function PromptFormDialog({
 }
 
 export default function PromptGalleryPage() {
-    const t = useTranslations("PromptGalleryPage");
+    const t = useTranslations("PromptGallery");
     const { toast } = useToast();
     const [prompts, setPrompts] = useState<GalleryPrompt[]>([]);
     const [isLoading, setIsLoading] = useState(true);

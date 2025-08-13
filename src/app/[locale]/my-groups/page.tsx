@@ -23,7 +23,7 @@ import type { UserGroup } from "@/lib/types";
 import { getUserGroups } from "@/ai/flows/getUserGroups";
 
 export default function MyGroupsPage() {
-  const t = useTranslations("MyGroupsPage")
+  const t = useTranslations("MyGroups")
   const { user, loading } = useAuth();
   const [userGroups, setUserGroups] = useState<UserGroup[]>([]);
   const [isLoading, setIsLoading] = useState(true);

@@ -33,7 +33,7 @@ interface ActionsTableProps {
 type SortKey = keyof ImprovementAction | 'responsible'
 
 export function ActionsTable({ actions }: ActionsTableProps) {
-  const t = useTranslations("ActionsTable")
+  const t = useTranslations("Actions.table")
   const { openTab } = useTabs();
 
   const [searchTerm, setSearchTerm] = useState("")

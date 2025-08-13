@@ -9,7 +9,7 @@ import type { ImprovementAction } from '@/lib/types';
 import { Loader2 } from 'lucide-react';
 
 export default function DashboardPage() {
-  const t = useTranslations("DashboardPage");
+  const t = useTranslations("Dashboard");
   const [actions, setActions] = useState<ImprovementAction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 

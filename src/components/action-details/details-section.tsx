@@ -37,7 +37,7 @@ interface DetailsSectionProps {
 }
 
 export function DetailsSection({ action }: DetailsSectionProps) {
-  const t = useTranslations("ActionDetailPage")
+  const t = useTranslations("Actions.detail")
 
   return (
     <Card>

@@ -1,0 +1,75 @@
+{
+  "PromptGallery": {
+    "title": "Galeria de Prompts",
+    "description": "Explora una col·lecció de prompts útils que pots copiar i adaptar a la teva configuració d'IA.",
+    "addNew": "Afegir Nou Prompt",
+    "noPrompts": "No s'han trobat prompts. Fes clic a 'Afegir Nou Prompt' per a començar.",
+    "addTitle": "Crear Nou Prompt",
+    "editTitle": "Editar Prompt",
+    "save": "Desar",
+    "cancel": "Cancel·lar",
+    "col": {
+      "title": "Títol",
+      "description": "Descripció",
+      "prompt": "Prompt",
+      "actions": "Accions"
+    },
+    "copy": {
+      "button": "Copiar Prompt",
+      "toastTitle": "Prompt Copiat!",
+      "toastDescription": "El prompt s'ha copiat al porta-retalls."
+    },
+    "add": {
+      "toastTitle": "Prompt Creat"
+    },
+    "edit": {
+      "toastTitle": "Prompt Actualitzat"
+    },
+    "delete": {
+      "toastTitle": "Prompt Eliminat",
+      "confirmationTitle": "Estàs segur?",
+      "confirmationMessage": "Aquesta acció no es pot desfer. S'eliminarà el prompt permanentment.",
+      "confirm": "Eliminar"
+    },
+    "prompts": {
+      "createRoadmap": {
+        "title": "Crear una Pàgina de Roadmap",
+        "description": "Genera una pàgina de Roadmap que analitza l'estat actual de l'aplicació per a determinar les fases completades i pendents."
+      },
+      "createDashboard": {
+        "title": "Crear un Dashboard de mètriques clau",
+        "description": "Analitza els dades disponibles per a generar un dashboard amb targetes de KPI i gràfics rellevants."
+      },
+      "integrateGoogleLogin": {
+        "title": "Integrar Login amb Google",
+        "description": "Genera tota la funcionalitat d'autenticació d'usuaris amb Firebase, incloent-hi rutes protegides i la pàgina de login."
+      },
+      "createDynamicTabLayout": {
+        "title": "Crear un Layout amb Pestanyes Dinàmiques (Client-Side)",
+        "description": "Genera un sistema de navegació basat en pestanyes gestionat al client per a una aplicació Next.js, seguint les millors pràctiques d'arquitectura per a evitar conflictes entre Server i Client Components. Aquesta implementació ha de ser robusta i oferir un rendiment òptim."
+      }
+    },
+    "executionOrder": {
+      "title": "Ordre d'Execució Recomanat",
+      "description": "Per a construir una aplicació de manera eficient, et recomanem executar els prompts en la següent seqüència:",
+      "steps": {
+        "layout": {
+          "title": "1. Crear un Layout Dinàmic amb Pestanyes",
+          "description": "Estableix l'esquelet visual i l'estructura base (menú lateral, capçalera i sistema de pestanyes). És el prerequisit per a tota la resta."
+        },
+        "i18n": {
+          "title": "2. Integrar Suport Multillenguatge",
+          "description": "Configura les rutes i traduccions al principi per a evitar haver de refactoritzar tots els enllaços més endavant."
+        },
+        "auth": {
+          "title": "3. Integrar Login amb Google",
+          "description": "Afegeix la gestió d'usuaris i protegeix les rutes per a assegurar que només els usuaris autenticats accedixin a l'aplicació."
+        },
+        "roadmap": {
+          "title": "4. Crear Pàgina de Roadmap",
+          "description": "Un cop l'estructura i la seguretat estan llestes, pots començar a afegir les pàgines de contingut."
+        }
+      }
+    }
+  }
+}

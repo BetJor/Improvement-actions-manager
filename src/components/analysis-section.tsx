@@ -57,7 +57,7 @@ interface AnalysisSectionProps {
 }
 
 export function AnalysisSection({ action, user, isSubmitting, onSave }: AnalysisSectionProps) {
-  const t = useTranslations("ActionDetailPage.analysis")
+  const t = useTranslations("Actions.detail.analysis")
   const { toast } = useToast()
 
   const [users, setUsers] = useState<User[]>([]);

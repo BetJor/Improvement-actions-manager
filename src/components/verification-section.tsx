@@ -28,7 +28,7 @@ interface VerificationSectionProps {
 }
 
 export function VerificationSection({ action, user, isSubmitting, onSave }: VerificationSectionProps) {
-  const t = useTranslations("ActionDetailPage.verification")
+  const t = useTranslations("Actions.detail.verification")
 
   const defaultStatuses = action.analysis?.proposedActions.reduce((acc, pa) => {
     acc[pa.id] = action.verification?.proposedActionsStatus[pa.id] || "No Implementada"

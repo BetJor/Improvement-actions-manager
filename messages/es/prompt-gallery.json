@@ -1,0 +1,75 @@
+{
+  "PromptGallery": {
+    "title": "Galería de Prompts",
+    "description": "Explora una colección de prompts útiles que puedes copiar y adaptar a tu configuración de IA.",
+    "addNew": "Añadir Nuevo Prompt",
+    "noPrompts": "No se encontraron prompts. Haz clic en 'Añadir Nuevo Prompt' para empezar.",
+    "addTitle": "Crear Nuevo Prompt",
+    "editTitle": "Editar Prompt",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "col": {
+      "title": "Título",
+      "description": "Descripción",
+      "prompt": "Prompt",
+      "actions": "Acciones"
+    },
+    "copy": {
+      "button": "Copiar Prompt",
+      "toastTitle": "¡Prompt Copiado!",
+      "toastDescription": "El prompt se ha copiado al portapapeles."
+    },
+    "add": {
+      "toastTitle": "Prompt Creado"
+    },
+    "edit": {
+      "toastTitle": "Prompt Actualizado"
+    },
+    "delete": {
+      "toastTitle": "Prompt Eliminado",
+      "confirmationTitle": "¿Estás seguro?",
+      "confirmationMessage": "Esta acción no se puede deshacer. Se eliminará el prompt permanentemente.",
+      "confirm": "Eliminar"
+    },
+    "prompts": {
+      "createRoadmap": {
+        "title": "Crear una Página de Roadmap",
+        "description": "Genera una página de Roadmap que analiza el estado actual de la aplicación para determinar las fases completadas y pendientes."
+      },
+      "createDashboard": {
+        "title": "Crear un Dashboard de métricas clave",
+        "description": "Analiza los datos disponibles para generar un dashboard con tarjetas de KPI y gráficos relevantes."
+      },
+      "integrateGoogleLogin": {
+        "title": "Integrar Login con Google",
+        "description": "Genera toda la funcionalidad de autenticación de usuarios con Firebase, incluyendo rutas protegidas y la página de login."
+      },
+      "createDynamicTabLayout": {
+        "title": "Crear un Layout con Pestañas Dinámicas (Client-Side)",
+        "description": "Genera un sistema de navegación basado en pestañas gestionado en el cliente para una aplicación Next.js, siguiendo las mejores prácticas de arquitectura para evitar conflictos entre Server y Client Components. Esta implementación debe ser robusta y ofrecer un rendimiento óptimo."
+      }
+    },
+    "executionOrder": {
+      "title": "Orden de Ejecución Recomendado",
+      "description": "Para construir una aplicación de forma eficiente, te recomendamos ejecutar los prompts en la siguiente secuencia:",
+      "steps": {
+        "layout": {
+          "title": "1. Crear un Layout Dinámico con Pestañas",
+          "description": "Establece el esqueleto visual y la estructura base (menú lateral, cabecera y sistema de pestañas). Es el prerrequisito para todo lo demás."
+        },
+        "i18n": {
+          "title": "2. Integrar Soporte Multilenguaje",
+          "description": "Configura las rutas y traducciones al principio para evitar tener que refactorizar todos los enlaces más adelante."
+        },
+        "auth": {
+          "title": "3. Integrar Login con Google",
+          "description": "Añade la gestión de usuarios y protege las rutas para asegurar que solo los usuarios autenticados accedan a la aplicación."
+        },
+        "roadmap": {
+          "title": "4. Crear Página de Roadmap",
+          "description": "Una vez la estructura y la seguridad están listas, puedes empezar a añadir las páginas de contenido."
+        }
+      }
+    }
+  }
+}

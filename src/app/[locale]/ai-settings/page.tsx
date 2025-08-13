@@ -23,7 +23,7 @@ const formSchema = z.object({
 type PromptId = "improveWriting" | "analysisSuggestion" | "correctiveActions";
 
 export default function AiSettingsPage() {
-  const t = useTranslations("AiSettingsPage")
+  const t = useTranslations("AiSettings")
   const { toast } = useToast()
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)

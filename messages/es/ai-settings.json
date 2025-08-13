@@ -1,0 +1,21 @@
+{
+  "AiSettings": {
+    "title": "Configuración de la IA",
+    "description": "Gestiona los prompts y otros parámetros de los asistentes de Inteligencia Artificial.",
+    "form": {
+      "improvePrompt": {
+        "label": "Prompt de Mejora de Observaciones",
+        "placeholder": "Introduce aquí el prompt que usará la IA para mejorar las observaciones..."
+      },
+      "analysisPrompt": {
+        "label": "Prompt de Análisis de Causas",
+        "placeholder": "Introduce el prompt para el asistente de análisis de causas..."
+      },
+      "correctiveActionsPrompt": {
+        "label": "Prompt de Acciones Correctivas",
+        "placeholder": "Introduce el prompt para el asistente de propuestas de acciones..."
+      },
+      "save": "Guardar Cambios"
+    }
+  }
+}

@@ -38,7 +38,7 @@ import {
 } from "@/components/ui/alert-dialog"
 
 export default function UserManagementPage() {
-  const t = useTranslations("UserManagementPage")
+  const t = useTranslations("UserManagement")
   const { toast } = useToast();
   const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);

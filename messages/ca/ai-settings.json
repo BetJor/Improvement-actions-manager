@@ -1,0 +1,21 @@
+{
+  "AiSettings": {
+    "title": "Configuració de l'IA",
+    "description": "Gestiona els prompts i altres paràmetres dels assistents d'Intel·ligència Artificial.",
+    "form": {
+      "improvePrompt": {
+        "label": "Prompt de Millora d'Observacions",
+        "placeholder": "Introdueix aquí el prompt que utilitzarà l'IA per a millorar les observacions..."
+      },
+      "analysisPrompt": {
+        "label": "Prompt de Suggeriment d'Anàlisi i Accions",
+        "placeholder": "Introdueix el prompt per a l'assistent que suggereix anàlisis de causes i accions correctives..."
+      },
+      "correctiveActionsPrompt": {
+        "label": "Prompt d'Accions Correctives",
+        "placeholder": "Introdueix el prompt per a l'assistent de propostes d'accions..."
+      },
+      "save": "Desar Canvis"
+    }
+  }
+}

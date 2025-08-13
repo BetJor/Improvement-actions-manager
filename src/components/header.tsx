@@ -43,16 +43,14 @@ const pageConfig: { [key: string]: { icon: React.ElementType, titleKey: string }
 
 
 export function Header() {
-  const t = useTranslations('Header');
-  const tSidebar = useTranslations('AppSidebar');
-  const tDialog = useTranslations('SettingsDialog');
+  const t = useTranslations('Common');
   const { user, logout } = useAuth();
   const { tabs, activeTab, openTab } = useTabs();
   const pathname = usePathname();
   
   const activeTabData = tabs.find(tab => tab.id === activeTab);
   const Icon = activeTabData?.icon || GanttChartSquare;
-  const title = activeTabData?.title || t('title');
+  const title = activeTabData?.title || t('Header.title');
 
 
   return (
@@ -62,7 +60,7 @@ export function Header() {
           <SidebarTrigger className="text-primary-foreground hover:text-primary-foreground/90" />
           <div className="flex items-center gap-2">
               <GanttChartSquare className="h-7 w-7" />
-              <span className="text-lg font-semibold">{t('title')}</span>
+              <span className="text-lg font-semibold">{t('Header.title')}</span>
           </div>
       </div>
 
@@ -70,7 +68,7 @@ export function Header() {
       <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" className="rounded-full text-primary-foreground hover:text-primary-foreground/90">
             <Bell className="h-5 w-5" />
-            <span className="sr-only">{tSidebar("toggleNotifications")}</span>
+            <span className="sr-only">{t("AppSidebar.toggleNotifications")}</span>
           </Button>
           
           <Dialog>
@@ -87,26 +85,26 @@ export function Header() {
                   </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                  <DropdownMenuLabel>{user ? user.displayName : t("myAccount")}</DropdownMenuLabel>
+                  <DropdownMenuLabel>{user ? user.displayName : t("Header.myAccount")}</DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={() => openTab({path: '/my-groups', title: 'Els Meus Grups', icon: Users, isClosable: true})}>
                       <Users className="mr-2 h-4 w-4" />
-                      <span>{t("myGroups")}</span>
+                      <span>{t("Header.myGroups")}</span>
                   </DropdownMenuItem>
                   <DialogTrigger asChild>
-                    <DropdownMenuItem>{t("settings")}</DropdownMenuItem>
+                    <DropdownMenuItem>{t("Header.settings")}</DropdownMenuItem>
                   </DialogTrigger>
-                  <DropdownMenuItem>{t("support")}</DropdownMenuItem>
+                  <DropdownMenuItem>{t("Header.support")}</DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={logout}>{t("logout")}</DropdownMenuItem>
+                  <DropdownMenuItem onClick={logout}>{t("Header.logout")}</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
 
             <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>{tDialog("title")}</DialogTitle>
+                  <DialogTitle>{t("SettingsDialog.title")}</DialogTitle>
                   <DialogDescription>
-                    {tDialog("description")}
+                    {t("SettingsDialog.description")}
                   </DialogDescription>
                 </DialogHeader>
                 <LanguageSwitcher />

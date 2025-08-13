@@ -8,11 +8,13 @@ import {
     CardHeader,
     CardTitle,
   } from "@/components/ui/card"
-  import { CheckCircle2, CircleDot } from "lucide-react"
+import { useTranslations } from "next-intl"
+import { CheckCircle2, CircleDot } from "lucide-react"
 
   
-  export default function RoadmapPage() {
-  
+export default function RoadmapPage() {
+    const t = useTranslations("Roadmap");
+
     const timeline = [
         {
           key: "phase1",
@@ -111,8 +113,8 @@ import {
     return (
         <div className="flex flex-col gap-6">
             <div>
-                <h1 className="text-3xl font-bold tracking-tight">Roadmap del Projecte</h1>
-                <p className="text-muted-foreground mt-1">Una visió general de les fases completades i les tasques pendents.</p>
+                <h1 className="text-3xl font-bold tracking-tight">{t("title")}</h1>
+                <p className="text-muted-foreground mt-1">{t("description")}</p>
             </div>
             
             <Card>
