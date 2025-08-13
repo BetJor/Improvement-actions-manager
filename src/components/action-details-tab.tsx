@@ -229,7 +229,7 @@ export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTab
             case 'Pendiente Comprobación':
                 return user.id === action.analysis?.verificationResponsibleUserId;
             case 'Pendiente de Cierre':
-                return user.id === action.analysis?.verificationResponsibleUserId;
+                return user.id === action.creator.id;
             default:
                 return false;
         }
