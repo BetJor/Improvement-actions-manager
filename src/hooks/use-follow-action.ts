@@ -2,19 +2,17 @@
 "use client";
 
 import { useAuth } from "@/hooks/use-auth";
-import { useToast } from "@/hooks/use-toast";
 import { toggleFollowAction } from "@/lib/data";
 import type { ImprovementAction } from "@/lib/types";
-import React from "react";
+import React, { useCallback } from "react";
 
 export function useFollowAction(
     actions: ImprovementAction[], 
     setActions: React.Dispatch<React.SetStateAction<ImprovementAction[]>>
 ) {
     const { user } = useAuth();
-    const { toast } = useToast();
 
-    const handleToggleFollow = async (actionId: string, e?: React.MouseEvent) => {
+    const handleToggleFollow = useCallback(async (actionId: string, e?: React.MouseEvent) => {
         e?.stopPropagation();
         if (!user) return;
 
@@ -39,28 +37,15 @@ export function useFollowAction(
             await toggleFollowAction(actionId, user.id);
         } catch (error) {
             console.error("Failed to toggle follow status", error);
-            // Optionally, show a toast on error
-             toast({
-                variant: "destructive",
-                title: "Error",
-                description: "No s'ha pogut actualitzar l'estat de seguiment.",
-            });
             // Revert optimistic update on error
-            setActions(prevActions => 
-                prevActions.map(action => {
-                    if (action.id === actionId) {
-                        // Revert to the original follower state by finding it in the initial actions array
-                        return { ...action, followers: actions.find(a => a.id === actionId)?.followers };
-                    }
-                    return action;
-                })
-            );
+            setActions(actions);
         }
-    };
+    }, [actions, user, setActions]);
     
     const isFollowing = (actionId: string): boolean => {
         if (!user) return false;
-        return actions.find(a => a.id === actionId)?.followers?.includes(user.id) ?? false;
+        const action = actions.find(a => a.id === actionId);
+        return action?.followers?.includes(user.id) ?? false;
     };
 
     return { handleToggleFollow, isFollowing };
