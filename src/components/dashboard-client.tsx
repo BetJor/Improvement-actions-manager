@@ -60,7 +60,7 @@ interface DashboardClientProps {
     t: any;
 }
 
-const defaultLayout = ["stats", "pendingActions", "participatingActions", "charts"];
+const defaultLayout = ["pendingActions", "participatingActions", "charts"];
 
 function SortableItem({ id, children }: { id: string, children: React.ReactNode }) {
     const {
@@ -136,13 +136,6 @@ export function DashboardClient({ actions, assignedActions, participatingActions
     openTab({ path: `/actions/${action.id}`, title: `Acció ${action.actionId}`, icon: GanttChartSquare, isClosable: true, loader: actionLoader });
   }
 
-  const stats = {
-    total: actions.length,
-    pending: actions.filter(a => a.status !== 'Finalizada' && a.status !== 'Borrador').length,
-    finalized: actions.filter(a => a.status === 'Finalizada').length,
-    drafts: actions.filter(a => a.status === 'Borrador').length,
-  };
-
   const statusDistribution = useMemo(() => {
     const counts = actions.reduce((acc, action) => {
       acc[action.status] = (acc[action.status] || 0) + 1
@@ -168,14 +161,6 @@ export function DashboardClient({ actions, assignedActions, participatingActions
   }), [t.chartLabel]);
 
   const widgets: { [key: string]: React.ReactNode } = {
-    stats: (
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">{t.totalActions}</CardTitle><ListTodo className="h-4 w-4 text-muted-foreground" /></CardHeader><CardContent><div className="text-2xl font-bold">{stats.total}</div></CardContent></Card>
-        <Card><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">{t.activeActions}</CardTitle><Activity className="h-4 w-4 text-muted-foreground" /></CardHeader><CardContent><div className="text-2xl font-bold">{stats.pending}</div></CardContent></Card>
-        <Card><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">{t.finalizedActions}</CardTitle><CheckCircle className="h-4 w-4 text-muted-foreground" /></CardHeader><CardContent><div className="text-2xl font-bold">{stats.finalized}</div></CardContent></Card>
-        <Card><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">{t.drafts}</CardTitle><FileText className="h-4 w-4 text-muted-foreground" /></CardHeader><CardContent><div className="text-2xl font-bold">{stats.drafts}</div></CardContent></Card>
-      </div>
-    ),
     pendingActions: (
       <Card className="col-span-full">
         <CardHeader><CardTitle>{t.myPendingActions.title}</CardTitle><CardDescription>{t.myPendingActions.description}</CardDescription></CardHeader>
