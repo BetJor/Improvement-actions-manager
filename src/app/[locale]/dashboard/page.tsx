@@ -51,7 +51,10 @@ export default function DashboardPage() {
       // Condition 3: User is the verification responsible
       const isVerificationResponsible = action.analysis?.verificationResponsibleUserId === user.id;
   
-      return isMainResponsible || isProposedActionResponsible || isVerificationResponsible;
+      // Condition 4: User is the creator and the action is pending closure
+      const isCreatorPendingClosure = action.status === 'Pendiente de Cierre' && action.creator.id === user.id;
+
+      return isMainResponsible || isProposedActionResponsible || isVerificationResponsible || isCreatorPendingClosure;
     });
   }, [actions, user]);
 

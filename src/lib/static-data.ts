@@ -8,7 +8,8 @@ export const users: User[] = [
     { id: 'user-5', name: 'Sofía Hernandez', role: 'Admin', avatar: 'https://i.pravatar.cc/150?u=a0425e8ff4e29026704d', email: 'sofia.hernandez@example.com' },
     { id: 'user-6', name: 'David Fernandez', role: 'Responsible', avatar: 'https://i.pravatar.cc/150?u=a042581f4e29026704f', email: 'david.fernandez@example.com' },
     { id: 'user-7', name: 'Elena Gomez', role: 'Creator', avatar: 'https://i.pravatar.cc/150?u=a04258114e29026702e', email: 'elena.gomez@example.com' },
-    { id: 'user-8', name: 'Miguel Perez', role: 'Director', avatar: 'https://i.pravatar.cc/150?u=a042581f4e29026708d', email: 'miguel.perez@example.com' }
+    { id: 'user-8', name: 'Miguel Perez', role: 'Director', avatar: 'https://i.pravatar.cc/150?u=a042581f4e29026708d', email: 'miguel.perez@example.com' },
+    { id: 'user-9', name: 'Elisabet Jordana', role: 'Creator', avatar: 'https://i.pravatar.cc/150?u=a042581f4e29026709e', email: 'elisabet.jordana@example.com' }
   ];
   
   export const groups: UserGroup[] = [
@@ -19,5 +20,6 @@ export const users: User[] = [
     { id: 'risk-management@example.com', name: 'Gestió de Riscos', userIds: ['user-1', 'user-5'] },
     { id: 'it-legacy-systems@example.com', name: 'Sistemes Legacy', userIds: ['user-5'] },
     { id: 'rsc-committee@example.com', name: 'Comitè RSC', userIds: ['user-3', 'user-4'] },
+    { id: 'bcn_ca_director@example.com', name: 'Direcció CA (BCN)', userIds: []}
   ];
   
