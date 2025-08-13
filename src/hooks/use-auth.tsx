@@ -40,7 +40,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (impersonationData) {
             const { impersonatedUser, originalUser } = JSON.parse(impersonationData);
             // Ensure the original user stored is the same as the current firebase user
-            if (originalUser.id === fbUser.uid) {
+            if (originalUser?.id === fbUser.uid) {
                 setUser(impersonatedUser);
                 setFirebaseUser(fbUser);
                 setIsImpersonating(true);
