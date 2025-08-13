@@ -28,10 +28,10 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import { GanttChartSquare, GripVertical, Star, CheckCircle, FileText, FolderClock, Inbox } from "lucide-react"
+import { GanttChartSquare, GripVertical, Star } from "lucide-react"
 import { Button } from "./ui/button"
 import { useTabs } from "@/hooks/use-tabs"
-import { getActionById, getActionTypes, getCategories, getCenters, getResponsibilityRoles, getSubcategories, getAffectedAreas, toggleFollowAction, getFollowedActions } from "@/lib/data"
+import { getActionById, getActionTypes, getCategories, getCenters, getResponsibilityRoles, getSubcategories, getAffectedAreas } from "@/lib/data"
 import { ActionDetailsTab } from "./action-details-tab"
 import { cn } from '@/lib/utils';
 import { useFollowAction } from '@/hooks/use-follow-action';
@@ -126,8 +126,11 @@ export function DashboardClient({ actions, assignedActions }: DashboardClientPro
 
   const widgets: { [key: string]: React.ReactNode } = {
     pendingActions: (
-      <Card className="col-span-full xl:col-span-2">
-        <CardHeader><CardTitle>{t("myPendingActions.title")}</CardTitle><CardDescription className="min-h-[40px]">{t("myPendingActions.description")}</CardDescription></CardHeader>
+      <Card>
+        <CardHeader>
+          <CardTitle>{t("myPendingActions.title")}</CardTitle>
+          <CardDescription className="min-h-[40px]">{t("myPendingActions.description")}</CardDescription>
+        </CardHeader>
         <CardContent className="min-h-[120px]">
             {assignedActions.length > 0 ? (
                 <div className="space-y-4">
@@ -156,8 +159,11 @@ export function DashboardClient({ actions, assignedActions }: DashboardClientPro
       </Card>
     ),
     followedActions: (
-      <Card className="col-span-full xl:col-span-2">
-        <CardHeader><CardTitle>{t("followedActions.title")}</CardTitle><CardDescription className="min-h-[40px]">{t("followedActions.description")}</CardDescription></CardHeader>
+      <Card>
+        <CardHeader>
+          <CardTitle>{t("followedActions.title")}</CardTitle>
+          <CardDescription className="min-h-[40px]">{t("followedActions.description")}</CardDescription>
+        </CardHeader>
         <CardContent className="min-h-[120px]">
             {followedActions.length > 0 ? (
                 <div className="space-y-4">
@@ -190,7 +196,7 @@ export function DashboardClient({ actions, assignedActions }: DashboardClientPro
   return (
     <div className="flex flex-col gap-6">
       <h1 className="text-3xl font-bold tracking-tight">{t("title")}</h1>
-        <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
+        <div className="flex flex-col gap-4">
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
                 <SortableContext items={items.filter(id => widgets[id])} strategy={verticalListSortingStrategy}>
                     {items.map(id => (
