@@ -3,7 +3,7 @@
 
 import Link from "next/link"
 import { usePathname, useParams } from "next/navigation"
-import { Home, ListChecks, Settings, Route, Sparkles, Library, GanttChartSquare, Users, BarChart3 } from "lucide-react"
+import { Home, ListChecks, Settings, Route, Sparkles, Library, GanttChartSquare, Users, BarChart3, TestTubeDiagonal } from "lucide-react"
 import { useAuth } from "@/hooks/use-auth"
 import { cn } from "@/lib/utils"
 import { Sidebar, SidebarContent, SidebarHeader, SidebarMenu, SidebarMenuItem, SidebarMenuButton, useSidebar } from "./ui/sidebar"
@@ -62,6 +62,7 @@ export function AppSidebar({ t }: { t: any }) {
   const aboutNavItems = [
     { href: `/${locale}/roadmap`, icon: Route, label: t("Common.AppSidebar.roadmap"), isTab: true },
     { href: `/${locale}/backlog`, icon: GanttChartSquare, label: t("Common.AppSidebar.backlog"), isTab: true },
+    { href: `/${locale}/intranet-test`, icon: TestTubeDiagonal, label: "Intranet Test", isTab: true },
   ]
 
   return (
