@@ -42,27 +42,31 @@ const getIntranetDataFlow = ai.defineFlow(
 
     console.log(`Fetching data from intranet service: ${apiUrl}`);
     
+    let response;
     try {
-        const response = await fetch(apiUrl, {
+        response = await fetch(apiUrl, {
             // If your service needs an auth token, you would add it here.
             // headers: {
             //     'Authorization': `Bearer ${process.env.INTRANET_API_TOKEN}`
             // }
         });
+    } catch (networkError: any) {
+        console.error("[getIntranetDataFlow] Network Error:", networkError.message);
+        throw new Error("Error de xarxa o de connexió en intentar accedir a la intranet. Assegura't que el servidor té accés a la URL.");
+    }
 
-        if (!response.ok) {
-            throw new Error(`Failed to fetch data: ${response.status} ${response.statusText}`);
-        }
+    if (!response.ok) {
+        console.error(`[getIntranetDataFlow] Error response from service: ${response.status} ${response.statusText}`);
+        throw new Error(`El servei d'intranet ha retornat un error: ${response.status} ${response.statusText}`);
+    }
 
+    try {
         const data = await response.json();
-        
         // Let's take just a few items for the example
         return data.slice(0, 5);
-
-    } catch (error) {
-        console.error("Error calling intranet service:", error);
-        // In a real scenario, you might want to return a more user-friendly error.
-        throw new Error("Could not connect to the intranet service.");
+    } catch (jsonError: any) {
+        console.error("[getIntranetDataFlow] JSON Parsing Error:", jsonError.message);
+        throw new Error("Error en processar la resposta JSON del servei. Verifica que el format de la resposta és correcte.");
     }
   }
 );
