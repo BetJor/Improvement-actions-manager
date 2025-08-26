@@ -89,12 +89,14 @@ const getUserGroupsFlow = ai.defineFlow(
         }));
         
     } catch (error: any) {
-        console.error(`[getUserGroupsFlow] Error fetching groups from Google Admin SDK:`, error.message);
+        console.error(`[getUserGroupsFlow] Detailed error object:`, JSON.stringify(error, null, 2));
+
         if (error.code === 403) {
-             throw new Error("Accés denegat a l'API de Google Admin. Assegura't que el compte de servei té els permisos de 'Domain-Wide Delegation' correctes a Google Workspace i que l'API d'Admin SDK està habilitada.");
+             throw new Error("Accés denegat (403 Forbidden) a l'API de Google Admin. Revisa que el Compte de Servei tingui els permisos de 'Domain-Wide Delegation' correctes a la consola d'administració de Google Workspace i que l'API d'Admin SDK estigui habilitada.");
         } else if (error.code === 404) {
             throw new Error(`L'usuari '${userEmail}' o el domini no s'ha trobat a Google Workspace.`);
         }
+        
         throw new Error("S'ha produït un error inesperat en connectar amb l'API de Google Workspace.");
     }
   }
