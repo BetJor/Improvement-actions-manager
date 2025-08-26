@@ -53,7 +53,7 @@ const getUserGroupsFlow = ai.defineFlow(
     console.log(`[getUserGroupsFlow] Starting to fetch groups for: ${userEmail} by impersonating ${adminEmail}`);
 
     try {
-        // 1. Authenticate and create a client
+        // 1. Authenticate and create a client using Application Default Credentials
         const auth = new google.auth.GoogleAuth({
             scopes: ['https://www.googleapis.com/auth/admin.directory.group.readonly'],
             // Impersonate the G Suite admin user
