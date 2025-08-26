@@ -31,9 +31,6 @@ const nextConfig = {
       ...config.resolve.alias,
       'handlebars': 'handlebars/dist/handlebars.js',
     };
-    config.externals.push({
-      'node-gyp-build': 'commonjs2 node-gyp-build',
-    });
     return config
   },
   experimental: {
