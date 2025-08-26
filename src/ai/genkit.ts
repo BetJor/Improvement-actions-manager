@@ -1,3 +1,4 @@
+
 import {genkit, configureGenkit} from 'genkit';
 import {googleAI} from '@genkit-ai/googleai';
 
@@ -6,8 +7,6 @@ import {googleAI} from '@genkit-ai/googleai';
 configureGenkit({
   plugins: [
     googleAI(),
-    // The Firebase plugin is temporarily removed to resolve a persistent initialization error.
-    // The app continues to use the standard Firebase SDK for database operations.
   ],
   logLevel: 'debug', // Set to 'debug' to see all logs for development
   enableTracing: true,
