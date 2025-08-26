@@ -53,6 +53,8 @@ const getUserGroupsFlow = ai.defineFlow(
 
     try {
         // 1. Use Application Default Credentials to authenticate.
+        // This method is recommended for server environments like App Hosting.
+        // It automatically finds the service account credentials from the environment.
         const auth = new google.auth.GoogleAuth({
             scopes: ['https://www.googleapis.com/auth/admin.directory.group.readonly'],
             clientOptions: {
