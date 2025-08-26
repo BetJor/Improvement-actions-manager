@@ -3,11 +3,12 @@
 /**
  * @fileOverview A flow to retrieve the Google Groups for a given user email.
  * 
- * This flow uses the Google Admin SDK to connect to the Google Workspace API. 
- * It requires a service account with Domain-Wide Delegation to be configured.
- * 
- * Make sure the following environment variables are set:
- * - GSUITE_ADMIN_EMAIL: The email of the G Suite admin to impersonate.
+ * This flow currently returns mock data because the real API call was causing server timeouts.
+ * To re-enable the real API call, you would need to:
+ * 1. Install the 'googleapis' package: `npm install googleapis`
+ * 2. Uncomment the commented-out code block.
+ * 3. Ensure the Service Account has Domain-Wide Delegation enabled in the Google Workspace Admin Console.
+ * 4. Set the GSUITE_ADMIN_EMAIL environment variable.
  * 
  * - getUserGroups - A function that returns the groups for a user.
  * - GetUserGroupsInput - The input type for the getUserGroups function (user email).
@@ -16,7 +17,7 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
-import { google } from 'googleapis';
+// import { google } from 'googleapis'; // Uncomment when re-enabling real API call
 import type { UserGroup } from '@/lib/types';
 
 // The input is the user's email address
@@ -44,6 +45,23 @@ const getUserGroupsFlow = ai.defineFlow(
     outputSchema: GetUserGroupsOutputSchema,
   },
   async (userEmail) => {
+    console.log(`[getUserGroupsFlow] Starting to fetch MOCK groups for: ${userEmail}`);
+    
+    // --- MOCK DATA IMPLEMENTATION ---
+    // This section returns hardcoded data to prevent server timeouts caused by API issues.
+    const mockGroups = [
+        { id: 'quality-assurance@example.com', name: 'Comitè de Qualitat', description: 'Grup per a la gestió de la qualitat.' },
+        { id: 'risk-committee@example.com', name: 'Comitè de Riscos', description: 'Grup per a la gestió de riscos.' },
+        { id: 'management@example.com', name: 'Direcció General', description: 'Grup de la direcció de l\'empresa.' }
+    ];
+    
+    console.log(`[getUserGroupsFlow] Successfully returned ${mockGroups.length} mock groups.`);
+    return mockGroups;
+
+    /*
+    // --- REAL GOOGLE API IMPLEMENTATION (Currently Disabled) ---
+    // To re-enable, uncomment this block, install 'googleapis', and ensure permissions are correct.
+
     const adminEmail = process.env.GSUITE_ADMIN_EMAIL;
     if (!adminEmail) {
         throw new Error("La variable d'entorn GSUITE_ADMIN_EMAIL no està configurada. És necessari per a la suplantació de l'usuari administrador.");
@@ -52,9 +70,6 @@ const getUserGroupsFlow = ai.defineFlow(
     console.log(`[getUserGroupsFlow] Starting to fetch groups for: ${userEmail} by impersonating ${adminEmail}`);
 
     try {
-        // 1. Use Application Default Credentials to authenticate.
-        // This method is recommended for server environments like App Hosting.
-        // It automatically finds the service account credentials from the environment.
         const auth = new google.auth.GoogleAuth({
             scopes: ['https://www.googleapis.com/auth/admin.directory.group.readonly'],
             clientOptions: {
@@ -62,16 +77,14 @@ const getUserGroupsFlow = ai.defineFlow(
             }
         });
         
-        // 2. Create the Admin SDK client
         const admin = google.admin({
             version: 'directory_v1',
             auth: auth,
         });
 
-        // 3. List the groups for the specified user
         const response = await admin.groups.list({
             userKey: userEmail,
-            maxResults: 200, // Maximum allowed by the API
+            maxResults: 200,
         });
         
         const groups = response.data.groups;
@@ -83,7 +96,6 @@ const getUserGroupsFlow = ai.defineFlow(
 
         console.log(`[getUserGroupsFlow] Found ${groups.length} groups for ${userEmail}.`);
 
-        // 4. Map the results to our defined output schema
         return groups.map(g => ({
             id: g.email || g.id!,
             name: g.name || '',
@@ -101,5 +113,6 @@ const getUserGroupsFlow = ai.defineFlow(
         
         throw new Error("S'ha produït un error inesperat en connectar amb l'API de Google Workspace.");
     }
+    */
   }
 );
