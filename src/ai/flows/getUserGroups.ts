@@ -4,8 +4,7 @@
  * @fileOverview A flow to retrieve the Google Groups for a given user email.
  * 
  * This flow uses the Google Admin SDK to connect to the Google Workspace API. 
- * It requires Application Default Credentials (ADC) to be configured in the environment,
- * and it impersonates a G Suite admin user to perform the necessary actions.
+ * It requires a service account JSON key to be configured to perform the necessary actions.
  * 
  * Make sure the following environment variables are set:
  * - GSUITE_ADMIN_EMAIL: The email of the G Suite admin to impersonate.
@@ -38,6 +37,13 @@ export async function getUserGroups(userEmail: GetUserGroupsInput): Promise<GetU
   return getUserGroupsFlow(userEmail);
 }
 
+// Service Account Credentials
+const JSONKey = {
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDApP5LL57PtJWN\nWTpVbQjjNP0I7rBMsmPiEDbccXwGuSpRvhEHFza6iZAVyKqD9E9fW4TzxwEg3qnv\nQj4RdaPj/ySEpiqq6xc/msbMU4kZW0uFln2xiy/K8e4izw6JTsaa7Jvr1j+XqZtY\ngp5oczxFeKwnIHsP5QLTZ7eLcv7bpASyiN6Eu0sC6S64BdIf+WnBlKr/tOQYqC3v\nz0IegAhdXsEk88Pnf0sdj89CyEwWDYMEah8+SamHhCe2j+ycRRCs8hfsXaawSfJd\nX9rhkWNdFR0ib0RqWrIWRhoObMGLbkXfb7DX1OZgzbjY6U6+2gFAmoBFhKVQ5GFe\nNCninooDAgMBAAECggEAS53X9TI1f6kOFOQDyjlYxjpr4iAy0oApRbiAmEnxWYBA\nFMLq0yIxCMprZKmWCOKSb0cwqjGgh0LvaCtTyq2nDZz+PBUvZVSPFRfPVa+qfmn/\n/GlEYDbWpS4Of9pPheUGfxRF5a382y6ne/gVbsFg1JIX3OnadDQ7xjiNaq7SS+rn\nZ/3XpbXcGPUC9eq1HFpOiH2IKgtLgzogU2o23ZvttqabdgvYsZysTIWTUy+dMTC1\nWia8OD5MUkkPnf2/yTdLCeV7mYPAwo8HLLZajOGsqTcU6sxhrKRlU1exO5Rao1YA\nbT65eXseiJgGj1h0YZvKFzPbo9uerRl3adxYV8u/mQKBgQD8fnF3nbyBLjNtnpi6\nUuOM7SANa0xBvi88yWfTRcaQ6ljromnDERNlc8JYVEj9a8gyUEMcdEwWIOUu5/Y2\ntXbrlmhRVa0gupSQi+Y0j3SJH0ixdrLnqESFAxRyuoWfXeHsQWFrSLCLJ0a1lAPg\nugDugNuKP+CTX1pgntl7sorDuQKBgQDDUcyouMFMovc/IdGS85vfPX553h2dDIpA\nlVL+nTnUQI9b7Lg4mg+01C7IZx3F2PMibh9BQWUIMSmCVnDuXMLEhVG36PiKUMSO\nVFLUsqalnlES+ncFFE5aasXaJdseqHvlv5nhbJByDnnmZptsIzBNUbn8nigVLjo9\nnkCrfVDRmwKBgQCwWmhKEaPt3iURdWpbCTXh4mU2ujCi4oD/xfR8fgm4gdXljqSs\nGCsh+v5Mz2HDjxpe+exF3XyfIA6y+lTf1VLgLUdjN6Iab/cAFpaNM31DoNQXDz7Z\nyo9BD+uiTmCx9NKtPuUaF8UnDCG5BU7IEWJBM0MjhoYGqNzpC0n/ua5uEQKBgFWq\nYuD9Z4p9T4PZCVoyjoLzLa21xbdD8L8yvxv9SYfWaQogYQwyRgFBruMmluBXrwvC\n0OKGFBHrvhD0aMOi26nl71mCTMAdfJgQU+QGFyE8tsJkKB+KMHNnsS9kux5PN0gl\nKRC91PyxbLWo+zIKnPzMg45Qr7PaeqDb7/FHHVNRAoGBAN7PnVKSHabDW+drqx+O\n3cE2kMApK3uSr9RYm3aAM/8MY35YgSP7YQNl3ykITJK25nf0H7wNEGgUymirQG5+\nk3iu3QtfjcZNVAFZH5xepZz6PcF98RSu53a5qAdGdcssXE6RoOWai+8QUhLM1M3d\nQW9F2F+x78Oy2yJxM8ultNoJ\n-----END PRIVATE KEY-----\n",
+  "client_email": "gam-project-a4x-ksa-k4w@gam-project-a4x-ksa-k4w.iam.gserviceaccount.com",
+};
+
+
 const getUserGroupsFlow = ai.defineFlow(
   {
     name: 'getUserGroupsFlow',
@@ -53,21 +59,21 @@ const getUserGroupsFlow = ai.defineFlow(
     console.log(`[getUserGroupsFlow] Starting to fetch groups for: ${userEmail} by impersonating ${adminEmail}`);
 
     try {
-        // 1. Authenticate and create a client using Application Default Credentials
-        const auth = new google.auth.GoogleAuth({
-            scopes: ['https://www.googleapis.com/auth/admin.directory.group.readonly'],
-            // Impersonate the G Suite admin user
-            clientOptions: {
-              subject: adminEmail
-            }
-        });
+        // 1. Authenticate using the provided Service Account JSON key
+        const jwtClient = new google.auth.JWT(
+            JSONKey.client_email,
+            undefined,
+            JSONKey.private_key.replace(/\\n/g, '\n'), // Ensure newlines are correctly formatted
+            ['https://www.googleapis.com/auth/admin.directory.group.readonly'],
+            adminEmail // User to impersonate
+        );
 
-        const authClient = await auth.getClient();
+        await jwtClient.authorize();
         
         // 2. Create the Admin SDK client
         const admin = google.admin({
             version: 'directory_v1',
-            auth: authClient,
+            auth: jwtClient,
         });
 
         // 3. List the groups for the specified user
@@ -95,7 +101,7 @@ const getUserGroupsFlow = ai.defineFlow(
     } catch (error: any) {
         console.error(`[getUserGroupsFlow] Error fetching groups from Google Admin SDK:`, error.message);
         if (error.code === 403) {
-             throw new Error("Accés denegat a l'API de Google Admin. Assegura't que la Compte de Servei té els permisos de 'Domain-Wide Delegation' correctes a Google Workspace i que l'API d'Admin SDK està habilitada.");
+             throw new Error("Accés denegat a l'API de Google Admin. Assegura't que el compte de servei té els permisos de 'Domain-Wide Delegation' correctes a Google Workspace i que l'API d'Admin SDK està habilitada.");
         } else if (error.code === 404) {
             throw new Error(`L'usuari '${userEmail}' o el domini no s'ha trobat a Google Workspace.`);
         }
@@ -103,3 +109,5 @@ const getUserGroupsFlow = ai.defineFlow(
     }
   }
 );
+
+    
