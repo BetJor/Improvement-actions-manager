@@ -3,9 +3,12 @@
 /**
  * @fileOverview A flow to retrieve the Google Groups for a given user email.
  * 
- * This flow uses mock data for demonstration purposes. To connect to the real
- * Google Workspace API, you would need to install 'googleapis', configure
- * Application Default Credentials (ADC), and use the Google Admin SDK.
+ * This flow uses the Google Admin SDK to connect to the Google Workspace API. 
+ * It requires Application Default Credentials (ADC) to be configured in the environment,
+ * and it impersonates a G Suite admin user to perform the necessary actions.
+ * 
+ * Make sure the following environment variables are set:
+ * - GSUITE_ADMIN_EMAIL: The email of the G Suite admin to impersonate.
  * 
  * - getUserGroups - A function that returns the groups for a user.
  * - GetUserGroupsInput - The input type for the getUserGroups function (user email).
@@ -14,8 +17,8 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
+import { google } from 'googleapis';
 import type { UserGroup } from '@/lib/types';
-import { groups, users } from '@/lib/static-data'; // Using mock data
 
 // The input is the user's email address
 const GetUserGroupsInputSchema = z.string().email().describe("The email address of the user.");
@@ -42,25 +45,61 @@ const getUserGroupsFlow = ai.defineFlow(
     outputSchema: GetUserGroupsOutputSchema,
   },
   async (userEmail) => {
-    console.log(`[getUserGroupsFlow] Starting to fetch mock groups for: ${userEmail}`);
-    
-    // Find the user ID from the mock users data based on the email
-    const user = users.find(u => u.email === userEmail);
-    if (!user) {
-        console.warn(`[getUserGroupsFlow] User with email ${userEmail} not found in mock data.`);
-        return [];
+    const adminEmail = process.env.GSUITE_ADMIN_EMAIL;
+    if (!adminEmail) {
+        throw new Error("La variable d'entorn GSUITE_ADMIN_EMAIL no està configurada. És necessari per a la suplantació de l'usuari administrador.");
     }
-
-    // Find groups that contain the user's ID in their userIds array
-    const userGroups = groups.filter(g => g.userIds.includes(user.id));
     
-    console.log(`[getUserGroupsFlow] Found ${userGroups.length} mock groups for ${userEmail}`);
+    console.log(`[getUserGroupsFlow] Starting to fetch groups for: ${userEmail} by impersonating ${adminEmail}`);
 
-    return userGroups.map(g => ({
-        id: g.id,
-        name: g.name,
-        // Mock data doesn't have description, so we can leave it undefined.
-        // description: g.description || undefined, 
-    }));
+    try {
+        // 1. Authenticate and create a client
+        const auth = new google.auth.GoogleAuth({
+            scopes: ['https://www.googleapis.com/auth/admin.directory.group.readonly'],
+            // Impersonate the G Suite admin user
+            clientOptions: {
+              subject: adminEmail
+            }
+        });
+
+        const authClient = await auth.getClient();
+        
+        // 2. Create the Admin SDK client
+        const admin = google.admin({
+            version: 'directory_v1',
+            auth: authClient,
+        });
+
+        // 3. List the groups for the specified user
+        const response = await admin.groups.list({
+            userKey: userEmail,
+            maxResults: 200, // Maximum allowed by the API
+        });
+        
+        const groups = response.data.groups;
+
+        if (!groups || groups.length === 0) {
+            console.log(`[getUserGroupsFlow] No groups found for user ${userEmail}.`);
+            return [];
+        }
+
+        console.log(`[getUserGroupsFlow] Found ${groups.length} groups for ${userEmail}.`);
+
+        // 4. Map the results to our defined output schema
+        return groups.map(g => ({
+            id: g.email || g.id!,
+            name: g.name || '',
+            description: g.description || undefined,
+        }));
+        
+    } catch (error: any) {
+        console.error(`[getUserGroupsFlow] Error fetching groups from Google Admin SDK:`, error.message);
+        if (error.code === 403) {
+             throw new Error("Accés denegat a l'API de Google Admin. Assegura't que la Compte de Servei té els permisos de 'Domain-Wide Delegation' correctes a Google Workspace i que l'API d'Admin SDK està habilitada.");
+        } else if (error.code === 404) {
+            throw new Error(`L'usuari '${userEmail}' o el domini no s'ha trobat a Google Workspace.`);
+        }
+        throw new Error("S'ha produït un error inesperat en connectar amb l'API de Google Workspace.");
+    }
   }
 );
