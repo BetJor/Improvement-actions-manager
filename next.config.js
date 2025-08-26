@@ -1,10 +1,10 @@
 
-import type {NextConfig} from 'next';
-import createWithIntl from 'next-intl/plugin';
+const createWithIntl = require('next-intl/plugin');
 
 const withIntl = createWithIntl('./src/i18n.ts');
 
-const nextConfig: NextConfig = {
+/** @type {import('next').NextConfig} */
+const nextConfig = {
   /* config options here */
   typescript: {
     ignoreBuildErrors: true,
@@ -28,6 +28,13 @@ const nextConfig: NextConfig = {
       }
     ],
   },
+  webpack: (config) => {
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      'handlebars': 'handlebars/dist/handlebars.js',
+    }
+    return config
+  },
   experimental: {
     // This is required for Genkit flows to work.
     serverActions: {
@@ -36,4 +43,4 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default withIntl(nextConfig);
+module.exports = withIntl(nextConfig);
