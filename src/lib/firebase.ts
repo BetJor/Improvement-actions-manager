@@ -1,6 +1,6 @@
 
 import { initializeApp, getApps, getApp } from "firebase/app";
-import { getAuth } from "firebase/auth";
+import { getAuth, connectAuthEmulator } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 
@@ -19,5 +19,16 @@ const firebaseApp = !getApps().length ? initializeApp(firebaseConfig) : getApp()
 const auth = getAuth(firebaseApp);
 const db = getFirestore(firebaseApp);
 const storage = getStorage(firebaseApp);
+
+// Connect to Firebase Emulators if running in development
+if (process.env.NODE_ENV === 'development') {
+    try {
+        connectAuthEmulator(auth, "http://localhost:9099");
+        console.log("Authentication Emulator connected");
+    } catch (error) {
+        console.error("Error connecting to Auth Emulator: ", error);
+    }
+}
+
 
 export { firebaseApp, auth, db, storage };
