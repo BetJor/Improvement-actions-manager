@@ -55,6 +55,7 @@
       "filterPlaceholder": "Filtrar por título, ID o responsable...",
       "status": "Estado",
       "type": "Tipo",
+      "center": "Centro",
       "noResults": "No se encontraron resultados.",
       "col": {
         "id": "ID",

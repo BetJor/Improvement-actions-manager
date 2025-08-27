@@ -44,11 +44,14 @@ export function ActionsTable({ actions }: ActionsTableProps) {
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState<Set<ImprovementActionStatus>>(new Set())
   const [typeFilter, setTypeFilter] = useState<Set<string>>(new Set())
+  const [centerFilter, setCenterFilter] = useState<Set<string>>(new Set())
   const [sortConfig, setSortConfig] = useState<{ key: SortKey; direction: 'asc' | 'desc' } | null>(null)
   
 
   const allStatuses = useMemo(() => Array.from(new Set(actions.map(a => a.status))), [actions])
   const allTypes = useMemo(() => Array.from(new Set(actions.map(a => a.type))), [actions])
+  const allCenters = useMemo(() => Array.from(new Set(actions.map(a => a.center).filter(Boolean))) as string[], [actions]);
+
 
   const filteredAndSortedActions = useMemo(() => {
     let filtered = actions.filter(action => {
@@ -60,8 +63,9 @@ export function ActionsTable({ actions }: ActionsTableProps) {
 
       const statusMatch = statusFilter.size === 0 || statusFilter.has(action.status)
       const typeMatch = typeFilter.size === 0 || typeFilter.has(action.type)
+      const centerMatch = centerFilter.size === 0 || (action.center && centerFilter.has(action.center));
 
-      return searchMatch && statusMatch && typeMatch
+      return searchMatch && statusMatch && typeMatch && centerMatch
     })
 
     if (sortConfig !== null) {
@@ -89,7 +93,7 @@ export function ActionsTable({ actions }: ActionsTableProps) {
     }
 
     return filtered
-  }, [actions, searchTerm, statusFilter, typeFilter, sortConfig])
+  }, [actions, searchTerm, statusFilter, typeFilter, centerFilter, sortConfig])
 
   const requestSort = (key: SortKey) => {
     let direction: 'asc' | 'desc' = 'asc'
@@ -193,6 +197,31 @@ export function ActionsTable({ actions }: ActionsTableProps) {
                 }}
               >
                 {type}
+              </DropdownMenuCheckboxItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline">
+              {t("center")} <ChevronDown className="ml-2 h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            {allCenters.map(center => (
+              <DropdownMenuCheckboxItem
+                key={center}
+                checked={centerFilter.has(center)}
+                onCheckedChange={checked => {
+                  setCenterFilter(prev => {
+                    const newSet = new Set(prev)
+                    if (checked) newSet.add(center)
+                    else newSet.delete(center)
+                    return newSet
+                  })
+                }}
+              >
+                {center}
               </DropdownMenuCheckboxItem>
             ))}
           </DropdownMenuContent>

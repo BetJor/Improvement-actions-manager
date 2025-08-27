@@ -55,6 +55,7 @@
       "filterPlaceholder": "Filtra per títol, ID o responsable...",
       "status": "Estat",
       "type": "Tipus",
+      "center": "Centre",
       "noResults": "No s'han trobat resultats.",
       "col": {
         "id": "ID",
