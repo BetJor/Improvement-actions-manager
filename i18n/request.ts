@@ -9,6 +9,18 @@ export default getRequestConfig(async ({locale}) => {
   if (!locales.includes(locale as any)) notFound();
  
   return {
-    messages: (await import(`../messages/${locale}/common.json`)).default
+    messages: {
+      ...(await import(`../messages/${locale}/common.json`)).default,
+      ...(await import(`../messages/${locale}/actions.json`)).default,
+      ...(await import(`../messages/${locale}/dashboard.json`)).default,
+      ...(await import(`../messages/${locale}/reports.json`)).default,
+      ...(await import(`../messages/${locale}/settings.json`)).default,
+      ...(await import(`../messages/${locale}/ai-settings.json`)).default,
+      ...(await import(`../messages/${locale}/prompt-gallery.json`)).default,
+      ...(await import(`../messages/${locale}/roadmap.json`)).default,
+      ...(await import(`../messages/${locale}/backlog.json`)).default,
+      ...(await import(`../messages/${locale}/my-groups.json`)).default,
+      ...(await import(`../messages/${locale}/user-management.json`)).default,
+    }
   };
 });
