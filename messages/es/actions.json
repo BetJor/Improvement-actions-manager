@@ -57,6 +57,9 @@
       "type": "Tipo",
       "center": "Centro",
       "noResults": "No se encontraron resultados.",
+      "activeFilters": "Filtros activos",
+      "text": "Texto",
+      "clearAll": "Limpiar filtros",
       "col": {
         "id": "ID",
         "title": "Título",

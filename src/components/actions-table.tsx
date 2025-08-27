@@ -20,7 +20,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { ActionStatusBadge } from "./action-status-badge"
 import type { ImprovementAction, ImprovementActionStatus, ImprovementActionType, User } from "@/lib/types"
-import { ArrowUpDown, ChevronDown, GanttChartSquare, Star } from "lucide-react"
+import { ArrowUpDown, ChevronDown, GanttChartSquare, Star, X } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useTabs } from "@/hooks/use-tabs"
 import { getActionById, getActionTypes, getCategories, getSubcategories, getAffectedAreas, getCenters, getResponsibilityRoles, getUsers } from "@/lib/data"
@@ -28,6 +28,7 @@ import { ActionDetailsTab } from "@/components/action-details-tab"
 import { useAuth } from "@/hooks/use-auth"
 import { cn } from "@/lib/utils"
 import { useFollowAction } from "@/hooks/use-follow-action"
+import { Badge } from "./ui/badge"
 
 interface ActionsTableProps {
   actions: ImprovementAction[];
@@ -52,10 +53,28 @@ export function ActionsTable({ actions }: ActionsTableProps) {
   const allTypes = useMemo(() => Array.from(new Set(actions.map(a => a.type))), [actions])
   const allCenters = useMemo(() => Array.from(new Set(actions.map(a => a.center).filter(Boolean))) as string[], [actions]);
 
+  const removeFilter = (filterSetState: React.Dispatch<React.SetStateAction<Set<any>>>, value: any) => {
+    filterSetState(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(value);
+        return newSet;
+    });
+  };
+
+  const clearAllFilters = () => {
+    setStatusFilter(new Set());
+    setTypeFilter(new Set());
+    setCenterFilter(new Set());
+    setSearchTerm("");
+  }
+
+  const activeFiltersCount = statusFilter.size + typeFilter.size + centerFilter.size + (searchTerm ? 1 : 0);
+
 
   const filteredAndSortedActions = useMemo(() => {
     let filtered = actions.filter(action => {
       const searchMatch =
+        searchTerm === "" ||
         action.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         action.actionId.toLowerCase().includes(searchTerm.toLowerCase()) ||
         (action.responsibleUser && action.responsibleUser.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
@@ -227,6 +246,43 @@ export function ActionsTable({ actions }: ActionsTableProps) {
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
+
+       {activeFiltersCount > 0 && (
+          <div className="flex items-center gap-2 mb-4">
+              <span className="text-sm font-medium">{t('activeFilters')}:</span>
+              <div className="flex flex-wrap gap-1">
+                  {searchTerm && (
+                     <Badge variant="secondary" className="pl-2 pr-1">
+                        {t('text')}: "{searchTerm}"
+                        <button onClick={() => setSearchTerm('')} className="ml-1 rounded-full hover:bg-background/80 p-0.5"><X className="h-3 w-3"/></button>
+                    </Badge>
+                  )}
+                  {[...statusFilter].map(value => (
+                      <Badge key={value} variant="secondary" className="pl-2 pr-1">
+                          {t('status')}: {value}
+                          <button onClick={() => removeFilter(setStatusFilter, value)} className="ml-1 rounded-full hover:bg-background/80 p-0.5"><X className="h-3 w-3"/></button>
+                      </Badge>
+                  ))}
+                  {[...typeFilter].map(value => (
+                      <Badge key={value} variant="secondary" className="pl-2 pr-1">
+                          {t('type')}: {value}
+                          <button onClick={() => removeFilter(setTypeFilter, value)} className="ml-1 rounded-full hover:bg-background/80 p-0.5"><X className="h-3 w-3"/></button>
+                      </Badge>
+                  ))}
+                  {[...centerFilter].map(value => (
+                      <Badge key={value} variant="secondary" className="pl-2 pr-1">
+                          {t('center')}: {value}
+                          <button onClick={() => removeFilter(setCenterFilter, value)} className="ml-1 rounded-full hover:bg-background/80 p-0.5"><X className="h-3 w-3"/></button>
+                      </Badge>
+                  ))}
+              </div>
+              <Button variant="ghost" size="sm" onClick={clearAllFilters} className="ml-auto text-sm h-auto px-2 py-1">
+                  <X className="mr-1 h-4 w-4" />
+                  {t('clearAll')}
+              </Button>
+          </div>
+      )}
+
       <div className="rounded-md border">
         <Table>
           <TableHeader>

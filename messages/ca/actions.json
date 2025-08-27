@@ -57,6 +57,9 @@
       "type": "Tipus",
       "center": "Centre",
       "noResults": "No s'han trobat resultats.",
+      "activeFilters": "Filtres actius",
+      "text": "Text",
+      "clearAll": "Netejar filtres",
       "col": {
         "id": "ID",
         "title": "Títol",
