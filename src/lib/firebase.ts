@@ -23,8 +23,8 @@ const storage = getStorage(firebaseApp);
 // Connect to Firebase Emulators if running in development
 if (process.env.NODE_ENV === 'development') {
     try {
-        connectAuthEmulator(auth, "http://localhost:9099");
-        console.log("Authentication Emulator connected");
+        connectAuthEmulator(auth, "http://127.0.0.1:9099");
+        console.log("Authentication Emulator connected to http://127.0.0.1:9099");
     } catch (error) {
         console.error("Error connecting to Auth Emulator: ", error);
     }
