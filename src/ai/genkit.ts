@@ -1,3 +1,4 @@
+
 import {genkit, type GenkitOptions} from 'genkit';
 import {googleAI} from '@genkit-ai/googleai';
 
@@ -7,7 +8,7 @@ const genkitConfig: GenkitOptions = {
     googleAI(),
   ],
   logLevel: 'debug',
-  enableTracing: true,
+  enableTracing: false,
   model: 'googleai/gemini-2.0-flash',
 };
 
