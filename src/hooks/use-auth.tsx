@@ -2,7 +2,16 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
-import { onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut, type User as FirebaseUser } from 'firebase/auth';
+import { 
+  onAuthStateChanged, 
+  signInWithPopup, 
+  GoogleAuthProvider, 
+  signOut, 
+  type User as FirebaseUser,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  sendPasswordResetEmail,
+} from 'firebase/auth';
 import { auth, firebaseApp } from '@/lib/firebase';
 import { usePathname, useRouter } from 'next/navigation';
 import { useLocale } from 'next-intl';
@@ -17,6 +26,9 @@ interface AuthContextType {
   impersonateUser: (userToImpersonate: User) => void;
   stopImpersonating: () => void;
   signInWithGoogle: () => Promise<void>;
+  signInWithEmail: (email: string, pass: string) => Promise<void>;
+  signUpWithEmail: (email: string, pass: string) => Promise<void>;
+  sendPasswordReset: (email: string) => Promise<void>;
   logout: () => Promise<void>;
   updateDashboardLayout: (layout: string[]) => Promise<void>;
 }
@@ -77,11 +89,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signInWithGoogle = async () => {
     const provider = new GoogleAuthProvider();
-    try {
-      await signInWithPopup(auth, provider);
-    } catch (error) {
-      console.error("Error signing in with Google", error);
-    }
+    await signInWithPopup(auth, provider);
+  };
+  
+  const signInWithEmail = async (email: string, pass: string) => {
+    await signInWithEmailAndPassword(auth, email, pass);
+  };
+
+  const signUpWithEmail = async (email: string, pass: string) => {
+    await createUserWithEmailAndPassword(auth, email, pass);
+  };
+
+  const sendPasswordReset = async (email: string) => {
+    await sendPasswordResetEmail(auth, email);
   };
 
   const logout = async () => {
@@ -113,8 +133,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     sessionStorage.removeItem(IMPERSONATION_KEY);
     setIsImpersonating(false);
     await loadFullUser(auth.currentUser); 
-    // No full reload here, just reload the user data
-    // to avoid losing state on other parts of the app
   }, [loadFullUser]);
   
   const updateDashboardLayout = async (layout: string[]) => {
@@ -136,6 +154,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         impersonateUser,
         stopImpersonating,
         signInWithGoogle, 
+        signInWithEmail,
+        signUpWithEmail,
+        sendPasswordReset,
         logout,
         updateDashboardLayout
     }}>

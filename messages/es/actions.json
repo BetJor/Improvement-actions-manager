@@ -1,6 +1,30 @@
 
 {
   "Actions": {
+    "login": {
+      "title": "Inicia sesión",
+      "description": "Accede a la plataforma con tus credenciales.",
+      "googleSignIn": "Continuar con Google",
+      "orContinueWith": "o continuar con",
+      "email": "Correo electrónico",
+      "password": "Contraseña",
+      "signIn": "Iniciar Sesión",
+      "signUp": "Crear una cuenta nueva",
+      "forgotPassword": "¿Has olvidado la contraseña?",
+      "errors": {
+        "fieldsRequired": "Los campos de correo y contraseña son obligatorios.",
+        "signInFailed": "Error al iniciar sesión",
+        "signUpFailed": "Error en el registro",
+        "emailRequiredForReset": "Introduce tu correo electrónico para restablecer la contraseña.",
+        "passwordResetFailed": "Error al restablecer la contraseña"
+      },
+      "success": {
+        "signUpSuccessTitle": "¡Cuenta Creada!",
+        "signUpSuccessDescription": "Tu cuenta se ha creado correctamente. Ahora puedes iniciar sesión.",
+        "passwordResetSentTitle": "Correo enviado",
+        "passwordResetSentDescription": "Se ha enviado un correo para restablecer tu contraseña."
+      }
+    },
     "page": {
       "title": "Acciones de Mejora",
       "description": "Aquí puedes encontrar todas las acciones de mejora. Usa los filtros para acotar tu búsqueda.",

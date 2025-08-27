@@ -1,6 +1,30 @@
 
 {
   "Actions": {
+    "login": {
+      "title": "Inicia sessió",
+      "description": "Accedeix a la plataforma amb les teves credencials.",
+      "googleSignIn": "Continua amb Google",
+      "orContinueWith": "o continua amb",
+      "email": "Correu electrònic",
+      "password": "Contrasenya",
+      "signIn": "Iniciar Sessió",
+      "signUp": "Crear un compte nou",
+      "forgotPassword": "Has oblidat la contrasenya?",
+      "errors": {
+        "fieldsRequired": "Els camps de correu i contrasenya són obligatoris.",
+        "signInFailed": "Error en iniciar sessió",
+        "signUpFailed": "Error en el registre",
+        "emailRequiredForReset": "Introdueix el teu correu electrònic per a restablir la contrasenya.",
+        "passwordResetFailed": "Error en restablir la contrasenya"
+      },
+      "success": {
+        "signUpSuccessTitle": "Compte Creat!",
+        "signUpSuccessDescription": "El teu compte s'ha creat correctament. Ara pots iniciar sessió.",
+        "passwordResetSentTitle": "Correu enviat",
+        "passwordResetSentDescription": "S'ha enviat un correu per a restablir la teva contrasenya."
+      }
+    },
     "page": {
       "title": "Accions de Millora",
       "description": "Aquí pots trobar totes les accions de millora. Utilitza els filtres per acotar la teva cerca.",
@@ -80,7 +104,7 @@
       "closeAction": "Tancar Acció",
       "causesAndProposedAction": "Causes i Acció Proposada",
       "causesAnalysis": "Anàlisi de les Causes",
-      "proposedAction": "Acció Proposada",
+      "proposedAction": "Acció Propusada",
       "analysisPerformedBy": "Anàlisi realitzat per {name} el {date}",
       "verificationPerformedBy": "Verificació realitzada per {name} el {date}",
       "implementationVerification": "Comprovació de la Implantació",

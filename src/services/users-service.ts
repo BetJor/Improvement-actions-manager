@@ -33,7 +33,6 @@ export async function getUserById(userId: string): Promise<User | null> {
         if (userData.email) {
             return { id: userDocSnap.id, ...userData } as User;
         }
-        // If user exists but email is missing (e.g. from old static data), update it
         const authUser = auth.currentUser;
         if (authUser && authUser.uid === userId && authUser.email) {
             await updateDoc(userDocRef, { email: authUser.email });
@@ -42,15 +41,15 @@ export async function getUserById(userId: string): Promise<User | null> {
         return { id: userDocSnap.id, ...userData } as User;
     }
     
-    // If user is not in 'users' collection, maybe they just signed up
-    // We can create a basic user profile for them
+    // If user is not in 'users' collection, they probably just signed up.
+    // We create a basic user profile for them.
     const authUser = auth.currentUser;
     if (authUser && authUser.uid === userId) {
         const newUser: User = {
             id: authUser.uid,
-            name: authUser.displayName || 'Nou Usuari',
+            name: authUser.displayName || authUser.email || 'Usuari Nou',
             email: authUser.email || '',
-            role: 'Creator', // Default role
+            role: 'Creator', // Default role for new sign-ups
             avatar: authUser.photoURL || `https://i.pravatar.cc/150?u=${authUser.uid}`
         };
         await setDoc(userDocRef, newUser);
@@ -63,8 +62,9 @@ export async function getUserById(userId: string): Promise<User | null> {
 
 
 export async function addUser(user: Omit<User, 'id'>): Promise<string> {
-    // Note: In a real app, you'd likely create the user in Firebase Auth first,
+    // In a real app, you'd create the user in Firebase Auth first,
     // and use the resulting UID as the document ID here.
+    // This function is mainly for manual additions via the user management page.
     const collectionRef = collection(db, 'users');
     const docRef = await addDoc(collectionRef, user);
     return docRef.id;
@@ -76,7 +76,7 @@ export async function updateUser(userId: string, user: Partial<Omit<User, 'id'>>
 }
 
 export async function deleteUser(userId: string): Promise<void> {
-    // Note: In a real app, you should also handle deleting the user from Firebase Auth.
+    // In a real app, you should also handle deleting the user from Firebase Auth.
     const docRef = doc(db, 'users', userId);
     await deleteDoc(docRef);
 }
