@@ -1,6 +1,6 @@
 
 import { ProtectedLayout } from "@/components/protected-layout";
-import { getMessages } from "next-intl/server";
+import { getMessages, getLocale } from "next-intl/server";
 
 export default async function LocaleLayout({
   children,
@@ -10,7 +10,7 @@ export default async function LocaleLayout({
   params: {locale: string};
 }) {
   const messages = await getMessages();
-  const locale = params.locale;
+  const locale = await getLocale();
   
   return (
     <ProtectedLayout locale={locale} messages={messages}>
