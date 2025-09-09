@@ -126,23 +126,33 @@ export function TabsProvider({ children, initialPath }: { children: ReactNode, i
                     isLoading: true 
                 };
 
-                tabData.loader().then(loadedContent => {
-                    setTabs(currentTabs => currentTabs.map(t => 
-                        t.id === tabId ? { ...t, content: loadedContent, isLoading: false } : t
-                    ));
-                }).catch(error => {
-                    console.error("Error loading tab content:", error);
-                    setTabs(currentTabs => currentTabs.map(t => 
-                        t.id === tabId ? { ...t, content: <div>Error loading content.</div>, isLoading: false } : t
-                    ));
-                });
+                // DEMO: Simulate network delay
+                setTimeout(() => {
+                    tabData.loader!().then(loadedContent => {
+                        setTabs(currentTabs => currentTabs.map(t => 
+                            t.id === tabId ? { ...t, content: loadedContent, isLoading: false } : t
+                        ));
+                    }).catch(error => {
+                        console.error("Error loading tab content:", error);
+                        setTabs(currentTabs => currentTabs.map(t => 
+                            t.id === tabId ? { ...t, content: <div>Error loading content.</div>, isLoading: false } : t
+                        ));
+                    });
+                }, 500);
+
             } else {
                 const PageComponent = getPageComponent(tabData.path);
                 if (!PageComponent) {
                     console.error(`No page component found for path: ${tabData.path}`);
                     newTab = { ...tabData, id: tabId, content: <div>Not Found</div>, isLoading: false };
                 } else {
-                    newTab = { ...tabData, id: tabId, content: <PageComponent />, isLoading: false };
+                    newTab = { ...tabData, id: tabId, content: <div className="flex justify-center items-center h-full"><Loader2 className="h-6 w-6 animate-spin" /></div>, isLoading: true };
+                     // DEMO: Simulate network delay
+                    setTimeout(() => {
+                        setTabs(currentTabs => currentTabs.map(t => 
+                            t.id === tabId ? { ...t, content: <PageComponent />, isLoading: false } : t
+                        ));
+                    }, 500);
                 }
             }
             
