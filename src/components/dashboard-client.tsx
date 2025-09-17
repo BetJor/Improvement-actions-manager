@@ -28,7 +28,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import { GanttChartSquare, GripVertical, Star } from "lucide-react"
+import { FilePlus, GanttChartSquare, GripVertical, Plus, Star } from "lucide-react"
 import { Button } from "./ui/button"
 import { useTabs } from "@/hooks/use-tabs"
 import { getActionById, getActionTypes, getCategories, getCenters, getResponsibilityRoles, getSubcategories, getAffectedAreas } from "@/lib/data"
@@ -37,6 +37,12 @@ import { cn } from '@/lib/utils';
 import { useFollowAction } from '@/hooks/use-follow-action';
 import { useTranslations } from 'next-intl';
 import { ActionStatusBadge } from './action-status-badge';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 
 interface DashboardClientProps {
     actions: ImprovementAction[];
@@ -71,6 +77,7 @@ function SortableItem({ id, children }: { id: string, children: React.ReactNode 
 
 export function DashboardClient({ actions, assignedActions }: DashboardClientProps) {
   const t = useTranslations("Dashboard");
+  const tActions = useTranslations("Actions.page");
   const { openTab } = useTabs();
   const { user, updateDashboardLayout } = useAuth();
   const [items, setItems] = useState<string[]>(user?.dashboardLayout || defaultLayout);
@@ -122,6 +129,15 @@ export function DashboardClient({ actions, assignedActions }: DashboardClientPro
       return <ActionDetailsTab initialAction={actionData} masterData={masterData} />;
     };
     openTab({ path: `/actions/${action.id}`, title: `Acció ${action.actionId}`, icon: GanttChartSquare, isClosable: true, loader: actionLoader });
+  }
+
+  const handleNewAction = () => {
+    openTab({
+        path: '/actions/new',
+        title: 'Nova Acció',
+        icon: FilePlus,
+        isClosable: true,
+    });
   }
 
   const widgets: { [key: string]: React.ReactNode } = {
@@ -209,6 +225,24 @@ export function DashboardClient({ actions, assignedActions }: DashboardClientPro
                 </SortableContext>
             </DndContext>
         </div>
+        <TooltipProvider>
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <Button 
+                        onClick={handleNewAction}
+                        className="fixed bottom-8 right-8 h-16 w-16 rounded-full shadow-lg"
+                        size="icon"
+                        >
+                        <Plus className="h-8 w-8" />
+                    </Button>
+                </TooltipTrigger>
+                <TooltipContent side="left">
+                    <p>{tActions("createAction")}</p>
+                </TooltipContent>
+            </Tooltip>
+        </TooltipProvider>
     </div>
   )
 }
+
+    
