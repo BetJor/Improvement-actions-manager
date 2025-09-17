@@ -25,7 +25,6 @@
     },
     "followedActions": {
       "title": "Accions en Seguiment",
-      "description": "Un recull de les accions que has marcat per a seguir de prop.",
       "noActions": "No estàs seguint cap acció. Fes clic a la icona d'estrella per a començar.",
       "unfollow": "Deixar de seguir l'acció",
       "col": {

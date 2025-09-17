@@ -163,7 +163,6 @@ export function DashboardClient({ actions, assignedActions }: DashboardClientPro
       <Card>
         <CardHeader>
           <CardTitle>{t("followedActions.title")}</CardTitle>
-          <CardDescription className="min-h-[40px]">{t("followedActions.description")}</CardDescription>
         </CardHeader>
         <CardContent className="min-h-[120px]">
             {followedActions.length > 0 ? (
