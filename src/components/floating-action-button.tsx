@@ -29,7 +29,7 @@ export function FloatingActionButton() {
                         className="fixed bottom-8 right-8 h-16 w-16 rounded-full shadow-lg"
                         size="icon"
                         >
-                        <Plus className="h-8 w-8" />
+                        <Plus style={{ width: '30px', height: '30px' }} />
                     </Button>
                 </TooltipTrigger>
                 <TooltipContent side="left">
