@@ -50,7 +50,8 @@ export default function RoadmapPage() {
             "Implementar la pujada de fitxers adjunts (integració amb Firebase Storage).",
             "Refactoritzar la gestió de dades per a un estat global sincronitzat (`useActionState`).",
             "Implementar un sistema de subscripció (seguiment) a les accions de millora.",
-            "Personalitzar i simplificar el Dashboard eliminant ginys de gràfics."
+            "Personalitzar i simplificar el Dashboard eliminant ginys de gràfics.",
+            "Crear un botó d'acció flotant (FAB) per a la creació ràpida d'accions."
           ],
           pending_tasks: []
         },
@@ -97,7 +98,8 @@ export default function RoadmapPage() {
           title: "Fase 7: Rols i Permisos d'Usuari",
           duration: "Estimat: 3-4 dies",
           completed_tasks: [
-            "Definir una estructura de dades a Firestore per a rols i permisos."
+            "Definir una estructura de dades a Firestore per a rols i permisos.",
+            "Implementar funcionalitat de suplantació d'usuaris per a administradors."
           ],
           pending_tasks: [
             "Pendent: Crear un mecanisme per a assignar rols als usuaris (p. ex., en un panell d'administració).",
@@ -108,7 +110,9 @@ export default function RoadmapPage() {
           key: "phase8",
           title: "Fase 8: Millores d'Experiència d'Usuari (UX)",
           duration: "Estimat: 2-3 dies",
-          completed_tasks: [],
+          completed_tasks: [
+            "Implementar la reordenació de les seccions del dashboard amb 'drag-and-drop' per a desar la preferència de l'usuari."
+          ],
           pending_tasks: [
             "Pendent: Implementar la reordenació de les seccions (Detalls, Comentaris, Adjunts) del panell lateral amb 'drag-and-drop' per a desar la preferència de l'usuari."
           ]
@@ -161,3 +165,6 @@ export default function RoadmapPage() {
 
     
 
+
+
+    
