@@ -57,13 +57,11 @@ export function AppSidebar({ t }: { t: any }) {
     { href: `/${locale}/ai-settings`, icon: Sparkles, label: t("Common.AppSidebar.aiSettings"), isTab: true },
     { href: `/${locale}/prompt-gallery`, icon: Library, label: t("Common.AppSidebar.promptGallery"), isTab: true },
     { href: `/${locale}/user-management`, icon: Users, label: t("Common.AppSidebar.userManagement"), isTab: true },
-  ]
-
-  const aboutNavItems = [
     { href: `/${locale}/roadmap`, icon: Route, label: t("Common.AppSidebar.roadmap"), isTab: true },
     { href: `/${locale}/backlog`, icon: GanttChartSquare, label: t("Common.AppSidebar.backlog"), isTab: true },
     { href: `/${locale}/intranet-test`, icon: TestTubeDiagonal, label: "Intranet Test", isTab: true },
   ]
+
 
   return (
     <Sidebar>
@@ -85,12 +83,6 @@ export function AppSidebar({ t }: { t: any }) {
                 </>
             )}
 
-            <div className="my-4 border-t border-border -mx-2"></div>
-            <SidebarMenu>
-                {aboutNavItems.map((item) => (
-                    <SidebarNavLink key={item.href} {...item} />
-                ))}
-            </SidebarMenu>
         </SidebarContent>
     </Sidebar>
   )

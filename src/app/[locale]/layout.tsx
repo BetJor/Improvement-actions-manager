@@ -1,19 +1,21 @@
 
 import { ProtectedLayout } from "@/components/protected-layout";
-import { getMessages, getLocale } from "next-intl/server";
+import {unstable_setRequestLocale} from 'next-intl/server';
+import { useMessages, useLocale } from "next-intl";
 
-export default async function LocaleLayout({
+export default function LocaleLayout({
   children,
-  params
+  params: {locale}
 }: {
   children: React.ReactNode;
   params: {locale: string};
 }) {
-  const messages = await getMessages();
-  const locale = await getLocale();
+  unstable_setRequestLocale(locale);
+  const messages = useMessages();
+  const messagesLocale = useLocale();
   
   return (
-    <ProtectedLayout locale={locale} messages={messages}>
+    <ProtectedLayout locale={messagesLocale} messages={messages}>
       {children}
     </ProtectedLayout>
   )
