@@ -15,7 +15,6 @@
     },
     "myPendingActions": {
       "title": "Les Meves Accions Pendents",
-      "description": "Accions que requereixen la teva atenció immediata per a avançar.",
       "noActions": "No tens cap acció pendent. Bona feina!",
       "col": {
         "id": "ID",

@@ -130,7 +130,6 @@ export function DashboardClient({ actions, assignedActions }: DashboardClientPro
       <Card>
         <CardHeader>
           <CardTitle>{t("myPendingActions.title")}</CardTitle>
-          <CardDescription className="min-h-[40px]">{t("myPendingActions.description")}</CardDescription>
         </CardHeader>
         <CardContent className="min-h-[120px]">
             {assignedActions.length > 0 ? (
