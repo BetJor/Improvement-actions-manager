@@ -41,7 +41,7 @@ function SidebarNavLink({ href, icon: Icon, label, isTab }: { href: string; icon
 
 export function AppSidebar({ t }: { t: any }) {
   const locale = useParams().locale as string;
-  const { user } = useAuth(); 
+  const { user, isAdmin } = useAuth(); 
   const { state } = useSidebar();
   
   if (!user) return null;
@@ -73,12 +73,18 @@ export function AppSidebar({ t }: { t: any }) {
                     <SidebarNavLink key={item.href} {...item} />
                 ))}
             </SidebarMenu>
-            <div className="my-4 border-t border-border -mx-2"></div>
-             <SidebarMenu>
-                {adminNavItems.map((item) => (
-                    <SidebarNavLink key={item.href} {...item} />
-                ))}
-            </SidebarMenu>
+            
+            {isAdmin && (
+                <>
+                    <div className="my-4 border-t border-border -mx-2"></div>
+                    <SidebarMenu>
+                        {adminNavItems.map((item) => (
+                            <SidebarNavLink key={item.href} {...item} />
+                        ))}
+                    </SidebarMenu>
+                </>
+            )}
+
             <div className="my-4 border-t border-border -mx-2"></div>
             <SidebarMenu>
                 {aboutNavItems.map((item) => (
