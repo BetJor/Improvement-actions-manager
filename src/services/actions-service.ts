@@ -5,9 +5,10 @@ import { format } from 'date-fns';
 import type { ImprovementAction, ProposedAction } from '@/lib/types';
 import { planActionWorkflow } from '@/ai/flows/planActionWorkflow';
 import { getUsers } from './users-service';
-import { getCategories, getSubcategories, getAffectedAreas, getCenters, getActionTypes } from './master-data-service';
+import { getCategories, getSubcategories, getAffectedAreas, getCenters, getActionTypes, getResponsibilityRoles } from './master-data-service';
+import { getPermissionRuleForState, resolveRoles } from './permissions-service';
 
-interface CreateActionData extends Omit<ImprovementAction, 'id' | 'actionId' | 'status' | 'creationDate' | 'category' | 'subcategory' | 'type' | 'affectedAreas' | 'center' | 'analysisDueDate' | 'implementationDueDate' | 'closureDueDate'> {
+interface CreateActionData extends Omit<ImprovementAction, 'id' | 'actionId' | 'status' | 'creationDate' | 'category' | 'subcategory' | 'type' | 'affectedAreas' | 'center' | 'analysisDueDate' | 'implementationDueDate' | 'closureDueDate' | 'readers' | 'authors' > {
   status: 'Borrador' | 'Pendiente Análisis';
   category: string; // ID
   subcategory: string; // ID
@@ -138,10 +139,15 @@ export async function createAction(data: CreateActionData, masterData: any): Pro
       implementationDueDate: '',
       closureDueDate: '',
       followers: [],
+      readers: [],
+      authors: [],
     };
   
     // Add the new document to Firestore
     const docRef = await addDoc(actionsCol, newAction);
+
+    // Apply initial permissions
+    await updateActionPermissions(docRef.id, newAction.typeId, newAction.status);
 
     // 4. Plan the workflow using the new Genkit flow
     try {
@@ -173,8 +179,15 @@ export async function createAction(data: CreateActionData, masterData: any): Pro
 // Function to update an existing action
 export async function updateAction(actionId: string, data: any, masterData?: any, status?: 'Borrador' | 'Pendiente Análisis'): Promise<ImprovementAction | null> {
     const actionDocRef = doc(db, 'actions', actionId);
+    const originalActionSnap = await getDoc(actionDocRef);
+    if (!originalActionSnap.exists()) {
+        throw new Error(`Action with ID ${actionId} not found.`);
+    }
+    const originalAction = originalActionSnap.data() as ImprovementAction;
     
     let dataToUpdate: any = {};
+    let newStatus = status || data.status || originalAction.status;
+    const statusChanged = newStatus !== originalAction.status;
 
     if (data.updateProposedActionStatus) {
         // Use a transaction to safely update one element of the array
@@ -226,39 +239,42 @@ export async function updateAction(actionId: string, data: any, masterData?: any
 
         // Handle closure logic for non-compliant actions
         if (data.closure && !data.closure.isCompliant) {
-            const originalActionSnap = await getDoc(actionDocRef);
-            if(originalActionSnap.exists()) {
-                const originalAction = { id: originalActionSnap.id, ...originalActionSnap.data() } as ImprovementAction;
-                const allMasterData = {
-                    categories: await getCategories(),
-                    subcategories: await getSubcategories(),
-                    affectedAreas: await getAffectedAreas(),
-                    centers: await getCenters(),
-                    actionTypes: await getActionTypes(),
-                }
-                const bisActionData: CreateActionData = {
-                    title: `${originalAction.title} BIS`,
-                    description: `${originalAction.description}\n\n--- \nObservacions de tancament no conforme:\n${data.closure.notes}`,
-                    category: originalAction.categoryId,
-                    subcategory: originalAction.subcategoryId,
-                    affectedAreasIds: originalAction.affectedAreasIds,
-                    centerId: originalAction.centerId,
-                    assignedTo: originalAction.assignedTo,
-                    typeId: originalAction.typeId,
-                    creator: data.closure.closureResponsible, // The closer is the creator of the new action
-                    status: 'Borrador', // New BIS action starts as a draft
-                    originalActionId: originalAction.id,
-                    originalActionTitle: `${originalAction.actionId}: ${originalAction.title}`
-                };
-                await createAction(bisActionData, allMasterData);
-            }
+            const bisActionData: CreateActionData = {
+                title: `${originalAction.title} BIS`,
+                description: `${originalAction.description}\n\n--- \nObservacions de tancament no conforme:\n${data.closure.notes}`,
+                category: originalAction.categoryId,
+                subcategory: originalAction.subcategoryId,
+                affectedAreasIds: originalAction.affectedAreasIds,
+                centerId: originalAction.centerId,
+                assignedTo: originalAction.assignedTo,
+                typeId: originalAction.typeId,
+                creator: data.closure.closureResponsible,
+                status: 'Borrador',
+                originalActionId: originalAction.id,
+                originalActionTitle: `${originalAction.actionId}: ${originalAction.title}`
+            };
+             const allMasterData = {
+                categories: await getCategories(),
+                subcategories: await getSubcategories(),
+                affectedAreas: await getAffectedAreas(),
+                centers: await getCenters(),
+                actionTypes: await getActionTypes(),
+            };
+            await createAction(bisActionData, allMasterData);
         }
          await updateDoc(actionDocRef, dataToUpdate);
     }
-
+    
+    // Always update status if provided
     if (status) {
-        await updateDoc(actionDocRef, {status: status});
+        await updateDoc(actionDocRef, { status: status });
     }
+    
+    // Update permissions if status has changed
+    if (statusChanged) {
+        await updateActionPermissions(actionId, dataToUpdate.typeId || originalAction.typeId, newStatus, originalAction);
+    }
+
 
     const updatedDoc = await getActionById(actionId);
     return updatedDoc;
@@ -297,4 +313,36 @@ export async function getFollowedActions(userId: string): Promise<ImprovementAct
     } as ImprovementAction));
 
     return actions;
+}
+
+export async function updateActionPermissions(actionId: string, typeId: string, status: ImprovementActionStatus, existingAction?: ImprovementAction) {
+    const actionDocRef = doc(db, 'actions', actionId);
+    if (!existingAction) {
+        const docSnap = await getDoc(actionDocRef);
+        if (docSnap.exists()) {
+            existingAction = docSnap.data() as ImprovementAction;
+        } else {
+            console.error("Cannot update permissions: Action document not found.");
+            return;
+        }
+    }
+
+    const permissionRule = await getPermissionRuleForState(typeId, status);
+    if (!permissionRule) {
+        console.warn(`No permission rule found for type ${typeId} and status ${status}.`);
+        return;
+    }
+
+    const allRoles = await getResponsibilityRoles();
+
+    const readers = await resolveRoles(permissionRule.readerRoleIds, allRoles, existingAction);
+    const authors = await resolveRoles(permissionRule.authorRoleIds, allRoles, existingAction);
+    
+    // Authors are implicitly readers
+    const allReaders = [...new Set([...readers, ...authors])];
+
+    await updateDoc(actionDocRef, {
+        readers: allReaders,
+        authors: authors
+    });
 }

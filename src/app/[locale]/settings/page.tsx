@@ -14,9 +14,10 @@ import {
     updateMasterDataItem,
     deleteMasterDataItem,
     getResponsibilityRoles,
+    getPermissionRules,
 } from "@/lib/data";
 import { useToast } from "@/hooks/use-toast";
-import type { MasterDataItem } from "@/lib/types";
+import type { MasterDataItem, PermissionRule } from "@/lib/types";
 import { Loader2 } from "lucide-react";
 
 export default function SettingsPage() {
@@ -29,12 +30,13 @@ export default function SettingsPage() {
     const loadData = useCallback(async (currentTab?: string) => {
         setIsLoading(true);
         try {
-            const [actionTypes, categories, subcategories, affectedAreas, responsibilityRoles] = await Promise.all([
+            const [actionTypes, categories, subcategories, affectedAreas, responsibilityRoles, permissionRules] = await Promise.all([
                 getActionTypes(),
                 getCategories(),
                 getSubcategories(),
                 getAffectedAreas(),
                 getResponsibilityRoles(),
+                getPermissionRules(),
             ]);
 
             const subcategoriesWithCategoryName = subcategories.map(s => ({
@@ -61,6 +63,13 @@ export default function SettingsPage() {
                     .join(', ');
                 return { ...at, analysisRolesList: analysisRoles, closureRolesList: closureRoles };
             });
+            
+            const permissionRulesWithNames = permissionRules.map(rule => ({
+                ...rule,
+                actionTypeName: actionTypes.find(at => at.id === rule.actionTypeId)?.name || rule.actionTypeId,
+                readerRoleNames: (rule.readerRoleIds || []).map(id => responsibilityRoles.find(r => r.id === id)?.name).join(', '),
+                authorRoleNames: (rule.authorRoleIds || []).map(id => responsibilityRoles.find(r => r.id === id)?.name).join(', '),
+            }));
 
 
             const data = {
@@ -98,6 +107,16 @@ export default function SettingsPage() {
                         { key: 'emailPattern', label: 'Patró Email' },
                     ] 
                 },
+                 permissionMatrix: {
+                    title: t("tabs.permissionMatrix"),
+                    data: permissionRulesWithNames,
+                    columns: [
+                        { key: 'actionTypeName', label: 'Tipus d\'Acció' },
+                        { key: 'status', label: 'Estat' },
+                        { key: 'readerRoleNames', label: 'Lectors' },
+                        { key: 'authorRoleNames', label: 'Autors' },
+                    ],
+                },
             };
             setMasterData(data);
             
@@ -126,18 +145,17 @@ export default function SettingsPage() {
     }, [loadData, masterData]);
 
 
-    const handleSave = async (collectionName: string, item: MasterDataItem) => {
+    const handleSave = async (collectionName: string, item: MasterDataItem | PermissionRule) => {
         try {
-            const { id, ...dataToSave } = item;
-            if ('categoryName' in dataToSave) {
-                delete (dataToSave as any).categoryName;
-            }
-             if ('analysisRolesList' in dataToSave) {
-                delete (dataToSave as any).analysisRolesList;
-            }
-             if ('closureRolesList' in dataToSave) {
-                delete (dataToSave as any).closureRolesList;
-            }
+            const { id, ...dataToSave } = item as any; // Cast to any to handle dynamic properties
+            
+            // Clean up derived properties before saving
+            const propertiesToRemove = ['categoryName', 'analysisRolesList', 'closureRolesList', 'actionTypeName', 'readerRoleNames', 'authorRoleNames'];
+            propertiesToRemove.forEach(prop => {
+                if (prop in dataToSave) {
+                    delete dataToSave[prop];
+                }
+            });
 
             if (id) {
                 await updateMasterDataItem(collectionName, id, dataToSave);

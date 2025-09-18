@@ -1,5 +1,6 @@
 
 
+
 export interface MasterDataItem {
   id?: string;
   name: string;
@@ -105,6 +106,15 @@ export interface Tab {
   isClosable: boolean;
 }
 
+export interface PermissionRule {
+  id?: string;
+  actionTypeId: string;
+  status: ImprovementActionStatus;
+  readerRoleIds: string[];
+  authorRoleIds: string[];
+}
+
+
 export interface ImprovementAction {
   id: string; // Firestore document ID
   actionId: string; // User-facing ID like AM-24001
@@ -129,6 +139,10 @@ export interface ImprovementAction {
   assignedTo: string;
   
   status: ImprovementActionStatus;
+
+  // Dynamic permissions fields
+  readers: string[]; // Array of resolved user/group emails
+  authors: string[]; // Array of resolved user/group emails
 
   // Dates
   analysisDueDate: string;

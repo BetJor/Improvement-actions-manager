@@ -33,14 +33,19 @@ export const getResponsibilityRoles = async (): Promise<ResponsibilityRole[]> =>
 };
 
 export const getCenters = async (): Promise<Center[]> => {
-  const mockCenters: Center[] = [
-    { id: 'bcn', name: 'Barcelona' },
-    { id: 'mad', name: 'Madrid' },
-    { id: 'val', name: 'València' },
-    { id: 'sev', name: 'Sevilla' },
-  ];
-  return Promise.resolve(mockCenters);
-}
+  const centersCol = collection(db, 'centers');
+  const snapshot = await getDocs(query(centersCol, orderBy("name")));
+  if (snapshot.empty) {
+    const mockCenters: Center[] = [
+      { id: 'bcn', name: 'Barcelona' },
+      { id: 'mad', name: 'Madrid' },
+      { id: 'val', name: 'València' },
+      { id: 'sev', name: 'Sevilla' },
+    ];
+    return Promise.resolve(mockCenters);
+  }
+  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Center));
+};
 
 // --- CRUD for Master Data ---
 export async function addMasterDataItem(collectionName: string, item: Omit<MasterDataItem, 'id'>): Promise<string> {
