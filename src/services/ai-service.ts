@@ -1,6 +1,7 @@
 import { collection, doc, getDoc, addDoc, updateDoc, deleteDoc, setDoc, query, orderBy, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { GalleryPrompt } from '@/lib/types';
+import type { AclEntry } from '@/app/[locale]/firestore-rules/page';
 
 // --- CRUD for AI Prompts ---
 type PromptId = "improveWriting" | "analysisSuggestion" | "correctiveActions";
@@ -60,3 +61,21 @@ export async function deleteGalleryPrompt(promptId: string): Promise<void> {
     const docRef = doc(db, 'prompt_gallery', promptId);
     await deleteDoc(docRef);
 }
+
+// --- Functions for Firestore Rules ACL ---
+
+export async function getAclEntries(): Promise<AclEntry[]> {
+    const docRef = doc(db, 'app_settings', 'firestore_acl');
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists() && docSnap.data().entries) {
+        return docSnap.data().entries;
+    }
+    return []; // Return empty array if not found
+}
+
+export async function setAclEntries(entries: AclEntry[]): Promise<void> {
+    const docRef = doc(db, 'app_settings', 'firestore_acl');
+    await setDoc(docRef, { entries: entries });
+}
+
+    

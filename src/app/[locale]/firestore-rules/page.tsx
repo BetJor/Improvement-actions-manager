@@ -12,16 +12,17 @@ import {
 } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { Copy, PlusCircle, Trash2, User, Users } from "lucide-react";
+import { Copy, PlusCircle, Trash2, User, Users, Save, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { getAclEntries, setAclEntries } from "@/services/ai-service";
 
 type AclEntryType = "user" | "group";
 type AclAccessLevel = "No Access" | "Reader" | "Author" | "Editor" | "Manager";
 
-interface AclEntry {
+export interface AclEntry {
   id: string;
   name: string;
   type: AclEntryType;
@@ -89,30 +90,26 @@ export default function FirestoreRulesGeneratorPage() {
   const [entries, setEntries] = useState<AclEntry[]>([]);
   const [newEntry, setNewEntry] = useState({ name: "", type: "user" as AclEntryType, access: "Reader" as AclAccessLevel });
   const [generatedRules, setGeneratedRules] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
 
-  // Load from localStorage on initial render
   useEffect(() => {
-    try {
-      const savedEntries = localStorage.getItem("firestoreAclEntries");
-      if (savedEntries) {
-        const parsedEntries = JSON.parse(savedEntries);
-        setEntries(parsedEntries);
-        const rules = generateFirestoreRules(parsedEntries);
-        setGeneratedRules(rules);
-      }
-    } catch (error) {
-        console.error("Failed to load ACL entries from localStorage", error);
+    async function loadEntries() {
+        setIsLoading(true);
+        try {
+            const savedEntries = await getAclEntries();
+            setEntries(savedEntries);
+            const rules = generateFirestoreRules(savedEntries);
+            setGeneratedRules(rules);
+        } catch (error) {
+            console.error("Failed to load ACL entries from Firestore", error);
+            toast({ variant: "destructive", title: "Error", description: "No s'han pogut carregar les entrades de la llista d'accés." });
+        } finally {
+            setIsLoading(false);
+        }
     }
-  }, []);
-
-  // Save to localStorage whenever entries change
-  useEffect(() => {
-    try {
-      localStorage.setItem("firestoreAclEntries", JSON.stringify(entries));
-    } catch (error) {
-        console.error("Failed to save ACL entries to localStorage", error);
-    }
-  }, [entries]);
+    loadEntries();
+  }, [toast]);
 
   const handleAddEntry = () => {
     if (!newEntry.name) {
@@ -126,6 +123,19 @@ export default function FirestoreRulesGeneratorPage() {
   const handleRemoveEntry = (id: string) => {
     setEntries(entries.filter(e => e.id !== id));
   };
+
+  const handleSaveChanges = async () => {
+    setIsSaving(true);
+    try {
+        await setAclEntries(entries);
+        toast({ title: "Llista Desada!", description: "La llista de control d'accés s'ha desat a Firestore." });
+    } catch (error) {
+        console.error("Failed to save ACL entries to Firestore", error);
+        toast({ variant: "destructive", title: "Error", description: "No s'ha pogut desar la llista d'accés." });
+    } finally {
+        setIsSaving(false);
+    }
+  }
   
   const handleGenerate = () => {
     const rules = generateFirestoreRules(entries);
@@ -188,8 +198,15 @@ export default function FirestoreRulesGeneratorPage() {
         </Card>
 
         <Card>
-           <CardHeader>
-              <CardTitle>Llista de Control d'Accés (ACL)</CardTitle>
+           <CardHeader className="flex flex-row items-center justify-between">
+              <div className="space-y-1.5">
+                <CardTitle>Llista de Control d'Accés (ACL)</CardTitle>
+                <CardDescription>Aquesta llista es desarà a Firestore.</CardDescription>
+              </div>
+              <Button onClick={handleSaveChanges} disabled={isSaving || isLoading}>
+                {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                Desar Llista
+              </Button>
            </CardHeader>
            <CardContent>
               <Table>
@@ -202,7 +219,13 @@ export default function FirestoreRulesGeneratorPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {entries.length > 0 ? entries.map(entry => (
+                  {isLoading ? (
+                    <TableRow>
+                        <TableCell colSpan={4} className="h-24 text-center">
+                            <Loader2 className="mx-auto h-6 w-6 animate-spin" />
+                        </TableCell>
+                    </TableRow>
+                  ) : entries.length > 0 ? entries.map(entry => (
                     <TableRow key={entry.id}>
                       <TableCell>
                           {entry.type === 'user' ? <User className="h-4 w-4" /> : <Users className="h-4 w-4" />}
@@ -252,3 +275,5 @@ export default function FirestoreRulesGeneratorPage() {
     </div>
   );
 }
+
+    
