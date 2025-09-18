@@ -21,7 +21,8 @@
       "roadmap": "Roadmap",
       "backlog": "Backlog",
       "promptGallery": "Galeria de Prompts",
-      "userManagement": "Gestió d'Usuaris"
+      "userManagement": "Gestió d'Usuaris",
+      "firestoreRules": "Regles de Firestore"
     },
     "RootLayout": {
       "title": "Gestor d'Accions de Millora",

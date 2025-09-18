@@ -21,7 +21,8 @@
       "roadmap": "Roadmap",
       "backlog": "Backlog",
       "promptGallery": "Galería de Prompts",
-      "userManagement": "Gestión de Usuarios"
+      "userManagement": "Gestión de Usuarios",
+      "firestoreRules": "Reglas de Firestore"
     },
     "RootLayout": {
       "title": "Gestor de Acciones de Mejora",

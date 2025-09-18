@@ -21,6 +21,7 @@ import ActionDetailPage from '@/app/[locale]/actions/[id]/page';
 import UserManagementPage from '@/app/[locale]/user-management/page';
 import ReportsPage from '@/app/[locale]/reports/page';
 import IntranetTestPage from '@/app/[locale]/intranet-test/page';
+import FirestoreRulesPage from '@/app/[locale]/firestore-rules/page';
 import { getActionById, getActionTypes, getCategories, getSubcategories, getAffectedAreas } from '@/lib/data';
 
 import { Home, ListChecks, Settings, Sparkles, Library, Route, Users, BarChart3, GanttChartSquare } from 'lucide-react';
@@ -38,6 +39,7 @@ const pageComponentMapping: { [key: string]: React.ComponentType<any> | undefine
     '/my-groups': MyGroupsPage,
     '/user-management': UserManagementPage,
     '/intranet-test': IntranetTestPage,
+    '/firestore-rules': FirestoreRulesPage,
 };
 
 const getPageComponent = (path: string): React.ComponentType<any> | undefined => {

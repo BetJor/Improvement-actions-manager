@@ -1,0 +1,20 @@
+{
+  "FirestoreRules": {
+    "title": "Editor de Reglas de Firestore",
+    "description": "Edita las reglas de seguridad de la base de datos Firestore. Estos cambios afectarán directamente la seguridad de los datos. Procede con precaución.",
+    "placeholder": "Cargando las reglas de Firestore...",
+    "buttons": {
+      "save": "Guardar Reglas",
+      "saving": "Guardando..."
+    },
+    "toast": {
+      "saveSuccessTitle": "Reglas Guardadas",
+      "saveSuccessDescription": "Las reglas de Firestore se han actualizado correctamente."
+    },
+    "errors": {
+      "title": "Error",
+      "loadFailed": "No se pudieron cargar las reglas de Firestore desde el servidor.",
+      "saveFailed": "No se pudieron guardar las reglas de Firestore."
+    }
+  }
+}

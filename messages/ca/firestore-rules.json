@@ -1,0 +1,20 @@
+{
+  "FirestoreRules": {
+    "title": "Editor de Regles de Firestore",
+    "description": "Edita les regles de seguretat de la base de dades Firestore. Aquests canvis afectaran directament la seguretat de les dades. Fes-ho amb precaució.",
+    "placeholder": "Carregant les regles de Firestore...",
+    "buttons": {
+      "save": "Desar Regles",
+      "saving": "Desant..."
+    },
+    "toast": {
+      "saveSuccessTitle": "Regles Desades",
+      "saveSuccessDescription": "Les regles de Firestore s'han actualitzat correctament."
+    },
+    "errors": {
+      "title": "Error",
+      "loadFailed": "No s'han pogut carregar les regles de Firestore des del servidor.",
+      "saveFailed": "No s'han pogut desar les regles de Firestore."
+    }
+  }
+}

@@ -22,7 +22,7 @@ export default getRequestConfig(async ({locale}) => {
       ...(await import(`../messages/${locale}/backlog.json`)).default,
       ...(await import(`../messages/${locale}/my-groups.json`)).default,
       ...(await import(`../messages/${locale}/user-management.json`)).default,
+      ...(await import(`../messages/${locale}/firestore-rules.json`)).default,
     }
   };
 });
-
