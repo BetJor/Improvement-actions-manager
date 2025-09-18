@@ -62,7 +62,7 @@ interface MasterDataFormDialogProps {
     actionTypes?: ImprovementActionType[],
     responsibilityRoles?: ResponsibilityRole[],
   }
-  t: (key: string) => string
+  t: (key: string, ...args: any[]) => string
 }
 
 function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, title, onSave, extraData, t }: MasterDataFormDialogProps) {
@@ -334,7 +334,7 @@ function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, title, 
           <DialogClose asChild>
             <Button variant="outline">{t("cancel")}</Button>
           </DialogClose>
-          <Button onClick={handleSave}>{t("save") || "Guardar"}</Button>
+          <Button onClick={handleSave}>Desar</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -346,7 +346,7 @@ interface MasterDataTableProps {
   columns: { key: string; label: string }[];
   onEdit: (item: MasterDataItem) => void;
   onDelete: (item: MasterDataItem) => void;
-  t: (key: string) => string;
+  t: (key: string, ...args: any[]) => string;
   isLoading: boolean;
 }
 
@@ -424,7 +424,7 @@ interface MasterDataManagerProps {
   };
   onSave: (collectionName: string, item: MasterDataItem | PermissionRule) => Promise<void>;
   onDelete: (collectionName: string, itemId: string) => Promise<void>;
-  t: (key: string) => string;
+  t: (key: string, ...args: any[]) => string;
   activeTab: string;
   setActiveTab: (value: string) => void;
   isLoading: boolean;
@@ -511,3 +511,5 @@ export function MasterDataManager({ data, onSave, onDelete, t, activeTab, setAct
     </>
   )
 }
+
+    
