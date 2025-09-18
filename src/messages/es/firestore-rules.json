@@ -1,0 +1,44 @@
+
+{
+  "FirestoreRules": {
+    "title": "Generador de Reglas de Acceso de Firestore",
+    "description": "Añade usuarios o grupos, asígnales un nivel de acceso y genera las reglas de seguridad de Firestore para tu aplicación.",
+    "form": {
+      "entryNamePlaceholder": "Email del usuario o nombre del grupo...",
+      "typeUser": "Usuario",
+      "typeGroup": "Grupo",
+      "access": {
+        "noAccess": "Sin Acceso",
+        "reader": "Lector",
+        "author": "Autor",
+        "editor": "Editor",
+        "manager": "Gestor"
+      }
+    },
+    "buttons": {
+      "add": "Añadir a la Lista",
+      "generate": "Generar Reglas",
+      "copy": "Copiar Reglas"
+    },
+    "aclListTitle": "Lista de Control de Acceso (ACL)",
+    "noEntries": "Aún no has añadido ninguna entrada.",
+    "col": {
+      "type": "Tipo",
+      "name": "Nombre",
+      "access": "Acceso"
+    },
+    "generatedRulesTitle": "Reglas Generadas",
+    "generatedRulesDescription": "Copia este contenido y pégalo en tu archivo `firestore.rules`.",
+    "placeholder": "Haz clic en 'Generar Reglas' para crear las reglas de seguridad.",
+    "toast": {
+      "generateSuccessTitle": "¡Reglas Generadas!",
+      "copySuccessTitle": "¡Reglas Copiadas!",
+      "copySuccessDescription": "Las reglas se han copiado al portapapeles."
+    },
+    "errors": {
+      "title": "Error"
+    }
+  }
+}
+
+    
