@@ -1,4 +1,5 @@
-import { collection, getDocs, doc, addDoc, query, orderBy, updateDoc, deleteDoc } from 'firebase/firestore';
+
+import { collection, getDocs, doc, addDoc, query, orderBy, updateDoc, deleteDoc, writeBatch } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { ImprovementActionType, ActionCategory, ActionSubcategory, AffectedArea, MasterDataItem, ResponsibilityRole, Center } from '@/lib/types';
 
@@ -32,24 +33,36 @@ export const getResponsibilityRoles = async (): Promise<ResponsibilityRole[]> =>
     
     let roles = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ResponsibilityRole));
 
-    // Ensure the dynamic "Assignee" role exists for selection in the permission matrix
-    if (!roles.some(role => role.type === 'Assignee')) {
-      const assigneeRole: ResponsibilityRole = {
-        id: 'dynamic_assignee', // Use a fixed, known ID
-        name: 'Assignat (Dinàmic)',
-        type: 'Assignee'
-      };
-      // We don't save this to Firestore, it's a virtual role for the UI
-      roles.push(assigneeRole);
-    }
-    
-     if (!roles.some(role => role.type === 'Creator')) {
-      const creatorRole: ResponsibilityRole = {
-        id: 'dynamic_creator', // Use a fixed, known ID
-        name: 'Creador (Dinàmic)',
-        type: 'Creator'
-      };
-      roles.push(creatorRole);
+    // Seed dynamic roles if they don't exist in the database
+    const hasAssignee = roles.some(role => role.type === 'Assignee');
+    const hasCreator = roles.some(role => role.type === 'Creator');
+
+    if (!hasAssignee || !hasCreator) {
+        const batch = writeBatch(db);
+        
+        if (!hasAssignee) {
+            const assigneeRole: Omit<ResponsibilityRole, 'id'> = {
+                name: 'Assignat (Dinàmic)',
+                type: 'Assignee'
+            };
+            const assigneeRef = doc(collection(db, 'responsibilityRoles'));
+            batch.set(assigneeRef, assigneeRole);
+            roles.push({ ...assigneeRole, id: assigneeRef.id });
+        }
+        
+        if (!hasCreator) {
+            const creatorRole: Omit<ResponsibilityRole, 'id'> = {
+                name: 'Creador (Dinàmic)',
+                type: 'Creator'
+            };
+            const creatorRef = doc(collection(db, 'responsibilityRoles'));
+            batch.set(creatorRef, creatorRole);
+            roles.push({ ...creatorRole, id: creatorRef.id });
+        }
+        
+        await batch.commit();
+        // Re-sort roles after adding new ones
+        roles.sort((a, b) => a.name.localeCompare(b.name));
     }
 
     return roles;
