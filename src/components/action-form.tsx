@@ -42,6 +42,7 @@ import { Label } from "@/components/ui/label"
 import type { ImprovementAction, ImprovementActionType, ResponsibilityRole, AffectedArea, Center } from "@/lib/types"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "./ui/card"
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "./ui/dropdown-menu"
+import { useAuth } from "@/hooks/use-auth"
 
 const formSchema = z.object({
   title: z.string().min(1, "El títol és requerit."),
@@ -86,6 +87,7 @@ export function ActionForm({
     t
 }: ActionFormProps) {
   const { toast } = useToast()
+  const { user } = useAuth()
   
   const [isRecording, setIsRecording] = useState(false);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
@@ -151,7 +153,7 @@ export function ActionForm({
 
   // Dynamic responsible options logic
   const responsibleOptions = useMemo(() => {
-    if (!selectedActionTypeId || !masterData) return [];
+    if (!selectedActionTypeId || !masterData || !user) return [];
     
     const actionType: ImprovementActionType | undefined = masterData.actionTypes.find((t: any) => t.id === selectedActionTypeId);
     if (!actionType?.possibleAnalysisRoles) return [];
@@ -170,12 +172,14 @@ export function ActionForm({
             const resolvedEmail = role.emailPattern.replace('{{center.id}}', center.id!.toLowerCase());
             options.push({ value: resolvedEmail, label: `${role.name} (${resolvedEmail})` });
           }
+        } else if (role.type === 'Creator' && user.email) {
+          options.push({ value: user.email, label: `${role.name} (${user.email})` });
         }
       }
     });
 
     return options;
-  }, [selectedActionTypeId, selectedCenterId, masterData]);
+  }, [selectedActionTypeId, selectedCenterId, masterData, user]);
 
   useEffect(() => {
     // Reset responsible person if the options change and the current value is not valid anymore

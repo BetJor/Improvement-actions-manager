@@ -136,7 +136,7 @@ function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, title, 
               <Label htmlFor="type" className="text-right">Tipus</Label>
               <Select
                 value={roleData.type}
-                onValueChange={(value) => setFormData({ ...formData, type: value })}
+                onValueChange={(value) => setFormData({ ...formData, type: value as ResponsibilityRole['type'] })}
               >
                 <SelectTrigger className="col-span-3">
                   <SelectValue placeholder="Selecciona un tipus" />
@@ -144,6 +144,7 @@ function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, title, 
                 <SelectContent>
                   <SelectItem value="Fixed">Fix</SelectItem>
                   <SelectItem value="Pattern">Patró</SelectItem>
+                  <SelectItem value="Creator">Creador</SelectItem>
                 </SelectContent>
               </Select>
           </div>
