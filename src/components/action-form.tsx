@@ -165,12 +165,13 @@ export function ActionForm({
       if (role) {
         if (role.type === 'Fixed' && role.email) {
           options.push({ value: role.email, label: `${role.name} (${role.email})` });
-        } else if (role.type === 'Pattern' && role.emailPattern && selectedCenterId) {
-          // Replace placeholder with the actual ID from the selected center
-          const center: Center | undefined = masterData.centers.find((c: any) => c.id === selectedCenterId);
-          if (center) {
-            const resolvedEmail = role.emailPattern.replace('{{center.id}}', center.id!.toLowerCase());
-            options.push({ value: resolvedEmail, label: `${role.name} (${resolvedEmail})` });
+        } else if (role.type === 'Pattern' && role.emailPattern) {
+          if (selectedCenterId) {
+             const center: Center | undefined = masterData.centers.find((c: any) => c.id === selectedCenterId);
+             if (center) {
+               const resolvedEmail = role.emailPattern.replace('{{center.id}}', center.id!.toLowerCase());
+               options.push({ value: resolvedEmail, label: `${role.name} (${resolvedEmail})` });
+             }
           }
         } else if (role.type === 'Creator' && user.email) {
           options.push({ value: user.email, label: `${role.name} (${user.email})` });
@@ -182,13 +183,8 @@ export function ActionForm({
   }, [selectedActionTypeId, selectedCenterId, masterData, user]);
 
   useEffect(() => {
-    // Reset responsible person if the options change and the current value is not valid anymore
-    const currentResponsible = form.getValues("assignedTo");
-    if (responsibleOptions.length > 0 && !responsibleOptions.some(opt => opt.value === currentResponsible)) {
-        form.resetField("assignedTo", { defaultValue: "" });
-    }
-  }, [responsibleOptions, form]);
-
+    form.resetField("assignedTo", { defaultValue: "" });
+  }, [selectedActionTypeId, selectedCenterId, form]);
 
 
   useEffect(() => {
