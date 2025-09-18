@@ -54,8 +54,7 @@ export function AppSidebar({ t }: { t: any }) {
   
   const adminSettingsNavItems = [
     { href: `/${locale}/settings`, icon: Settings, label: t("Common.AppSidebar.settings"), isTab: true },
-    { href: `/${locale}/ai-settings`, icon: Sparkles, label: t("Common.AppSidebar.aiSettings"), isTab: true },
-    { href: `/${locale}/prompt-gallery`, icon: Library, label: t("Common.AppSidebar.promptGallery"), isTab: true },
+    { href: `/${locale}/ai-settings`, icon: Sparkles, label: t("Common.AppSidebar.aiSettings"), isTab: true },    
     { href: `/${locale}/user-management`, icon: Users, label: t("Common.AppSidebar.userManagement"), isTab: true },
   ]
 
@@ -63,6 +62,7 @@ export function AppSidebar({ t }: { t: any }) {
     { href: `/${locale}/roadmap`, icon: Route, label: t("Common.AppSidebar.roadmap"), isTab: true },
     { href: `/${locale}/backlog`, icon: GanttChartSquare, label: t("Common.AppSidebar.backlog"), isTab: true },
     { href: `/${locale}/intranet-test`, icon: TestTubeDiagonal, label: "Intranet Test", isTab: true },
+    { href: `/${locale}/prompt-gallery`, icon: Library, label: t("Common.AppSidebar.promptGallery"), isTab: true },
   ]
 
 
