@@ -13,7 +13,6 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { Copy, PlusCircle, Trash2, User, Users } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -85,7 +84,6 @@ service cloud.firestore {
 
 
 export default function FirestoreRulesGeneratorPage() {
-  const t = useTranslations("FirestoreRules");
   const { toast } = useToast();
   
   const [entries, setEntries] = useState<AclEntry[]>([]);
@@ -108,7 +106,7 @@ export default function FirestoreRulesGeneratorPage() {
   const handleGenerate = () => {
     const rules = generateFirestoreRules(entries);
     setGeneratedRules(rules);
-    toast({ title: t("toast.generateSuccessTitle") });
+    toast({ title: "Regles Generades!" });
   };
   
   const handleCopy = () => {
@@ -117,7 +115,7 @@ export default function FirestoreRulesGeneratorPage() {
       return;
     }
     navigator.clipboard.writeText(generatedRules);
-    toast({ title: t("toast.copySuccessTitle") });
+    toast({ title: "Regles Copiades!", description: "Les regles s'han copiat al porta-retalls." });
   };
 
   return (
@@ -125,13 +123,13 @@ export default function FirestoreRulesGeneratorPage() {
       <div className="flex flex-col gap-6">
         <Card>
           <CardHeader>
-            <CardTitle>{t("title")}</CardTitle>
-            <CardDescription>{t("description")}</CardDescription>
+            <CardTitle>Generador de Regles d'Accés de Firestore</CardTitle>
+            <CardDescription>Afegeix usuaris o grups, assigna'ls un nivell d'accés i genera les regles de seguretat de Firestore per a la teva aplicació.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
               <div className="flex gap-2">
                  <Input
-                    placeholder={t("form.entryNamePlaceholder")}
+                    placeholder="Email de l'usuari o nom del grup..."
                     value={newEntry.name}
                     onChange={(e) => setNewEntry({ ...newEntry, name: e.target.value })}
                     className="flex-grow"
@@ -141,8 +139,8 @@ export default function FirestoreRulesGeneratorPage() {
                           <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                          <SelectItem value="user">{t("form.typeUser")}</SelectItem>
-                          <SelectItem value="group">{t("form.typeGroup")}</SelectItem>
+                          <SelectItem value="user">Usuari</SelectItem>
+                          <SelectItem value="group">Grup</SelectItem>
                       </SelectContent>
                   </Select>
                    <Select value={newEntry.access} onValueChange={(v) => setNewEntry({ ...newEntry, access: v as AclAccessLevel })}>
@@ -150,32 +148,32 @@ export default function FirestoreRulesGeneratorPage() {
                           <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                          <SelectItem value="No Access">{t("form.access.noAccess")}</SelectItem>
-                          <SelectItem value="Reader">{t("form.access.reader")}</SelectItem>
-                          <SelectItem value="Author">{t("form.access.author")}</SelectItem>
-                          <SelectItem value="Editor">{t("form.access.editor")}</SelectItem>
-                          <SelectItem value="Manager">{t("form.access.manager")}</SelectItem>
+                          <SelectItem value="No Access">Sense Accés</SelectItem>
+                          <SelectItem value="Reader">Lector</SelectItem>
+                          <SelectItem value="Author">Autor</SelectItem>
+                          <SelectItem value="Editor">Editor</SelectItem>
+                          <SelectItem value="Manager">Gestor</SelectItem>
                       </SelectContent>
                   </Select>
               </div>
               <Button onClick={handleAddEntry} className="w-full">
                 <PlusCircle className="mr-2 h-4 w-4" />
-                {t("buttons.add")}
+                Afegir a la Llista
               </Button>
           </CardContent>
         </Card>
 
         <Card>
            <CardHeader>
-              <CardTitle>{t("aclListTitle")}</CardTitle>
+              <CardTitle>Llista de Control d'Accés (ACL)</CardTitle>
            </CardHeader>
            <CardContent>
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>{t("col.type")}</TableHead>
-                    <TableHead>{t("col.name")}</TableHead>
-                    <TableHead>{t("col.access")}</TableHead>
+                    <TableHead>Tipus</TableHead>
+                    <TableHead>Nom</TableHead>
+                    <TableHead>Accés</TableHead>
                     <TableHead className="text-right"></TableHead>
                   </TableRow>
                 </TableHeader>
@@ -197,7 +195,7 @@ export default function FirestoreRulesGeneratorPage() {
                     </TableRow>
                   )) : (
                     <TableRow>
-                      <TableCell colSpan={4} className="h-24 text-center">{t("noEntries")}</TableCell>
+                      <TableCell colSpan={4} className="h-24 text-center">Encara no has afegit cap entrada.</TableCell>
                     </TableRow>
                   )}
                 </TableBody>
@@ -208,21 +206,21 @@ export default function FirestoreRulesGeneratorPage() {
       
       <Card>
         <CardHeader>
-          <CardTitle>{t("generatedRulesTitle")}</CardTitle>
-          <CardDescription>{t("generatedRulesDescription")}</CardDescription>
+          <CardTitle>Regles Generades</CardTitle>
+          <CardDescription>Copia aquest contingut i enganxa'l al teu fitxer `firestore.rules`.</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col h-full gap-4">
           <Textarea
             readOnly
             value={generatedRules}
             className="flex-grow h-[calc(100vh-20rem)] font-mono text-xs resize-none"
-            placeholder={t("placeholder")}
+            placeholder="Fes clic a 'Generar Regles' per a crear les regles de seguretat."
           />
           <div className="flex gap-2">
-            <Button onClick={handleGenerate} className="flex-1">{t("buttons.generate")}</Button>
+            <Button onClick={handleGenerate} className="flex-1">Generar Regles</Button>
             <Button onClick={handleCopy} variant="secondary" className="flex-1">
               <Copy className="mr-2 h-4 w-4" />
-              {t("buttons.copy")}
+              Copiar Regles
             </Button>
           </div>
         </CardContent>
