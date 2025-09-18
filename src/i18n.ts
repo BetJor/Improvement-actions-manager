@@ -1,14 +1,18 @@
-import {notFound} from 'next/navigation';
 import {getRequestConfig} from 'next-intl/server';
-
-// A list of all locales that are supported
-const locales = ['ca', 'es'];
-
-export default getRequestConfig(async ({locale}) => {
-  // Validate that the incoming `locale` parameter is a valid locale
-  if (!locales.includes(locale as any)) notFound();
-
-  return {
-    messages: (await import(`./messages/${locale}/common.json`)).default,
-  };
-});
+ 
+export default getRequestConfig(async ({locale}) => ({
+  messages: {
+    ...(await import(`./messages/${locale}/common.json`)).default,
+    ...(await import(`./messages/${locale}/actions.json`)).default,
+    ...(await import(`./messages/${locale}/dashboard.json`)).default,
+    ...(await import(`./messages/${locale}/reports.json`)).default,
+    ...(await import(`./messages/${locale}/settings.json`)).default,
+    ...(await import(`./messages/${locale}/ai-settings.json`)).default,
+    ...(await import(`./messages/${locale}/prompt-gallery.json`)).default,
+    ...(await import(`./messages/${locale}/roadmap.json`)).default,
+    ...(await import(`./messages/${locale}/backlog.json`)).default,
+    ...(await import(`./messages/${locale}/my-groups.json`)).default,
+    ...(await import(`./messages/${locale}/user-management.json`)).default,
+    ...(await import(`./messages/${locale}/firestore-rules.json`)).default,
+  }
+}));
