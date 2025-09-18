@@ -1,4 +1,5 @@
 
+
 "use client"
 
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -26,7 +27,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { getPrompt } from "@/lib/data"
 import { useToast } from "@/hooks/use-toast"
 import { useState, useMemo, useEffect, useRef } from "react"
-import { Loader2, Mic, MicOff, Wand2, Save, Send, Ban } from "lucide-react"
+import { Loader2, Mic, MicOff, Wand2, Save, Send, Ban, ChevronsUpDown } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { improveWriting, type ImproveWritingOutput } from "@/ai/flows/improveWriting"
 import {
@@ -40,12 +41,13 @@ import {
 import { Label } from "@/components/ui/label"
 import type { ImprovementAction, ImprovementActionType, ResponsibilityRole, AffectedArea, Center } from "@/lib/types"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "./ui/card"
+import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "./ui/dropdown-menu"
 
 const formSchema = z.object({
   title: z.string().min(1, "El títol és requerit."),
   category: z.string().min(1, "La categoria és requerida."),
   subcategory: z.string().min(1, "La subcategoria és requerida."),
-  affectedAreasId: z.string().min(1, "L'àrea implicada és requerida."),
+  affectedAreasIds: z.array(z.string()).min(1, "Has de seleccionar almenys una àrea implicada."),
   centerId: z.string().optional(),
   assignedTo: z.string({ required_error: "Has de seleccionar un grup responsable." }).min(1, "Has de seleccionar un grup responsable."),
   description: z.string().min(1, "Les observacions són requerides."),
@@ -62,12 +64,14 @@ interface ActionFormProps {
     t: (key: string, ...args: any) => string;
 }
 
-const ReadOnlyField = ({ label, value }: { label: string, value?: string }) => {
+const ReadOnlyField = ({ label, value }: { label: string, value?: string | string[] }) => {
     if (!value) return null;
     return (
         <div className="grid gap-1.5">
             <Label className="text-muted-foreground">{label}</Label>
-            <p className="text-sm font-medium">{value}</p>
+            <div className="text-sm font-medium">
+              {Array.isArray(value) ? value.join(', ') : value}
+            </div>
         </div>
     )
 }
@@ -98,7 +102,7 @@ export function ActionForm({
       title: "",
       category: "",
       subcategory: "",
-      affectedAreasId: "",
+      affectedAreasIds: [],
       centerId: "",
       assignedTo: "",
       description: "",
@@ -122,7 +126,7 @@ export function ActionForm({
             assignedTo: initialData.assignedTo,
             category: initialData.categoryId,
             subcategory: initialData.subcategoryId,
-            affectedAreasId: initialData.affectedAreasId,
+            affectedAreasIds: initialData.affectedAreasIds || [],
             centerId: initialData.centerId,
             typeId: initialData.typeId,
         });
@@ -303,7 +307,7 @@ export function ActionForm({
                     <ReadOnlyField label="Tipus d'Acció" value={initialData.type} />
                     <ReadOnlyField label="Categoria" value={initialData.category} />
                     <ReadOnlyField label="Subcategoria" value={initialData.subcategory} />
-                    <ReadOnlyField label="Àrea Funcional Implicada" value={initialData.affectedAreas} />
+                    <ReadOnlyField label="Àrees Funcionals Implicades" value={initialData.affectedAreas} />
                     <ReadOnlyField label="Centre" value={initialData.center} />
                     <ReadOnlyField label="Assignat A (Responsable Anàlisi)" value={initialData.assignedTo} />
                 </CardContent>
@@ -439,22 +443,41 @@ export function ActionForm({
             />
             <FormField
               control={form.control}
-              name="affectedAreasId"
+              name="affectedAreasIds"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Àrea Funcional Implicada</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value} disabled={disableForm}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecciona una àrea implicada" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {masterData?.affectedAreas.map((area: any) => (
-                        <SelectItem key={area.id} value={area.id}>{area.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <FormLabel>Àrees Funcionals Implicades</FormLabel>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <FormControl>
+                        <Button variant="outline" className={cn("w-full justify-start text-left font-normal", !field.value?.length && "text-muted-foreground")}>
+                           {field.value?.length > 0
+                            ? `${field.value.length} seleccionades`
+                            : "Selecciona àrees"}
+                           <ChevronsUpDown className="ml-auto h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </FormControl>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent className="w-[300px]" align="start">
+                        <DropdownMenuLabel>Àrees Afectades</DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        {masterData?.affectedAreas.map((area: AffectedArea) => (
+                             <DropdownMenuCheckboxItem
+                                key={area.id}
+                                checked={field.value?.includes(area.id!)}
+                                onCheckedChange={(checked) => {
+                                    const currentSelection = field.value || [];
+                                    const newSelection = checked
+                                        ? [...currentSelection, area.id!]
+                                        : currentSelection.filter(id => id !== area.id);
+                                    field.onChange(newSelection);
+                                }}
+                             >
+                                {area.name}
+                            </DropdownMenuCheckboxItem>
+                        ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                   <FormMessage />
                 </FormItem>
               )}

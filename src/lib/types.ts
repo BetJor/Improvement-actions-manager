@@ -121,8 +121,8 @@ export interface ImprovementAction {
   subcategoryId: string;
   type: string;
   typeId: string;
-  affectedAreas: string; 
-  affectedAreasId: string;
+  affectedAreas: string[]; 
+  affectedAreasIds: string[];
   center?: string;
   centerId?: string;
   assignedTo: string;

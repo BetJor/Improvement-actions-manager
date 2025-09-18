@@ -12,7 +12,7 @@ interface CreateActionData extends Omit<ImprovementAction, 'id' | 'actionId' | '
   category: string; // ID
   subcategory: string; // ID
   typeId: string;
-  affectedAreasId: string;
+  affectedAreasIds: string[];
   centerId?: string;
 }
 
@@ -111,7 +111,7 @@ export async function createAction(data: CreateActionData, masterData: any): Pro
     // Find names from IDs
     const categoryName = masterData.categories.find((c: any) => c.id === data.category)?.name || data.category;
     const subcategoryName = masterData.subcategories.find((s: any) => s.id === data.subcategory)?.name || data.subcategory;
-    const affectedAreaName = masterData.affectedAreas.find((a: any) => a.id === data.affectedAreasId)?.name || data.affectedAreasId;
+    const affectedAreasNames = data.affectedAreasIds.map(id => masterData.affectedAreas.find((a: any) => a.id === id)?.name || id);
     const centerName = masterData.centers.find((c: any) => c.id === data.centerId)?.name || data.centerId;
     const typeName = masterData.actionTypes.find((t: any) => t.id === data.typeId)?.name || data.typeId;
 
@@ -126,8 +126,8 @@ export async function createAction(data: CreateActionData, masterData: any): Pro
       type: typeName,
       typeId: data.typeId,
       status: data.status || 'Borrador',
-      affectedAreas: affectedAreaName,
-      affectedAreasId: data.affectedAreasId,
+      affectedAreas: affectedAreasNames,
+      affectedAreasIds: data.affectedAreasIds,
       center: centerName,
       centerId: data.centerId,
       assignedTo: data.assignedTo,
@@ -149,7 +149,7 @@ export async function createAction(data: CreateActionData, masterData: any): Pro
             actionId: newActionId,
             actionType: typeName,
             category: categoryName,
-            affectedAreaName: affectedAreaName,
+            affectedAreaName: affectedAreasNames.join(', '),
             responsibleGroupId: data.assignedTo,
             creationDate: creationDate,
         });
@@ -212,8 +212,8 @@ export async function updateAction(actionId: string, data: any, masterData?: any
             categoryId: data.category,
             subcategory: masterData.subcategories.find((s: any) => s.id === data.subcategory)?.name || data.subcategory,
             subcategoryId: data.subcategory,
-            affectedAreas: masterData.affectedAreas.find((a: any) => a.id === data.affectedAreasId)?.name || data.affectedAreasId,
-            affectedAreasId: data.affectedAreasId,
+            affectedAreas: data.affectedAreasIds.map((id: string) => masterData.affectedAreas.find((a: any) => a.id === id)?.name || id),
+            affectedAreasIds: data.affectedAreasIds,
             center: masterData.centers.find((c: any) => c.id === data.centerId)?.name || data.centerId,
             centerId: data.centerId,
             type: masterData.actionTypes.find((t: any) => t.id === data.typeId)?.name || data.typeId,
@@ -241,7 +241,7 @@ export async function updateAction(actionId: string, data: any, masterData?: any
                     description: `${originalAction.description}\n\n--- \nObservacions de tancament no conforme:\n${data.closure.notes}`,
                     category: originalAction.categoryId,
                     subcategory: originalAction.subcategoryId,
-                    affectedAreasId: originalAction.affectedAreasId,
+                    affectedAreasIds: originalAction.affectedAreasIds,
                     centerId: originalAction.centerId,
                     assignedTo: originalAction.assignedTo,
                     typeId: originalAction.typeId,
