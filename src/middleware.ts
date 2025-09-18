@@ -5,7 +5,13 @@ export default createMiddleware({
   locales: ['ca', 'es'],
  
   // Used when no locale matches
-  defaultLocale: 'ca'
+  defaultLocale: 'ca',
+
+  // The path to the i18n configuration file
+  pathnames: [],
+  localePrefix: 'as-needed',
+  // Specify the file with the getRequestConfig function
+  localeDetection: true,
 });
  
 export const config = {
