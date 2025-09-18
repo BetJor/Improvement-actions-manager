@@ -1,23 +1,21 @@
 
-
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
 import { MasterDataManager } from "@/components/master-data-manager";
 import {
     getActionTypes,
-    getCategories,
-    getSubcategories,
-    getAffectedAreas,
     addMasterDataItem,
     updateMasterDataItem,
     deleteMasterDataItem,
+    getResponsibilityRoles,
+    getPermissionRules,
 } from "@/lib/data";
 import { useToast } from "@/hooks/use-toast";
-import type { MasterDataItem } from "@/lib/types";
+import type { MasterDataItem, PermissionRule } from "@/lib/types";
 import { Loader2 } from "lucide-react";
 
-export default function SettingsPage() {
+export default function WorkflowPage() {
     const { toast } = useToast();
     const [masterData, setMasterData] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -26,48 +24,40 @@ export default function SettingsPage() {
     const loadData = useCallback(async (currentTab?: string) => {
         setIsLoading(true);
         try {
-            const [actionTypes, categories, subcategories, affectedAreas] = await Promise.all([
+            const [actionTypes, responsibilityRoles, permissionRules] = await Promise.all([
                 getActionTypes(),
-                getCategories(),
-                getSubcategories(),
-                getAffectedAreas(),
+                getResponsibilityRoles(),
+                getPermissionRules(),
             ]);
 
-            const subcategoriesWithCategoryName = subcategories.map(s => ({
-              ...s, 
-              categoryName: categories.find(c => c.id === s.categoryId)?.name || ''
+            const permissionRulesWithNames = permissionRules.map(rule => ({
+                ...rule,
+                actionTypeName: actionTypes.find(at => at.id === rule.actionTypeId)?.name || rule.actionTypeId,
+                readerRoleNames: (rule.readerRoleIds || []).map(id => responsibilityRoles.find(r => r.id === id)?.name).join(', '),
+                authorRoleNames: (rule.authorRoleIds || []).map(id => responsibilityRoles.find(r => r.id === id)?.name).join(', '),
             }));
-            
-            subcategoriesWithCategoryName.sort((a, b) => {
-              if (a.categoryName < b.categoryName) return -1;
-              if (a.categoryName > b.categoryName) return 1;
-              if (a.name < b.name) return -1;
-              if (a.name > b.name) return 1;
-              return 0;
-            });
+
 
             const data = {
-                actionTypes: { 
-                    title: "Tipus d'Acció", 
-                    data: actionTypes, 
+                responsibilityRoles: { 
+                    title: "Rols de Responsabilitat", 
+                    data: responsibilityRoles, 
                     columns: [
-                        { key: 'name', label: "Nom" },
+                        { key: 'name', label: 'Nom' },
+                        { key: 'type', label: 'Tipus' },
+                        { key: 'email', label: 'Email' },
+                        { key: 'emailPattern', label: 'Patró Email' },
                     ] 
                 },
-                categories: { 
-                    title: "Categories", 
-                    data: categories, 
-                    columns: [{ key: 'name', label: "Nom" }] 
-                },
-                subcategories: { 
-                    title: "Subcategories", 
-                    data: subcategoriesWithCategoryName, 
-                    columns: [{ key: 'name', label: "Nom" }, { key: 'categoryName', label: "Categoria" }] 
-                },
-                affectedAreas: { 
-                    title: "Àrees Afectades", 
-                    data: affectedAreas, 
-                    columns: [{ key: 'name', label: "Nom" }] 
+                 permissionMatrix: {
+                    title: "Matriu de Permisos",
+                    data: permissionRulesWithNames,
+                    columns: [
+                        { key: 'actionTypeName', label: "Tipus d'Acció" },
+                        { key: 'status', label: 'Estat' },
+                        { key: 'readerRoleNames', label: 'Lectors' },
+                        { key: 'authorRoleNames', label: 'Autors' },
+                    ],
                 },
             };
             setMasterData(data);
@@ -97,11 +87,11 @@ export default function SettingsPage() {
     }, [loadData, masterData]);
 
 
-    const handleSave = async (collectionName: string, item: MasterDataItem) => {
+    const handleSave = async (collectionName: string, item: MasterDataItem | PermissionRule) => {
         try {
             const { id, ...dataToSave } = item as any;
             
-            const propertiesToRemove = ['categoryName'];
+            const propertiesToRemove = ['actionTypeName', 'readerRoleNames', 'authorRoleNames'];
             propertiesToRemove.forEach(prop => {
                 if (prop in dataToSave) {
                     delete dataToSave[prop];
@@ -133,11 +123,12 @@ export default function SettingsPage() {
         }
     };
 
+
     return (
         <div className="flex flex-col gap-4">
-            <h1 className="text-3xl font-bold tracking-tight">Configuració</h1>
+            <h1 className="text-3xl font-bold tracking-tight">Gestió del Workflow</h1>
             <p className="text-muted-foreground">
-                Aquí podràs gestionar les taules mestres de l'aplicació, com ara categories, tipus d'acció, etc.
+                Defineix els rols i els permisos que governen el cicle de vida de les accions de millora.
             </p>
             {isLoading && !masterData ? (
                 <div className="flex items-center justify-center h-64">

@@ -62,10 +62,9 @@ interface MasterDataFormDialogProps {
     actionTypes?: ImprovementActionType[],
     responsibilityRoles?: ResponsibilityRole[],
   }
-  t: (key: string, ...args: any[]) => string
 }
 
-function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, title, onSave, extraData, t }: MasterDataFormDialogProps) {
+function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, title, onSave, extraData }: MasterDataFormDialogProps) {
   const [formData, setFormData] = useState<MasterDataItem>(item || { name: "" })
   const { toast } = useToast()
 
@@ -102,14 +101,14 @@ function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, title, 
         return (
              <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor={'categoryId'} className="text-right">
-                {t('col.category')}
+                Categoria
               </Label>
               <Select
                 value={formData['categoryId']}
                 onValueChange={(value) => setFormData({ ...formData, ['categoryId']: value })}
               >
                 <SelectTrigger className="col-span-3">
-                  <SelectValue placeholder={`Selecciona ${t('col.category').toLowerCase()}`} />
+                  <SelectValue placeholder="Selecciona categoria" />
                 </SelectTrigger>
                 <SelectContent>
                   {extraData.categories.map(option => (
@@ -322,7 +321,7 @@ function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, title, 
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{item ? t("edit") : t("addNew")} {title}</DialogTitle>
+          <DialogTitle>{item ? "Editar" : "Afegir Nou"} {title}</DialogTitle>
           <DialogDescription>
             Omple els detalls a continuació.
           </DialogDescription>
@@ -332,7 +331,7 @@ function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, title, 
         </div>
         <DialogFooter>
           <DialogClose asChild>
-            <Button variant="outline">{t("cancel")}</Button>
+            <Button variant="outline">Cancel·lar</Button>
           </DialogClose>
           <Button onClick={handleSave}>Desar</Button>
         </DialogFooter>
@@ -346,18 +345,17 @@ interface MasterDataTableProps {
   columns: { key: string; label: string }[];
   onEdit: (item: MasterDataItem) => void;
   onDelete: (item: MasterDataItem) => void;
-  t: (key: string, ...args: any[]) => string;
   isLoading: boolean;
 }
 
-function MasterDataTable({ data, columns, onEdit, onDelete, t, isLoading }: MasterDataTableProps) {
+function MasterDataTable({ data, columns, onEdit, onDelete, isLoading }: MasterDataTableProps) {
   return (
     <div className="rounded-md border">
       <Table>
         <TableHeader>
           <TableRow>
             {columns.map(col => <TableHead key={col.key}>{col.label}</TableHead>)}
-            <TableHead className="text-right">{t("col.actions")}</TableHead>
+            <TableHead className="text-right">Accions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -387,14 +385,14 @@ function MasterDataTable({ data, columns, onEdit, onDelete, t, isLoading }: Mast
                     </AlertDialogTrigger>
                     <AlertDialogContent>
                       <AlertDialogHeader>
-                        <AlertDialogTitle>{t("deleteConfirmation")}</AlertDialogTitle>
+                        <AlertDialogTitle>Estàs segur?</AlertDialogTitle>
                         <AlertDialogDescription>
-                          {t("deleteConfirmationMessage")}
+                          Aquesta acció no es pot desfer. Això eliminarà permanentment l'element.
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
-                        <AlertDialogCancel>{t("cancel")}</AlertDialogCancel>
-                        <AlertDialogAction onClick={() => onDelete(item)}>{t("continue")}</AlertDialogAction>
+                        <AlertDialogCancel>Cancel·lar</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => onDelete(item)}>Continuar</AlertDialogAction>
                       </AlertDialogFooter>
                     </AlertDialogContent>
                   </AlertDialog>
@@ -424,13 +422,12 @@ interface MasterDataManagerProps {
   };
   onSave: (collectionName: string, item: MasterDataItem | PermissionRule) => Promise<void>;
   onDelete: (collectionName: string, itemId: string) => Promise<void>;
-  t: (key: string, ...args: any[]) => string;
   activeTab: string;
   setActiveTab: (value: string) => void;
   isLoading: boolean;
 }
 
-export function MasterDataManager({ data, onSave, onDelete, t, activeTab, setActiveTab, isLoading }: MasterDataManagerProps) {
+export function MasterDataManager({ data, onSave, onDelete, activeTab, setActiveTab, isLoading }: MasterDataManagerProps) {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [currentItem, setCurrentItem] = useState<MasterDataItem | null>(null);
 
@@ -482,7 +479,7 @@ export function MasterDataManager({ data, onSave, onDelete, t, activeTab, setAct
           <TabsContent key={key} value={key}>
              <div className="flex justify-end mb-4">
               <Button onClick={handleAddNew}>
-                <PlusCircle className="mr-2 h-4 w-4" /> {t("addNew")}
+                <PlusCircle className="mr-2 h-4 w-4" /> Afegeix Nou
               </Button>
             </div>
             <MasterDataTable
@@ -490,7 +487,6 @@ export function MasterDataManager({ data, onSave, onDelete, t, activeTab, setAct
               columns={data[key].columns}
               onEdit={handleEdit}
               onDelete={handleDelete}
-              t={t}
               isLoading={isLoading}
             />
           </TabsContent>
@@ -505,7 +501,6 @@ export function MasterDataManager({ data, onSave, onDelete, t, activeTab, setAct
           title={data[activeTab].title.endsWith('s') ? data[activeTab].title.slice(0, -1) : data[activeTab].title}
           onSave={handleSave}
           extraData={getExtraDataForTab(activeTab)}
-          t={t}
         />
       )}
     </>

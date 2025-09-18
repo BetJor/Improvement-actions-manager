@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
@@ -22,6 +23,7 @@ import UserManagementPage from '@/app/[locale]/user-management/page';
 import ReportsPage from '@/app/[locale]/reports/page';
 import IntranetTestPage from '@/app/[locale]/intranet-test/page';
 import FirestoreRulesPage from '@/app/[locale]/firestore-rules/page';
+import WorkflowPage from '@/app/[locale]/workflow/page';
 import { getActionById, getActionTypes, getCategories, getSubcategories, getAffectedAreas } from '@/lib/data';
 
 import { Home, ListChecks, Settings, Sparkles, Library, Route, Users, BarChart3, GanttChartSquare } from 'lucide-react';
@@ -31,6 +33,7 @@ const pageComponentMapping: { [key: string]: React.ComponentType<any> | undefine
     '/actions': ActionsPage,
     '/actions/new': NewActionPage,
     '/settings': SettingsPage,
+    '/workflow': WorkflowPage,
     '/ai-settings': AiSettingsPage,
     '/prompt-gallery': PromptGalleryPage,
     '/roadmap': RoadmapPage,

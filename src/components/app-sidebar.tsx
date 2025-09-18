@@ -3,7 +3,7 @@
 
 import Link from "next/link"
 import { usePathname, useParams } from "next/navigation"
-import { Home, ListChecks, Settings, Route, Sparkles, Library, GanttChartSquare, Users, BarChart3, TestTubeDiagonal, FileLock2 } from "lucide-react"
+import { Home, ListChecks, Settings, Route, Sparkles, Library, GanttChartSquare, Users, BarChart3, TestTubeDiagonal, FileLock2, Sitemap } from "lucide-react"
 import { useAuth } from "@/hooks/use-auth"
 import { cn } from "@/lib/utils"
 import { Sidebar, SidebarContent, SidebarHeader, SidebarMenu, SidebarMenuItem, SidebarMenuButton, useSidebar } from "./ui/sidebar"
@@ -54,6 +54,7 @@ export function AppSidebar({ t }: { t: any }) {
   
   const adminSettingsNavItems = [
     { href: `/${locale}/settings`, icon: Settings, label: t("Common.AppSidebar.settings"), isTab: true },
+    { href: `/${locale}/workflow`, icon: Sitemap, label: "Workflow", isTab: true },
     { href: `/${locale}/ai-settings`, icon: Sparkles, label: t("Common.AppSidebar.aiSettings"), isTab: true },    
     { href: `/${locale}/user-management`, icon: Users, label: t("Common.AppSidebar.userManagement"), isTab: true },
   ]
