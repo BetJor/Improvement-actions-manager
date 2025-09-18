@@ -208,6 +208,7 @@ function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, title, 
                   <SelectItem value="Fixed">Fix</SelectItem>
                   <SelectItem value="Pattern">Patró</SelectItem>
                   <SelectItem value="Creator">Creador</SelectItem>
+                  <SelectItem value="Assignee">Assignat</SelectItem>
                 </SelectContent>
               </Select>
           </div>

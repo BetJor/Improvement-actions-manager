@@ -1,6 +1,5 @@
 
 
-
 export interface MasterDataItem {
   id?: string;
   name: string;
@@ -13,7 +12,7 @@ export interface ImprovementActionType extends MasterDataItem {
 }
 
 export interface ResponsibilityRole extends MasterDataItem {
-    type: 'Pattern' | 'Fixed' | 'Creator';
+    type: 'Pattern' | 'Fixed' | 'Creator' | 'Assignee';
     emailPattern?: string; // e.g., "direccion-{{center.id}}@example.com"
     email?: string; // e.g., "calidad.global@example.com"
 }
@@ -57,6 +56,7 @@ export interface ActionUserInfo {
   id: string;
   name: string;
   avatar?: string;
+  email?: string;
 }
 
 export interface WorkflowStep {

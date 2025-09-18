@@ -66,25 +66,14 @@ export async function resolveRoles(
                 }
                 break;
             case 'Creator':
-                // The creator's email is stored in action.creator.id (which is their UID)
-                // but we need their email. We'll assume the email is what's used for permissions.
-                // In a real scenario, you'd fetch the user document to get the email if needed.
-                // For simplicity, we'll assume the creator's identity is their primary login email.
-                 if (action.creator.id) {
-                     // This is a simplification. We need a way to map creator ID to email.
-                     // Let's assume for now that assignedTo holds the relevant emails.
-                     // A better approach would be to look up the user.
-                 }
-
-                // A better implementation for 'Creator' would be:
-                 if (action.creator?.id) {
-                    const creatorEmail = action.creator.id; // Assuming the creator's ID is their email for permissions
-                    // A proper implementation would look up the user by ID and get their email.
-                    // For now, let's assume we can get it from the creator object if it exists.
-                    // This part needs to be robust. Let's use the responsible user for now.
-                    if(action.responsibleUser?.email) resolvedEmails.push(action.responsibleUser.email);
+                if (action.creator.email) {
+                    resolvedEmails.push(action.creator.email);
                 }
-
+                break;
+            case 'Assignee':
+                if (action.responsibleGroupId) {
+                    resolvedEmails.push(action.responsibleGroupId);
+                }
                 break;
         }
     }

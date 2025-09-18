@@ -29,7 +29,30 @@ export const getAffectedAreas = async (): Promise<AffectedArea[]> => {
 export const getResponsibilityRoles = async (): Promise<ResponsibilityRole[]> => {
     const rolesCol = collection(db, 'responsibilityRoles');
     const snapshot = await getDocs(query(rolesCol, orderBy("name")));
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ResponsibilityRole));
+    
+    let roles = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ResponsibilityRole));
+
+    // Ensure the dynamic "Assignee" role exists for selection in the permission matrix
+    if (!roles.some(role => role.type === 'Assignee')) {
+      const assigneeRole: ResponsibilityRole = {
+        id: 'dynamic_assignee', // Use a fixed, known ID
+        name: 'Assignat (Dinàmic)',
+        type: 'Assignee'
+      };
+      // We don't save this to Firestore, it's a virtual role for the UI
+      roles.push(assigneeRole);
+    }
+    
+     if (!roles.some(role => role.type === 'Creator')) {
+      const creatorRole: ResponsibilityRole = {
+        id: 'dynamic_creator', // Use a fixed, known ID
+        name: 'Creador (Dinàmic)',
+        type: 'Creator'
+      };
+      roles.push(creatorRole);
+    }
+
+    return roles;
 };
 
 export const getCenters = async (): Promise<Center[]> => {
