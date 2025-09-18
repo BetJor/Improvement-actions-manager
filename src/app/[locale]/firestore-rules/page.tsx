@@ -2,7 +2,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -18,7 +17,6 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Terminal } from "lucide-react";
 
 export default function FirestoreRulesPage() {
-  const t = useTranslations("FirestoreRules");
   const { toast } = useToast();
   const [rules, setRules] = useState("");
   const [isLoading, setIsLoading] = useState(true);
@@ -32,7 +30,7 @@ export default function FirestoreRulesPage() {
       try {
         const response = await fetch("/api/firestore-rules");
         if (!response.ok) {
-          throw new Error(t("errors.loadFailed"));
+          throw new Error("No s'han pogut carregar les regles de Firestore des del servidor.");
         }
         const data = await response.json();
         setRules(data.rules);
@@ -44,7 +42,7 @@ export default function FirestoreRulesPage() {
     };
 
     fetchRules();
-  }, [t]);
+  }, []);
 
   const handleSave = async () => {
     setIsSaving(true);
@@ -56,12 +54,12 @@ export default function FirestoreRulesPage() {
       });
 
       if (!response.ok) {
-        throw new Error(t("errors.saveFailed"));
+        throw new Error("No s'han pogut desar les regles de Firestore.");
       }
 
       toast({
-        title: t("toast.saveSuccessTitle"),
-        description: t("toast.saveSuccessDescription"),
+        title: "Regles Desades",
+        description: "Les regles de Firestore s'han actualitzat correctament.",
       });
     } catch (err: any) {
       toast({
@@ -77,14 +75,14 @@ export default function FirestoreRulesPage() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{t("title")}</CardTitle>
-        <CardDescription>{t("description")}</CardDescription>
+        <CardTitle>Editor de Regles de Firestore</CardTitle>
+        <CardDescription>Edita les regles de seguretat de la base de dades Firestore. Aquests canvis afectaran directament la seguretat de les dades. Fes-ho amb precaució.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         {error && (
           <Alert variant="destructive">
             <Terminal className="h-4 w-4" />
-            <AlertTitle>{t("errors.title")}</AlertTitle>
+            <AlertTitle>Error</AlertTitle>
             <AlertDescription>{error}</AlertDescription>
           </Alert>
         )}
@@ -98,18 +96,18 @@ export default function FirestoreRulesPage() {
               value={rules}
               onChange={(e) => setRules(e.target.value)}
               className="h-[60vh] font-mono text-sm"
-              placeholder={t("placeholder")}
+              placeholder="Carregant les regles de Firestore..."
             />
             <Button onClick={handleSave} disabled={isSaving}>
               {isSaving ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  {t("buttons.saving")}
+                  Desant...
                 </>
               ) : (
                 <>
                   <Save className="mr-2 h-4 w-4" />
-                  {t("buttons.save")}
+                  Desar Regles
                 </>
               )}
             </Button>
