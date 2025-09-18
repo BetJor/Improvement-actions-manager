@@ -47,23 +47,24 @@ const generateFirestoreRules = (entries: AclEntry[]): string => {
   const getDeletePermission = (access: AclAccessLevel) =>
     ["Editor", "Manager"].includes(access);
 
-  const userRules = entries
-    .filter(e => e.type === 'user')
-    .map(e => `
-      // ${e.name} (${e.access})
-      allow read: if request.auth.token.email == "${e.name}" && ${getReadPermission(e.access)};
-      allow write: if request.auth.token.email == "${e.name}" && ${getWritePermission(e.access)};
-      allow delete: if request.auth.token.email == "${e.name}" && ${getDeletePermission(e.access)};
-    `).join('').trim();
+  const generateRuleBlock = (entry: AclEntry): string => {
+    const condition = entry.type === 'user'
+      ? `request.auth.token.email == "${entry.name}"`
+      : `get(/databases/$(database)/documents/groups/${entry.name}).data.members.hasAny([request.auth.uid])`;
 
-  const groupRules = entries
-    .filter(e => e.type === 'group')
-    .map(e => `
-      // Group: ${e.name} (${e.access})
-      allow read: if get(/databases/$(database)/documents/groups/${e.name}).data.members.hasAny([request.auth.uid]) && ${getReadPermission(e.access)};
-      allow write: if get(/databases/$(database)/documents/groups/${e.name}).data.members.hasAny([request.auth.uid]) && ${getWritePermission(e.access)};
-      allow delete: if get(/databases/$(database)/documents/groups/${e.name}).data.members.hasAny([request.auth.uid]) && ${getDeletePermission(e.access)};
-    `).join('').trim();
+    const rules = [
+      getReadPermission(entry.access) && `allow read: if ${condition};`,
+      getWritePermission(entry.access) && `allow write: if ${condition};`,
+      getDeletePermission(entry.access) && `allow delete: if ${condition};`
+    ].filter(Boolean).join('\n      ');
+
+    return rules ? `
+      // ${entry.type === 'user' ? 'User' : 'Group'}: ${entry.name} (${entry.access})
+      ${rules}
+    ` : '';
+  };
+
+  const allRules = entries.map(generateRuleBlock).join('').trim();
 
   return `
 rules_version = '2';
@@ -72,12 +73,16 @@ service cloud.firestore {
 
     // Example for a collection 'actions'
     match /actions/{actionId} {
-      ${userRules}
-      ${groupRules}
+      ${allRules}
 
-      // Default deny
+      // Default deny for safety
       allow read, write, delete: if false;
     }
+
+    // Add other collection rules here...
+    // match /other_collection/{docId} {
+    //   ...
+    // }
   }
 }
   `.trim();
@@ -275,5 +280,3 @@ export default function FirestoreRulesGeneratorPage() {
     </div>
   );
 }
-
-    
