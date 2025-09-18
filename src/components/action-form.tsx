@@ -450,11 +450,27 @@ export function ActionForm({
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <FormControl>
-                        <Button variant="outline" className={cn("w-full justify-start text-left font-normal", !field.value?.length && "text-muted-foreground")}>
-                           {field.value?.length > 0
-                            ? `${field.value.length} seleccionades`
-                            : "Selecciona àrees"}
-                           <ChevronsUpDown className="ml-auto h-4 w-4 shrink-0 opacity-50" />
+                         <Button
+                            variant="outline"
+                            className={cn(
+                                "w-full justify-start text-left font-normal",
+                                !field.value?.length && "text-muted-foreground"
+                            )}
+                            >
+                            <span className="truncate">
+                                {field.value?.length > 0
+                                ? field.value
+                                    .map(
+                                    (id) =>
+                                        masterData?.affectedAreas.find(
+                                        (area: AffectedArea) => area.id === id
+                                        )?.name
+                                    )
+                                    .filter(Boolean)
+                                    .join(", ")
+                                : "Selecciona àrees"}
+                            </span>
+                            <ChevronsUpDown className="ml-auto h-4 w-4 shrink-0 opacity-50" />
                         </Button>
                       </FormControl>
                     </DropdownMenuTrigger>
