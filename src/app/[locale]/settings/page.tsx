@@ -108,7 +108,7 @@ export default function SettingsPage() {
                     ] 
                 },
                  permissionMatrix: {
-                    title: t("tabs.permissionMatrix"),
+                    title: "Matriu de Permisos",
                     data: permissionRulesWithNames,
                     columns: [
                         { key: 'actionTypeName', label: 'Tipus d\'Acció' },
