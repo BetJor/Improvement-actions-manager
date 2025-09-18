@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -89,6 +89,30 @@ export default function FirestoreRulesGeneratorPage() {
   const [entries, setEntries] = useState<AclEntry[]>([]);
   const [newEntry, setNewEntry] = useState({ name: "", type: "user" as AclEntryType, access: "Reader" as AclAccessLevel });
   const [generatedRules, setGeneratedRules] = useState("");
+
+  // Load from localStorage on initial render
+  useEffect(() => {
+    try {
+      const savedEntries = localStorage.getItem("firestoreAclEntries");
+      if (savedEntries) {
+        const parsedEntries = JSON.parse(savedEntries);
+        setEntries(parsedEntries);
+        const rules = generateFirestoreRules(parsedEntries);
+        setGeneratedRules(rules);
+      }
+    } catch (error) {
+        console.error("Failed to load ACL entries from localStorage", error);
+    }
+  }, []);
+
+  // Save to localStorage whenever entries change
+  useEffect(() => {
+    try {
+      localStorage.setItem("firestoreAclEntries", JSON.stringify(entries));
+    } catch (error) {
+        console.error("Failed to save ACL entries to localStorage", error);
+    }
+  }, [entries]);
 
   const handleAddEntry = () => {
     if (!newEntry.name) {
@@ -228,5 +252,3 @@ export default function FirestoreRulesGeneratorPage() {
     </div>
   );
 }
-
-    
