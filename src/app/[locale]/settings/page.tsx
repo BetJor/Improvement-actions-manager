@@ -51,11 +51,15 @@ export default function SettingsPage() {
             });
 
             const actionTypesWithRoles = actionTypes.map(at => {
-                const roleNames = (at.possibleAnalysisRoles || [])
+                const analysisRoles = (at.possibleAnalysisRoles || [])
                     .map(roleId => responsibilityRoles.find(r => r.id === roleId)?.name)
                     .filter(Boolean)
                     .join(', ');
-                return { ...at, rolesList: roleNames };
+                const closureRoles = (at.possibleClosureRoles || [])
+                    .map(roleId => responsibilityRoles.find(r => r.id === roleId)?.name)
+                    .filter(Boolean)
+                    .join(', ');
+                return { ...at, analysisRolesList: analysisRoles, closureRolesList: closureRoles };
             });
 
 
@@ -65,7 +69,8 @@ export default function SettingsPage() {
                     data: actionTypesWithRoles, 
                     columns: [
                         { key: 'name', label: t('col.name') },
-                        { key: 'rolesList', label: "Rols per a l'Anàlisi" }
+                        { key: 'analysisRolesList', label: "Rols per a l'Anàlisi" },
+                        { key: 'closureRolesList', label: "Rols per al Tancament" },
                     ] 
                 },
                 categories: { 
@@ -127,8 +132,11 @@ export default function SettingsPage() {
             if ('categoryName' in dataToSave) {
                 delete (dataToSave as any).categoryName;
             }
-             if ('rolesList' in dataToSave) {
-                delete (dataToSave as any).rolesList;
+             if ('analysisRolesList' in dataToSave) {
+                delete (dataToSave as any).analysisRolesList;
+            }
+             if ('closureRolesList' in dataToSave) {
+                delete (dataToSave as any).closureRolesList;
             }
 
             if (id) {

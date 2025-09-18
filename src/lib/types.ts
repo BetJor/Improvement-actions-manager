@@ -8,6 +8,7 @@ export interface MasterDataItem {
     
 export interface ImprovementActionType extends MasterDataItem {
   possibleAnalysisRoles?: string[]; // IDs from ResponsibilityRole collection
+  possibleClosureRoles?: string[]; // IDs from ResponsibilityRole collection
 }
 
 export interface ResponsibilityRole extends MasterDataItem {
