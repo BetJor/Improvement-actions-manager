@@ -1,0 +1,42 @@
+
+{
+  "Common": {
+    "Header": {
+      "title": "Acciones de Mejora",
+      "myAccount": "Mi Cuenta",
+      "myGroups": "Mis Grupos",
+      "settings": "Configuración",
+      "support": "Soporte",
+      "logout": "Cerrar Sesión"
+    },
+    "AppSidebar": {
+      "title": "Acciones de Mejora",
+      "toggleNotifications": "Activar/desactivar notificaciones",
+      "dashboard": "Panel de Control",
+      "actions": "Acciones",
+      "reports": "Informes",
+      "myGroups": "Mis Grupos",
+      "settings": "Configuración",
+      "workflow": "Workflow",
+      "aiSettings": "Configuración IA",
+      "roadmap": "Roadmap",
+      "backlog": "Backlog",
+      "promptGallery": "Galería de Prompts",
+      "userManagement": "Gestión de Usuarios",
+      "firestoreRules": "Reglas de Firestore"
+    },
+    "RootLayout": {
+      "title": "Gestor de Acciones de Mejora",
+      "description": "Gestiona y sigue las acciones de mejora en toda tu organización."
+    },
+    "SettingsDialog": {
+      "title": "Configuración",
+      "description": "Gestiona la configuración de tu cuenta y las preferencias de la aplicación."
+    },
+    "LanguageSwitcher": {
+      "selectLanguage": "Selecciona un idioma",
+      "catalan": "Catalán",
+      "spanish": "Español"
+    }
+  }
+}

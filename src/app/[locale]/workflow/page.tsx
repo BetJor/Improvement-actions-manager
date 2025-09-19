@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
@@ -30,6 +31,19 @@ export default function WorkflowPage() {
                 getPermissionRules(),
             ]);
 
+            const actionTypesWithRoleNames = actionTypes.map(at => ({
+                ...at,
+                creationRoleNames: (at.possibleCreationRoles || [])
+                    .map(roleId => responsibilityRoles.find(r => r.id === roleId)?.name || roleId)
+                    .join(', '),
+                analysisRoleNames: (at.possibleAnalysisRoles || [])
+                    .map(roleId => responsibilityRoles.find(r => r.id === roleId)?.name || roleId)
+                    .join(', '),
+                closureRoleNames: (at.possibleClosureRoles || [])
+                    .map(roleId => responsibilityRoles.find(r => r.id === roleId)?.name || roleId)
+                    .join(', '),
+            }));
+
             const processedRoles = responsibilityRoles.map(role => {
                 if (role.type === 'Creator') {
                     return { ...role, emailPattern: "{{action.creator.email}}" };
@@ -46,6 +60,16 @@ export default function WorkflowPage() {
 
 
             const data = {
+                actionTypes: { 
+                    title: "Tipus d'Acció", 
+                    data: actionTypesWithRoleNames, 
+                    columns: [
+                        { key: 'name', label: "Nom" },
+                        { key: 'creationRoleNames', label: "Rols Creació" },
+                        { key: 'analysisRoleNames', label: "Rols Anàlisi" },
+                        { key: 'closureRoleNames', label: "Rols Tancament" },
+                    ] 
+                },
                 responsibilityRoles: { 
                     title: "Rols de Responsabilitat", 
                     data: processedRoles, 
@@ -98,7 +122,7 @@ export default function WorkflowPage() {
         try {
             const { id, ...dataToSave } = item as any;
             
-            const propertiesToRemove = ['actionTypeName', 'readerRoleNames', 'authorRoleNames'];
+            const propertiesToRemove = ['actionTypeName', 'readerRoleNames', 'authorRoleNames', 'categoryName', 'creationRoleNames', 'analysisRoleNames', 'closureRoleNames'];
             propertiesToRemove.forEach(prop => {
                 if (prop in dataToSave) {
                     delete dataToSave[prop];

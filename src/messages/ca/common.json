@@ -1,0 +1,42 @@
+
+{
+  "Common": {
+    "Header": {
+      "title": "Accions de Millora",
+      "myAccount": "El Meu Compte",
+      "myGroups": "Els Meus Grups",
+      "settings": "Configuració",
+      "support": "Suport",
+      "logout": "Tancar Sessió"
+    },
+    "AppSidebar": {
+      "title": "Accions de Millora",
+      "toggleNotifications": "Activar/desactivar notificacions",
+      "dashboard": "Panell de Control",
+      "actions": "Accions",
+      "reports": "Informes",
+      "myGroups": "Els Meus Grups",
+      "settings": "Configuració",
+      "workflow": "Workflow",
+      "aiSettings": "Configuració IA",
+      "roadmap": "Roadmap",
+      "backlog": "Backlog",
+      "promptGallery": "Galeria de Prompts",
+      "userManagement": "Gestió d'Usuaris",
+      "firestoreRules": "Regles de Firestore"
+    },
+    "RootLayout": {
+      "title": "Gestor d'Accions de Millora",
+      "description": "Gestiona i segueix les accions de millora a tota la teva organització."
+    },
+    "SettingsDialog": {
+      "title": "Configuració",
+      "description": "Gestiona la configuració del teu compte i les preferències de l'aplicació."
+    },
+    "LanguageSwitcher": {
+      "selectLanguage": "Selecciona un idioma",
+      "catalan": "Català",
+      "spanish": "Espanyol"
+    }
+  }
+}

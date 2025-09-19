@@ -4,12 +4,9 @@
     "title": "Configuración",
     "description": "Aquí podrás gestionar las tablas maestras de la aplicación, como categorías, tipos de acción, etc.",
     "tabs": {
-      "actionTypes": "Tipos de Acción",
       "categories": "Categorías",
       "subcategories": "Subcategorías",
-      "affectedAreas": "Áreas Afectadas",
-      "responsibilityRoles": "Roles de Responsabilidad",
-      "permissionMatrix": "Matriz de Permisos"
+      "affectedAreas": "Áreas Afectadas"
     },
     "col": {
       "name": "Nombre",

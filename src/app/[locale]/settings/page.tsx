@@ -5,7 +5,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { MasterDataManager } from "@/components/master-data-manager";
 import {
-    getActionTypes,
     getCategories,
     getSubcategories,
     getAffectedAreas,
@@ -15,7 +14,7 @@ import {
     getResponsibilityRoles,
 } from "@/lib/data";
 import { useToast } from "@/hooks/use-toast";
-import type { MasterDataItem, ResponsibilityRole } from "@/lib/types";
+import type { MasterDataItem } from "@/lib/types";
 import { Loader2 } from "lucide-react";
 
 export default function SettingsPage() {
@@ -27,27 +26,11 @@ export default function SettingsPage() {
     const loadData = useCallback(async (currentTab?: string) => {
         setIsLoading(true);
         try {
-            const [actionTypes, categories, subcategories, affectedAreas, responsibilityRoles] = await Promise.all([
-                getActionTypes(),
+            const [categories, subcategories, affectedAreas] = await Promise.all([
                 getCategories(),
                 getSubcategories(),
                 getAffectedAreas(),
-                getResponsibilityRoles(),
             ]);
-
-            const actionTypesWithRoleNames = actionTypes.map(at => ({
-                ...at,
-                creationRoleNames: (at.possibleCreationRoles || [])
-                    .map(roleId => responsibilityRoles.find(r => r.id === roleId)?.name || roleId)
-                    .join(', '),
-                analysisRoleNames: (at.possibleAnalysisRoles || [])
-                    .map(roleId => responsibilityRoles.find(r => r.id === roleId)?.name || roleId)
-                    .join(', '),
-                closureRoleNames: (at.possibleClosureRoles || [])
-                    .map(roleId => responsibilityRoles.find(r => r.id === roleId)?.name || roleId)
-                    .join(', '),
-            }));
-
 
             const subcategoriesWithCategoryName = subcategories.map(s => ({
               ...s, 
@@ -63,16 +46,6 @@ export default function SettingsPage() {
             });
 
             const data = {
-                actionTypes: { 
-                    title: "Tipus d'Acció", 
-                    data: actionTypesWithRoleNames, 
-                    columns: [
-                        { key: 'name', label: "Nom" },
-                        { key: 'creationRoleNames', label: "Rols Creació" },
-                        { key: 'analysisRoleNames', label: "Rols Anàlisi" },
-                        { key: 'closureRoleNames', label: "Rols Tancament" },
-                    ] 
-                },
                 categories: { 
                     title: "Categories", 
                     data: categories, 
@@ -88,11 +61,6 @@ export default function SettingsPage() {
                     data: affectedAreas, 
                     columns: [{ key: 'name', label: "Nom" }] 
                 },
-                responsibilityRoles: {
-                    title: "Rols de Responsabilitat",
-                    data: responsibilityRoles,
-                    columns: [{ key: 'name', label: "Nom" }, { key: 'type', label: 'Tipus' }]
-                }
             };
             setMasterData(data);
             
