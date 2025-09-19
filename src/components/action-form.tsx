@@ -127,14 +127,14 @@ export function ActionForm({
   useEffect(() => {
     if (mode !== 'create' && initialData && masterData) {
         form.reset({
-            title: initialData.title,
-            description: initialData.description,
-            assignedTo: initialData.assignedTo,
-            category: initialData.categoryId,
-            subcategory: initialData.subcategoryId,
+            title: initialData.title || "",
+            description: initialData.description || "",
+            assignedTo: initialData.assignedTo || "",
+            category: initialData.categoryId || "",
+            subcategory: initialData.subcategoryId || "",
             affectedAreasIds: initialData.affectedAreasIds || [],
-            centerId: initialData.centerId,
-            typeId: initialData.typeId,
+            centerId: initialData.centerId || "",
+            typeId: initialData.typeId || "",
         });
     }
   }, [initialData, masterData, form, mode]);
@@ -292,13 +292,14 @@ export function ActionForm({
     setAiSuggestion(null);
   };
 
-  const handleCreateFormSubmit = (status: 'Borrador' | 'Pendiente Análisis') => {
-      form.handleSubmit((values) => onSubmit(values, status))();
-  };
+    const handleSendForAnalysisSubmit = () => {
+        form.handleSubmit((values) => onSubmit(values, 'Pendiente Análisis'))();
+    };
 
-  const handleEditFormSubmit = (status?: 'Borrador' | 'Pendiente Análisis') => {
-    form.handleSubmit((values) => onSubmit(values, status))();
-  }
+    const handleDraftSubmit = () => {
+        const values = form.getValues();
+        onSubmit(values, 'Borrador');
+    };
   
   const disableForm = isSubmitting || mode === 'view';
 
@@ -624,16 +625,16 @@ export function ActionForm({
           />
           
           {mode === 'create' && (
-            <div className="flex gap-2">
-                <Button type="button" variant="outline" onClick={() => handleCreateFormSubmit('Borrador')} disabled={disableForm}>
-                    {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                    {t("form.saveAsDraft")}
-                </Button>
-                <Button type="button" onClick={() => handleCreateFormSubmit('Pendiente Análisis')} disabled={disableForm}>
-                    {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
-                    {t("form.sendForAnalysis")}
-                </Button>
-            </div>
+              <div className="flex gap-2">
+                  <Button type="button" variant="outline" onClick={handleDraftSubmit} disabled={disableForm}>
+                      {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                      {t("form.saveAsDraft")}
+                  </Button>
+                  <Button type="button" onClick={handleSendForAnalysisSubmit} disabled={disableForm}>
+                      {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
+                      {t("form.sendForAnalysis")}
+                  </Button>
+              </div>
           )}
 
           {mode === 'edit' && (
@@ -642,11 +643,11 @@ export function ActionForm({
                     <Ban className="mr-2 h-4 w-4" />
                     {t("form.cancel")}
                 </Button>
-                <Button type="button" onClick={() => handleEditFormSubmit('Borrador')} disabled={isSubmitting}>
+                <Button type="button" onClick={handleDraftSubmit} disabled={isSubmitting}>
                     {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                     {t("form.saveAsDraft")}
                 </Button>
-                 <Button type="button" onClick={() => handleEditFormSubmit('Pendiente Análisis')} disabled={isSubmitting}>
+                 <Button type="button" onClick={handleSendForAnalysisSubmit} disabled={isSubmitting}>
                     {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
                     {t("form.sendForAnalysis")}
                 </Button>
@@ -676,3 +677,5 @@ export function ActionForm({
     </>
   )
 }
+
+    

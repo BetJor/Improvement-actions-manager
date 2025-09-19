@@ -155,7 +155,7 @@ export async function createAction(data: CreateActionData, masterData: any): Pro
     // 5. Add the new document to Firestore
     const docRef = await addDoc(actionsCol, newActionData);
 
-    // Apply initial permissions
+    // 6. Apply initial permissions
     await updateActionPermissions(docRef.id, newActionData.typeId, newActionData.status, {id: docRef.id, ...newActionData});
     
     // Return the full object to update the local state
@@ -364,3 +364,5 @@ export async function updateActionPermissions(actionId: string, typeId: string, 
         authors: finalAuthors
     });
 }
+
+    
