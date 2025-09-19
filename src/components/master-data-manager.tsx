@@ -136,102 +136,51 @@ function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, title, 
                 : [...currentRoles, roleId];
             setFormData({ ...formData, [fieldName]: newRoles });
         };
+
+        const renderDropdown = (type: 'creation' | 'analysis' | 'closure', label: string) => {
+            const fieldName = `possible${type.charAt(0).toUpperCase() + type.slice(1)}Roles` as keyof ImprovementActionType;
+            const selectedRoles = (actionTypeData[fieldName] || []) as string[];
+            
+            return (
+                <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor={`${type}-roles`} className="text-right">{label}</Label>
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="outline" className="col-span-3 justify-between">
+                                <span className="truncate">
+                                    {(selectedRoles.length > 0
+                                        ? extraData.responsibilityRoles!
+                                            .filter(r => selectedRoles.includes(r.id!))
+                                            .map(r => r.name)
+                                            .join(', ')
+                                        : "Selecciona rols")}
+                                </span>
+                                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent className="w-[300px]">
+                            <DropdownMenuLabel>{label}</DropdownMenuLabel>
+                            <DropdownMenuSeparator />
+                            {extraData.responsibilityRoles!.map((role) => (
+                                 <DropdownMenuCheckboxItem
+                                    key={role.id}
+                                    checked={selectedRoles.includes(role.id!)}
+                                    onCheckedChange={() => handleRoleSelection(role.id!, type)}
+                                 >
+                                    {role.name}
+                                </DropdownMenuCheckboxItem>
+                            ))}
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                </div>
+            );
+        };
         
         return (
             <>
-            <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="creation-roles" className="text-right">Rols per a la Creació</Label>
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <Button variant="outline" className="col-span-3 justify-between">
-                            <span className="truncate">
-                                {(actionTypeData.possibleCreationRoles?.length > 0
-                                    ? extraData.responsibilityRoles
-                                        .filter(r => actionTypeData.possibleCreationRoles.includes(r.id))
-                                        .map(r => r.name)
-                                        .join(', ')
-                                    : "Selecciona rols")}
-                            </span>
-                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                        </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent className="w-[300px]">
-                        <DropdownMenuLabel>Rols de Responsabilitat (Creació)</DropdownMenuLabel>
-                        <DropdownMenuSeparator />
-                        {extraData.responsibilityRoles.map((role) => (
-                             <DropdownMenuCheckboxItem
-                                key={role.id}
-                                checked={actionTypeData.possibleCreationRoles?.includes(role.id!)}
-                                onCheckedChange={() => handleRoleSelection(role.id!, 'creation')}
-                             >
-                                {role.name}
-                            </DropdownMenuCheckboxItem>
-                        ))}
-                    </DropdownMenuContent>
-                </DropdownMenu>
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="analysis-roles" className="text-right">Rols per a l'Anàlisi</Label>
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <Button variant="outline" className="col-span-3 justify-between">
-                            <span className="truncate">
-                                {(actionTypeData.possibleAnalysisRoles?.length > 0
-                                    ? extraData.responsibilityRoles
-                                        .filter(r => actionTypeData.possibleAnalysisRoles.includes(r.id))
-                                        .map(r => r.name)
-                                        .join(', ')
-                                    : "Selecciona rols")}
-                            </span>
-                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                        </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent className="w-[300px]">
-                        <DropdownMenuLabel>Rols de Responsabilitat (Anàlisi)</DropdownMenuLabel>
-                        <DropdownMenuSeparator />
-                        {extraData.responsibilityRoles.map((role) => (
-                             <DropdownMenuCheckboxItem
-                                key={role.id}
-                                checked={actionTypeData.possibleAnalysisRoles?.includes(role.id!)}
-                                onCheckedChange={() => handleRoleSelection(role.id!, 'analysis')}
-                             >
-                                {role.name}
-                            </DropdownMenuCheckboxItem>
-                        ))}
-                    </DropdownMenuContent>
-                </DropdownMenu>
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="closure-roles" className="text-right">Rols per al Tancament</Label>
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <Button variant="outline" className="col-span-3 justify-between">
-                             <span className="truncate">
-                                {(actionTypeData.possibleClosureRoles?.length > 0
-                                     ? extraData.responsibilityRoles
-                                        .filter(r => actionTypeData.possibleClosureRoles.includes(r.id))
-                                        .map(r => r.name)
-                                        .join(', ')
-                                    : "Selecciona rols")}
-                            </span>
-                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                        </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent className="w-[300px]">
-                        <DropdownMenuLabel>Rols de Responsabilitat (Tancament)</DropdownMenuLabel>
-                        <DropdownMenuSeparator />
-                        {extraData.responsibilityRoles.map((role) => (
-                             <DropdownMenuCheckboxItem
-                                key={role.id}
-                                checked={actionTypeData.possibleClosureRoles?.includes(role.id!)}
-                                onCheckedChange={() => handleRoleSelection(role.id!, 'closure')}
-                             >
-                                {role.name}
-                            </DropdownMenuCheckboxItem>
-                        ))}
-                    </DropdownMenuContent>
-                </DropdownMenu>
-            </div>
+                {renderDropdown('creation', 'Rols per a la Creació')}
+                {renderDropdown('analysis', 'Rols per a l\'Anàlisi')}
+                {renderDropdown('closure', 'Rols per al Tancament')}
             </>
         )
     }
@@ -553,4 +502,5 @@ export function MasterDataManager({ data, onSave, onDelete, activeTab, setActive
   )
 }
 
+    
     
