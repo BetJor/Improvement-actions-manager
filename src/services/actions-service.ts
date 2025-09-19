@@ -1,3 +1,4 @@
+
 import { collection, doc, getDoc, getDocs, addDoc, updateDoc, query, orderBy, limit, arrayUnion, Timestamp, runTransaction, arrayRemove, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { format } from 'date-fns';
@@ -339,7 +340,7 @@ export async function updateActionPermissions(actionId: string, typeId: string, 
     if (!permissionRule) {
         console.warn(`No permission rule found for type ${typeId} and status ${status}. Setting empty permissions.`);
         await updateDoc(actionDocRef, {
-            readers: [],
+            readers: currentAction.readers || [], // Keep existing readers if no rule is found
             authors: [],
         });
         return;
@@ -347,14 +348,19 @@ export async function updateActionPermissions(actionId: string, typeId: string, 
 
     const allRoles = await getResponsibilityRoles();
 
-    const readers = await resolveRoles(permissionRule.readerRoleIds, allRoles, currentAction);
-    const authors = await resolveRoles(permissionRule.authorRoleIds, allRoles, currentAction);
+    const newReaders = await resolveRoles(permissionRule.readerRoleIds, allRoles, currentAction);
+    const newAuthors = await resolveRoles(permissionRule.authorRoleIds, allRoles, currentAction);
     
-    // Authors are implicitly readers
-    const allReaders = [...new Set([...readers, ...authors])];
+    // READERS: Cumulative. Combine existing readers with new ones.
+    const combinedReaders = [...new Set([...(currentAction.readers || []), ...newReaders, ...newAuthors])];
+
+    // AUTHORS: Restrictive. Only the ones from the new rule.
+    // Authors are implicitly readers, so we ensure they are in the readers list as well.
+    const finalAuthors = [...new Set(newAuthors)];
+    const finalReaders = [...new Set([...combinedReaders, ...finalAuthors])];
 
     await updateDoc(actionDocRef, {
-        readers: allReaders,
-        authors: authors
+        readers: finalReaders,
+        authors: finalAuthors
     });
 }
