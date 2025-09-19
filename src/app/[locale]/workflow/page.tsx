@@ -32,7 +32,7 @@ export default function WorkflowPage() {
 
             const processedRoles = responsibilityRoles.map(role => {
                 if (role.type === 'Creator') {
-                    return { ...role, emailPattern: "(Es resol a l'email de l'usuari que crea l'acció)" };
+                    return { ...role, emailPattern: "{{action.creator.email}}" };
                 }
                 return role;
             });
