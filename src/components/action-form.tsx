@@ -421,12 +421,12 @@ export function ActionForm({
             />
           </div>
           
-          <div className="grid md:grid-cols-2 gap-6">
+          <div className="grid md:grid-cols-2 gap-6 items-start">
              <FormField
                 control={form.control}
                 name="centerId"
                 render={({ field }) => (
-                  <FormItem className="flex flex-col">
+                  <FormItem>
                     <FormLabel>Centre</FormLabel>
                     <Popover open={isCenterPopoverOpen} onOpenChange={setIsCenterPopoverOpen}>
                       <PopoverTrigger asChild>
