@@ -3,7 +3,6 @@
 import { collection, getDocs, doc, addDoc, query, orderBy, updateDoc, deleteDoc, writeBatch, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { ImprovementActionType, ActionCategory, ActionSubcategory, AffectedArea, MasterDataItem, ResponsibilityRole, Center } from '@/lib/types';
-import { locations as mockLocations } from '@/lib/static-data';
 
 export const getActionTypes = async (): Promise<ImprovementActionType[]> => {
   const typesCol = collection(db, 'actionTypes');
@@ -72,9 +71,17 @@ export const getResponsibilityRoles = async (): Promise<ResponsibilityRole[]> =>
 
 export const getCenters = async (): Promise<Center[]> => {
   const centersCol = collection(db, 'locations');
-  const q = query(centersCol, where("estado", "==", "OPERATIVO"), orderBy("descripcion_centro"));
-  const snapshot = await getDocs(q);
-  return snapshot.docs.map(doc => ({ id: doc.id, name: doc.data().descripcion_centro } as Center));
+  const snapshot = await getDocs(centersCol);
+  
+  const allCenters = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+  const operativeCenters = allCenters
+    .filter(center => center.estado === 'OPERATIVO')
+    .map(center => ({ id: center.id, name: center.descripcion_centro } as Center));
+
+  operativeCenters.sort((a, b) => a.name.localeCompare(b.name));
+
+  return operativeCenters;
 };
 
 
