@@ -37,6 +37,9 @@ export default function SettingsPage() {
 
             const actionTypesWithRoleNames = actionTypes.map(at => ({
                 ...at,
+                creationRoleNames: (at.possibleCreationRoles || [])
+                    .map(roleId => responsibilityRoles.find(r => r.id === roleId)?.name || roleId)
+                    .join(', '),
                 analysisRoleNames: (at.possibleAnalysisRoles || [])
                     .map(roleId => responsibilityRoles.find(r => r.id === roleId)?.name || roleId)
                     .join(', '),
@@ -65,6 +68,7 @@ export default function SettingsPage() {
                     data: actionTypesWithRoleNames, 
                     columns: [
                         { key: 'name', label: "Nom" },
+                        { key: 'creationRoleNames', label: "Rols Creació" },
                         { key: 'analysisRoleNames', label: "Rols Anàlisi" },
                         { key: 'closureRoleNames', label: "Rols Tancament" },
                     ] 
@@ -116,7 +120,7 @@ export default function SettingsPage() {
         try {
             const { id, ...dataToSave } = item as any;
             
-            const propertiesToRemove = ['categoryName', 'analysisRoleNames', 'closureRoleNames'];
+            const propertiesToRemove = ['categoryName', 'creationRoleNames', 'analysisRoleNames', 'closureRoleNames'];
             propertiesToRemove.forEach(prop => {
                 if (prop in dataToSave) {
                     delete dataToSave[prop];
