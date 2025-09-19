@@ -1,7 +1,7 @@
 import { collection, doc, getDoc, getDocs, addDoc, updateDoc, query, orderBy, limit, arrayUnion, Timestamp, runTransaction, arrayRemove, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { format } from 'date-fns';
-import type { ImprovementAction, ImprovementActionStatus } from '@/lib/types';
+import type { ImprovementAction, ImprovementActionStatus, ActionUserInfo } from '@/lib/types';
 import { planTraditionalActionWorkflow } from './workflow-service';
 import { getUsers } from './users-service';
 import { getCategories, getSubcategories, getAffectedAreas, getCenters, getActionTypes, getResponsibilityRoles } from './master-data-service';
@@ -155,12 +155,11 @@ export async function createAction(data: CreateActionData, masterData: any): Pro
     const docRef = await addDoc(actionsCol, newActionData);
 
     // Apply initial permissions
-    updateActionPermissions(docRef.id, newActionData.typeId, newActionData.status);
+    await updateActionPermissions(docRef.id, newActionData.typeId, newActionData.status, {id: docRef.id, ...newActionData});
     
-    return {
-        id: docRef.id,
-        ...newActionData,
-    };
+    // Return the full object to update the local state
+    const createdActionDoc = await getDoc(docRef);
+    return { id: createdActionDoc.id, ...createdActionDoc.data() } as ImprovementAction;
 }
 
 
@@ -261,7 +260,7 @@ export async function updateAction(actionId: string, data: any, masterData?: any
     
     // Update permissions if status has changed
     if (statusChanged) {
-        await updateActionPermissions(actionId, dataToUpdate.typeId || originalAction.typeId, newStatus, originalAction);
+        await updateActionPermissions(actionId, dataToUpdate.typeId || originalAction.typeId, newStatus, {...originalAction, ...dataToUpdate, status: newStatus});
     }
 
 
@@ -306,26 +305,50 @@ export async function getFollowedActions(userId: string): Promise<ImprovementAct
 
 export async function updateActionPermissions(actionId: string, typeId: string, status: ImprovementActionStatus, existingAction?: ImprovementAction) {
     const actionDocRef = doc(db, 'actions', actionId);
-    if (!existingAction) {
+    let currentAction = existingAction;
+
+    if (!currentAction) {
         const docSnap = await getDoc(actionDocRef);
         if (docSnap.exists()) {
-            existingAction = docSnap.data() as ImprovementAction;
+            currentAction = docSnap.data() as ImprovementAction;
         } else {
             console.error("Cannot update permissions: Action document not found.");
             return;
         }
     }
+    
+    // Special rule for 'Borrador' state
+    if (status === 'Borrador') {
+        const creatorEmail = currentAction.creator?.email;
+        if (creatorEmail) {
+            await updateDoc(actionDocRef, {
+                readers: [creatorEmail],
+                authors: [creatorEmail],
+            });
+        } else {
+            console.warn(`Action ${actionId} in 'Borrador' state has no creator email. Permissions not set.`);
+             await updateDoc(actionDocRef, {
+                readers: [],
+                authors: [],
+            });
+        }
+        return;
+    }
 
     const permissionRule = await getPermissionRuleForState(typeId, status);
     if (!permissionRule) {
-        console.warn(`No permission rule found for type ${typeId} and status ${status}.`);
+        console.warn(`No permission rule found for type ${typeId} and status ${status}. Setting empty permissions.`);
+        await updateDoc(actionDocRef, {
+            readers: [],
+            authors: [],
+        });
         return;
     }
 
     const allRoles = await getResponsibilityRoles();
 
-    const readers = await resolveRoles(permissionRule.readerRoleIds, allRoles, existingAction);
-    const authors = await resolveRoles(permissionRule.authorRoleIds, allRoles, existingAction);
+    const readers = await resolveRoles(permissionRule.readerRoleIds, allRoles, currentAction);
+    const authors = await resolveRoles(permissionRule.authorRoleIds, allRoles, currentAction);
     
     // Authors are implicitly readers
     const allReaders = [...new Set([...readers, ...authors])];
@@ -335,5 +358,3 @@ export async function updateActionPermissions(actionId: string, typeId: string, 
         authors: authors
     });
 }
-
-    
