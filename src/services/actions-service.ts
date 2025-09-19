@@ -2,7 +2,7 @@
 import { collection, doc, getDoc, getDocs, addDoc, updateDoc, query, orderBy, limit, arrayUnion, Timestamp, runTransaction, arrayRemove, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { format } from 'date-fns';
-import type { ImprovementAction, ProposedAction } from '@/lib/types';
+import type { ImprovementAction, ImprovementActionStatus } from '@/lib/types';
 import { planActionWorkflow } from '@/ai/flows/planActionWorkflow';
 import { getUsers } from './users-service';
 import { getCategories, getSubcategories, getAffectedAreas, getCenters, getActionTypes, getResponsibilityRoles } from './master-data-service';
