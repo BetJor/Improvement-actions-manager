@@ -12,7 +12,7 @@ import {
     getPermissionRules,
 } from "@/lib/data";
 import { useToast } from "@/hooks/use-toast";
-import type { MasterDataItem, PermissionRule } from "@/lib/types";
+import type { MasterDataItem, PermissionRule, ResponsibilityRole } from "@/lib/types";
 import { Loader2 } from "lucide-react";
 
 export default function WorkflowPage() {
@@ -30,6 +30,13 @@ export default function WorkflowPage() {
                 getPermissionRules(),
             ]);
 
+            const processedRoles = responsibilityRoles.map(role => {
+                if (role.type === 'Creator') {
+                    return { ...role, emailPattern: "(Es resol a l'email de l'usuari que crea l'acció)" };
+                }
+                return role;
+            });
+
             const permissionRulesWithNames = permissionRules.map(rule => ({
                 ...rule,
                 actionTypeName: actionTypes.find(at => at.id === rule.actionTypeId)?.name || rule.actionTypeId,
@@ -41,7 +48,7 @@ export default function WorkflowPage() {
             const data = {
                 responsibilityRoles: { 
                     title: "Rols de Responsabilitat", 
-                    data: responsibilityRoles, 
+                    data: processedRoles, 
                     columns: [
                         { key: 'name', label: 'Nom' },
                         { key: 'type', label: 'Tipus' },
