@@ -44,14 +44,6 @@ export default function WorkflowPage() {
                     .join(', '),
             }));
 
-            const processedRoles = responsibilityRoles.map(role => {
-                const roleWithType = role as any;
-                if (roleWithType.type === 'Creator') {
-                    return { ...role, emailPattern: "{{action.creator.email}}" };
-                }
-                return role;
-            });
-
             const permissionRulesWithNames = permissionRules.map(rule => ({
                 ...rule,
                 actionTypeName: actionTypes.find(at => at.id === rule.actionTypeId)?.name || rule.actionTypeId,
@@ -73,7 +65,7 @@ export default function WorkflowPage() {
                 },
                 responsibilityRoles: { 
                     title: "Rols de Responsabilitat", 
-                    data: processedRoles, 
+                    data: responsibilityRoles, 
                     columns: [
                         { key: 'name', label: 'Nom' },
                         { key: 'type', label: 'Tipus' },

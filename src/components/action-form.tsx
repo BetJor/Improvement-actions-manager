@@ -173,14 +173,12 @@ export function ActionForm({
             const center: Center | undefined = masterData.centers.find((c: any) => c.id === selectedCenterId);
             const context = {
                 center: center,
-                action: { creator: user }
+                action: { creator: user } // Pass the creator context for patterns like {{action.creator.email}}
             };
             const resolvedEmail = evaluatePattern(role.emailPattern, context);
             if (resolvedEmail && !resolvedEmail.includes('{{')) {
                options.push({ value: resolvedEmail, label: `${role.name} (${resolvedEmail})` });
             }
-        } else if (role.type === 'Creator' && user.email) {
-          options.push({ value: user.email, label: `${role.name} (${user.email})` });
         }
       }
     });
