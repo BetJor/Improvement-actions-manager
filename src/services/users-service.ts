@@ -80,3 +80,5 @@ export async function deleteUser(userId: string): Promise<void> {
     const docRef = doc(db, 'users', userId);
     await deleteDoc(docRef);
 }
+
+    

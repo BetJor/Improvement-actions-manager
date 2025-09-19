@@ -4,7 +4,7 @@ import { db } from '@/lib/firebase';
 import { format } from 'date-fns';
 import type { ImprovementAction, ImprovementActionStatus, ActionUserInfo } from '@/lib/types';
 import { planTraditionalActionWorkflow } from './workflow-service';
-import { getUsers } from './users-service';
+import { getUsers, getUserById } from './users-service';
 import { getCategories, getSubcategories, getAffectedAreas, getCenters, getActionTypes, getResponsibilityRoles } from './master-data-service';
 import { getPermissionRuleForState, resolveRoles } from './permissions-service';
 
@@ -152,11 +152,23 @@ export async function createAction(data: CreateActionData, masterData: any): Pro
     newActionData.implementationDueDate = workflowPlan.steps.find(s => s.stepName.includes('Implantació'))?.dueDate || '';
     newActionData.closureDueDate = workflowPlan.steps.find(s => s.stepName.includes('Tancament'))?.dueDate || '';
     
-    // 5. Add the new document to Firestore
+    // 5. Apply initial permissions for 'Borrador' state
+    if (newActionData.status === 'Borrador') {
+        // We need to fetch the full user to get the email
+        const creatorDetails = await getUserById(newActionData.creator.id);
+        if (creatorDetails?.email) {
+            newActionData.readers = [creatorDetails.email];
+            newActionData.authors = [creatorDetails.email];
+        }
+    }
+
+    // 6. Add the new document to Firestore
     const docRef = await addDoc(actionsCol, newActionData);
 
-    // 6. Apply initial permissions
-    await updateActionPermissions(docRef.id, newActionData.typeId, newActionData.status, {id: docRef.id, ...newActionData});
+    // 7. If status is not 'Borrador', calculate permissions now
+    if (newActionData.status !== 'Borrador') {
+        await updateActionPermissions(docRef.id, newActionData.typeId, newActionData.status, {id: docRef.id, ...newActionData});
+    }
     
     // Return the full object to update the local state
     const createdActionDoc = await getDoc(docRef);
@@ -320,7 +332,7 @@ export async function updateActionPermissions(actionId: string, typeId: string, 
     
     // Special rule for 'Borrador' state
     if (status === 'Borrador') {
-        const creatorEmail = currentAction.creator?.email;
+        const creatorEmail = currentAction.creator?.email || (await getUserById(currentAction.creator.id))?.email;
         if (creatorEmail) {
             await updateDoc(actionDocRef, {
                 readers: [creatorEmail],
