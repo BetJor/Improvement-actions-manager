@@ -2,7 +2,7 @@ import { collection, doc, getDoc, getDocs, addDoc, updateDoc, query, orderBy, li
 import { db } from '@/lib/firebase';
 import { format } from 'date-fns';
 import type { ImprovementAction, ImprovementActionStatus } from '@/lib/types';
-import { planActionWorkflow } from '@/ai/flows/planActionWorkflow';
+import { planTraditionalActionWorkflow } from './workflow-service';
 import { getUsers } from './users-service';
 import { getCategories, getSubcategories, getAffectedAreas, getCenters, getActionTypes, getResponsibilityRoles } from './master-data-service';
 import { getPermissionRuleForState, resolveRoles } from './permissions-service';
@@ -142,31 +142,20 @@ export async function createAction(data: CreateActionData, masterData: any): Pro
       authors: [],
     };
   
-    // Add the new document to Firestore
+    // 3. Plan the workflow using the traditional method
+    const workflowPlan = await planTraditionalActionWorkflow(newActionData);
+
+    // 4. Add the workflow plan and dates to the action data
+    newActionData.workflowPlan = workflowPlan;
+    newActionData.analysisDueDate = workflowPlan.steps.find(s => s.stepName.includes('Anàlisi'))?.dueDate || '';
+    newActionData.implementationDueDate = workflowPlan.steps.find(s => s.stepName.includes('Implantació'))?.dueDate || '';
+    newActionData.closureDueDate = workflowPlan.steps.find(s => s.stepName.includes('Tancament'))?.dueDate || '';
+    
+    // 5. Add the new document to Firestore
     const docRef = await addDoc(actionsCol, newActionData);
 
     // Apply initial permissions
     updateActionPermissions(docRef.id, newActionData.typeId, newActionData.status);
-
-    // Plan the workflow asynchronously in the background.
-    planActionWorkflow({
-        actionId: newActionId,
-        actionType: typeName,
-        category: categoryName,
-        affectedAreaName: affectedAreasNames.join(', '),
-        responsibleGroupId: data.assignedTo,
-        creationDate: creationDate,
-    }).then(workflowPlan => {
-        // Save the workflow plan back to the action document
-        updateDoc(docRef, { 
-            workflowPlan: workflowPlan,
-            analysisDueDate: workflowPlan.steps.find(s => s.stepName.includes('Análisis'))?.dueDate || '',
-            implementationDueDate: workflowPlan.steps.find(s => s.stepName.includes('Implantación'))?.dueDate || '',
-            closureDueDate: workflowPlan.steps.find(s => s.stepName.includes('Cierre'))?.dueDate || '',
-        });
-    }).catch(error => {
-        console.error("Error planning workflow in background for action:", newActionId, error);
-    });
     
     return {
         id: docRef.id,
@@ -346,3 +335,5 @@ export async function updateActionPermissions(actionId: string, typeId: string, 
         authors: authors
     });
 }
+
+    

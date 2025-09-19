@@ -8,3 +8,6 @@ export * from '@/services/users-service';
 export * from '@/services/ai-service';
 export * from '@/services/storage-service';
 export * from '@/services/permissions-service';
+export * from '@/services/workflow-service';
+
+    
