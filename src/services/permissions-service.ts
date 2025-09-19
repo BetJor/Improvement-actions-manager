@@ -1,6 +1,7 @@
 import { collection, doc, getDocs, addDoc, updateDoc, deleteDoc, query, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { PermissionRule, ResponsibilityRole, ImprovementAction, ImprovementActionStatus } from '@/lib/types';
+import { evaluatePattern } from '@/lib/pattern-evaluator';
 
 
 // --- CRUD for Permission Rules ---
@@ -60,14 +61,17 @@ export async function resolveRoles(
                 if (role.email) resolvedEmails.push(role.email);
                 break;
             case 'Pattern':
-                if (role.emailPattern && action.centerId) {
-                    // Aquí és on es resol el patró: se substitueix {{center.id}} per l'ID real del centre de l'acció.
-                    const resolvedEmail = role.emailPattern.replace('{{center.id}}', action.centerId.toLowerCase());
-                    resolvedEmails.push(resolvedEmail);
+                if (role.emailPattern) {
+                    // This is where the pattern is resolved using the generic evaluator.
+                    const resolvedEmail = evaluatePattern(role.emailPattern, { action });
+                    // Check if the pattern was fully resolved
+                    if (resolvedEmail && !resolvedEmail.includes('{{')) {
+                        resolvedEmails.push(resolvedEmail);
+                    }
                 }
                 break;
             case 'Creator':
-                if (action.creator.email) {
+                 if (action.creator.email) {
                     resolvedEmails.push(action.creator.email);
                 }
                 break;

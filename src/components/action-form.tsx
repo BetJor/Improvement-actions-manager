@@ -45,6 +45,7 @@ import type { ImprovementAction, ImprovementActionType, ResponsibilityRole, Affe
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "./ui/card"
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "./ui/dropdown-menu"
 import { useAuth } from "@/hooks/use-auth"
+import { evaluatePattern } from "@/lib/pattern-evaluator"
 
 const formSchema = z.object({
   title: z.string().min(1, "El títol és requerit."),
@@ -169,13 +170,15 @@ export function ActionForm({
         if (role.type === 'Fixed' && role.email) {
           options.push({ value: role.email, label: `${role.name} (${role.email})` });
         } else if (role.type === 'Pattern' && role.emailPattern) {
-          if (selectedCenterId) {
-             const center: Center | undefined = masterData.centers.find((c: any) => c.id === selectedCenterId);
-             if (center) {
-               const resolvedEmail = role.emailPattern.replace('{{center.id}}', center.id!.toLowerCase());
+            const center: Center | undefined = masterData.centers.find((c: any) => c.id === selectedCenterId);
+            const context = {
+                center: center,
+                action: { creator: user }
+            };
+            const resolvedEmail = evaluatePattern(role.emailPattern, context);
+            if (resolvedEmail && !resolvedEmail.includes('{{')) {
                options.push({ value: resolvedEmail, label: `${role.name} (${resolvedEmail})` });
-             }
-          }
+            }
         } else if (role.type === 'Creator' && user.email) {
           options.push({ value: user.email, label: `${role.name} (${user.email})` });
         }
@@ -422,65 +425,59 @@ export function ActionForm({
           </div>
           
           <div className="grid md:grid-cols-2 gap-6 items-start">
-             <FormField
-                control={form.control}
-                name="centerId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Centre</FormLabel>
-                    <Popover open={isCenterPopoverOpen} onOpenChange={setIsCenterPopoverOpen}>
-                      <PopoverTrigger asChild>
-                        <FormControl>
-                          <Button
-                            variant="outline"
-                            role="combobox"
-                            className={cn(
-                              "w-full justify-between",
-                              !field.value && "text-muted-foreground"
-                            )}
-                          >
-                            {field.value
-                              ? masterData.centers.find(
-                                  (center: Center) => center.id === field.value
-                                )?.name
-                              : "Selecciona un centre"}
-                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                          </Button>
-                        </FormControl>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-[--radix-popover-trigger-width] max-h-[--radix-popover-content-available-height] p-0">
-                        <Command>
-                          <CommandInput placeholder="Cerca un centre..." />
-                          <CommandEmpty>No s'ha trobat cap centre.</CommandEmpty>
-                          <CommandGroup>
-                            {masterData?.centers.map((center: Center) => (
-                              <CommandItem
-                                value={center.name}
-                                key={center.id}
-                                onSelect={() => {
-                                  form.setValue("centerId", center.id);
-                                  setIsCenterPopoverOpen(false);
-                                }}
-                              >
-                                <Check
-                                  className={cn(
-                                    "mr-2 h-4 w-4",
-                                    center.id === field.value
-                                      ? "opacity-100"
-                                      : "opacity-0"
-                                  )}
-                                />
-                                {center.name}
-                              </CommandItem>
-                            ))}
-                          </CommandGroup>
-                        </Command>
-                      </PopoverContent>
-                    </Popover>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+             <FormItem>
+                <FormLabel>Centre</FormLabel>
+                <Popover open={isCenterPopoverOpen} onOpenChange={setIsCenterPopoverOpen}>
+                    <PopoverTrigger asChild>
+                    <FormControl>
+                        <Button
+                        variant="outline"
+                        role="combobox"
+                        className={cn(
+                            "w-full justify-between",
+                            !form.getValues("centerId") && "text-muted-foreground"
+                        )}
+                        >
+                        {form.getValues("centerId")
+                            ? masterData.centers.find(
+                                (center: Center) => center.id === form.getValues("centerId")
+                            )?.name
+                            : "Selecciona un centre"}
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                    </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[--radix-popover-trigger-width] max-h-[--radix-popover-content-available-height] p-0">
+                    <Command>
+                        <CommandInput placeholder="Cerca un centre..." />
+                        <CommandEmpty>No s'ha trobat cap centre.</CommandEmpty>
+                        <CommandGroup>
+                        {masterData?.centers.map((center: Center) => (
+                            <CommandItem
+                            value={center.name}
+                            key={center.id}
+                            onSelect={() => {
+                                form.setValue("centerId", center.id);
+                                setIsCenterPopoverOpen(false);
+                            }}
+                            >
+                            <Check
+                                className={cn(
+                                "mr-2 h-4 w-4",
+                                center.id === form.getValues("centerId")
+                                    ? "opacity-100"
+                                    : "opacity-0"
+                                )}
+                            />
+                            {center.name}
+                            </CommandItem>
+                        ))}
+                        </CommandGroup>
+                    </Command>
+                    </PopoverContent>
+                </Popover>
+                <FormMessage />
+            </FormItem>
             <FormField
               control={form.control}
               name="affectedAreasIds"
