@@ -65,7 +65,7 @@ interface MasterDataFormDialogProps {
 }
 
 function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, title, onSave, extraData }: MasterDataFormDialogProps) {
-  const [formData, setFormData] = useState<MasterDataItem>(item || { name: "" })
+  const [formData, setFormData] = useState<MasterDataItem>({ name: "" })
   const { toast } = useToast()
 
   useEffect(() => {
@@ -121,68 +121,68 @@ function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, title, 
     }
 
     if (collectionName === 'actionTypes' && extraData?.responsibilityRoles) {
-        const actionTypeData = formData as any; 
+      const actionTypeData = formData as any;
 
-        const handleRoleSelection = (roleId: string, type: 'creation' | 'analysis' | 'closure') => {
-            const fieldNameMapping = {
-                creation: 'possibleCreationRoles',
-                analysis: 'possibleAnalysisRoles',
-                closure: 'possibleClosureRoles'
-            };
-            const fieldName = fieldNameMapping[type];
-            const currentRoles = actionTypeData[fieldName] || [];
-            const newRoles = currentRoles.includes(roleId)
-                ? currentRoles.filter((id: string) => id !== roleId)
-                : [...currentRoles, roleId];
-            setFormData({ ...formData, [fieldName]: newRoles });
+      const handleRoleSelection = (roleId: string, type: 'creation' | 'analysis' | 'closure') => {
+        const fieldNameMapping = {
+          creation: 'possibleCreationRoles',
+          analysis: 'possibleAnalysisRoles',
+          closure: 'possibleClosureRoles'
         };
+        const fieldName = fieldNameMapping[type];
+        const currentRoles = actionTypeData[fieldName] || [];
+        const newRoles = currentRoles.includes(roleId)
+          ? currentRoles.filter((id: string) => id !== roleId)
+          : [...currentRoles, roleId];
+        setFormData({ ...formData, [fieldName]: newRoles });
+      };
 
-        const renderDropdown = (type: 'creation' | 'analysis' | 'closure', label: string) => {
-            const fieldName = `possible${type.charAt(0).toUpperCase() + type.slice(1)}Roles` as keyof ImprovementActionType;
-            const selectedRoles = (actionTypeData[fieldName] || []) as string[];
-            
-            return (
-                <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor={`${type}-roles`} className="text-right">{label}</Label>
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="outline" className="col-span-3 justify-between">
-                                <span className="truncate">
-                                    {(selectedRoles.length > 0
-                                        ? extraData.responsibilityRoles!
-                                            .filter(r => selectedRoles.includes(r.id!))
-                                            .map(r => r.name)
-                                            .join(', ')
-                                        : "Selecciona rols")}
-                                </span>
-                                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent className="w-[300px]">
-                            <DropdownMenuLabel>{label}</DropdownMenuLabel>
-                            <DropdownMenuSeparator />
-                            {extraData.responsibilityRoles!.map((role) => (
-                                 <DropdownMenuCheckboxItem
-                                    key={role.id}
-                                    checked={selectedRoles.includes(role.id!)}
-                                    onCheckedChange={() => handleRoleSelection(role.id!, type)}
-                                 >
-                                    {role.name}
-                                </DropdownMenuCheckboxItem>
-                            ))}
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                </div>
-            );
-        };
-        
+      const renderDropdown = (type: 'creation' | 'analysis' | 'closure', label: string) => {
+        const fieldName = `possible${type.charAt(0).toUpperCase() + type.slice(1)}Roles` as keyof ImprovementActionType;
+        const selectedRoles = (actionTypeData[fieldName] || []) as string[];
+
         return (
-            <>
-                {renderDropdown('creation', 'Rols per a la Creació')}
-                {renderDropdown('analysis', 'Rols per a l\'Anàlisi')}
-                {renderDropdown('closure', 'Rols per al Tancament')}
-            </>
-        )
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor={`${type}-roles`} className="text-right">{label}</Label>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="col-span-3 justify-between">
+                  <span className="truncate">
+                    {selectedRoles.length > 0
+                      ? extraData.responsibilityRoles!
+                          .filter(r => selectedRoles.includes(r.id!))
+                          .map(r => r.name)
+                          .join(', ')
+                      : "Selecciona rols"}
+                  </span>
+                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-[300px]">
+                <DropdownMenuLabel>{label}</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {extraData.responsibilityRoles!.map((role) => (
+                  <DropdownMenuCheckboxItem
+                    key={role.id}
+                    checked={selectedRoles.includes(role.id!)}
+                    onCheckedChange={() => handleRoleSelection(role.id!, type)}
+                  >
+                    {role.name}
+                  </DropdownMenuCheckboxItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        );
+      };
+
+      return (
+        <>
+          {renderDropdown('creation', 'Rols per a la Creació')}
+          {renderDropdown('analysis', 'Rols per a l\'Anàlisi')}
+          {renderDropdown('closure', 'Rols per al Tancament')}
+        </>
+      )
     }
 
     if (collectionName === 'responsibilityRoles') {
