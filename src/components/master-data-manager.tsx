@@ -96,7 +96,9 @@ function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, title, 
     setIsOpen(false)
   }
 
-  const renderSpecificFields = () => {
+ const renderSpecificFields = () => {
+    const actionTypeData = formData as any;
+
     if (collectionName === 'subcategories' && extraData?.categories) {
         return (
              <div className="grid grid-cols-4 items-center gap-4">
@@ -121,15 +123,7 @@ function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, title, 
     }
 
     if (collectionName === 'actionTypes' && extraData?.responsibilityRoles) {
-      const actionTypeData = formData as any;
-
-      const handleRoleSelection = (roleId: string, type: 'creation' | 'analysis' | 'closure') => {
-        const fieldNameMapping = {
-          creation: 'possibleCreationRoles',
-          analysis: 'possibleAnalysisRoles',
-          closure: 'possibleClosureRoles'
-        };
-        const fieldName = fieldNameMapping[type];
+      const handleRoleSelection = (roleId: string, fieldName: 'possibleCreationRoles' | 'possibleAnalysisRoles' | 'possibleClosureRoles') => {
         const currentRoles = actionTypeData[fieldName] || [];
         const newRoles = currentRoles.includes(roleId)
           ? currentRoles.filter((id: string) => id !== roleId)
@@ -137,18 +131,12 @@ function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, title, 
         setFormData({ ...formData, [fieldName]: newRoles });
       };
 
-      const renderDropdown = (type: 'creation' | 'analysis' | 'closure', label: string) => {
-        const fieldNameMapping = {
-            creation: 'possibleCreationRoles',
-            analysis: 'possibleAnalysisRoles',
-            closure: 'possibleClosureRoles'
-        };
-        const fieldName = fieldNameMapping[type];
+      const renderDropdown = (fieldName: 'possibleCreationRoles' | 'possibleAnalysisRoles' | 'possibleClosureRoles', label: string) => {
         const selectedRoles = (actionTypeData[fieldName] || []) as string[];
 
         return (
           <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor={`${type}-roles`} className="text-right">{label}</Label>
+            <Label htmlFor={fieldName} className="text-right">{label}</Label>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" className="col-span-3 justify-between">
@@ -170,7 +158,7 @@ function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, title, 
                   <DropdownMenuCheckboxItem
                     key={role.id}
                     checked={selectedRoles.includes(role.id!)}
-                    onCheckedChange={() => handleRoleSelection(role.id!, type)}
+                    onCheckedChange={() => handleRoleSelection(role.id!, fieldName)}
                   >
                     {role.name}
                   </DropdownMenuCheckboxItem>
@@ -183,9 +171,9 @@ function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, title, 
 
       return (
         <>
-          {renderDropdown('creation', 'Rols per a la Creació')}
-          {renderDropdown('analysis', 'Rols per a l\'Anàlisi')}
-          {renderDropdown('closure', 'Rols per al Tancament')}
+          {renderDropdown('possibleCreationRoles', 'Rols per a la Creació')}
+          {renderDropdown('possibleAnalysisRoles', 'Rols per a l\'Anàlisi')}
+          {renderDropdown('possibleClosureRoles', 'Rols per al Tancament')}
         </>
       )
     }
@@ -302,24 +290,12 @@ function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, title, 
         )
     }
 
-     return (collectionName !== 'permissionMatrix') ? (
-        <div className="grid grid-cols-4 items-center gap-4">
-          <Label htmlFor="name" className="text-right">
-            Nom
-          </Label>
-          <Input
-            id="name"
-            value={formData.name}
-            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-            className="col-span-3"
-          />
-        </div>
-      ) : null;
+     return null;
   }
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogContent>
+      <DialogContent className={cn(collectionName === 'actionTypes' && 'sm:max-w-2xl')}>
         <DialogHeader>
           <DialogTitle>{item ? "Editar" : "Afegir Nou"} {title}</DialogTitle>
           <DialogDescription>
@@ -327,6 +303,17 @@ function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, title, 
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="name" className="text-right">
+              Nom
+            </Label>
+            <Input
+              id="name"
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              className="col-span-3"
+            />
+          </div>
           {renderSpecificFields()}
         </div>
         <DialogFooter>
@@ -506,8 +493,3 @@ export function MasterDataManager({ data, onSave, onDelete, activeTab, setActive
     </>
   )
 }
-
-    
-    
-
-    
