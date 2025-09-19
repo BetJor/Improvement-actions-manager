@@ -1,4 +1,3 @@
-
 import { collection, doc, getDoc, getDocs, addDoc, updateDoc, query, orderBy, limit, arrayUnion, Timestamp, runTransaction, arrayRemove, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { format } from 'date-fns';
@@ -87,7 +86,7 @@ export const getActionById = async (id: string): Promise<ImprovementAction | nul
 }
 
 // Function to create a new action
-export async function createAction(data: CreateActionData, masterData: any): Promise<string> {
+export async function createAction(data: CreateActionData, masterData: any): Promise<ImprovementAction> {
     const actionsCol = collection(db, 'actions');
   
     // 1. Get the last actionId to generate the new one
@@ -116,7 +115,7 @@ export async function createAction(data: CreateActionData, masterData: any): Pro
     const centerName = masterData.centers.find((c: any) => c.id === data.centerId)?.name || data.centerId;
     const typeName = masterData.actionTypes.find((t: any) => t.id === data.typeId)?.name || data.typeId;
 
-    const newAction: Omit<ImprovementAction, 'id'> = {
+    const newActionData: Omit<ImprovementAction, 'id'> = {
       actionId: newActionId,
       title: data.title,
       category: categoryName,
@@ -144,13 +143,12 @@ export async function createAction(data: CreateActionData, masterData: any): Pro
     };
   
     // Add the new document to Firestore
-    const docRef = await addDoc(actionsCol, newAction);
+    const docRef = await addDoc(actionsCol, newActionData);
 
     // Apply initial permissions
-    updateActionPermissions(docRef.id, newAction.typeId, newAction.status);
+    updateActionPermissions(docRef.id, newActionData.typeId, newActionData.status);
 
     // Plan the workflow asynchronously in the background.
-    // We don't await this so the UI can respond immediately.
     planActionWorkflow({
         actionId: newActionId,
         actionType: typeName,
@@ -168,11 +166,12 @@ export async function createAction(data: CreateActionData, masterData: any): Pro
         });
     }).catch(error => {
         console.error("Error planning workflow in background for action:", newActionId, error);
-        // Optionally, you could update the action with an error status or log this error more permanently.
     });
     
-    // Return the new document ID immediately
-    return docRef.id;
+    return {
+        id: docRef.id,
+        ...newActionData,
+    };
 }
 
 
@@ -239,6 +238,14 @@ export async function updateAction(actionId: string, data: any, masterData?: any
 
         // Handle closure logic for non-compliant actions
         if (data.closure && !data.closure.isCompliant) {
+            const allMasterData = {
+                categories: await getCategories(),
+                subcategories: await getSubcategories(),
+                affectedAreas: await getAffectedAreas(),
+                centers: await getCenters(),
+                actionTypes: await getActionTypes(),
+                responsibilityRoles: await getResponsibilityRoles(),
+            };
             const bisActionData: CreateActionData = {
                 title: `${originalAction.title} BIS`,
                 description: `${originalAction.description}\n\n--- \nObservacions de tancament no conforme:\n${data.closure.notes}`,
@@ -252,13 +259,6 @@ export async function updateAction(actionId: string, data: any, masterData?: any
                 status: 'Borrador',
                 originalActionId: originalAction.id,
                 originalActionTitle: `${originalAction.actionId}: ${originalAction.title}`
-            };
-             const allMasterData = {
-                categories: await getCategories(),
-                subcategories: await getSubcategories(),
-                affectedAreas: await getAffectedAreas(),
-                centers: await getCenters(),
-                actionTypes: await getActionTypes(),
             };
             await createAction(bisActionData, allMasterData);
         }

@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useEffect } from "react"
@@ -11,6 +10,7 @@ import { ActionForm } from "@/components/action-form"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Loader2 } from "lucide-react"
 import { useTabs } from "@/hooks/use-tabs"
+import { useActionState } from "@/hooks/use-action-state"
 
 
 export default function NewActionPage() {
@@ -19,6 +19,7 @@ export default function NewActionPage() {
   const router = useRouter()
   const { user } = useAuth()
   const { closeCurrentTab } = useTabs();
+  const { setActions } = useActionState();
   
   const [masterData, setMasterData] = useState<any>(null);
   const [isLoadingData, setIsLoadingData] = useState(true);
@@ -82,8 +83,11 @@ export default function NewActionPage() {
           avatar: user.avatar || undefined,
         },
       };
-      await createAction(actionData, masterData);
+      const newAction = await createAction(actionData, masterData);
       
+      // Optimistic update of the global state
+      setActions(prevActions => [newAction, ...prevActions]);
+
       toast({
         title: t("form.toast.title"),
         description: t("form.toast.description"),
@@ -91,7 +95,6 @@ export default function NewActionPage() {
       
       closeCurrentTab();
       router.push("/actions");
-      router.refresh();
 
     } catch (error) {
       console.error("Error creating action:", error);
