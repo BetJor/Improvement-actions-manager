@@ -18,30 +18,13 @@ export default function DashboardPage() {
   const assignedActions = useMemo(() => {
     if (!user || !actions) return [];
   
-    const isUserTurnToAct = (action: ImprovementAction): boolean => {
-      switch (action.status) {
-        case 'Pendiente Análisis':
-          return user.email === action.responsibleGroupId;
-        
-        case 'Pendiente Comprobación':
-          const hasPendingProposedActions = action.analysis?.proposedActions?.some(pa => pa.status === 'Pendent');
-          if (hasPendingProposedActions) {
-            return action.analysis?.proposedActions.some(pa => pa.responsibleUserId === user.id && pa.status === 'Pendent') || false;
-          }
-          return user.id === action.analysis?.verificationResponsibleUserId;
+    // An action is pending for the user if their email is in the 'authors' array
+    // and the action is not finalized.
+    return actions.filter(action => 
+        action.status !== 'Finalizada' &&
+        action.authors?.includes(user.email)
+    );
 
-        case 'Pendiente de Cierre':
-          return user.id === action.creator.id;
-        
-        default:
-           if (action.status !== 'Borrador' && action.status !== 'Finalizada') {
-              return action.analysis?.proposedActions?.some(pa => pa.responsibleUserId === user.id && pa.status === 'Pendent') || false;
-           }
-          return false;
-      }
-    };
-  
-    return actions.filter(action => isUserTurnToAct(action));
   }, [actions, user]);
 
 
