@@ -138,7 +138,12 @@ function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, title, 
       };
 
       const renderDropdown = (type: 'creation' | 'analysis' | 'closure', label: string) => {
-        const fieldName = `possible${type.charAt(0).toUpperCase() + type.slice(1)}Roles` as keyof ImprovementActionType;
+        const fieldNameMapping = {
+            creation: 'possibleCreationRoles',
+            analysis: 'possibleAnalysisRoles',
+            closure: 'possibleClosureRoles'
+        };
+        const fieldName = fieldNameMapping[type];
         const selectedRoles = (actionTypeData[fieldName] || []) as string[];
 
         return (
@@ -503,4 +508,6 @@ export function MasterDataManager({ data, onSave, onDelete, activeTab, setActive
 }
 
     
+    
+
     
