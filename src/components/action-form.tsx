@@ -172,8 +172,10 @@ export function ActionForm({
         } else if (role.type === 'Pattern' && role.emailPattern) {
             const center: Center | undefined = masterData.centers.find((c: any) => c.id === selectedCenterId);
             const context = {
-                center: center,
-                action: { creator: user } // Pass the creator context for patterns like {{action.creator.email}}
+                action: { 
+                    creator: user,
+                    center: center
+                }
             };
             const resolvedEmail = evaluatePattern(role.emailPattern, context);
             if (resolvedEmail && !resolvedEmail.includes('{{')) {
