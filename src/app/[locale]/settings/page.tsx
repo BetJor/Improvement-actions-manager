@@ -12,9 +12,10 @@ import {
     addMasterDataItem,
     updateMasterDataItem,
     deleteMasterDataItem,
+    getResponsibilityRoles,
 } from "@/lib/data";
 import { useToast } from "@/hooks/use-toast";
-import type { MasterDataItem } from "@/lib/types";
+import type { MasterDataItem, ResponsibilityRole } from "@/lib/types";
 import { Loader2 } from "lucide-react";
 
 export default function SettingsPage() {
@@ -26,12 +27,24 @@ export default function SettingsPage() {
     const loadData = useCallback(async (currentTab?: string) => {
         setIsLoading(true);
         try {
-            const [actionTypes, categories, subcategories, affectedAreas] = await Promise.all([
+            const [actionTypes, categories, subcategories, affectedAreas, responsibilityRoles] = await Promise.all([
                 getActionTypes(),
                 getCategories(),
                 getSubcategories(),
                 getAffectedAreas(),
+                getResponsibilityRoles(),
             ]);
+
+            const actionTypesWithRoleNames = actionTypes.map(at => ({
+                ...at,
+                analysisRoleNames: (at.possibleAnalysisRoles || [])
+                    .map(roleId => responsibilityRoles.find(r => r.id === roleId)?.name || roleId)
+                    .join(', '),
+                closureRoleNames: (at.possibleClosureRoles || [])
+                    .map(roleId => responsibilityRoles.find(r => r.id === roleId)?.name || roleId)
+                    .join(', '),
+            }));
+
 
             const subcategoriesWithCategoryName = subcategories.map(s => ({
               ...s, 
@@ -49,9 +62,11 @@ export default function SettingsPage() {
             const data = {
                 actionTypes: { 
                     title: "Tipus d'Acció", 
-                    data: actionTypes, 
+                    data: actionTypesWithRoleNames, 
                     columns: [
                         { key: 'name', label: "Nom" },
+                        { key: 'analysisRoleNames', label: "Rols Anàlisi" },
+                        { key: 'closureRoleNames', label: "Rols Tancament" },
                     ] 
                 },
                 categories: { 
@@ -101,7 +116,7 @@ export default function SettingsPage() {
         try {
             const { id, ...dataToSave } = item as any;
             
-            const propertiesToRemove = ['categoryName'];
+            const propertiesToRemove = ['categoryName', 'analysisRoleNames', 'closureRoleNames'];
             propertiesToRemove.forEach(prop => {
                 if (prop in dataToSave) {
                     delete dataToSave[prop];
