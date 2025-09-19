@@ -93,6 +93,7 @@ interface TabsContextType {
     activeTab: string | null;
     openTab: (tabData: TabInput) => void;
     closeTab: (tabId: string) => void;
+    closeCurrentTab: () => void;
     setActiveTab: (tabId: string) => void;
 }
 
@@ -213,11 +214,18 @@ export function TabsProvider({ children, initialPath }: { children: ReactNode, i
         }
     };
 
+    const closeCurrentTab = () => {
+        if (activeTab) {
+            closeTab(activeTab);
+        }
+    }
+
     const value = {
         tabs,
         activeTab,
         openTab,
         closeTab,
+        closeCurrentTab,
         setActiveTab,
     };
 

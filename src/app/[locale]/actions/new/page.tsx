@@ -10,6 +10,7 @@ import { createAction, getActionTypes, getCategories, getSubcategories, getAffec
 import { ActionForm } from "@/components/action-form"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Loader2 } from "lucide-react"
+import { useTabs } from "@/hooks/use-tabs"
 
 
 export default function NewActionPage() {
@@ -17,6 +18,7 @@ export default function NewActionPage() {
   const { toast } = useToast()
   const router = useRouter()
   const { user } = useAuth()
+  const { closeCurrentTab } = useTabs();
   
   const [masterData, setMasterData] = useState<any>(null);
   const [isLoadingData, setIsLoadingData] = useState(true);
@@ -87,8 +89,10 @@ export default function NewActionPage() {
         description: t("form.toast.description"),
       });
       
+      closeCurrentTab();
       router.push("/actions");
       router.refresh();
+
     } catch (error) {
       console.error("Error creating action:", error);
       toast({
