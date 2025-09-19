@@ -29,6 +29,7 @@ import { useRouter } from "next/navigation"
 import { UpdateActionStatusDialog } from "./update-action-status-dialog"
 import { useFollowAction } from "@/hooks/use-follow-action"
 import { useActionState } from "@/hooks/use-action-state"
+import { useTabs } from "@/hooks/use-tabs"
 
 
 interface ActionDetailsTabProps {
@@ -42,6 +43,7 @@ export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTab
     const tActionsTable = useTranslations("Actions.table")
     const { toast } = useToast()
     const router = useRouter();
+    const { closeCurrentTab } = useTabs();
     const { user } = useAuth()
     const { actions, setActions } = useActionState();
 
@@ -86,8 +88,13 @@ export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTab
             }
             
             await updateAction(action.id, dataToUpdate, masterData, status);
-            setIsEditing(false);
-            await handleActionUpdate();
+
+            if (status === 'Pendiente Análisis') {
+                closeCurrentTab();
+            } else {
+                setIsEditing(false);
+                await handleActionUpdate();
+            }
         } catch (error) {
             console.error("Error updating action:", error);
             toast({
