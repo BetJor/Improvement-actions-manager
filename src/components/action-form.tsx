@@ -425,59 +425,64 @@ export function ActionForm({
           </div>
           
           <div className="grid md:grid-cols-2 gap-6 items-start">
-             <FormItem>
-                <FormLabel>Centre</FormLabel>
-                <Popover open={isCenterPopoverOpen} onOpenChange={setIsCenterPopoverOpen}>
-                    <PopoverTrigger asChild>
-                    <FormControl>
-                        <Button
-                        variant="outline"
-                        role="combobox"
-                        className={cn(
-                            "w-full justify-between",
-                            !form.getValues("centerId") && "text-muted-foreground"
-                        )}
-                        >
-                        {form.getValues("centerId")
-                            ? masterData.centers.find(
-                                (center: Center) => center.id === form.getValues("centerId")
-                            )?.name
-                            : "Selecciona un centre"}
-                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                        </Button>
-                    </FormControl>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-[--radix-popover-trigger-width] max-h-[--radix-popover-content-available-height] p-0">
-                    <Command>
-                        <CommandInput placeholder="Cerca un centre..." />
-                        <CommandEmpty>No s'ha trobat cap centre.</CommandEmpty>
-                        <CommandGroup>
-                        {masterData?.centers.map((center: Center) => (
-                            <CommandItem
-                            value={center.name}
-                            key={center.id}
-                            onSelect={() => {
-                                form.setValue("centerId", center.id);
-                                setIsCenterPopoverOpen(false);
-                            }}
+             <FormField
+              control={form.control}
+              name="centerId"
+              render={({ field }) => (
+                <FormItem className="flex flex-col">
+                    <FormLabel>Centre</FormLabel>
+                    <Popover open={isCenterPopoverOpen} onOpenChange={setIsCenterPopoverOpen}>
+                        <PopoverTrigger asChild>
+                        <FormControl>
+                            <Button
+                            variant="outline"
+                            role="combobox"
+                            className={cn(
+                                "w-full justify-between",
+                                !field.value && "text-muted-foreground"
+                            )}
                             >
-                            <Check
-                                className={cn(
-                                "mr-2 h-4 w-4",
-                                center.id === form.getValues("centerId")
-                                    ? "opacity-100"
-                                    : "opacity-0"
-                                )}
-                            />
-                            {center.name}
-                            </CommandItem>
-                        ))}
-                        </CommandGroup>
-                    </Command>
-                    </PopoverContent>
-                </Popover>
-                <FormMessage />
-            </FormItem>
+                            {field.value
+                                ? masterData.centers.find(
+                                    (center: Center) => center.id === field.value
+                                )?.name
+                                : "Selecciona un centre"}
+                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                            </Button>
+                        </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-[--radix-popover-trigger-width] max-h-[--radix-popover-content-available-height] p-0">
+                        <Command>
+                            <CommandInput placeholder="Cerca un centre..." />
+                            <CommandEmpty>No s'ha trobat cap centre.</CommandEmpty>
+                            <CommandGroup>
+                            {masterData?.centers.map((center: Center) => (
+                                <CommandItem
+                                value={center.name}
+                                key={center.id}
+                                onSelect={() => {
+                                    form.setValue("centerId", center.id);
+                                    setIsCenterPopoverOpen(false);
+                                }}
+                                >
+                                <Check
+                                    className={cn(
+                                    "mr-2 h-4 w-4",
+                                    center.id === field.value
+                                        ? "opacity-100"
+                                        : "opacity-0"
+                                    )}
+                                />
+                                {center.name}
+                                </CommandItem>
+                            ))}
+                            </CommandGroup>
+                        </Command>
+                        </PopoverContent>
+                    </Popover>
+                    <FormMessage />
+                </FormItem>
+            )} />
             <FormField
               control={form.control}
               name="affectedAreasIds"
