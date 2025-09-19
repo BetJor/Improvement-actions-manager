@@ -70,16 +70,6 @@ export async function resolveRoles(
                     }
                 }
                 break;
-            case 'Creator':
-                 if (action.creator.email) {
-                    resolvedEmails.push(action.creator.email);
-                }
-                break;
-            case 'Assignee':
-                if (action.responsibleGroupId) {
-                    resolvedEmails.push(action.responsibleGroupId);
-                }
-                break;
         }
     }
 

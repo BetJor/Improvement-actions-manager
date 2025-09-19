@@ -32,40 +32,8 @@ export const getResponsibilityRoles = async (): Promise<ResponsibilityRole[]> =>
     const rolesCol = collection(db, 'responsibilityRoles');
     const snapshot = await getDocs(query(rolesCol, orderBy("name")));
     
-    let roles = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ResponsibilityRole));
-
-    // Seed dynamic roles if they don't exist in the database
-    const hasAssignee = roles.some(role => role.type === 'Assignee');
-    const hasCreator = roles.some(role => role.type === 'Creator');
-
-    if (!hasAssignee || !hasCreator) {
-        const batch = writeBatch(db);
-        
-        if (!hasAssignee) {
-            const assigneeRole: Omit<ResponsibilityRole, 'id'> = {
-                name: 'Assignat (Dinàmic)',
-                type: 'Assignee'
-            };
-            const assigneeRef = doc(collection(db, 'responsibilityRoles'));
-            batch.set(assigneeRef, assigneeRole);
-            roles.push({ ...assigneeRole, id: assigneeRef.id });
-        }
-        
-        if (!hasCreator) {
-            const creatorRole: Omit<ResponsibilityRole, 'id'> = {
-                name: 'Creador (Dinàmic)',
-                type: 'Creator'
-            };
-            const creatorRef = doc(collection(db, 'responsibilityRoles'));
-            batch.set(creatorRef, creatorRole);
-            roles.push({ ...creatorRole, id: creatorRef.id });
-        }
-        
-        await batch.commit();
-        // Re-sort roles after adding new ones
-        roles.sort((a, b) => a.name.localeCompare(b.name));
-    }
-
+    const roles = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ResponsibilityRole));
+    
     return roles;
 };
 

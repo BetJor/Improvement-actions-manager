@@ -45,7 +45,8 @@ export default function WorkflowPage() {
             }));
 
             const processedRoles = responsibilityRoles.map(role => {
-                if (role.type === 'Creator') {
+                const roleWithType = role as any;
+                if (roleWithType.type === 'Creator') {
                     return { ...role, emailPattern: "{{action.creator.email}}" };
                 }
                 return role;
