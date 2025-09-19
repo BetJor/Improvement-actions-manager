@@ -61,6 +61,7 @@ export async function resolveRoles(
                 break;
             case 'Pattern':
                 if (role.emailPattern && action.centerId) {
+                    // Aquí és on es resol el patró: se substitueix {{center.id}} per l'ID real del centre de l'acció.
                     const resolvedEmail = role.emailPattern.replace('{{center.id}}', action.centerId.toLowerCase());
                     resolvedEmails.push(resolvedEmail);
                 }
