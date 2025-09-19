@@ -75,9 +75,9 @@ export default function NewActionPage() {
         ...values,
         status,
         creator: {
-          id: user.uid,
-          name: user.displayName || "Usuari desconegut",
-          avatar: user.photoURL || undefined,
+          id: user.id,
+          name: user.name || "Usuari desconegut",
+          avatar: user.avatar || undefined,
         },
       };
       await createAction(actionData, masterData);
