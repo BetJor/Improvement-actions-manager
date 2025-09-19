@@ -1,7 +1,9 @@
 
+
 import { collection, getDocs, doc, addDoc, query, orderBy, updateDoc, deleteDoc, writeBatch } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { ImprovementActionType, ActionCategory, ActionSubcategory, AffectedArea, MasterDataItem, ResponsibilityRole, Center } from '@/lib/types';
+import { locations as mockLocations } from '@/lib/static-data';
 
 export const getActionTypes = async (): Promise<ImprovementActionType[]> => {
   const typesCol = collection(db, 'actionTypes');
@@ -69,18 +71,22 @@ export const getResponsibilityRoles = async (): Promise<ResponsibilityRole[]> =>
 };
 
 export const getCenters = async (): Promise<Center[]> => {
-  const centersCol = collection(db, 'centers');
-  const snapshot = await getDocs(query(centersCol, orderBy("name")));
+  const centersCol = collection(db, 'locations');
+  const snapshot = await getDocs(query(centersCol, orderBy("descripcion_centro")));
   if (snapshot.empty) {
-    const mockCenters: Center[] = [
-      { id: 'bcn', name: 'Barcelona' },
-      { id: 'mad', name: 'Madrid' },
-      { id: 'val', name: 'València' },
-      { id: 'sev', name: 'Sevilla' },
-    ];
-    return Promise.resolve(mockCenters);
+      console.log("Locations collection is empty. Populating from static data...");
+      const batch = writeBatch(db);
+      mockLocations.forEach(location => {
+          const docRef = doc(centersCol, location.codigo_centro);
+          batch.set(docRef, location);
+      });
+      await batch.commit();
+      
+      const newSnapshot = await getDocs(query(centersCol, orderBy("descripcion_centro")));
+      return newSnapshot.docs.map(doc => ({ id: doc.id, name: doc.data().descripcion_centro } as Center));
   }
-  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Center));
+  
+  return snapshot.docs.map(doc => ({ id: doc.id, name: doc.data().descripcion_centro } as Center));
 };
 
 // --- CRUD for Master Data ---

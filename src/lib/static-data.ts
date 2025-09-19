@@ -1,3 +1,4 @@
+
 import type { User, UserGroup } from './types';
 
 export const users: User[] = [
@@ -22,4 +23,10 @@ export const users: User[] = [
     { id: 'rsc-committee@example.com', name: 'Comitè RSC', userIds: ['user-3', 'user-4'] },
     { id: 'bcn_ca_director@example.com', name: 'Direcció CA (BCN)', userIds: []}
   ];
-  
+
+export const locations = [
+  { "codigo_centro": "0101", "descripcion_centro": "Llodio", "responsable": "Llodio CA_Director", "estado": "OPERATIVO", "organizacion": "Organización Territorial", "tipo_centro": "Centro Asistencial", "ambito_comunidad": { "codigo": "J", "descripcion": "Euskadi" }, "ambito_area": { "codigo": "JA", "descripcion": "Cpl. Euskadi" }, "ambito_sector": { "codigo": "JF", "descripcion": "Llodio" } },
+  { "codigo_centro": "0102", "descripcion_centro": "Vitoria-Gasteiz", "responsable": "Vitoria CA_Director", "estado": "OPERATIVO", "organizacion": "Organización Territorial", "tipo_centro": "Centro Asistencial", "ambito_comunidad": { "codigo": "J", "descripcion": "Euskadi" }, "ambito_area": { "codigo": "JA", "descripcion": "Cpl. Euskadi" }, "ambito_sector": { "codigo": "JB", "descripcion": "Vitoria" } },
+  { "codigo_centro": "0201", "descripcion_centro": "Albacete", "responsable": "Albacete CA_Director", "estado": "OPERATIVO", "organizacion": "Organización Territorial", "tipo_centro": "Centro Asistencial", "ambito_comunidad": { "codigo": "I", "descripcion": "Castilla-La Mancha" }, "ambito_area": { "codigo": "IA", "descripcion": "Cpl. Castilla-La Mancha" }, "ambito_sector": { "codigo": "GB", "descripcion": "Albacete" } },
+  { "codigo_centro": "0301", "descripcion_centro": "Alacant-Alicante", "responsable": "Alicante CA_Director", "estado": "OPERATIVO", "organizacion": "Organización Territorial", "tipo_centro": "Centro Asistencial", "ambito_comunidad": { "codigo": "0", "descripcion": "Comunidad Valenciana" }, "ambito_area": { "codigo": "UA", "descripcion": "Alicante" }, "ambito_sector": { "codigo": "GC", "descripcion": "Alicante" } }
+] as const;
