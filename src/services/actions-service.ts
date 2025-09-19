@@ -147,31 +147,31 @@ export async function createAction(data: CreateActionData, masterData: any): Pro
     const docRef = await addDoc(actionsCol, newAction);
 
     // Apply initial permissions
-    await updateActionPermissions(docRef.id, newAction.typeId, newAction.status);
+    updateActionPermissions(docRef.id, newAction.typeId, newAction.status);
 
-    // 4. Plan the workflow using the new Genkit flow
-    try {
-        const workflowPlan = await planActionWorkflow({
-            actionId: newActionId,
-            actionType: typeName,
-            category: categoryName,
-            affectedAreaName: affectedAreasNames.join(', '),
-            responsibleGroupId: data.assignedTo,
-            creationDate: creationDate,
-        });
-
-        // 5. Save the workflow plan back to the action document
-        await updateDoc(docRef, { 
+    // Plan the workflow asynchronously in the background.
+    // We don't await this so the UI can respond immediately.
+    planActionWorkflow({
+        actionId: newActionId,
+        actionType: typeName,
+        category: categoryName,
+        affectedAreaName: affectedAreasNames.join(', '),
+        responsibleGroupId: data.assignedTo,
+        creationDate: creationDate,
+    }).then(workflowPlan => {
+        // Save the workflow plan back to the action document
+        updateDoc(docRef, { 
             workflowPlan: workflowPlan,
             analysisDueDate: workflowPlan.steps.find(s => s.stepName.includes('Análisis'))?.dueDate || '',
             implementationDueDate: workflowPlan.steps.find(s => s.stepName.includes('Implantación'))?.dueDate || '',
             closureDueDate: workflowPlan.steps.find(s => s.stepName.includes('Cierre'))?.dueDate || '',
         });
-        
-    } catch (error) {
-        console.error("Error planning workflow for action:", newActionId, error);
-    }
-
+    }).catch(error => {
+        console.error("Error planning workflow in background for action:", newActionId, error);
+        // Optionally, you could update the action with an error status or log this error more permanently.
+    });
+    
+    // Return the new document ID immediately
     return docRef.id;
 }
 
