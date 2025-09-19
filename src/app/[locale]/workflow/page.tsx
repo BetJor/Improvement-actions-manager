@@ -58,9 +58,9 @@ export default function WorkflowPage() {
                     data: actionTypesWithRoleNames, 
                     columns: [
                         { key: 'name', label: "Nom" },
-                        { key: 'creationRoleNames', label: "Rols Creació" },
-                        { key: 'analysisRoleNames', label: "Rols Anàlisi" },
-                        { key: 'closureRoleNames', label: "Rols Tancament" },
+                        { key: 'creationRoleNames', label: "Creació" },
+                        { key: 'analysisRoleNames', label: "Anàlisi" },
+                        { key: 'closureRoleNames', label: "Tancament" },
                     ] 
                 },
                 responsibilityRoles: { 
