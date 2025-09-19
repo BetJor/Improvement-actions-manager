@@ -99,6 +99,7 @@ export function ActionForm({
   const [aiSuggestion, setAiSuggestion] = useState<ImproveWritingOutput | null>(null);
   const [isSuggestionDialogOpen, setIsSuggestionDialogOpen] = useState(false);
   const [hasImprovePrompt, setHasImprovePrompt] = useState(false);
+  const [isCenterPopoverOpen, setIsCenterPopoverOpen] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -427,7 +428,7 @@ export function ActionForm({
                 render={({ field }) => (
                   <FormItem className="flex flex-col">
                     <FormLabel>Centre</FormLabel>
-                    <Popover>
+                    <Popover open={isCenterPopoverOpen} onOpenChange={setIsCenterPopoverOpen}>
                       <PopoverTrigger asChild>
                         <FormControl>
                           <Button
@@ -457,7 +458,8 @@ export function ActionForm({
                                 value={center.name}
                                 key={center.id}
                                 onSelect={() => {
-                                  form.setValue("centerId", center.id)
+                                  form.setValue("centerId", center.id);
+                                  setIsCenterPopoverOpen(false);
                                 }}
                               >
                                 <Check
