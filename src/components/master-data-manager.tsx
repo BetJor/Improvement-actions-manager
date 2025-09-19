@@ -139,9 +139,14 @@ function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, title, 
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                         <Button variant="outline" className="col-span-3 justify-between">
-                            {(actionTypeData.possibleAnalysisRoles?.length > 0
-                                ? `${actionTypeData.possibleAnalysisRoles.length} seleccionats`
-                                : "Selecciona rols")}
+                            <span className="truncate">
+                                {(actionTypeData.possibleAnalysisRoles?.length > 0
+                                    ? extraData.responsibilityRoles
+                                        .filter(r => actionTypeData.possibleAnalysisRoles.includes(r.id))
+                                        .map(r => r.name)
+                                        .join(', ')
+                                    : "Selecciona rols")}
+                            </span>
                             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                         </Button>
                     </DropdownMenuTrigger>
@@ -165,9 +170,14 @@ function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, title, 
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                         <Button variant="outline" className="col-span-3 justify-between">
-                            {(actionTypeData.possibleClosureRoles?.length > 0
-                                ? `${actionTypeData.possibleClosureRoles.length} seleccionats`
-                                : "Selecciona rols")}
+                             <span className="truncate">
+                                {(actionTypeData.possibleClosureRoles?.length > 0
+                                     ? extraData.responsibilityRoles
+                                        .filter(r => actionTypeData.possibleClosureRoles.includes(r.id))
+                                        .map(r => r.name)
+                                        .join(', ')
+                                    : "Selecciona rols")}
+                            </span>
                             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                         </Button>
                     </DropdownMenuTrigger>
