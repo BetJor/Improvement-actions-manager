@@ -17,7 +17,9 @@ export interface ResponsibilityRole extends MasterDataItem {
     email?: string; // e.g., "calidad.global@example.com"
 }
 
-export interface Center extends MasterDataItem {}
+export interface Center extends MasterDataItem {
+  code?: string;
+}
 
 
 export type ImprovementActionStatus = 'Borrador' | 'Pendiente Análisis' | 'Pendiente Comprobación' | 'Pendiente de Cierre' | 'Finalizada';

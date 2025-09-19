@@ -27,7 +27,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { getPrompt } from "@/lib/data"
 import { useToast } from "@/hooks/use-toast"
 import { useState, useMemo, useEffect, useRef } from "react"
-import { Loader2, Mic, MicOff, Wand2, Save, Send, Ban, ChevronsUpDown } from "lucide-react"
+import { Loader2, Mic, MicOff, Wand2, Save, Send, Ban, ChevronsUpDown, Check } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { improveWriting, type ImproveWritingOutput } from "@/ai/flows/improveWriting"
 import {
@@ -38,6 +38,8 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command"
 import { Label } from "@/components/ui/label"
 import type { ImprovementAction, ImprovementActionType, ResponsibilityRole, AffectedArea, Center } from "@/lib/types"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "./ui/card"
@@ -420,27 +422,63 @@ export function ActionForm({
           
           <div className="grid md:grid-cols-2 gap-6">
              <FormField
-              control={form.control}
-              name="centerId"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Centre</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value} disabled={disableForm}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecciona un centre" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {masterData?.centers.map((center: any) => (
-                        <SelectItem key={center.id} value={center.id}>{center.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                control={form.control}
+                name="centerId"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col">
+                    <FormLabel>Centre</FormLabel>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            variant="outline"
+                            role="combobox"
+                            className={cn(
+                              "w-full justify-between",
+                              !field.value && "text-muted-foreground"
+                            )}
+                          >
+                            {field.value
+                              ? masterData.centers.find(
+                                  (center: Center) => center.id === field.value
+                                )?.name
+                              : "Selecciona un centre"}
+                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-[--radix-popover-trigger-width] max-h-[--radix-popover-content-available-height] p-0">
+                        <Command>
+                          <CommandInput placeholder="Cerca un centre..." />
+                          <CommandEmpty>No s'ha trobat cap centre.</CommandEmpty>
+                          <CommandGroup>
+                            {masterData?.centers.map((center: Center) => (
+                              <CommandItem
+                                value={center.name}
+                                key={center.id}
+                                onSelect={() => {
+                                  form.setValue("centerId", center.id)
+                                }}
+                              >
+                                <Check
+                                  className={cn(
+                                    "mr-2 h-4 w-4",
+                                    center.id === field.value
+                                      ? "opacity-100"
+                                      : "opacity-0"
+                                  )}
+                                />
+                                {center.name}
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             <FormField
               control={form.control}
               name="affectedAreasIds"

@@ -73,11 +73,20 @@ export const getCenters = async (): Promise<Center[]> => {
   const centersCol = collection(db, 'locations');
   const snapshot = await getDocs(centersCol);
   
-  const allCenters = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  const allCenters = snapshot.docs.map(doc => ({ 
+      id: doc.id,
+      code: doc.data().codigo_centro,
+      name: doc.data().descripcion_centro,
+      estado: doc.data().estado
+    }));
 
   const operativeCenters = allCenters
     .filter(center => center.estado === 'OPERATIVO')
-    .map(center => ({ id: center.id, name: center.descripcion_centro } as Center));
+    .map(center => ({
+      id: center.id,
+      code: center.code,
+      name: `${center.code} - ${center.name}`
+    }));
 
   operativeCenters.sort((a, b) => a.name.localeCompare(b.name));
 
