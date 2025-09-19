@@ -88,6 +88,11 @@ export default function SettingsPage() {
                     data: affectedAreas, 
                     columns: [{ key: 'name', label: "Nom" }] 
                 },
+                responsibilityRoles: {
+                    title: "Rols de Responsabilitat",
+                    data: responsibilityRoles,
+                    columns: [{ key: 'name', label: "Nom" }, { key: 'type', label: 'Tipus' }]
+                }
             };
             setMasterData(data);
             

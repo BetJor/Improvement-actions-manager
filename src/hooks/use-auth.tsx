@@ -79,6 +79,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
       setLoading(true);
       await loadFullUser(fbUser);
+      // After sign-in (from redirect or normal), if we are on the login page, go to dashboard.
       if (fbUser && pathname.includes('/login')) {
         window.location.href = `/${locale}/dashboard`;
       }
