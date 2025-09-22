@@ -291,12 +291,24 @@ export async function updateAction(actionId: string, data: any, masterData?: any
     const statusChanged = newStatus !== originalAction.status;
     if (statusChanged) {
         await updateActionPermissions(actionId, updatedAction.typeId, newStatus, updatedAction);
-        // Send email notification
-        await sendStateChangeEmail({
+        
+        // Send email notification and get recipient
+        const recipient = await sendStateChangeEmail({
             action: updatedAction,
             oldStatus: originalAction.status,
             newStatus: newStatus
         });
+        
+        // Add a system comment if the email was sent
+        if (recipient) {
+            const systemComment = {
+                id: crypto.randomUUID(),
+                author: { id: 'system', name: 'Sistema' },
+                date: new Date().toISOString(),
+                text: `S'ha enviat una notificació de canvi d'estat a ${recipient.name} (${recipient.email}).`
+            };
+            await updateDoc(actionDocRef, { comments: arrayUnion(systemComment) });
+        }
     }
 
     // Return the latest version of the document

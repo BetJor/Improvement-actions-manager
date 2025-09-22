@@ -6,7 +6,7 @@
  */
 
 import { google } from 'googleapis';
-import { ImprovementAction } from '@/lib/types';
+import { ImprovementAction, User } from '@/lib/types';
 import { getUserById } from './users-service';
 
 interface EmailDetails {
@@ -28,14 +28,15 @@ interface EmailDetails {
  *    - `GMAIL_SENDER`: The email address from which the notification will be sent (e.g., 'noreply@yourdomain.com'). This user must exist in your Workspace.
  * 
  * @param details - The details required to build and send the email.
+ * @returns The user object of the recipient if the email was sent, otherwise null.
  */
-export async function sendStateChangeEmail(details: EmailDetails) {
+export async function sendStateChangeEmail(details: EmailDetails): Promise<User | null> {
   const { action, oldStatus, newStatus } = details;
 
   const senderEmail = process.env.GMAIL_SENDER;
   if (!senderEmail) {
     console.warn('[EmailService] GMAIL_SENDER environment variable is not set. Skipping email notification.');
-    return;
+    return null;
   }
   
   // Determine the recipient. For now, let's notify the creator.
@@ -45,7 +46,7 @@ export async function sendStateChangeEmail(details: EmailDetails) {
 
   if (!recipientEmail) {
     console.warn(`[EmailService] No recipient email found for action ${action.actionId}. Skipping email notification.`);
-    return;
+    return null;
   }
 
   try {
@@ -101,8 +102,10 @@ export async function sendStateChangeEmail(details: EmailDetails) {
     });
 
     console.log(`[EmailService] Email sent successfully to ${recipientEmail} for action ${action.actionId}`);
+    return recipient;
   } catch (error) {
     console.error('[EmailService] Error sending email:', error);
     // In a real application, you might want to throw the error or handle it differently
+    return null;
   }
 }
