@@ -25,38 +25,41 @@ export async function getUsers(): Promise<User[]> {
 }
 
 export async function getUserById(userId: string): Promise<User | null> {
+    if (!userId) {
+        console.warn("getUserById called with null or undefined userId.");
+        return null;
+    }
+    
     const userDocRef = doc(db, 'users', userId);
     const userDocSnap = await getDoc(userDocRef);
 
     if (userDocSnap.exists()) {
-        const userData = userDocSnap.data();
-        if (userData.email) {
-            return { id: userDocSnap.id, ...userData } as User;
-        }
-        const authUser = auth.currentUser;
-        if (authUser && authUser.uid === userId && authUser.email) {
-            await updateDoc(userDocRef, { email: authUser.email });
-            return { id: userDocSnap.id, ...userData, email: authUser.email } as User;
-        }
-        return { id: userDocSnap.id, ...userData } as User;
+        return { id: userDocSnap.id, ...userDocSnap.data() } as User;
     }
     
-    // If user is not in 'users' collection, they probably just signed up.
-    // We create a basic user profile for them.
-    const authUser = auth.currentUser;
-    if (authUser && authUser.uid === userId) {
-        const newUser: User = {
-            id: authUser.uid,
-            name: authUser.displayName || authUser.email || 'Usuari Nou',
-            email: authUser.email || '',
-            role: 'Creator', // Default role for new sign-ups
-            avatar: authUser.photoURL || `https://i.pravatar.cc/150?u=${authUser.uid}`
-        };
-        await setDoc(userDocRef, newUser);
-        return newUser;
+    // If user is not in 'users' collection, they probably just signed up with Firebase Auth.
+    // We create a basic user profile for them based on their auth details.
+    try {
+        // This part relies on Firebase Auth being up-to-date.
+        // It's better to get the user from the client and pass it, but this is a server-side fallback.
+        const authUser = auth.currentUser;
+        if (authUser && authUser.uid === userId) {
+            console.log(`User ${userId} not in Firestore, creating from Auth details.`);
+            const newUser: User = {
+                id: authUser.uid,
+                name: authUser.displayName || authUser.email || 'Usuari Nou',
+                email: authUser.email || '',
+                role: 'Creator', // Default role for new sign-ups
+                avatar: authUser.photoURL || `https://i.pravatar.cc/150?u=${authUser.uid}`
+            };
+            await setDoc(userDocRef, newUser);
+            return newUser;
+        }
+    } catch (error) {
+        console.error("Error trying to create user profile from Auth:", error);
     }
 
-    console.warn(`User with ID ${userId} not found in Firestore.`);
+    console.warn(`User with ID ${userId} not found in Firestore and could not be created from Auth.`);
     return null;
 }
 

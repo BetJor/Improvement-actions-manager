@@ -8,12 +8,30 @@
 import { google } from 'googleapis';
 import { ImprovementAction, User } from '@/lib/types';
 import { getUserById } from './users-service';
+import { doc, updateDoc, arrayUnion } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 interface EmailDetails {
   action: ImprovementAction;
   oldStatus: string;
   newStatus: string;
 }
+
+async function addSystemComment(actionId: string, text: string) {
+    const actionDocRef = doc(db, 'actions', actionId);
+    const systemComment = {
+        id: crypto.randomUUID(),
+        author: { id: 'system', name: 'Sistema' },
+        date: new Date().toISOString(),
+        text: text,
+    };
+    try {
+        await updateDoc(actionDocRef, { comments: arrayUnion(systemComment) });
+    } catch (commentError) {
+        console.error(`[NotificationService] Failed to add system comment to action ${actionId}:`, commentError);
+    }
+}
+
 
 /**
  * Sends an email notification about a status change in an improvement action.
@@ -35,19 +53,21 @@ export async function sendStateChangeEmail(details: EmailDetails): Promise<User 
 
   const senderEmail = process.env.GMAIL_SENDER;
   if (!senderEmail) {
-    console.warn('[EmailService] GMAIL_SENDER environment variable is not set. Skipping email notification.');
+    console.warn('[NotificationService] GMAIL_SENDER environment variable is not set. Skipping email notification.');
+    await addSystemComment(action.id, `Error d'enviament de correu: La variable d'entorn GMAIL_SENDER no està configurada.`);
     return null;
   }
   
   // Determine the recipient. For now, let's notify the creator.
   // This could be made more complex, e.g., notifying the responsible person.
   const recipient = await getUserById(action.creator.id);
-  const recipientEmail = recipient?.email;
 
-  if (!recipientEmail) {
-    console.warn(`[EmailService] No recipient email found for action ${action.actionId}. Skipping email notification.`);
+  if (!recipient || !recipient.email) {
+    console.warn(`[NotificationService] No recipient or recipient email found for action ${action.actionId}. Skipping email notification.`);
+    await addSystemComment(action.id, `Error d'enviament de correu: No s'ha trobat el destinatari o la seva adreça de correu.`);
     return null;
   }
+  const recipientEmail = recipient.email;
 
   try {
     const auth = new google.auth.GoogleAuth({
@@ -101,10 +121,13 @@ export async function sendStateChangeEmail(details: EmailDetails): Promise<User 
       },
     });
 
-    console.log(`[EmailService] Email sent successfully to ${recipientEmail} for action ${action.actionId}`);
+    console.log(`[NotificationService] Email sent successfully to ${recipientEmail} for action ${action.actionId}`);
+    await addSystemComment(action.id, `S'ha enviat una notificació de canvi d'estat a ${recipient.name} (${recipient.email}).`);
     return recipient;
-  } catch (error) {
-    console.error('[EmailService] Error sending email:', error);
+
+  } catch (error: any) {
+    console.error('[NotificationService] Error sending email:', error);
+    await addSystemComment(action.id, `Error en l'enviament de correu a ${recipientEmail}: ${error.message}`);
     // In a real application, you might want to throw the error or handle it differently
     return null;
   }
