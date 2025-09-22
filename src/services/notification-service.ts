@@ -53,7 +53,7 @@ export async function sendStateChangeEmail(details: EmailDetails): Promise<User 
   }
   console.log(`[NotificationService] Sender email is: ${senderEmail}`);
   
-  let recipient: User | null = null;
+  let recipient: Partial<User> | null = null;
   const allUsers = await getUsers();
   const allRoles = await getResponsibilityRoles();
 
@@ -64,21 +64,23 @@ export async function sendStateChangeEmail(details: EmailDetails): Promise<User 
       const recipientEmails = await resolveRoles(permissionRule.authorRoleIds, allRoles, action);
       console.log(`[NotificationService] Resolved author emails from matrix: ${recipientEmails.join(', ')}`);
       if (recipientEmails.length > 0) {
-        // Find the first user matching the resolved emails
-        recipient = allUsers.find(u => recipientEmails.includes(u.email)) || null;
-        console.log(`[NotificationService] Found recipient from authors:`, recipient);
+        const firstRecipientEmail = recipientEmails[0];
+        recipient = allUsers.find(u => u.email === firstRecipientEmail) || null;
+        
+        if (recipient) {
+            console.log(`[NotificationService] Found matching user in DB:`, recipient);
+        } else {
+            console.log(`[NotificationService] No user found in DB for email ${firstRecipientEmail}. Creating temporary recipient.`);
+            // If no user is found, create a temporary recipient object to send the email anyway.
+            recipient = {
+                name: firstRecipientEmail.split('@')[0],
+                email: firstRecipientEmail
+            };
+        }
       }
     } else {
-        console.log('[NotificationService] No specific permission rule or authors found for this state. Will try fallback.');
+        console.log('[NotificationService] No specific permission rule or authors found for this state.');
     }
-  }
-
-  // Fallback logic if no recipient is found via permissions
-  if (!recipient) {
-      if (newStatus === 'Pendiente Análisis' && action.responsibleGroupId) {
-          recipient = allUsers.find(u => u.email === action.responsibleGroupId) || null;
-          console.log(`[NotificationService] Attempting to notify analysis responsible (fallback): ${action.responsibleGroupId}. Found user:`, recipient);
-      }
   }
   
   if (!recipient) {
@@ -151,7 +153,7 @@ export async function sendStateChangeEmail(details: EmailDetails): Promise<User 
 
     console.log(`[NotificationService] Email sent successfully to ${recipientEmail} for action ${action.actionId}`);
     await addSystemComment(action.id, `Se ha enviado una notificación por correo a ${recipient.name} (${recipient.email}) sobre el cambio de estado a "${newStatus}".`);
-    return recipient;
+    return recipient as User;
 
   } catch (error: any) {
     console.error('[NotificationService] Error sending email:', error);
