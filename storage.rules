@@ -1,19 +1,20 @@
+
 rules_version = '2';
 
 service firebase.storage {
   match /b/{bucket}/o {
-    // Permet la lectura pública de tots els fitxers.
-    // Això és útil perquè les URLs dels fitxers adjunts siguin accessibles.
-    // Considera restringir-ho si necessites més seguretat.
-    match /{allPaths=**} {
-      allow read;
-    }
+    // Allow users to upload files to their own action folders
+    match /actions/{actionId}/{allPaths=**} {
+      // Allow create only if the user is authenticated, the file is not too large,
+      // and the userId in the metadata matches the authenticated user's UID.
+      allow create: if request.auth != null &&
+                       request.resource.size < 5 * 1024 * 1024 &&
+                       request.resource.metadata.userId == request.auth.uid;
 
-    // Regles específiques per a la pujada de fitxers d'accions
-    match /actions/{actionId}/{fileName} {
-      // Només un usuari autenticat pot pujar (escriure) un fitxer.
-      // També comprovem que el fitxer no sigui massa gran (p.ex., < 5MB).
-      allow write: if request.auth != null && request.resource.size < 5 * 1024 * 1024;
+      // Allow read and delete for authenticated users.
+      // In a real application, you might want to restrict this further,
+      // e.g., only allow users involved in the action to read/delete.
+      allow read, delete: if request.auth != null;
     }
   }
 }
