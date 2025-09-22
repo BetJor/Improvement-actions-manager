@@ -30,6 +30,7 @@ import { UpdateActionStatusDialog } from "./update-action-status-dialog"
 import { useFollowAction } from "@/hooks/use-follow-action"
 import { useActionState } from "@/hooks/use-action-state"
 import { useTabs } from "@/hooks/use-tabs"
+import { ActionStatusBadge } from "./action-status-badge"
 
 
 interface ActionDetailsTabProps {
@@ -264,7 +265,6 @@ export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTab
       
             <div className="lg:col-span-3 flex flex-col gap-6">
                 <header className="flex items-center gap-4">
-                    <h1 className="text-3xl font-bold tracking-tight">{action.actionId}: {action.title}</h1>
                      <Button
                         variant="ghost"
                         size="icon"
@@ -274,6 +274,8 @@ export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTab
                       >
                         <Star className={cn("h-5 w-5", isFollowing(action.id) ? "text-yellow-400 fill-yellow-400" : "text-muted-foreground")} />
                       </Button>
+                    <h1 className="text-3xl font-bold tracking-tight">{action.actionId}: {action.title}</h1>
+                    <ActionStatusBadge status={action.status} />
                 </header>
 
                 <Tabs defaultValue="details" className="w-full">
@@ -480,3 +482,5 @@ export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTab
         </div>
     )
 }
+
+    

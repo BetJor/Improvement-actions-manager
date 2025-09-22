@@ -41,7 +41,7 @@ export function DetailsSection({ action }: DetailsSectionProps) {
 
   return (
     <Card>
-      <Collapsible>
+      <Collapsible defaultOpen>
         <CollapsibleTrigger asChild>
           <div className="flex justify-between items-center p-4 cursor-pointer">
             <CardTitle className="text-base flex items-center gap-2">
@@ -49,7 +49,6 @@ export function DetailsSection({ action }: DetailsSectionProps) {
               {t('details')}
             </CardTitle>
             <div className="flex items-center gap-2">
-              <ActionStatusBadge status={action.status} />
               <Button variant="ghost" size="icon" className="data-[state=open]:rotate-180">
                 <ChevronDown className="h-4 w-4 transition-transform" />
               </Button>
@@ -89,3 +88,5 @@ export function DetailsSection({ action }: DetailsSectionProps) {
     </Card>
   )
 }
+
+    
