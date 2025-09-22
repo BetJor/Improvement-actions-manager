@@ -9,7 +9,9 @@ import { ImprovementAction, User } from '@/lib/types';
 import { getUserById, getUsers } from './users-service';
 import { doc, updateDoc, arrayUnion } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { getTranslations } from 'next-intl/server';
+import { getPermissionRuleForState, resolveRoles } from './permissions-service';
+import { getResponsibilityRoles } from './master-data-service';
+
 
 interface EmailDetails {
   action: ImprovementAction;
@@ -54,10 +56,30 @@ export async function sendStateChangeEmail(details: EmailDetails): Promise<User 
   
   let recipient: User | null = null;
   const allUsers = await getUsers();
+  const allRoles = await getResponsibilityRoles();
 
-  if (newStatus === 'Pendiente Análisis' && action.responsibleGroupId) {
-    recipient = allUsers.find(u => u.email === action.responsibleGroupId) || null;
-    console.log(`[NotificationService] Attempting to notify analysis responsible: ${action.responsibleGroupId}. Found user:`, recipient);
+  if (newStatus === 'Pendiente Análisis') {
+    console.log('[NotificationService] Status is "Pendiente Análisis". Resolving recipient from permission matrix.');
+    const permissionRule = await getPermissionRuleForState(action.typeId, newStatus);
+    if (permissionRule && permissionRule.authorRoleIds.length > 0) {
+      const recipientEmails = await resolveRoles(permissionRule.authorRoleIds, allRoles, action);
+      console.log(`[NotificationService] Resolved author emails from matrix: ${recipientEmails.join(', ')}`);
+      if (recipientEmails.length > 0) {
+        // Find the first user matching the resolved emails
+        recipient = allUsers.find(u => recipientEmails.includes(u.email)) || null;
+        console.log(`[NotificationService] Found recipient from authors:`, recipient);
+      }
+    } else {
+        console.log('[NotificationService] No specific permission rule or authors found for this state. Will try fallback.');
+    }
+  }
+
+  // Fallback logic if no recipient is found via permissions
+  if (!recipient) {
+      if (newStatus === 'Pendiente Análisis' && action.responsibleGroupId) {
+          recipient = allUsers.find(u => u.email === action.responsibleGroupId) || null;
+          console.log(`[NotificationService] Attempting to notify analysis responsible (fallback): ${action.responsibleGroupId}. Found user:`, recipient);
+      }
   }
   
   if (!recipient) {
@@ -134,7 +156,8 @@ export async function sendStateChangeEmail(details: EmailDetails): Promise<User 
 
   } catch (error: any) {
     console.error('[NotificationService] Error sending email:', error);
-    await addSystemComment(action.id, `S'ha produït un error en intentar enviar la notificació per correu a ${recipientEmail}: ${error.message}`);
+    const errorMessage = error.response?.data?.error?.message || error.message;
+    await addSystemComment(action.id, `S'ha produït un error en intentar enviar la notificació per correu a ${recipientEmail}: ${errorMessage}`);
     return null;
   }
 }
