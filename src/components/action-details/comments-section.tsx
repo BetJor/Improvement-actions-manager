@@ -39,9 +39,9 @@ export function CommentsSection({ action, onActionUpdate }: CommentsSectionProps
     const commentToAdd: ActionComment = {
       id: crypto.randomUUID(),
       author: {
-        id: user.uid,
-        name: user.displayName || 'Unknown User',
-        avatar: user.photoURL || undefined,
+        id: user.id,
+        name: user.name || 'Unknown User',
+        avatar: user.avatar || undefined,
       },
       date: new Date().toISOString(),
       text: newComment,
