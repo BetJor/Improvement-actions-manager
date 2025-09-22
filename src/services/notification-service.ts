@@ -121,7 +121,7 @@ export async function sendStateChangeEmail(details: EmailDetails): Promise<User 
       'MIME-Version: 1.0',
       `Subject: ${utf8Subject}`,
       '',
-      `Hola ${recipient.name},`,
+      `Hola,`,
       '<br><br>',
       `El estado de la acción de mejora <strong>${action.actionId}: "${action.title}"</strong> ha cambiado.`,
       '<br><br>',
