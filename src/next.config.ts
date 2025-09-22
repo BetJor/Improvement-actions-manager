@@ -24,13 +24,6 @@ const nextConfig: NextConfig = {
       }
     ],
   },
-  webpack: (config) => {
-    config.resolve.alias = {
-      ...config.resolve.alias,
-      'handlebars': 'handlebars/dist/handlebars.js',
-    };
-    return config
-  },
   experimental: {
     // This is required for Genkit flows to work.
     serverActions: {
