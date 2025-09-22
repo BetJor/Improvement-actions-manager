@@ -48,14 +48,14 @@ import { useAuth } from "@/hooks/use-auth"
 import { evaluatePattern } from "@/lib/pattern-evaluator"
 
 const formSchema = z.object({
-  title: z.string().min(1, "El títol és requerit."),
-  category: z.string().min(1, "La categoria és requerida."),
-  subcategory: z.string().min(1, "La subcategoria és requerida."),
-  affectedAreasIds: z.array(z.string()).min(1, "Has de seleccionar almenys una àrea implicada."),
+  title: z.string().min(1, "El título es requerido."),
+  category: z.string().min(1, "La categoría es requerida."),
+  subcategory: z.string().min(1, "La subcategoría es requerida."),
+  affectedAreasIds: z.array(z.string()).min(1, "Debes seleccionar al menos un área implicada."),
   centerId: z.string().optional(),
-  assignedTo: z.string({ required_error: "Has de seleccionar un grup responsable." }).min(1, "Has de seleccionar un grup responsable."),
-  description: z.string().min(1, "Les observacions són requerides."),
-  typeId: z.string().min(1, "El tipus d'acció és requerit."),
+  assignedTo: z.string({ required_error: "Debes seleccionar un grupo responsable." }).min(1, "Debes seleccionar un grupo responsable."),
+  description: z.string().min(1, "Las observaciones son requeridas."),
+  typeId: z.string().min(1, "El tipo de acción es requerido."),
 })
 
 interface ActionFormProps {
@@ -65,7 +65,6 @@ interface ActionFormProps {
     isSubmitting: boolean;
     onSubmit: (values: any, status?: 'Borrador' | 'Pendiente Análisis') => void;
     onCancel?: () => void;
-    t: (key: string, ...args: any) => string;
 }
 
 const ReadOnlyField = ({ label, value }: { label: string, value?: string | string[] }) => {
@@ -86,8 +85,7 @@ export function ActionForm({
     masterData,
     isSubmitting,
     onSubmit,
-    onCancel,
-    t
+    onCancel
 }: ActionFormProps) {
   const { toast } = useToast()
   const { user } = useAuth()
@@ -199,7 +197,7 @@ export function ActionForm({
       const recognition = new SpeechRecognition();
       recognition.continuous = true;
       recognition.interimResults = true;
-      recognition.lang = 'ca-ES';
+      recognition.lang = 'es-ES';
 
       recognition.onresult = (event) => {
         let interimTranscript = '';
@@ -221,8 +219,8 @@ export function ActionForm({
         console.error("Speech recognition error", event.error);
         toast({
             variant: "destructive",
-            title: "Error de reconeixement de veu",
-            description: "No s'ha pogut accedir al micròfon o ha ocorregut un error.",
+            title: "Error de reconocimiento de voz",
+            description: "No se ha podido acceder al micrófono o ha ocurrido un error.",
         })
         setIsRecording(false);
       };
@@ -242,7 +240,7 @@ export function ActionForm({
         toast({
             variant: "destructive",
             title: "Navegador no compatible",
-            description: "El teu navegador no suporta el reconeixement de veu.",
+            description: "Tu navegador no soporta el reconocimiento de voz.",
         })
         return;
     }
@@ -261,8 +259,8 @@ export function ActionForm({
     if (!currentDescription.trim()) {
         toast({
             variant: "destructive",
-            title: "Camp buit",
-            description: "No hi ha text per a millorar.",
+            title: "Campo vacío",
+            description: "No hay texto para mejorar.",
         });
         return;
     }
@@ -276,8 +274,8 @@ export function ActionForm({
         console.error("Error improving text:", error);
         toast({
             variant: "destructive",
-            title: "Error de l'IA",
-            description: "No s'ha pogut millorar el text.",
+            title: "Error de la IA",
+            description: "No se ha podido mejorar el texto.",
         });
     } finally {
         setIsImprovingText(false);
@@ -308,20 +306,20 @@ export function ActionForm({
         <div className="space-y-6">
             <Card>
                 <CardHeader>
-                    <CardTitle>Detalls de l'Acció</CardTitle>
+                    <CardTitle>Detalles de la Acción</CardTitle>
                 </CardHeader>
                 <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
-                    <ReadOnlyField label="Tipus d'Acció" value={initialData.type} />
-                    <ReadOnlyField label="Categoria" value={initialData.category} />
-                    <ReadOnlyField label="Subcategoria" value={initialData.subcategory} />
-                    <ReadOnlyField label="Àrees Funcionals Implicades" value={initialData.affectedAreas} />
-                    <ReadOnlyField label="Centre" value={initialData.center} />
-                    <ReadOnlyField label="Assignat A (Responsable Anàlisi)" value={initialData.assignedTo} />
+                    <ReadOnlyField label="Tipo de Acción" value={initialData.type} />
+                    <ReadOnlyField label="Categoría" value={initialData.category} />
+                    <ReadOnlyField label="Subcategoría" value={initialData.subcategory} />
+                    <ReadOnlyField label="Áreas Funcionales Implicadas" value={initialData.affectedAreas} />
+                    <ReadOnlyField label="Centro" value={initialData.center} />
+                    <ReadOnlyField label="Asignado A (Responsable Análisis)" value={initialData.assignedTo} />
                 </CardContent>
             </Card>
             <Card>
                 <CardHeader>
-                    <CardTitle>{t("form.description.label")}</CardTitle>
+                    <CardTitle>Observaciones</CardTitle>
                 </CardHeader>
                 <CardContent>
                     <p className="text-muted-foreground whitespace-pre-wrap">
@@ -343,11 +341,11 @@ export function ActionForm({
             name="typeId"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>{t("form.type.label")}</FormLabel>
+                <FormLabel>Tipo de Acción</FormLabel>
                 <Select onValueChange={field.onChange} value={field.value} disabled={disableForm}>
                   <FormControl>
                     <SelectTrigger>
-                      <SelectValue placeholder={t("form.type.placeholder")} />
+                      <SelectValue placeholder="Selecciona un tipo de acción" />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
@@ -357,7 +355,7 @@ export function ActionForm({
                   </SelectContent>
                 </Select>
                 <FormDescription>
-                  {t("form.type.description")}
+                  Categoriza la acción de mejora.
                 </FormDescription>
                 <FormMessage />
               </FormItem>
@@ -369,9 +367,9 @@ export function ActionForm({
             name="title"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>{t("form.title.label")}</FormLabel>
+                <FormLabel>Asunto</FormLabel>
                 <FormControl>
-                  <Input placeholder={t("form.title.placeholder")} {...field} disabled={disableForm} />
+                  <Input placeholder="p. ej., Optimización del proceso de facturación" {...field} disabled={disableForm} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -384,11 +382,11 @@ export function ActionForm({
               name="category"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Categoria</FormLabel>
+                  <FormLabel>Categoría</FormLabel>
                   <Select onValueChange={field.onChange} value={field.value} disabled={disableForm}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Selecciona una categoria" />
+                        <SelectValue placeholder="Selecciona una categoría" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
@@ -406,11 +404,11 @@ export function ActionForm({
               name="subcategory"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Subcategoria</FormLabel>
+                  <FormLabel>Subcategoría</FormLabel>
                   <Select onValueChange={field.onChange} value={field.value} disabled={disableForm || !selectedCategoryId}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Selecciona una subcategoria" />
+                        <SelectValue placeholder="Selecciona una subcategoría" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
@@ -431,7 +429,7 @@ export function ActionForm({
               name="centerId"
               render={({ field }) => (
                 <FormItem className="flex flex-col gap-2">
-                    <FormLabel>Centre</FormLabel>
+                    <FormLabel>Centro</FormLabel>
                     <Popover open={isCenterPopoverOpen} onOpenChange={setIsCenterPopoverOpen}>
                         <PopoverTrigger asChild>
                         <FormControl>
@@ -455,7 +453,7 @@ export function ActionForm({
                         <PopoverContent className="w-[--radix-popover-trigger-width] max-h-[--radix-popover-content-available-height] p-0">
                         <Command>
                             <CommandInput placeholder="Cerca un centre..." />
-                            <CommandEmpty>No s'ha trobat cap centre.</CommandEmpty>
+                            <CommandEmpty>No se ha trobat cap centre.</CommandEmpty>
                             <CommandGroup>
                             {masterData?.centers.map((center: Center) => (
                                 <CommandItem
@@ -489,7 +487,7 @@ export function ActionForm({
               name="affectedAreasIds"
               render={({ field }) => (
                 <FormItem className="flex flex-col gap-2">
-                  <FormLabel>Àrees Funcionals Implicades</FormLabel>
+                  <FormLabel>Áreas Funcionales Implicadas</FormLabel>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <FormControl>
@@ -511,14 +509,14 @@ export function ActionForm({
                                     )
                                     .filter(Boolean)
                                     .join(", ")
-                                : "Selecciona àrees"}
+                                : "Selecciona áreas"}
                             </span>
                             <ChevronsUpDown className="ml-auto h-4 w-4 shrink-0 opacity-50" />
                         </Button>
                       </FormControl>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent className="w-[300px]" align="start">
-                        <DropdownMenuLabel>Àrees Afectades</DropdownMenuLabel>
+                        <DropdownMenuLabel>Áreas Afectadas</DropdownMenuLabel>
                         <DropdownMenuSeparator />
                         {masterData?.affectedAreas.map((area: AffectedArea) => (
                              <DropdownMenuCheckboxItem
@@ -548,7 +546,7 @@ export function ActionForm({
             name="assignedTo"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Assignat A</FormLabel>
+                <FormLabel>Asignado A</FormLabel>
                   <Select 
                   onValueChange={field.onChange} 
                   value={field.value} 
@@ -556,7 +554,7 @@ export function ActionForm({
                 >
                   <FormControl>
                     <SelectTrigger>
-                      <SelectValue placeholder={t("form.responsible.placeholder")} />
+                      <SelectValue placeholder="Selecciona una persona responsable" />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
@@ -566,7 +564,7 @@ export function ActionForm({
                   </SelectContent>
                 </Select>
                 <FormDescription>
-                  {t("form.responsible.description")}
+                  Asigna a la persona encargada del análisis.
                 </FormDescription>
                 <FormMessage />
               </FormItem>
@@ -578,11 +576,11 @@ export function ActionForm({
             name="description"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>{t("form.description.label")}</FormLabel>
+                <FormLabel>Observaciones</FormLabel>
                  <div className="relative">
                   <FormControl>
                       <Textarea
-                      placeholder={t("form.description.placeholder")}
+                      placeholder="Describe la no conformidad o el área de mejora..."
                       className="resize-y min-h-[120px] pr-24"
                       {...field}
                       disabled={disableForm}
@@ -597,10 +595,10 @@ export function ActionForm({
                             onClick={toggleRecording}
                             disabled={disableForm}
                             className={cn("h-8 w-8", isRecording && "bg-red-500/20 text-red-500 hover:bg-red-500/30 hover:text-red-500")}
-                            title={t("form.mic.toggle")}
+                            title="Activar/desactivar el micrófono"
                         >
                             {isRecording ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
-                            <span className="sr-only">{isRecording ? "Aturar enregistrament" : "Iniciar enregistrament"}</span>
+                            <span className="sr-only">{isRecording ? "Detener grabación" : "Iniciar grabación"}</span>
                         </Button>
                         {hasImprovePrompt && (
                           <Button 
@@ -610,10 +608,10 @@ export function ActionForm({
                               onClick={handleImproveText}
                               disabled={disableForm || isImprovingText}
                               className="h-8 w-8"
-                              title={t("form.improve.button")}
+                              title="Mejorar texto con IA"
                           >
                               {isImprovingText ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}
-                              <span className="sr-only">{t("form.improve.button")}</span>
+                              <span className="sr-only">Mejorar texto con IA</span>
                           </Button>
                         )}
                     </div>
@@ -628,11 +626,11 @@ export function ActionForm({
               <div className="flex gap-2">
                   <Button type="button" variant="outline" onClick={handleDraftSubmit} disabled={disableForm}>
                       {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                      {t("form.saveAsDraft")}
+                      Guardar Borrador
                   </Button>
                   <Button type="button" onClick={handleSendForAnalysisSubmit} disabled={disableForm}>
                       {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
-                      {t("form.sendForAnalysis")}
+                      Enviar para Análisis
                   </Button>
               </div>
           )}
@@ -641,15 +639,15 @@ export function ActionForm({
             <div className="flex gap-2">
                 <Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting}>
                     <Ban className="mr-2 h-4 w-4" />
-                    {t("form.cancel")}
+                    Cancelar
                 </Button>
                 <Button type="button" onClick={handleDraftSubmit} disabled={isSubmitting}>
                     {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                    {t("form.saveAsDraft")}
+                    Guardar Borrador
                 </Button>
                  <Button type="button" onClick={handleSendForAnalysisSubmit} disabled={isSubmitting}>
                     {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
-                    {t("form.sendForAnalysis")}
+                    Enviar para Análisis
                 </Button>
             </div>
           )}
@@ -659,18 +657,18 @@ export function ActionForm({
       <Dialog open={isSuggestionDialogOpen} onOpenChange={setIsSuggestionDialogOpen}>
         <DialogContent className="sm:max-w-2xl">
           <DialogHeader>
-            <DialogTitle>{t("form.suggestion.title")}</DialogTitle>
-            <DialogDescription>{t("form.suggestion.description")}</DialogDescription>
+            <DialogTitle>Sugerencia de la IA</DialogTitle>
+            <DialogDescription>El asistente ha generado la siguiente descripción. ¿Quieres aceptar estos cambios?</DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4 max-h-[60vh] overflow-y-auto pr-4">
             <div className="space-y-2">
-              <Label htmlFor="suggestion-description">{t("form.suggestion.improvedDescription")}</Label>
+              <Label htmlFor="suggestion-description">Descripción mejorada</Label>
               <Textarea id="suggestion-description" readOnly value={aiSuggestion || ''} rows={10} className="resize-y" />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsSuggestionDialogOpen(false)}>{t("form.suggestion.cancel")}</Button>
-            <Button onClick={handleAcceptSuggestion}>{t("form.suggestion.accept")}</Button>
+            <Button variant="outline" onClick={() => setIsSuggestionDialogOpen(false)}>Cancelar</Button>
+            <Button onClick={handleAcceptSuggestion}>Aceptar Sugerencia</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

@@ -1,5 +1,3 @@
-
-
 "use client"
 
 import { useState, useEffect } from "react"
@@ -79,7 +77,7 @@ export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTab
         if (!action) return;
         setIsSubmitting(true);
         try {
-            const dataToUpdate = { ...formData };
+            const dataToUpdate: any = { ...formData };
             if (status) {
               dataToUpdate.status = status;
             }

@@ -1,10 +1,8 @@
-
 "use client"
 
 import { useForm } from "react-hook-form"
 import * as z from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useTranslations } from "next-intl"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Button } from "@/components/ui/button"
@@ -14,7 +12,7 @@ import type { ImprovementAction, User, ProposedActionStatus } from "@/lib/types"
 import { Loader2, Save } from "lucide-react"
 
 const verificationSchema = z.object({
-  notes: z.string().min(1, "Les observacions són requerides."),
+  notes: z.string().min(1, "Las observaciones son requeridas."),
   proposedActionsStatus: z.record(z.string(), z.enum(["Implementada", "Implementada Parcialment", "No Implementada"])),
 })
 
@@ -28,7 +26,6 @@ interface VerificationSectionProps {
 }
 
 export function VerificationSection({ action, user, isSubmitting, onSave }: VerificationSectionProps) {
-  const t = useTranslations("Actions.detail.verification")
 
   const defaultStatuses = action.analysis?.proposedActions.reduce((acc, pa) => {
     acc[pa.id] = action.verification?.proposedActionsStatus[pa.id] || "No Implementada"
@@ -49,7 +46,7 @@ export function VerificationSection({ action, user, isSubmitting, onSave }: Veri
       isEffective: true, // This could be another field in the form
       verificationResponsible: {
         id: user.id,
-        name: user.name || "Usuari desconegut",
+        name: user.name || "Usuario desconocido",
         avatar: user.avatar || undefined,
       },
       verificationDate: new Date().toISOString(),
@@ -60,8 +57,8 @@ export function VerificationSection({ action, user, isSubmitting, onSave }: Veri
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{t("title")}</CardTitle>
-        <CardDescription>{t("description")}</CardDescription>
+        <CardTitle>Verificación de la Implantación</CardTitle>
+        <CardDescription>Comprueba si las acciones propuestas se han implantado y si han sido eficaces.</CardDescription>
       </CardHeader>
       <CardContent>
         <Form {...form}>
@@ -71,11 +68,11 @@ export function VerificationSection({ action, user, isSubmitting, onSave }: Veri
               name="notes"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-lg font-semibold">{t("notesLabel")}</FormLabel>
+                  <FormLabel className="text-lg font-semibold">Observaciones Generales</FormLabel>
                   <FormControl>
                     <Textarea
                       rows={4}
-                      placeholder={t("notesPlaceholder")}
+                      placeholder="Añade aquí tus observaciones sobre el proceso de verificación..."
                       className="resize-y"
                       {...field}
                     />
@@ -86,7 +83,7 @@ export function VerificationSection({ action, user, isSubmitting, onSave }: Veri
             />
 
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold">{t("statusOfActions")}</h3>
+              <h3 className="text-lg font-semibold">Estado de las Acciones Propuestas</h3>
               {action.analysis?.proposedActions.map((pa) => (
                 <FormField
                   key={pa.id}
@@ -105,19 +102,19 @@ export function VerificationSection({ action, user, isSubmitting, onSave }: Veri
                             <FormControl>
                               <RadioGroupItem value="Implementada" id={`${pa.id}-implemented`} />
                             </FormControl>
-                            <FormLabel htmlFor={`${pa.id}-implemented`} className="font-normal">{t("status.implemented")}</FormLabel>
+                            <FormLabel htmlFor={`${pa.id}-implemented`} className="font-normal">Implementada</FormLabel>
                           </FormItem>
                           <FormItem className="flex items-center space-x-2">
                             <FormControl>
                               <RadioGroupItem value="Implementada Parcialment" id={`${pa.id}-partial`} />
                             </FormControl>
-                            <FormLabel htmlFor={`${pa.id}-partial`} className="font-normal">{t("status.partiallyImplemented")}</FormLabel>
+                            <FormLabel htmlFor={`${pa.id}-partial`} className="font-normal">Implementada Parcialmente</FormLabel>
                           </FormItem>
                           <FormItem className="flex items-center space-x-2">
                             <FormControl>
                               <RadioGroupItem value="No Implementada" id={`${pa.id}-not-implemented`} />
                             </FormControl>
-                            <FormLabel htmlFor={`${pa.id}-not-implemented`} className="font-normal">{t("status.notImplemented")}</FormLabel>
+                            <FormLabel htmlFor={`${pa.id}-not-implemented`} className="font-normal">No Implementada</FormLabel>
                           </FormItem>
                         </RadioGroup>
                       </FormControl>
@@ -129,7 +126,7 @@ export function VerificationSection({ action, user, isSubmitting, onSave }: Veri
 
             <Button type="submit" disabled={isSubmitting}>
               {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-              {t("saveButton")}
+              Guardar Verificación y Avanzar
             </Button>
           </form>
         </Form>

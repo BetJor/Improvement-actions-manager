@@ -1,11 +1,9 @@
-
 "use client"
 
 import { useState, useEffect, useRef } from "react"
 import { useForm, useFieldArray, Controller } from "react-hook-form"
 import * as z from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useTranslations } from "next-intl"
 import { getPrompt, getUsers } from "@/lib/data"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
@@ -35,17 +33,17 @@ import { Separator } from "./ui/separator"
 
 
 const analysisSchema = z.object({
-  causes: z.string().min(1, "L'anàlisi de causes és requerit."),
+  causes: z.string().min(1, "El análisis de causas es requerido."),
   proposedActions: z.array(
     z.object({
       id: z.string().optional(),
-      description: z.string().min(1, "La descripció és requerida."),
-      responsibleUserId: z.string().min(1, "El responsable és requerit."),
-      dueDate: z.date({ required_error: "La data de venciment és requerida." }),
+      description: z.string().min(1, "La descripción es requerida."),
+      responsibleUserId: z.string().min(1, "El responsable es requerido."),
+      dueDate: z.date({ required_error: "La fecha de vencimiento es requerida." }),
       status: z.enum(["Pendent", "Implementada", "Implementada Parcialment", "No Implementada"]).default("Pendent"),
     })
-  ).min(1, "S'ha de proposar almenys una acció."),
-  verificationResponsibleUserId: z.string().min(1, "El responsable de verificació és requerit."),
+  ).min(1, "Se debe proponer al menos una acción."),
+  verificationResponsibleUserId: z.string().min(1, "El responsable de verificación es requerido."),
 })
 
 type AnalysisFormValues = z.infer<typeof analysisSchema>
@@ -58,7 +56,6 @@ interface AnalysisSectionProps {
 }
 
 export function AnalysisSection({ action, user, isSubmitting, onSave }: AnalysisSectionProps) {
-  const t = useTranslations("Actions.detail.analysis")
   const { toast } = useToast()
 
   const [users, setUsers] = useState<User[]>([]);
@@ -95,7 +92,7 @@ export function AnalysisSection({ action, user, isSubmitting, onSave }: Analysis
             setUsers(fetchedUsers);
         } catch (error) {
             console.error("Failed to load users for analysis section", error);
-            toast({ variant: "destructive", title: "Error", description: "No s'han pogut carregar els usuaris." });
+            toast({ variant: "destructive", title: "Error", description: "No se han podido cargar los usuarios." });
         } finally {
             setIsLoadingUsers(false);
         }
@@ -117,7 +114,7 @@ export function AnalysisSection({ action, user, isSubmitting, onSave }: Analysis
       const recognition = new SpeechRecognition();
       recognition.continuous = true;
       recognition.interimResults = true;
-      recognition.lang = 'ca-ES';
+      recognition.lang = 'es-ES';
 
       recognition.onresult = (event) => {
         let interimTranscript = '';
@@ -134,7 +131,7 @@ export function AnalysisSection({ action, user, isSubmitting, onSave }: Analysis
       recognition.onend = () => setIsRecording(false);
       recognition.onerror = (event) => {
         console.error("Speech recognition error", event.error);
-        toast({ variant: "destructive", title: "Error de reconeixement de veu" });
+        toast({ variant: "destructive", title: "Error de reconocimiento de voz" });
         setIsRecording(false);
       };
       recognitionRef.current = recognition;
@@ -161,7 +158,7 @@ export function AnalysisSection({ action, user, isSubmitting, onSave }: Analysis
       setIsSuggestionDialogOpen(true);
     } catch (error) {
       console.error("Error generating analysis suggestion:", error);
-      toast({ variant: "destructive", title: "Error de l'IA", description: "No s'ha pogut generar el suggeriment." });
+      toast({ variant: "destructive", title: "Error de la IA", description: "No se ha podido generar la sugerencia." });
     } finally {
       setIsGeneratingSuggestion(false);
     }
@@ -194,7 +191,7 @@ export function AnalysisSection({ action, user, isSubmitting, onSave }: Analysis
         })),
         analysisResponsible: {
             id: user.id,
-            name: user.name || "Usuari desconegut",
+            name: user.name || "Usuario desconocido",
             avatar: user.avatar || undefined,
         },
         analysisDate: new Date().toISOString(),
@@ -212,8 +209,8 @@ export function AnalysisSection({ action, user, isSubmitting, onSave }: Analysis
       <CardHeader>
         <div className="flex justify-between items-start">
           <div>
-            <CardTitle>{t("title")}</CardTitle>
-            <CardDescription>{t("description")}</CardDescription>
+            <CardTitle>Análisis de Causas y Plan de Acción</CardTitle>
+            <CardDescription>Realiza el análisis de las causas raíz y define las acciones a emprender.</CardDescription>
           </div>
           {hasAnalysisPrompt && (
             <Button
@@ -221,10 +218,10 @@ export function AnalysisSection({ action, user, isSubmitting, onSave }: Analysis
               variant="outline"
               onClick={handleGenerateSuggestion}
               disabled={isGeneratingSuggestion}
-              title={t("improve.button")}
+              title="Generar Análisis con IA"
             >
               {isGeneratingSuggestion ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}
-              <span className="ml-2 hidden sm:inline">{t("improve.button")}</span>
+              <span className="ml-2 hidden sm:inline">Generar Análisis con IA</span>
             </Button>
           )}
         </div>
@@ -237,12 +234,12 @@ export function AnalysisSection({ action, user, isSubmitting, onSave }: Analysis
               name="causes"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-lg font-semibold">{t("causes.label")}</FormLabel>
+                  <FormLabel className="text-lg font-semibold">Análisis de las Causas</FormLabel>
                   <div className="relative">
                     <FormControl>
                       <Textarea
                         rows={6}
-                        placeholder={t("causes.placeholder")}
+                        placeholder="Describe el análisis realizado para identificar las causas raíz del problema..."
                         className="resize-y pr-12"
                         {...field}
                       />
@@ -254,7 +251,7 @@ export function AnalysisSection({ action, user, isSubmitting, onSave }: Analysis
                         variant="ghost"
                         onClick={toggleRecording}
                         className={cn("h-8 w-8", isRecording && "bg-red-500/20 text-red-500 hover:bg-red-500/30 hover:text-red-500")}
-                        title={t("mic.toggle")}
+                        title="Activar/desactivar el micrófono"
                       >
                         {isRecording ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
                       </Button>
@@ -266,7 +263,7 @@ export function AnalysisSection({ action, user, isSubmitting, onSave }: Analysis
             />
 
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold">{t("proposedActions.title")}</h3>
+              <h3 className="text-lg font-semibold">Acciones Propuestas</h3>
               {fields.map((field, index) => (
                 <div key={field.id} className="flex gap-4 p-4 border rounded-md items-start">
                    <div className="flex-1 flex flex-col gap-4">
@@ -275,9 +272,9 @@ export function AnalysisSection({ action, user, isSubmitting, onSave }: Analysis
                         name={`proposedActions.${index}.description`}
                         render={({ field }) => (
                             <FormItem>
-                                <FormLabel>{t("proposedActions.description")}</FormLabel>
+                                <FormLabel>Descripción de la acción</FormLabel>
                                 <FormControl>
-                                    <Textarea {...field} placeholder={t("proposedActions.descriptionPlaceholder")} rows={2} className="resize-y" />
+                                    <Textarea {...field} placeholder="p. ej., Revisar y actualizar el procedimiento P-01" rows={2} className="resize-y" />
                                 </FormControl>
                                 <FormMessage />
                             </FormItem>
@@ -289,11 +286,11 @@ export function AnalysisSection({ action, user, isSubmitting, onSave }: Analysis
                         name={`proposedActions.${index}.responsibleUserId`}
                         render={({ field }) => (
                             <FormItem>
-                                <FormLabel>{t("proposedActions.responsible")}</FormLabel>
+                                <FormLabel>Responsable</FormLabel>
                                 <Select onValueChange={field.onChange} defaultValue={field.value}>
                                     <FormControl>
                                         <SelectTrigger>
-                                            <SelectValue placeholder={t("proposedActions.responsiblePlaceholder")} />
+                                            <SelectValue placeholder="Selecciona un usuario" />
                                         </SelectTrigger>
                                     </FormControl>
                                     <SelectContent>
@@ -311,7 +308,7 @@ export function AnalysisSection({ action, user, isSubmitting, onSave }: Analysis
                         name={`proposedActions.${index}.dueDate`}
                         render={({ field }) => (
                             <FormItem>
-                               <FormLabel>{t("proposedActions.dueDate")}</FormLabel>
+                               <FormLabel>Fecha Vencimiento</FormLabel>
                                <Popover>
                                 <PopoverTrigger asChild>
                                     <FormControl>
@@ -326,7 +323,7 @@ export function AnalysisSection({ action, user, isSubmitting, onSave }: Analysis
                                         {field.value ? (
                                         format(field.value, "PPP", { locale: es })
                                         ) : (
-                                        <span>{t("proposedActions.dueDatePlaceholder")}</span>
+                                        <span>Selecciona una fecha</span>
                                         )}
                                     </Button>
                                     </FormControl>
@@ -361,7 +358,7 @@ export function AnalysisSection({ action, user, isSubmitting, onSave }: Analysis
                 onClick={() => append({ description: "", responsibleUserId: "", dueDate: new Date(), status: 'Pendent' })}
               >
                 <PlusCircle className="mr-2 h-4 w-4" />
-                {t("proposedActions.add")}
+                Añadir Acción
               </Button>
             </div>
 
@@ -370,11 +367,11 @@ export function AnalysisSection({ action, user, isSubmitting, onSave }: Analysis
               name="verificationResponsibleUserId"
               render={({ field }) => (
                 <FormItem>
-                    <FormLabel className="text-lg font-semibold">{t("verificationResponsible.label")}</FormLabel>
+                    <FormLabel className="text-lg font-semibold">Responsable de la Verificación</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
                             <SelectTrigger className="md:max-w-sm">
-                                <SelectValue placeholder={t("verificationResponsible.placeholder")} />
+                                <SelectValue placeholder="Selecciona el usuario que verificará la eficacia" />
                             </SelectTrigger>
                         </FormControl>
                         <SelectContent>
@@ -390,7 +387,7 @@ export function AnalysisSection({ action, user, isSubmitting, onSave }: Analysis
 
             <Button type="submit" disabled={isSubmitting}>
               {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-              {t("saveButton")}
+              Guardar Análisis y Avanzar
             </Button>
           </form>
         </Form>
@@ -400,17 +397,17 @@ export function AnalysisSection({ action, user, isSubmitting, onSave }: Analysis
     <Dialog open={isSuggestionDialogOpen} onOpenChange={setIsSuggestionDialogOpen}>
         <DialogContent className="sm:max-w-2xl">
           <DialogHeader>
-            <DialogTitle>{t("suggestion.title")}</DialogTitle>
-            <DialogDescription>{t("suggestion.description")}</DialogDescription>
+            <DialogTitle>Sugerencia de la IA</DialogTitle>
+            <DialogDescription>El asistente ha generado el siguiente análisis y plan de acción. ¿Quieres aceptar estos cambios?</DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4 max-h-[60vh] overflow-y-auto pr-6">
             <div className="space-y-2">
-              <Label htmlFor="suggestion-causes" className="font-semibold text-base">{t("suggestion.suggestedAnalysis")}</Label>
+              <Label htmlFor="suggestion-causes" className="font-semibold text-base">Análisis de Causas Sugerido</Label>
               <Textarea id="suggestion-causes" readOnly value={aiSuggestion?.causesAnalysis || ''} rows={8} className="resize-y bg-muted/50" />
             </div>
             <Separator />
             <div className="space-y-4">
-               <h4 className="font-semibold text-base">{t("suggestion.suggestedActions")}</h4>
+               <h4 className="font-semibold text-base">Acciones Correctivas Sugeridas</h4>
                <ul className="space-y-2 list-disc pl-5">
                 {aiSuggestion?.proposedActions.map((action, index) => (
                     <li key={index}>{action.description}</li>
@@ -419,8 +416,8 @@ export function AnalysisSection({ action, user, isSubmitting, onSave }: Analysis
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsSuggestionDialogOpen(false)}>{t("suggestion.cancel")}</Button>
-            <Button onClick={handleAcceptSuggestion}>{t("suggestion.accept")}</Button>
+            <Button variant="outline" onClick={() => setIsSuggestionDialogOpen(false)}>Cancelar</Button>
+            <Button onClick={handleAcceptSuggestion}>Aceptar y Rellenar Formulario</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
