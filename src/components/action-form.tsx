@@ -425,7 +425,7 @@ export function ActionForm({
             />
           </div>
           
-          <div className="grid md:grid-cols-2 gap-6 items-start">
+          <div className="grid md:grid-cols-2 gap-6">
              <FormField
               control={form.control}
               name="centerId"
