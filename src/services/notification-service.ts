@@ -1,4 +1,5 @@
 
+
 'use server';
 /**
  * @fileOverview A service for handling notifications, such as sending emails.
@@ -18,6 +19,7 @@ interface EmailDetails {
 }
 
 async function addSystemComment(actionId: string, text: string) {
+    console.log(`[NotificationService] Adding system comment to action ${actionId}: "${text}"`);
     const actionDocRef = doc(db, 'actions', actionId);
     const systemComment = {
         id: crypto.randomUUID(),
@@ -27,6 +29,7 @@ async function addSystemComment(actionId: string, text: string) {
     };
     try {
         await updateDoc(actionDocRef, { comments: arrayUnion(systemComment) });
+        console.log(`[NotificationService] System comment added successfully.`);
     } catch (commentError) {
         console.error(`[NotificationService] Failed to add system comment to action ${actionId}:`, commentError);
     }
@@ -49,6 +52,7 @@ async function addSystemComment(actionId: string, text: string) {
  * @returns The user object of the recipient if the email was sent, otherwise null.
  */
 export async function sendStateChangeEmail(details: EmailDetails): Promise<User | null> {
+  console.log(`[NotificationService] sendStateChangeEmail called with details:`, details);
   const { action, oldStatus, newStatus } = details;
 
   const senderEmail = process.env.GMAIL_SENDER;
@@ -57,10 +61,13 @@ export async function sendStateChangeEmail(details: EmailDetails): Promise<User 
     await addSystemComment(action.id, `Error d'enviament de correu: La variable d'entorn GMAIL_SENDER no està configurada.`);
     return null;
   }
+  console.log(`[NotificationService] Sender email is: ${senderEmail}`);
   
   // Determine the recipient. For now, let's notify the creator.
   // This could be made more complex, e.g., notifying the responsible person.
+  // TODO: Make recipient logic more robust based on new status
   const recipient = await getUserById(action.creator.id);
+  console.log(`[NotificationService] Determined recipient:`, recipient);
 
   if (!recipient || !recipient.email) {
     console.warn(`[NotificationService] No recipient or recipient email found for action ${action.actionId}. Skipping email notification.`);
@@ -68,8 +75,10 @@ export async function sendStateChangeEmail(details: EmailDetails): Promise<User 
     return null;
   }
   const recipientEmail = recipient.email;
+  console.log(`[NotificationService] Recipient email is: ${recipientEmail}`);
 
   try {
+    console.log('[NotificationService] Authenticating with Google API...');
     const auth = new google.auth.GoogleAuth({
       scopes: ['https://www.googleapis.com/auth/gmail.send'],
       // The GOOGLE_APPLICATION_CREDENTIALS env var is automatically used by the library
@@ -79,6 +88,7 @@ export async function sendStateChangeEmail(details: EmailDetails): Promise<User 
     
     // The subject to impersonate is the sender email address
     (authClient as any).subject = senderEmail;
+    console.log(`[NotificationService] Impersonating sender: ${senderEmail}`);
 
     const gmail = google.gmail({ version: 'v1', auth: authClient });
 
@@ -106,6 +116,7 @@ export async function sendStateChangeEmail(details: EmailDetails): Promise<User 
       "L'equip de Gestió de Qualitat",
     ];
     const message = messageParts.join('\n');
+    console.log('[NotificationService] Email message constructed.');
 
     // The body needs to be base64url encoded.
     const encodedMessage = Buffer.from(message)
@@ -114,6 +125,7 @@ export async function sendStateChangeEmail(details: EmailDetails): Promise<User 
       .replace(/\//g, '_')
       .replace(/=+$/, '');
 
+    console.log('[NotificationService] Sending message via Gmail API...');
     await gmail.users.messages.send({
       userId: 'me', // 'me' refers to the impersonated user (GMAIL_SENDER)
       requestBody: {

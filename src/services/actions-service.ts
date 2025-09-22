@@ -1,4 +1,5 @@
 
+
 import { collection, doc, getDoc, getDocs, addDoc, updateDoc, query, orderBy, limit, arrayUnion, Timestamp, runTransaction, arrayRemove, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { format } from 'date-fns';
@@ -186,15 +187,19 @@ export async function createAction(data: CreateActionData, masterData: any): Pro
 
 // Private function to handle status change logic (permissions and notifications)
 async function handleStatusChange(action: ImprovementAction, oldStatus: ImprovementActionStatus) {
+    console.log(`[ActionService] handleStatusChange called for action ${action.id} from ${oldStatus} to ${action.status}`);
     const actionDocRef = doc(db, 'actions', action.id);
+    
+    console.log(`[ActionService] Updating permissions for action ${action.id}...`);
     await updateActionPermissions(action.id, action.typeId, action.status, action);
         
-    // Send email notification and get recipient
+    console.log(`[ActionService] Sending state change email for action ${action.id}...`);
     const recipient = await sendStateChangeEmail({
         action: action,
         oldStatus: oldStatus,
         newStatus: action.status
     });
+    console.log(`[ActionService] Email process completed. Recipient:`, recipient);
 }
 
 
@@ -344,6 +349,7 @@ export async function getFollowedActions(userId: string): Promise<ImprovementAct
 }
 
 export async function updateActionPermissions(actionId: string, typeId: string, status: ImprovementActionStatus, existingAction?: ImprovementAction) {
+    console.log(`[ActionService] updateActionPermissions for action ${actionId}, status ${status}`);
     const actionDocRef = doc(db, 'actions', actionId);
     let currentAction = existingAction;
 
@@ -352,7 +358,7 @@ export async function updateActionPermissions(actionId: string, typeId: string, 
         if (docSnap.exists()) {
             currentAction = docSnap.data() as ImprovementAction;
         } else {
-            console.error("Cannot update permissions: Action document not found.");
+            console.error("[ActionService] Cannot update permissions: Action document not found.");
             return;
         }
     }
@@ -361,12 +367,13 @@ export async function updateActionPermissions(actionId: string, typeId: string, 
     if (status === 'Borrador') {
         const creatorEmail = currentAction.creator?.email || (await getUserById(currentAction.creator.id))?.email;
         if (creatorEmail) {
+            console.log(`[ActionService] Setting 'Borrador' permissions for creator: ${creatorEmail}`);
             await updateDoc(actionDocRef, {
                 readers: [creatorEmail],
                 authors: [creatorEmail],
             });
         } else {
-            console.warn(`Action ${actionId} in 'Borrador' state has no creator email. Permissions not set.`);
+            console.warn(`[ActionService] Action ${actionId} in 'Borrador' state has no creator email. Permissions not set.`);
              await updateDoc(actionDocRef, {
                 readers: [],
                 authors: [],
@@ -377,14 +384,16 @@ export async function updateActionPermissions(actionId: string, typeId: string, 
 
     const permissionRule = await getPermissionRuleForState(typeId, status);
     if (!permissionRule) {
-        console.warn(`No permission rule found for type ${typeId} and status ${status}. Keeping existing permissions.`);
+        console.warn(`[ActionService] No permission rule found for type ${typeId} and status ${status}. Keeping existing permissions.`);
         return;
     }
+    console.log(`[ActionService] Found permission rule:`, permissionRule);
 
     const allRoles = await getResponsibilityRoles();
 
     const newReaders = await resolveRoles(permissionRule.readerRoleIds, allRoles, currentAction);
     const newAuthors = await resolveRoles(permissionRule.authorRoleIds, allRoles, currentAction);
+    console.log(`[ActionService] Resolved roles -> Readers: ${newReaders.join(', ')}, Authors: ${newAuthors.join(', ')}`);
     
     // READERS: Cumulative. Combine existing readers with new ones.
     const combinedReaders = [...new Set([...(currentAction.readers || []), ...newReaders, ...newAuthors])];
@@ -394,8 +403,11 @@ export async function updateActionPermissions(actionId: string, typeId: string, 
     const finalAuthors = [...new Set(newAuthors)];
     const finalReaders = [...new Set([...combinedReaders, ...finalAuthors])];
 
+    console.log(`[ActionService] Final permissions -> Readers: ${finalReaders.join(', ')}, Authors: ${finalAuthors.join(', ')}`);
+
     await updateDoc(actionDocRef, {
         readers: finalReaders,
         authors: finalAuthors
     });
+    console.log(`[ActionService] Permissions updated successfully for action ${actionId}.`);
 }
