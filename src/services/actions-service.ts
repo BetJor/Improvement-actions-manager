@@ -7,6 +7,7 @@ import { planTraditionalActionWorkflow } from './workflow-service';
 import { getUsers, getUserById } from './users-service';
 import { getCategories, getSubcategories, getAffectedAreas, getCenters, getActionTypes, getResponsibilityRoles } from './master-data-service';
 import { getPermissionRuleForState, resolveRoles } from './permissions-service';
+import { sendStateChangeEmail } from './notification-service';
 
 interface CreateActionData extends Omit<ImprovementAction, 'id' | 'actionId' | 'status' | 'creationDate' | 'category' | 'subcategory' | 'type' | 'affectedAreas' | 'center' | 'analysisDueDate' | 'implementationDueDate' | 'closureDueDate' | 'readers' | 'authors' > {
   status: 'Borrador' | 'Pendiente Análisis';
@@ -191,7 +192,7 @@ export async function updateAction(actionId: string, data: any, masterData?: any
     if (!originalActionSnap.exists()) {
         throw new Error(`Action with ID ${actionId} not found.`);
     }
-    const originalAction = originalActionSnap.data() as ImprovementAction;
+    const originalAction = { id: originalActionSnap.id, ...originalActionSnap.data() } as ImprovementAction;
     
     let dataToUpdate: any = { ...data };
     
@@ -281,15 +282,25 @@ export async function updateAction(actionId: string, data: any, masterData?: any
         }
     }
     
-    // Update permissions if status has changed
-    const newStatus = dataToUpdate.status || originalAction.status;
+    // Get a fresh copy of the action *after* updates
+    const updatedActionDoc = await getDoc(actionDocRef);
+    const updatedAction = { id: updatedActionDoc.id, ...updatedActionDoc.data() } as ImprovementAction;
+
+    // Update permissions and send email if status has changed
+    const newStatus = updatedAction.status;
     const statusChanged = newStatus !== originalAction.status;
     if (statusChanged) {
-        await updateActionPermissions(actionId, dataToUpdate.typeId || originalAction.typeId, newStatus, {...originalAction, ...dataToUpdate, status: newStatus});
+        await updateActionPermissions(actionId, updatedAction.typeId, newStatus, updatedAction);
+        // Send email notification
+        await sendStateChangeEmail({
+            action: updatedAction,
+            oldStatus: originalAction.status,
+            newStatus: newStatus
+        });
     }
 
-    const updatedDoc = await getActionById(actionId);
-    return updatedDoc;
+    // Return the latest version of the document
+    return await getActionById(actionId);
 }
 
 export async function toggleFollowAction(actionId: string, userId: string): Promise<void> {

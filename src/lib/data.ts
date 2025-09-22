@@ -9,5 +9,4 @@ export * from '@/services/ai-service';
 export * from '@/services/storage-service';
 export * from '@/services/permissions-service';
 export * from '@/services/workflow-service';
-
-    
+export * from '@/services/notification-service';
