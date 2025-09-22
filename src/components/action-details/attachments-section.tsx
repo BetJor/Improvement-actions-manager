@@ -35,9 +35,9 @@ export function AttachmentsSection({ action, onActionUpdate }: AttachmentsSectio
     setIsUploadingFile(true)
     try {
       await uploadFileAndUpdateAction(action.id, file, {
-        id: user.uid,
-        name: user.displayName || 'Unknown User',
-        avatar: user.photoURL || undefined,
+        id: user.id,
+        name: user.name || 'Unknown User',
+        avatar: user.avatar || undefined,
       })
 
       toast({
