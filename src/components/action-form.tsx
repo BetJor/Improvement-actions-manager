@@ -430,7 +430,7 @@ export function ActionForm({
               control={form.control}
               name="centerId"
               render={({ field }) => (
-                <FormItem className="flex flex-col">
+                <FormItem className="flex flex-col gap-2">
                     <FormLabel>Centre</FormLabel>
                     <Popover open={isCenterPopoverOpen} onOpenChange={setIsCenterPopoverOpen}>
                         <PopoverTrigger asChild>
@@ -488,7 +488,7 @@ export function ActionForm({
               control={form.control}
               name="affectedAreasIds"
               render={({ field }) => (
-                <FormItem>
+                <FormItem className="flex flex-col gap-2">
                   <FormLabel>Àrees Funcionals Implicades</FormLabel>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
