@@ -5,11 +5,15 @@
     "method": ["GET", "POST", "PUT", "DELETE", "HEAD", "OPTIONS"],
     "responseHeader": [
       "Content-Type",
-      "Authorization",
       "Content-Length",
-      "User-Agent",
+      "Authorization",
+      "X-Firebase-Storage-Version",
+      "X-Goog-Upload-Command",
+      "X-Goog-Upload-Content-Type",
+      "X-Goog-Upload-File-Name",
+      "X-Goog-Upload-Offset",
       "X-Goog-Upload-Protocol",
-      "X-Firebase-Storage-Version"
+      "X-Goog-Upload-Status"
     ],
     "maxAgeSeconds": 3600
   }
