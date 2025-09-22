@@ -287,12 +287,8 @@ export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTab
                     <TabsContent value="details" className="mt-4">
                        <div className="space-y-6">
                             <div className="flex items-start justify-between gap-4">
-                                <div>
-                                    <h2 className="text-2xl font-bold tracking-tight">{isEditing ? t("editingTitle") : action.title}</h2>
-                                    <p className="text-muted-foreground mt-1">{isEditing ? t("editingDescription") : t("viewingDescription")}</p>
-                                </div>
                                 {!isEditing && action.status === "Borrador" && (
-                                    <Button onClick={() => setIsEditing(true)}>
+                                    <Button onClick={() => setIsEditing(true)} className="ml-auto">
                                         <FileEdit className="mr-2 h-4 w-4" /> {t("editDraft")}
                                     </Button>
                                 )}
