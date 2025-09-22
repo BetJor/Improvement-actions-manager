@@ -6,17 +6,33 @@ import type { ActionUserInfo, ActionAttachment } from '@/lib/types';
 
 
 export async function uploadFileAndUpdateAction(actionId: string, file: File, user: ActionUserInfo): Promise<void> {
-  if (!file) throw new Error("No file provided");
+  console.log("[Storage Service] Starting upload for action:", actionId, "by user:", user);
+  if (!file) {
+    console.error("[Storage Service] No file provided.");
+    throw new Error("No file provided");
+  }
+  if (!user || !user.id || !user.name) {
+      console.error("[Storage Service] Invalid user object provided:", user);
+      throw new Error("Invalid user object for upload.");
+  }
+
 
   // 1. Create a storage reference
   const filePath = `actions/${actionId}/${Date.now()}-${file.name}`;
+  console.log("[Storage Service] File path:", filePath);
   const storageRef = ref(storage, filePath);
 
   // 2. Upload the file
+  console.log("[Storage Service] Uploading bytes...");
   await uploadBytes(storageRef, file);
+  console.log("[Storage Service] Upload successful.");
+
 
   // 3. Get the download URL
+  console.log("[Storage Service] Getting download URL...");
   const downloadURL = await getDownloadURL(storageRef);
+  console.log("[Storage Service] Download URL:", downloadURL);
+
 
   // 4. Create the attachment object
   const newAttachment: ActionAttachment = {
@@ -26,10 +42,14 @@ export async function uploadFileAndUpdateAction(actionId: string, file: File, us
     uploadedBy: user,
     uploadedAt: new Date().toISOString(),
   };
+  console.log("[Storage Service] New attachment object created:", newAttachment);
+
 
   // 5. Update the action document in Firestore
   const actionDocRef = doc(db, 'actions', actionId);
+  console.log("[Storage Service] Updating Firestore document...");
   await updateDoc(actionDocRef, {
     attachments: arrayUnion(newAttachment),
   });
+  console.log("[Storage Service] Firestore document updated successfully.");
 }

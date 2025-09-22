@@ -29,33 +29,47 @@ export function AttachmentsSection({ action, onActionUpdate }: AttachmentsSectio
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    console.log("[Attachments] handleFileChange triggered.");
     const file = event.target.files?.[0]
-    if (!file || !user) return
+    if (!file || !user) {
+        console.error("[Attachments] No file or user. File:", file, "User:", user);
+        return;
+    }
 
+    console.log("[Attachments] File selected:", file.name, "User:", user);
     setIsUploadingFile(true)
     try {
+      console.log("[Attachments] Calling uploadFileAndUpdateAction with user:", user);
       await uploadFileAndUpdateAction(action.id, file, {
         id: user.id,
         name: user.name || 'Unknown User',
         avatar: user.avatar || undefined,
       })
 
+      console.log("[Attachments] Upload finished. Toasting success.");
       toast({
         title: "Fitxer pujat",
         description: `${file.name} s'ha pujat i adjuntat correctament.`,
       })
 
+      console.log("[Attachments] Fetching updated action...");
       const updatedAction = await getActionById(action.id)
-      if (updatedAction) onActionUpdate(updatedAction)
+      if (updatedAction) {
+        console.log("[Attachments] Action updated, calling onActionUpdate.");
+        onActionUpdate(updatedAction)
+      } else {
+        console.warn("[Attachments] Updated action not found after upload.");
+      }
 
     } catch (error) {
-      console.error("Error uploading file:", error)
+      console.error("[Attachments] Error uploading file:", error)
       toast({
         variant: "destructive",
         title: "Error de pujada",
         description: "No s'ha pogut pujar el fitxer.",
       })
     } finally {
+      console.log("[Attachments] Finally block. Setting isUploadingFile to false.");
       setIsUploadingFile(false)
       if (fileInputRef.current) {
         fileInputRef.current.value = ""
