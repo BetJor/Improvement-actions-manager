@@ -173,15 +173,39 @@ export async function createAction(data: CreateActionData, masterData: any): Pro
 
     // 7. Add the new document to Firestore
     const docRef = await addDoc(actionsCol, newActionData);
+    const newAction = { id: docRef.id, ...newActionData } as ImprovementAction;
 
-    // 8. If status is not 'Borrador', calculate permissions now
-    if (newActionData.status !== 'Borrador') {
-        await updateActionPermissions(docRef.id, newActionData.typeId, newActionData.status, {id: docRef.id, ...newActionData});
+    // 8. Handle status change logic if not a draft
+    if (newAction.status !== 'Borrador') {
+        await handleStatusChange(newAction, 'Borrador');
     }
     
     // Return the full object to update the local state
-    const createdActionDoc = await getDoc(docRef);
-    return { id: createdActionDoc.id, ...createdActionDoc.data() } as ImprovementAction;
+    return newAction;
+}
+
+// Private function to handle status change logic (permissions and notifications)
+async function handleStatusChange(action: ImprovementAction, oldStatus: ImprovementActionStatus) {
+    const actionDocRef = doc(db, 'actions', action.id);
+    await updateActionPermissions(action.id, action.typeId, action.status, action);
+        
+    // Send email notification and get recipient
+    const recipient = await sendStateChangeEmail({
+        action: action,
+        oldStatus: oldStatus,
+        newStatus: action.status
+    });
+    
+    // Add a system comment if the email was sent
+    if (recipient) {
+        const systemComment = {
+            id: crypto.randomUUID(),
+            author: { id: 'system', name: 'Sistema' },
+            date: new Date().toISOString(),
+            text: `S'ha enviat una notificació de canvi d'estat a ${recipient.name} (${recipient.email}).`
+        };
+        await updateDoc(actionDocRef, { comments: arrayUnion(systemComment) });
+    }
 }
 
 
@@ -286,29 +310,9 @@ export async function updateAction(actionId: string, data: any, masterData?: any
     const updatedActionDoc = await getDoc(actionDocRef);
     const updatedAction = { id: updatedActionDoc.id, ...updatedActionDoc.data() } as ImprovementAction;
 
-    // Update permissions and send email if status has changed
-    const newStatus = updatedAction.status;
-    const statusChanged = newStatus !== originalAction.status;
-    if (statusChanged) {
-        await updateActionPermissions(actionId, updatedAction.typeId, newStatus, updatedAction);
-        
-        // Send email notification and get recipient
-        const recipient = await sendStateChangeEmail({
-            action: updatedAction,
-            oldStatus: originalAction.status,
-            newStatus: newStatus
-        });
-        
-        // Add a system comment if the email was sent
-        if (recipient) {
-            const systemComment = {
-                id: crypto.randomUUID(),
-                author: { id: 'system', name: 'Sistema' },
-                date: new Date().toISOString(),
-                text: `S'ha enviat una notificació de canvi d'estat a ${recipient.name} (${recipient.email}).`
-            };
-            await updateDoc(actionDocRef, { comments: arrayUnion(systemComment) });
-        }
+    // Handle status change if it occurred
+    if (updatedAction.status !== originalAction.status) {
+        await handleStatusChange(updatedAction, originalAction.status);
     }
 
     // Return the latest version of the document
