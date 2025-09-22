@@ -109,6 +109,8 @@ export async function createAction(data: CreateActionData, masterData: any): Pro
     const today = new Date();
     const creationDate = format(today, 'dd/MM/yyyy');
 
+    const creatorDetails = await getUserById(data.creator.id);
+
     // Find names from IDs
     const categoryName = masterData.categories.find((c: any) => c.id === data.category)?.name || data.category;
     const subcategoryName = masterData.subcategories.find((s: any) => s.id === data.subcategory)?.name || data.subcategory;
@@ -132,7 +134,12 @@ export async function createAction(data: CreateActionData, masterData: any): Pro
       center: centerName,
       centerId: data.centerId,
       assignedTo: data.assignedTo,
-      creator: data.creator,
+      creator: {
+        id: data.creator.id,
+        name: creatorDetails?.name || data.creator.name,
+        avatar: creatorDetails?.avatar || data.creator.avatar,
+        email: creatorDetails?.email || '',
+      },
       responsibleGroupId: data.assignedTo,
       creationDate: creationDate,
       analysisDueDate: '', 
@@ -153,19 +160,20 @@ export async function createAction(data: CreateActionData, masterData: any): Pro
     newActionData.closureDueDate = workflowPlan.steps.find(s => s.stepName.includes('Tancament'))?.dueDate || '';
     
     // 5. Apply initial permissions for 'Borrador' state
-    if (newActionData.status === 'Borrador') {
-        // We need to fetch the full user to get the email
-        const creatorDetails = await getUserById(newActionData.creator.id);
-        if (creatorDetails?.email) {
-            newActionData.readers = [creatorDetails.email];
-            newActionData.authors = [creatorDetails.email];
-        }
+    if (newActionData.status === 'Borrador' && newActionData.creator.email) {
+        newActionData.readers = [newActionData.creator.email];
+        newActionData.authors = [newActionData.creator.email];
+    }
+    
+    // 6. Add user as follower if sending for analysis right away
+    if (newActionData.status === 'Pendiente Análisis') {
+      newActionData.followers = [newActionData.creator.id];
     }
 
-    // 6. Add the new document to Firestore
+    // 7. Add the new document to Firestore
     const docRef = await addDoc(actionsCol, newActionData);
 
-    // 7. If status is not 'Borrador', calculate permissions now
+    // 8. If status is not 'Borrador', calculate permissions now
     if (newActionData.status !== 'Borrador') {
         await updateActionPermissions(docRef.id, newActionData.typeId, newActionData.status, {id: docRef.id, ...newActionData});
     }
@@ -185,57 +193,60 @@ export async function updateAction(actionId: string, data: any, masterData?: any
     }
     const originalAction = originalActionSnap.data() as ImprovementAction;
     
-    let dataToUpdate: any = {};
-    let newStatus = status || data.status || originalAction.status;
-    const statusChanged = newStatus !== originalAction.status;
-
-    if (data.updateProposedActionStatus) {
-        // Use a transaction to safely update one element of the array
+    let dataToUpdate: any = { ...data };
+    
+    // Handle specific update types first
+    if (data.newComment) {
+        await updateDoc(actionDocRef, { comments: arrayUnion(data.newComment) });
+    } else if (data.updateProposedActionStatus) {
         await runTransaction(db, async (transaction) => {
             const actionDoc = await transaction.get(actionDocRef);
-            if (!actionDoc.exists()) {
-                throw "Document does not exist!";
-            }
+            if (!actionDoc.exists()) throw "Document does not exist!";
+            
             const currentAction = actionDoc.data() as ImprovementAction;
             const proposedActions = currentAction.analysis?.proposedActions || [];
             
-            const updatedProposedActions = proposedActions.map(pa => {
-                if (pa.id === data.updateProposedActionStatus.proposedActionId) {
-                    return { ...pa, status: data.updateProposedActionStatus.status };
-                }
-                return pa;
-            });
+            const updatedProposedActions = proposedActions.map(pa => 
+                pa.id === data.updateProposedActionStatus.proposedActionId 
+                    ? { ...pa, status: data.updateProposedActionStatus.status } 
+                    : pa
+            );
             
             transaction.update(actionDocRef, { "analysis.proposedActions": updatedProposedActions });
         });
-    } else if (data.newComment) {
-        // Handle adding a new comment
-        dataToUpdate = {
-            comments: arrayUnion(data.newComment)
-        };
-        await updateDoc(actionDocRef, dataToUpdate);
-    } else if (masterData) {
-        // Handle editing a draft
-        dataToUpdate = {
-            title: data.title,
-            description: data.description,
-            assignedTo: data.assignedTo,
-            responsibleGroupId: data.assignedTo,
-            category: masterData.categories.find((c: any) => c.id === data.category)?.name || data.category,
-            categoryId: data.category,
-            subcategory: masterData.subcategories.find((s: any) => s.id === data.subcategory)?.name || data.subcategory,
-            subcategoryId: data.subcategory,
-            affectedAreas: data.affectedAreasIds.map((id: string) => masterData.affectedAreas.find((a: any) => a.id === id)?.name || id),
-            affectedAreasIds: data.affectedAreasIds,
-            center: masterData.centers.find((c: any) => c.id === data.centerId)?.name || data.centerId,
-            centerId: data.centerId,
-            type: masterData.actionTypes.find((t: any) => t.id === data.typeId)?.name || data.typeId,
-            typeId: data.typeId,
-        };
-         await updateDoc(actionDocRef, dataToUpdate);
     } else {
-        // If no masterData, we are likely updating other fields like analysis, verification or closure
-        dataToUpdate = { ...data };
+        // This is a general update, likely from the main form or a status change
+        
+        // If masterData is present, we're editing the draft details
+        if (masterData) {
+            dataToUpdate = {
+                ...dataToUpdate,
+                title: data.title,
+                description: data.description,
+                assignedTo: data.assignedTo,
+                responsibleGroupId: data.assignedTo,
+                category: masterData.categories.find((c: any) => c.id === data.category)?.name || data.category,
+                categoryId: data.category,
+                subcategory: masterData.subcategories.find((s: any) => s.id === data.subcategory)?.name || data.subcategory,
+                subcategoryId: data.subcategory,
+                affectedAreas: data.affectedAreasIds.map((id: string) => masterData.affectedAreas.find((a: any) => a.id === id)?.name || id),
+                affectedAreasIds: data.affectedAreasIds,
+                center: masterData.centers.find((c: any) => c.id === data.centerId)?.name || data.centerId,
+                centerId: data.centerId,
+                type: masterData.actionTypes.find((t: any) => t.id === data.typeId)?.name || data.typeId,
+                typeId: data.typeId,
+            };
+        }
+
+        // If a new status is provided, update it
+        if (status) {
+            dataToUpdate.status = status;
+        }
+        
+        // Auto-follow if sent to analysis
+        if (status === 'Pendiente Análisis' && originalAction.creator?.id) {
+            dataToUpdate.followers = arrayUnion(originalAction.creator.id);
+        }
 
         // Handle closure logic for non-compliant actions
         if (data.closure && !data.closure.isCompliant) {
@@ -263,19 +274,19 @@ export async function updateAction(actionId: string, data: any, masterData?: any
             };
             await createAction(bisActionData, allMasterData);
         }
-         await updateDoc(actionDocRef, dataToUpdate);
-    }
-    
-    // Always update status if provided
-    if (status) {
-        await updateDoc(actionDocRef, { status: status });
+        
+        // Apply updates to Firestore
+        if (Object.keys(dataToUpdate).length > 0) {
+            await updateDoc(actionDocRef, dataToUpdate);
+        }
     }
     
     // Update permissions if status has changed
+    const newStatus = dataToUpdate.status || originalAction.status;
+    const statusChanged = newStatus !== originalAction.status;
     if (statusChanged) {
         await updateActionPermissions(actionId, dataToUpdate.typeId || originalAction.typeId, newStatus, {...originalAction, ...dataToUpdate, status: newStatus});
     }
-
 
     const updatedDoc = await getActionById(actionId);
     return updatedDoc;
@@ -376,5 +387,3 @@ export async function updateActionPermissions(actionId: string, typeId: string, 
         authors: finalAuthors
     });
 }
-
-    
