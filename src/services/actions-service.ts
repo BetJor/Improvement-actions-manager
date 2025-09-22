@@ -17,6 +17,7 @@ interface CreateActionData extends Omit<ImprovementAction, 'id' | 'actionId' | '
   typeId: string;
   affectedAreasIds: string[];
   centerId?: string;
+  locale?: string;
 }
 
 

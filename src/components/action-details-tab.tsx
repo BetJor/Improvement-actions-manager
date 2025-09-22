@@ -83,6 +83,10 @@ export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTab
             }
             
             await updateAction(action.id, dataToUpdate, masterData, status);
+            toast({
+                title: "Acción guardada",
+                description: "Los cambios se han guardado correctamente.",
+            });
 
             if (status === 'Pendiente Análisis') {
                 closeCurrentTab();
@@ -110,6 +114,11 @@ export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTab
             analysis: analysisData,
             status: "Pendiente Comprobación",
           });
+          
+          toast({
+            title: "Análisis guardado",
+            description: "El análisis de causas se ha guardado y el estado ha avanzado.",
+          });
     
           await handleActionUpdate();
     
@@ -133,6 +142,11 @@ export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTab
             verification: verificationData,
             status: "Pendiente de Cierre",
           });
+          
+          toast({
+            title: "Verificación guardada",
+            description: "La verificación se ha guardado y el estado ha avanzado.",
+          });
     
           await handleActionUpdate();
     
@@ -152,7 +166,7 @@ export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTab
         if (!action || !user) return;
         setIsSubmitting(true);
         try {
-            const closedAction = await updateAction(action.id, {
+            await updateAction(action.id, {
                 closure: {
                     ...closureData,
                     closureResponsible: {
@@ -165,6 +179,11 @@ export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTab
                 status: 'Finalizada',
             });
             
+            toast({
+                title: "Acción cerrada",
+                description: "La acción de mejora se ha cerrado correctamente.",
+            });
+            closeCurrentTab();
             router.push("/actions");
             router.refresh();
     
@@ -189,6 +208,10 @@ export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTab
                     proposedActionId,
                     status: newStatus,
                 }
+            });
+            toast({
+                title: "Estado actualizado",
+                description: "El estado de la acción propuesta se ha actualizado.",
             });
             await handleActionUpdate();
         } catch (error) {
