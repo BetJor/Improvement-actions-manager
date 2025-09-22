@@ -1,7 +1,9 @@
 import { collection, doc, getDocs, addDoc, updateDoc, deleteDoc, query, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import type { PermissionRule, ResponsibilityRole, ImprovementAction, ImprovementActionStatus } from '@/lib/types';
+import type { PermissionRule, ResponsibilityRole, ImprovementAction, ImprovementActionStatus, Center } from '@/lib/types';
 import { evaluatePattern } from '@/lib/pattern-evaluator';
+import { getCenters } from './master-data-service';
+import { getUserById } from './users-service';
 
 
 // --- CRUD for Permission Rules ---
@@ -52,6 +54,20 @@ export async function resolveRoles(
 
     let resolvedEmails: string[] = [];
 
+    // Pre-fetch context data to avoid multiple DB calls inside the loop
+    const allCenters = await getCenters();
+    const center = allCenters.find((c: Center) => c.id === action.centerId);
+    const creator = await getUserById(action.creator.id);
+    
+    // Build the context object for the pattern evaluator
+    const context = {
+        action: {
+            ...action,
+            center: center,
+            creator: creator
+        }
+    };
+
     for (const roleId of roleIds) {
         const role = allRoles.find(r => r.id === roleId);
         if (!role) continue;
@@ -62,9 +78,7 @@ export async function resolveRoles(
                 break;
             case 'Pattern':
                 if (role.emailPattern) {
-                    // This is where the pattern is resolved using the generic evaluator.
-                    const resolvedEmail = evaluatePattern(role.emailPattern, { action });
-                    // Check if the pattern was fully resolved
+                    const resolvedEmail = evaluatePattern(role.emailPattern, context);
                     if (resolvedEmail && !resolvedEmail.includes('{{')) {
                         resolvedEmails.push(resolvedEmail);
                     }
