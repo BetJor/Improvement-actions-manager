@@ -14,6 +14,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { Paperclip, Upload, Download, Loader2, ChevronDown } from "lucide-react"
 import { Badge } from "../ui/badge"
+import { getAuth, onAuthStateChanged } from "firebase/auth";
 
 interface AttachmentsSectionProps {
   action: ImprovementAction
@@ -28,6 +29,34 @@ export function AttachmentsSection({ action, onActionUpdate }: AttachmentsSectio
   const [isUploadingFile, setIsUploadingFile] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
+  const safeUpload = async (file: File) => {
+    // Use a promise to wait for authentication to be confirmed
+    return new Promise<void>((resolve, reject) => {
+      // onAuthStateChanged is the most reliable way to check the auth state
+      const unsubscribe = onAuthStateChanged(getAuth(), async (user) => {
+        // Unsubscribe immediately to avoid memory leaks
+        unsubscribe();
+  
+        if (user) {
+          console.log("[Attachments] Auth confirmed, starting upload.");
+          try {
+            await uploadFileAndUpdateAction(action.id, file, {
+              id: user.uid, // Use the user ID from the SDK
+              name: user.displayName || 'Unknown User',
+              avatar: user.photoURL || undefined,
+            });
+            resolve();
+          } catch (error) {
+            reject(error);
+          }
+        } else {
+          reject(new Error("No authenticated user found."));
+        }
+      });
+    });
+  };
+  
+
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     console.log("[Attachments] handleFileChange triggered.");
     const file = event.target.files?.[0]
@@ -39,19 +68,12 @@ export function AttachmentsSection({ action, onActionUpdate }: AttachmentsSectio
     console.log("[Attachments] File selected:", file.name, "User:", user);
     setIsUploadingFile(true)
     try {
-      console.log("[Attachments] Calling uploadFileAndUpdateAction with user:", user);
-      await uploadFileAndUpdateAction(action.id, file, {
-        id: user.id,
-        name: user.name || 'Unknown User',
-        avatar: user.avatar || undefined,
-      })
-
-      console.log("[Attachments] Upload finished. Toasting success.");
+      await safeUpload(file);
       toast({
         title: "Fitxer pujat",
         description: `${file.name} s'ha pujat i adjuntat correctament.`,
-      })
-
+      });
+   
       console.log("[Attachments] Fetching updated action...");
       const updatedAction = await getActionById(action.id)
       if (updatedAction) {
