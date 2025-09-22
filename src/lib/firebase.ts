@@ -1,11 +1,8 @@
-
 import { initializeApp, getApps, getApp } from "firebase/app";
-import { getAuth } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
-import { getStorage } from "firebase/storage";
+import { getAuth, connectAuthEmulator } from "firebase/auth";
+import { getFirestore, connectFirestoreEmulator } from "firebase/firestore";
+import { getStorage, connectStorageEmulator } from "firebase/storage";
 
-// IMPORTANT: Replace this with your own Firebase configuration
-// You can get this from the Firebase console
 const firebaseConfig = {
   "projectId": "improvement-actions-manager",
   "appId": "1:920139375274:web:3c4fd3616765e7480566d3",
@@ -15,11 +12,17 @@ const firebaseConfig = {
   "messagingSenderId": "920139375274"
 };
 
-// Initialize Firebase
-const firebaseApp = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+const auth = getAuth(app);
+const db = getFirestore(app);
+const storage = getStorage(app);
 
-const auth = getAuth(firebaseApp);
-const db = getFirestore(firebaseApp);
-const storage = getStorage(firebaseApp);
+// Connect to emulators if running in development
+if (process.env.NODE_ENV === 'development') {
+    console.log("Connecting to Firebase Emulators");
+    connectAuthEmulator(auth, "http://localhost:9099", { disableWarnings: true });
+    connectFirestoreEmulator(db, 'localhost', 8080);
+    connectStorageEmulator(storage, "localhost", 9199);
+}
 
-export { firebaseApp, auth, db, storage };
+export { app as firebaseApp, auth, db, storage };
