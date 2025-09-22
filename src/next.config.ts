@@ -36,8 +36,6 @@ const nextConfig: NextConfig = {
     serverActions: {
       bodySizeLimit: '2mb',
     },
-    // This is required to allow cross-origin requests in the dev environment.
-    allowedDevOrigins: ["https://6000-firebase-studio-1753878008610.cluster-cbeiita7rbe7iuwhvjs5zww2i4.cloudworkstations.dev"]
   },
 };
  
