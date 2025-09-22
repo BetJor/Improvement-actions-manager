@@ -195,17 +195,6 @@ async function handleStatusChange(action: ImprovementAction, oldStatus: Improvem
         oldStatus: oldStatus,
         newStatus: action.status
     });
-    
-    // Add a system comment if the email was sent
-    if (recipient) {
-        const systemComment = {
-            id: crypto.randomUUID(),
-            author: { id: 'system', name: 'Sistema' },
-            date: new Date().toISOString(),
-            text: `S'ha enviat una notificació de canvi d'estat a ${recipient.name} (${recipient.email}).`
-        };
-        await updateDoc(actionDocRef, { comments: arrayUnion(systemComment) });
-    }
 }
 
 
@@ -388,11 +377,7 @@ export async function updateActionPermissions(actionId: string, typeId: string, 
 
     const permissionRule = await getPermissionRuleForState(typeId, status);
     if (!permissionRule) {
-        console.warn(`No permission rule found for type ${typeId} and status ${status}. Setting empty permissions.`);
-        await updateDoc(actionDocRef, {
-            readers: currentAction.readers || [], // Keep existing readers if no rule is found
-            authors: [],
-        });
+        console.warn(`No permission rule found for type ${typeId} and status ${status}. Keeping existing permissions.`);
         return;
     }
 
