@@ -18,12 +18,12 @@ export default function DashboardPage() {
   const assignedActions = useMemo(() => {
     if (!user || !actions) return [];
   
-    // An action is pending for the user if their email is in the 'authors' array
-    // and the action is not finalized.
-    return actions.filter(action => 
-        action.status !== 'Finalizada' &&
-        action.authors?.includes(user.email)
-    );
+    return actions.filter(action => {
+      const isResponsibleForAnalysis = action.status === 'Pendiente Análisis' && action.responsibleGroupId === user.email;
+      const isCreatorOfDraft = action.status === 'Borrador' && action.creator.id === user.id;
+      
+      return isResponsibleForAnalysis || isCreatorOfDraft;
+    });
 
   }, [actions, user]);
 
