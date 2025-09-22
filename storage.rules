@@ -2,26 +2,18 @@ rules_version = '2';
 
 service firebase.storage {
   match /b/{bucket}/o {
-    // Rule for files within the 'actions' folder
+    // Permet la lectura pública de tots els fitxers.
+    // Això és útil perquè les URLs dels fitxers adjunts siguin accessibles.
+    // Considera restringir-ho si necessites més seguretat.
+    match /{allPaths=**} {
+      allow read;
+    }
+
+    // Regles específiques per a la pujada de fitxers d'accions
     match /actions/{actionId}/{fileName} {
-
-      // Allow authenticated users to read files if the corresponding action document exists in Firestore.
-      allow read: if request.auth != null &&
-                   exists(/databases/$(database)/documents/actions/$(actionId));
-
-      // Allow users to create files (upload) under strict conditions.
-      allow create: if request.auth != null &&
-                    // 1. The user ID in the metadata must match the authenticated user's ID.
-                    request.resource.metadata.userId == request.auth.uid &&
-                    // 2. The file size must be less than 5MB.
-                    request.resource.size < 5 * 1024 * 1024 &&
-                    // 3. The file type must be one of the allowed types.
-                    request.resource.contentType.matches('image/.*|application/pdf|application/msword|application/vnd.openxmlformats-officedocument.wordprocessingml.document|application/vnd.ms-excel|application/vnd.openxmlformats-officedocument.spreadsheetml.sheet|text/plain') &&
-                    // 4. The action document must exist in Firestore.
-                    exists(/databases/$(database)/documents/actions/$(actionId));
-      
-      // Explicitly deny updates and deletes from the client-side for security.
-      allow update, delete: if false;
+      // Només un usuari autenticat pot pujar (escriure) un fitxer.
+      // També comprovem que el fitxer no sigui massa gran (p.ex., < 5MB).
+      allow write: if request.auth != null && request.resource.size < 5 * 1024 * 1024;
     }
   }
 }
