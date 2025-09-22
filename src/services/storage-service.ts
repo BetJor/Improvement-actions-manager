@@ -22,19 +22,26 @@ export async function uploadFileAndUpdateAction(actionId: string, file: File, us
   console.log("[Storage Service] File path:", filePath);
   const storageRef = ref(storage, filePath);
 
-  // 2. Upload the file
-  console.log("[Storage Service] Uploading bytes...");
-  await uploadBytes(storageRef, file);
+  // 2. Define metadata for the upload, including the user's ID for security rules
+  const metadata = {
+    customMetadata: {
+      'userId': user.id
+    }
+  };
+
+  // 3. Upload the file with metadata
+  console.log("[Storage Service] Uploading bytes with metadata...", metadata);
+  await uploadBytes(storageRef, file, metadata);
   console.log("[Storage Service] Upload successful.");
 
 
-  // 3. Get the download URL
+  // 4. Get the download URL
   console.log("[Storage Service] Getting download URL...");
   const downloadURL = await getDownloadURL(storageRef);
   console.log("[Storage Service] Download URL:", downloadURL);
 
 
-  // 4. Create the attachment object
+  // 5. Create the attachment object
   const newAttachment: ActionAttachment = {
     id: crypto.randomUUID(),
     fileName: file.name,
@@ -45,7 +52,7 @@ export async function uploadFileAndUpdateAction(actionId: string, file: File, us
   console.log("[Storage Service] New attachment object created:", newAttachment);
 
 
-  // 5. Update the action document in Firestore
+  // 6. Update the action document in Firestore
   const actionDocRef = doc(db, 'actions', actionId);
   console.log("[Storage Service] Updating Firestore document...");
   await updateDoc(actionDocRef, {
