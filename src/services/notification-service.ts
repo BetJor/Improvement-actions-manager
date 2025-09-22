@@ -1,5 +1,3 @@
-
-
 'use server';
 /**
  * @fileOverview A service for handling notifications, such as sending emails.
@@ -11,11 +9,13 @@ import { ImprovementAction, User } from '@/lib/types';
 import { getUserById, getUsers } from './users-service';
 import { doc, updateDoc, arrayUnion } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { getTranslations } from 'next-intl/server';
 
 interface EmailDetails {
   action: ImprovementAction;
   oldStatus: string;
   newStatus: string;
+  locale: string;
 }
 
 async function addSystemComment(actionId: string, text: string) {
@@ -39,21 +39,10 @@ async function addSystemComment(actionId: string, text: string) {
 /**
  * Sends an email notification about a status change in an improvement action.
  * This function authenticates with the Gmail API using a service account.
- * 
- * IMPORTANT: To use this function, you must:
- * 1. Create a Google Cloud Service Account.
- * 2. Enable the Gmail API in your Google Cloud project.
- * 3. Grant Domain-Wide Delegation to the service account in your Google Workspace Admin Console with the scope: `https://www.googleapis.com/auth/gmail.send`
- * 4. Set the following environment variables in your `.env` file:
- *    - `GOOGLE_APPLICATION_CREDENTIALS`: Path to your service account JSON key file.
- *    - `GMAIL_SENDER`: The email address from which the notification will be sent (e.g., 'noreply@yourdomain.com'). This user must exist in your Workspace.
- * 
- * @param details - The details required to build and send the email.
- * @returns The user object of the recipient if the email was sent, otherwise null.
  */
 export async function sendStateChangeEmail(details: EmailDetails): Promise<User | null> {
   console.log(`[NotificationService] sendStateChangeEmail called with details:`, details);
-  const { action, oldStatus, newStatus } = details;
+  const { action, oldStatus, newStatus, locale } = details;
 
   const senderEmail = process.env.GMAIL_SENDER;
   if (!senderEmail) {
@@ -63,7 +52,6 @@ export async function sendStateChangeEmail(details: EmailDetails): Promise<User 
   }
   console.log(`[NotificationService] Sender email is: ${senderEmail}`);
   
-  // Determine the recipient
   let recipient: User | null = null;
   const allUsers = await getUsers();
 
@@ -72,7 +60,6 @@ export async function sendStateChangeEmail(details: EmailDetails): Promise<User 
     console.log(`[NotificationService] Attempting to notify analysis responsible: ${action.responsibleGroupId}. Found user:`, recipient);
   }
   
-  // Fallback to creator if no specific recipient is found
   if (!recipient) {
     recipient = await getUserById(action.creator.id);
     console.log(`[NotificationService] Falling back to creator. Found user:`, recipient);
@@ -82,7 +69,7 @@ export async function sendStateChangeEmail(details: EmailDetails): Promise<User 
 
   if (!recipient || !recipient.email) {
     console.warn(`[NotificationService] No recipient or recipient email found for action ${action.actionId}. Skipping email notification.`);
-    await addSystemComment(action.id, `Error d'enviament de correu: No s'ha trobat el destinatari o la seva adreça de correu.`);
+    await addSystemComment(action.id, `Error d'enviament de correu: No s'ha trobat un destinatari vàlid.`);
     return null;
   }
   const recipientEmail = recipient.email;
@@ -92,12 +79,10 @@ export async function sendStateChangeEmail(details: EmailDetails): Promise<User 
     console.log('[NotificationService] Authenticating with Google API...');
     const auth = new google.auth.GoogleAuth({
       scopes: ['https://www.googleapis.com/auth/gmail.send'],
-      // The GOOGLE_APPLICATION_CREDENTIALS env var is automatically used by the library
     });
 
     const authClient = await auth.getClient();
     
-    // The subject to impersonate is the sender email address
     (authClient as any).subject = senderEmail;
     console.log(`[NotificationService] Impersonating sender: ${senderEmail}`);
 
@@ -129,7 +114,6 @@ export async function sendStateChangeEmail(details: EmailDetails): Promise<User 
     const message = messageParts.join('\n');
     console.log('[NotificationService] Email message constructed.');
 
-    // The body needs to be base64url encoded.
     const encodedMessage = Buffer.from(message)
       .toString('base64')
       .replace(/\+/g, '-')
@@ -138,20 +122,19 @@ export async function sendStateChangeEmail(details: EmailDetails): Promise<User 
 
     console.log('[NotificationService] Sending message via Gmail API...');
     await gmail.users.messages.send({
-      userId: 'me', // 'me' refers to the impersonated user (GMAIL_SENDER)
+      userId: 'me',
       requestBody: {
         raw: encodedMessage,
       },
     });
 
     console.log(`[NotificationService] Email sent successfully to ${recipientEmail} for action ${action.actionId}`);
-    await addSystemComment(action.id, `S'ha enviat una notificació de canvi d'estat a ${recipient.name} (${recipient.email}).`);
+    await addSystemComment(action.id, `S'ha enviat una notificació per correu a ${recipient.name} (${recipient.email}) sobre el canvi d'estat a "${newStatus}".`);
     return recipient;
 
   } catch (error: any) {
     console.error('[NotificationService] Error sending email:', error);
-    await addSystemComment(action.id, `Error en l'enviament de correu a ${recipientEmail}: ${error.message}`);
-    // In a real application, you might want to throw the error or handle it differently
+    await addSystemComment(action.id, `S'ha produït un error en intentar enviar la notificació per correu a ${recipientEmail}: ${error.message}`);
     return null;
   }
 }

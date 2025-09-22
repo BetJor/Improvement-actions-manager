@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Loader2 } from "lucide-react"
 import { useTabs } from "@/hooks/use-tabs"
 import { useActionState } from "@/hooks/use-action-state"
+import { useLocale } from "next-intl"
 
 
 export default function NewActionPage() {
@@ -18,6 +19,7 @@ export default function NewActionPage() {
   const { toast } = useToast()
   const router = useRouter()
   const { user } = useAuth()
+  const locale = useLocale()
   const { closeCurrentTab } = useTabs();
   const { setActions } = useActionState();
   
@@ -82,6 +84,7 @@ export default function NewActionPage() {
           name: user.name || "Usuari desconegut",
           avatar: user.avatar || undefined,
         },
+        locale: locale, // Pass the current locale
       };
       const newAction = await createAction(actionData, masterData);
       

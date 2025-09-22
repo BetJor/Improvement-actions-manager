@@ -2,10 +2,12 @@
 import { getActionById, getActionTypes, getCategories, getSubcategories, getAffectedAreas, getCenters, getResponsibilityRoles } from "@/lib/data"
 import { notFound } from "next/navigation"
 import { ActionDetailsTab } from "@/components/action-details-tab"
+import { getLocale } from "next-intl/server";
 
 
 export default async function ActionDetailPage({ params }: { params: { id: string } }) {
   const actionId = params.id as string;
+  const locale = await getLocale();
   if (!actionId) {
     notFound();
   }
@@ -39,6 +41,7 @@ export default async function ActionDetailPage({ params }: { params: { id: strin
     <ActionDetailsTab
       initialAction={actionData}
       masterData={masterData}
+      locale={locale}
     />
   )
 }

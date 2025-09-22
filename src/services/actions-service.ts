@@ -17,6 +17,7 @@ interface CreateActionData extends Omit<ImprovementAction, 'id' | 'actionId' | '
   typeId: string;
   affectedAreasIds: string[];
   centerId?: string;
+  locale: string; // Add locale here
 }
 
 
@@ -178,7 +179,7 @@ export async function createAction(data: CreateActionData, masterData: any): Pro
 
     // 8. Handle status change logic if not a draft
     if (newAction.status !== 'Borrador') {
-        await handleStatusChange(newAction, 'Borrador');
+        await handleStatusChange(newAction, 'Borrador', data.locale);
     }
     
     // Return the full object to update the local state
@@ -186,7 +187,7 @@ export async function createAction(data: CreateActionData, masterData: any): Pro
 }
 
 // Private function to handle status change logic (permissions and notifications)
-async function handleStatusChange(action: ImprovementAction, oldStatus: ImprovementActionStatus) {
+async function handleStatusChange(action: ImprovementAction, oldStatus: ImprovementActionStatus, locale: string) {
     console.log(`[ActionService] handleStatusChange called for action ${action.id} from ${oldStatus} to ${action.status}`);
     const actionDocRef = doc(db, 'actions', action.id);
     
@@ -197,14 +198,15 @@ async function handleStatusChange(action: ImprovementAction, oldStatus: Improvem
     const recipient = await sendStateChangeEmail({
         action: action,
         oldStatus: oldStatus,
-        newStatus: action.status
+        newStatus: action.status,
+        locale: locale,
     });
     console.log(`[ActionService] Email process completed. Recipient:`, recipient);
 }
 
 
 // Function to update an existing action
-export async function updateAction(actionId: string, data: any, masterData?: any, status?: 'Borrador' | 'Pendiente Análisis'): Promise<ImprovementAction | null> {
+export async function updateAction(actionId: string, data: any, masterData?: any, status?: 'Borrador' | 'Pendiente Análisis', locale?: string): Promise<ImprovementAction | null> {
     const actionDocRef = doc(db, 'actions', actionId);
     const originalActionSnap = await getDoc(actionDocRef);
     if (!originalActionSnap.exists()) {
@@ -268,7 +270,7 @@ export async function updateAction(actionId: string, data: any, masterData?: any
         }
 
         // Handle closure logic for non-compliant actions
-        if (data.closure && !data.closure.isCompliant) {
+        if (data.closure && !data.closure.isCompliant && locale) {
             const allMasterData = {
                 categories: await getCategories(),
                 subcategories: await getSubcategories(),
@@ -289,7 +291,8 @@ export async function updateAction(actionId: string, data: any, masterData?: any
                 creator: data.closure.closureResponsible,
                 status: 'Borrador',
                 originalActionId: originalAction.id,
-                originalActionTitle: `${originalAction.actionId}: ${originalAction.title}`
+                originalActionTitle: `${originalAction.actionId}: ${originalAction.title}`,
+                locale: locale,
             };
             await createAction(bisActionData, allMasterData);
         }
@@ -305,8 +308,8 @@ export async function updateAction(actionId: string, data: any, masterData?: any
     const updatedAction = { id: updatedActionDoc.id, ...updatedActionDoc.data() } as ImprovementAction;
 
     // Handle status change if it occurred
-    if (updatedAction.status !== originalAction.status) {
-        await handleStatusChange(updatedAction, originalAction.status);
+    if (updatedAction.status !== originalAction.status && locale) {
+        await handleStatusChange(updatedAction, originalAction.status, locale);
     }
 
     // Return the latest version of the document

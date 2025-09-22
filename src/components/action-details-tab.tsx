@@ -36,9 +36,10 @@ import { ActionStatusBadge } from "./action-status-badge"
 interface ActionDetailsTabProps {
     initialAction: ImprovementAction;
     masterData: any;
+    locale: string;
 }
 
-export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTabProps) {
+export function ActionDetailsTab({ initialAction, masterData, locale }: ActionDetailsTabProps) {
     const t = useTranslations("Actions.detail")
     const tForm = useTranslations("Actions.new")
     const tActionsTable = useTranslations("Actions.table")
@@ -88,7 +89,7 @@ export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTab
               dataToUpdate.status = status;
             }
             
-            await updateAction(action.id, dataToUpdate, masterData, status);
+            await updateAction(action.id, dataToUpdate, masterData, status, locale);
 
             if (status === 'Pendiente Análisis') {
                 closeCurrentTab();
@@ -115,7 +116,7 @@ export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTab
           await updateAction(action.id, {
             analysis: analysisData,
             status: "Pendiente Comprobación",
-          });
+          }, undefined, undefined, locale);
     
           await handleActionUpdate();
     
@@ -138,7 +139,7 @@ export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTab
           await updateAction(action.id, {
             verification: verificationData,
             status: "Pendiente de Cierre",
-          });
+          }, undefined, undefined, locale);
     
           await handleActionUpdate();
     
@@ -169,7 +170,7 @@ export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTab
                     date: new Date().toISOString(),
                 },
                 status: 'Finalizada',
-            });
+            }, undefined, undefined, locale);
             
             router.push("/actions");
             router.refresh();
@@ -195,7 +196,7 @@ export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTab
                     proposedActionId,
                     status: newStatus,
                 }
-            });
+            }, undefined, undefined, locale);
             await handleActionUpdate();
         } catch (error) {
             console.error("Error updating proposed action status:", error);
@@ -482,5 +483,3 @@ export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTab
         </div>
     )
 }
-
-    
