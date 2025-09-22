@@ -72,7 +72,7 @@ const ReadOnlyField = ({ label, value }: { label: string, value?: string | strin
     if (!value) return null;
     return (
         <div className="grid gap-1.5">
-            <Label className="text-muted-foreground">{label}</Label>
+            <Label className="text-primary">{label}</Label>
             <div className="text-sm font-medium">
               {Array.isArray(value) ? value.join(', ') : value}
             </div>
