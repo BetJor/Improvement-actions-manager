@@ -4,7 +4,6 @@
 import { useState, useRef } from "react"
 import { useAuth } from "@/hooks/use-auth"
 import { useToast } from "@/hooks/use-toast"
-import { useTranslations } from "next-intl"
 import { uploadFileAndUpdateAction, getActionById } from "@/lib/data"
 import type { ImprovementAction } from "@/lib/types"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -22,7 +21,6 @@ interface AttachmentsSectionProps {
 }
 
 export function AttachmentsSection({ action, onActionUpdate }: AttachmentsSectionProps) {
-  const t = useTranslations("Actions.detail.attachments")
   const { user } = useAuth()
   const { toast } = useToast()
   
@@ -70,8 +68,8 @@ export function AttachmentsSection({ action, onActionUpdate }: AttachmentsSectio
     try {
       await safeUpload(file);
       toast({
-        title: "Fitxer pujat",
-        description: `${file.name} s'ha pujat i adjuntat correctament.`,
+        title: "Archivo subido",
+        description: `${file.name} se ha subido y adjuntado correctamente.`,
       });
    
       console.log("[Attachments] Fetching updated action...");
@@ -87,8 +85,8 @@ export function AttachmentsSection({ action, onActionUpdate }: AttachmentsSectio
       console.error("[Attachments] Error uploading file:", error)
       toast({
         variant: "destructive",
-        title: "Error de pujada",
-        description: "No s'ha pogut pujar el fitxer.",
+        title: "Error de subida",
+        description: "No se ha podido subir el archivo.",
       })
     } finally {
       console.log("[Attachments] Finally block. Setting isUploadingFile to false.");
@@ -106,7 +104,7 @@ export function AttachmentsSection({ action, onActionUpdate }: AttachmentsSectio
           <div className="flex justify-between items-center p-4 cursor-pointer">
             <CardTitle className="flex items-center gap-2 text-base">
               <Paperclip className="h-5 w-5" />
-              {t('title')}
+              Adjuntos
             </CardTitle>
              <div className="flex items-center gap-2">
                 <Badge variant="secondary">{(action.attachments || []).length}</Badge>
@@ -124,12 +122,12 @@ export function AttachmentsSection({ action, onActionUpdate }: AttachmentsSectio
                   {isUploadingFile ? (
                     <>
                       <Loader2 className="w-8 h-8 mb-4 text-muted-foreground animate-spin" />
-                      <p className="text-sm text-muted-foreground">Pujant fitxer...</p>
+                      <p className="text-sm text-muted-foreground">Subiendo archivo...</p>
                     </>
                   ) : (
                     <>
                       <Upload className="w-8 h-8 mb-4 text-muted-foreground" />
-                      <p className="mb-2 text-sm text-muted-foreground"><span className="font-semibold">{t('clickToUpload')}</span> {t('dragAndDrop')}</p>
+                      <p className="mb-2 text-sm text-muted-foreground"><span className="font-semibold">Haz clic para subir</span> o arrastra y suelta</p>
                       <p className="text-xs text-muted-foreground">PDF, PNG, JPG, DOCX...</p>
                     </>
                   )}
@@ -169,7 +167,7 @@ export function AttachmentsSection({ action, onActionUpdate }: AttachmentsSectio
                   </div>
                 ))
               ) : (
-                <p className="text-sm text-muted-foreground text-center py-4 w-full">{t('noAttachments')}</p>
+                <p className="text-sm text-muted-foreground text-center py-4 w-full">Aún no hay archivos adjuntos.</p>
               )}
             </div>
           </CardContent>

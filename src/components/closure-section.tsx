@@ -4,7 +4,6 @@
 import { useForm } from "react-hook-form"
 import * as z from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useTranslations } from "next-intl"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Button } from "@/components/ui/button"
@@ -13,7 +12,7 @@ import { Switch } from "@/components/ui/switch"
 import { Loader2, Save } from "lucide-react"
 
 const closureSchema = z.object({
-  notes: z.string().min(1, "Les observacions són requerides."),
+  notes: z.string().min(1, "Las observaciones son requeridas."),
   isCompliant: z.boolean().default(true),
 })
 
@@ -25,7 +24,6 @@ interface ClosureSectionProps {
 }
 
 export function ClosureSection({ isSubmitting, onSave }: ClosureSectionProps) {
-  const t = useTranslations("Actions.detail.closure")
 
   const form = useForm<ClosureFormValues>({
     resolver: zodResolver(closureSchema),
@@ -38,8 +36,8 @@ export function ClosureSection({ isSubmitting, onSave }: ClosureSectionProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{t("title")}</CardTitle>
-        <CardDescription>{t("description")}</CardDescription>
+        <CardTitle>Cierre de la Acción</CardTitle>
+        <CardDescription>Finaliza la acción de mejora registrando las conclusiones finales.</CardDescription>
       </CardHeader>
       <CardContent>
         <Form {...form}>
@@ -49,11 +47,11 @@ export function ClosureSection({ isSubmitting, onSave }: ClosureSectionProps) {
               name="notes"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-lg font-semibold">{t("notesLabel")}</FormLabel>
+                  <FormLabel className="text-lg font-semibold">Observaciones del Cierre</FormLabel>
                   <FormControl>
                     <Textarea
                       rows={6}
-                      placeholder={t("notesPlaceholder")}
+                      placeholder="Describe el resultado final, lecciones aprendidas, etc."
                       className="resize-y"
                       {...field}
                     />
@@ -69,8 +67,8 @@ export function ClosureSection({ isSubmitting, onSave }: ClosureSectionProps) {
               render={({ field }) => (
                 <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                   <div className="space-y-0.5">
-                    <FormLabel className="text-base">{t("isCompliantLabel")}</FormLabel>
-                    <FormDescription>{t("isCompliantDescription")}</FormDescription>
+                    <FormLabel className="text-base">¿El resultado final es conforme?</FormLabel>
+                    <FormDescription>Si se marca como 'No Conforme', se generará automáticamente una nueva acción (BIS) para continuar el seguimiento.</FormDescription>
                   </div>
                   <FormControl>
                     <Switch
@@ -84,7 +82,7 @@ export function ClosureSection({ isSubmitting, onSave }: ClosureSectionProps) {
 
             <Button type="submit" disabled={isSubmitting}>
               {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-              {t("saveButton")}
+              Guardar y Cerrar Acción
             </Button>
           </form>
         </Form>

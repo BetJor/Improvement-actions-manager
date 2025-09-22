@@ -17,7 +17,6 @@ interface EmailDetails {
   action: ImprovementAction;
   oldStatus: string;
   newStatus: string;
-  locale: string;
 }
 
 async function addSystemComment(actionId: string, text: string) {
@@ -44,12 +43,12 @@ async function addSystemComment(actionId: string, text: string) {
  */
 export async function sendStateChangeEmail(details: EmailDetails): Promise<User | null> {
   console.log(`[NotificationService] sendStateChangeEmail called with details:`, details);
-  const { action, oldStatus, newStatus, locale } = details;
+  const { action, oldStatus, newStatus } = details;
 
   const senderEmail = process.env.GMAIL_SENDER;
   if (!senderEmail) {
     console.warn('[NotificationService] GMAIL_SENDER environment variable is not set. Skipping email notification.');
-    await addSystemComment(action.id, `Error d'enviament de correu: La variable d'entorn GMAIL_SENDER no està configurada.`);
+    await addSystemComment(action.id, `Error de envío de correo: La variable de entorno GMAIL_SENDER no está configurada.`);
     return null;
   }
   console.log(`[NotificationService] Sender email is: ${senderEmail}`);
@@ -91,7 +90,7 @@ export async function sendStateChangeEmail(details: EmailDetails): Promise<User 
 
   if (!recipient || !recipient.email) {
     console.warn(`[NotificationService] No recipient or recipient email found for action ${action.actionId}. Skipping email notification.`);
-    await addSystemComment(action.id, `Error d'enviament de correu: No s'ha trobat un destinatari vàlid.`);
+    await addSystemComment(action.id, `Error de envío de correo: No se ha encontrado un destinatario válido.`);
     return null;
   }
   const recipientEmail = recipient.email;
@@ -110,10 +109,10 @@ export async function sendStateChangeEmail(details: EmailDetails): Promise<User 
 
     const gmail = google.gmail({ version: 'v1', auth: authClient });
 
-    const subject = `Actualització Acció Millora: ${action.actionId} - ${action.title}`;
+    const subject = `Actualización Acción Mejora: ${action.actionId} - ${action.title}`;
     const utf8Subject = `=?utf-8?B?${Buffer.from(subject).toString('base64')}?=`;
     const messageParts = [
-      `From: Gestor d'Accions de Millora <${senderEmail}>`,
+      `From: Gestor de Acciones de Mejora <${senderEmail}>`,
       `To: ${recipient.name} <${recipientEmail}>`,
       'Content-Type: text/html; charset=utf-8',
       'MIME-Version: 1.0',
@@ -121,17 +120,17 @@ export async function sendStateChangeEmail(details: EmailDetails): Promise<User 
       '',
       `Hola ${recipient.name},`,
       '<br><br>',
-      `L'estat de l'acció de millora <strong>${action.actionId}: "${action.title}"</strong> ha canviat.`,
+      `El estado de la acción de mejora <strong>${action.actionId}: "${action.title}"</strong> ha cambiado.`,
       '<br><br>',
-      `Estat anterior: <strong>${oldStatus}</strong>`,
+      `Estado anterior: <strong>${oldStatus}</strong>`,
       '<br>',
-      `Estat nou: <strong>${newStatus}</strong>`,
+      `Estado nuevo: <strong>${newStatus}</strong>`,
       '<br><br>',
-      'Pots consultar els detalls a la plataforma.',
+      'Puedes consultar los detalles en la plataforma.',
       '<br><br>',
-      'Gràcies,',
+      'Gracias,',
       '<br>',
-      "L'equip de Gestió de Qualitat",
+      "El equipo de Gestión de Calidad",
     ];
     const message = messageParts.join('\n');
     console.log('[NotificationService] Email message constructed.');
@@ -151,13 +150,13 @@ export async function sendStateChangeEmail(details: EmailDetails): Promise<User 
     });
 
     console.log(`[NotificationService] Email sent successfully to ${recipientEmail} for action ${action.actionId}`);
-    await addSystemComment(action.id, `S'ha enviat una notificació per correu a ${recipient.name} (${recipient.email}) sobre el canvi d'estat a "${newStatus}".`);
+    await addSystemComment(action.id, `Se ha enviado una notificación por correo a ${recipient.name} (${recipient.email}) sobre el cambio de estado a "${newStatus}".`);
     return recipient;
 
   } catch (error: any) {
     console.error('[NotificationService] Error sending email:', error);
     const errorMessage = error.response?.data?.error?.message || error.message;
-    await addSystemComment(action.id, `S'ha produït un error en intentar enviar la notificació per correu a ${recipientEmail}: ${errorMessage}`);
+    await addSystemComment(action.id, `Se ha producido un error al intentar enviar la notificación por correo a ${recipientEmail}: ${errorMessage}`);
     return null;
   }
 }

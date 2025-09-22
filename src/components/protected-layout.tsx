@@ -8,7 +8,6 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { AppSidebar } from "@/components/app-sidebar";
 import { Header } from "@/components/header";
-import { useTranslations, NextIntlClientProvider, AbstractIntlMessages } from "next-intl";
 import { TabsProvider, useTabs } from "@/hooks/use-tabs";
 import { DynamicTabs } from "./dynamic-tabs";
 import { SidebarProvider } from "./ui/sidebar";
@@ -16,7 +15,6 @@ import { ActionStateProvider } from "@/hooks/use-action-state";
 
 
 function LayoutWithTabs({ children }: { children: React.ReactNode }) {
-    const t = useTranslations();
     const { activeTab, tabs } = useTabs();
     
     const activeTabObject = tabs.find(tab => tab.id === activeTab);
@@ -25,7 +23,7 @@ function LayoutWithTabs({ children }: { children: React.ReactNode }) {
         <div className="relative flex h-screen w-full flex-col">
             <Header />
             <div className="flex flex-1 overflow-hidden">
-                <AppSidebar t={t} />
+                <AppSidebar />
                 <main className="flex-1 flex flex-col bg-background/60 overflow-y-auto p-4 sm:p-6">
                     <div className="mb-6">
                         <DynamicTabs />
@@ -46,12 +44,8 @@ function LayoutWithTabs({ children }: { children: React.ReactNode }) {
 
 export function ProtectedLayout({ 
   children,
-  locale,
-  messages
 }: { 
   children: React.ReactNode,
-  locale: string,
-  messages: AbstractIntlMessages
 }) {
   const { user, loading } = useAuth();
   const pathname = usePathname();
@@ -59,12 +53,12 @@ export function ProtectedLayout({
   
   useEffect(() => {
     if (!loading && !user && !pathname.includes('/login')) {
-      router.push(`/${locale}/login`);
+      router.push(`/login`);
     }
-  }, [user, loading, pathname, router, locale]);
+  }, [user, loading, pathname, router]);
 
   if (loading) {
-    return <div className="flex items-center justify-center h-screen">Carregant...</div>;
+    return <div className="flex items-center justify-center h-screen">Cargando...</div>;
   }
   
   const isLoginPage = pathname.includes('/login');
@@ -86,12 +80,8 @@ export function ProtectedLayout({
   )
 
   return (
-    <NextIntlClientProvider locale={locale} messages={messages}>
-        <SidebarProvider>
-            {content}
-        </SidebarProvider>
-    </NextIntlClientProvider>
+      <SidebarProvider>
+          {content}
+      </SidebarProvider>
   );
 }
-
-

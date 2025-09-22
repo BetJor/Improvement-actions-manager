@@ -20,7 +20,6 @@ import {
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
-import { useTranslations } from "next-intl"
 import { LanguageSwitcher } from "./language-switcher"
 import { useAuth } from "@/hooks/use-auth"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
@@ -44,21 +43,20 @@ const pageConfig: { [key: string]: { icon: React.ElementType, titleKey: string }
 
 
 export function Header() {
-  const t = useTranslations('Common');
   const { user, logout, isImpersonating, stopImpersonating } = useAuth();
   const { tabs, activeTab, openTab } = useTabs();
   const pathname = usePathname();
   
   const activeTabData = tabs.find(tab => tab.id === activeTab);
   const Icon = activeTabData?.icon || GanttChartSquare;
-  const title = activeTabData?.title || t('Header.title');
+  const title = activeTabData?.title || "Acciones de Mejora";
 
 
   return (
     <header className="sticky top-0 z-30 flex h-auto flex-col">
        {isImpersonating && (
         <div className="bg-yellow-500 text-black p-2 text-center text-sm flex items-center justify-center gap-4">
-          <span>Estàs suplantant a <strong>{user?.name}</strong>.</span>
+          <span>Estás suplantando a <strong>{user?.name}</strong>.</span>
           <Button
             variant="ghost"
             size="sm"
@@ -66,7 +64,7 @@ export function Header() {
             className="h-auto px-2 py-1 text-black hover:bg-yellow-600 hover:text-black"
           >
             <LogOut className="mr-1 h-4 w-4" />
-            Aturar la suplantació
+            Detener la suplantación
           </Button>
         </div>
       )}
@@ -75,7 +73,7 @@ export function Header() {
             <SidebarTrigger className="text-primary-foreground hover:text-primary-foreground/90" />
             <div className="flex items-center gap-2">
                 <GanttChartSquare className="h-7 w-7" />
-                <span className="text-lg font-semibold">{t('Header.title')}</span>
+                <span className="text-lg font-semibold">Acciones de Mejora</span>
             </div>
         </div>
 
@@ -83,7 +81,7 @@ export function Header() {
         <div className="flex items-center gap-4">
             <Button variant="ghost" size="icon" className="rounded-full text-primary-foreground hover:text-primary-foreground/90">
               <Bell className="h-5 w-5" />
-              <span className="sr-only">{t("AppSidebar.toggleNotifications")}</span>
+              <span className="sr-only">Activar/desactivar notificaciones</span>
             </Button>
             
             <Dialog>
@@ -100,26 +98,26 @@ export function Header() {
                     </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                    <DropdownMenuLabel>{user ? user.name : t("Header.myAccount")}</DropdownMenuLabel>
+                    <DropdownMenuLabel>{user ? user.name : "Mi Cuenta"}</DropdownMenuLabel>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={() => openTab({path: '/my-groups', title: 'Els Meus Grups', icon: Users, isClosable: true})}>
+                    <DropdownMenuItem onClick={() => openTab({path: '/my-groups', title: 'Mis Grupos', icon: Users, isClosable: true})}>
                         <Users className="mr-2 h-4 w-4" />
-                        <span>{t("Header.myGroups")}</span>
+                        <span>Mis Grupos</span>
                     </DropdownMenuItem>
                     <DialogTrigger asChild>
-                      <DropdownMenuItem>{t("Header.settings")}</DropdownMenuItem>
+                      <DropdownMenuItem>Configuración</DropdownMenuItem>
                     </DialogTrigger>
-                    <DropdownMenuItem>{t("Header.support")}</DropdownMenuItem>
+                    <DropdownMenuItem>Soporte</DropdownMenuItem>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={logout}>{t("Header.logout")}</DropdownMenuItem>
+                    <DropdownMenuItem onClick={logout}>Cerrar Sesión</DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
 
               <DialogContent>
                   <DialogHeader>
-                    <DialogTitle>{t("SettingsDialog.title")}</DialogTitle>
+                    <DialogTitle>Configuración</DialogTitle>
                     <DialogDescription>
-                      {t("SettingsDialog.description")}
+                      Gestiona la configuración de tu cuenta y las preferencias de la aplicación.
                     </DialogDescription>
                   </DialogHeader>
                   <LanguageSwitcher />

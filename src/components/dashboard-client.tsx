@@ -35,7 +35,6 @@ import { getActionById, getActionTypes, getCategories, getCenters, getResponsibi
 import { ActionDetailsTab } from "./action-details-tab"
 import { cn } from '@/lib/utils';
 import { useFollowAction } from '@/hooks/use-follow-action';
-import { useTranslations } from 'next-intl';
 import { ActionStatusBadge } from './action-status-badge';
 import { FloatingActionButton } from './floating-action-button';
 
@@ -71,7 +70,6 @@ function SortableItem({ id, children }: { id: string, children: React.ReactNode 
 }
 
 export function DashboardClient({ actions, assignedActions }: DashboardClientProps) {
-  const t = useTranslations("Dashboard");
   const { openTab } = useTabs();
   const { user, updateDashboardLayout } = useAuth();
   const [items, setItems] = useState<string[]>(user?.dashboardLayout || defaultLayout);
@@ -122,14 +120,14 @@ export function DashboardClient({ actions, assignedActions }: DashboardClientPro
       const masterData = { actionTypes: types, categories: cats, subcategories: subcats, affectedAreas: areas, centers: centers, responsibilityRoles: roles };
       return <ActionDetailsTab initialAction={actionData} masterData={masterData} />;
     };
-    openTab({ path: `/actions/${action.id}`, title: `Acció ${action.actionId}`, icon: GanttChartSquare, isClosable: true, loader: actionLoader });
+    openTab({ path: `/actions/${action.id}`, title: `Acción ${action.actionId}`, icon: GanttChartSquare, isClosable: true, loader: actionLoader });
   }
 
   const widgets: { [key: string]: React.ReactNode } = {
     pendingActions: (
       <Card>
         <CardHeader>
-          <CardTitle>{t("myPendingActions.title")}</CardTitle>
+          <CardTitle>Mis Acciones Pendientes</CardTitle>
         </CardHeader>
         <CardContent className="min-h-[120px]">
             {assignedActions.length > 0 ? (
@@ -140,7 +138,7 @@ export function DashboardClient({ actions, assignedActions }: DashboardClientPro
                               variant="ghost"
                               size="icon"
                               onClick={(e) => handleToggleFollow(action.id, e)}
-                              title={isFollowing(action.id) ? "Deixar de seguir" : "Seguir acció"}
+                              title={isFollowing(action.id) ? "Dejar de seguir" : "Seguir acción"}
                             >
                               <Star className={cn("h-5 w-5", isFollowing(action.id) ? "text-yellow-400 fill-yellow-400" : "text-muted-foreground")} />
                             </Button>
@@ -154,14 +152,14 @@ export function DashboardClient({ actions, assignedActions }: DashboardClientPro
                         </div>
                     ))}
                 </div>
-            ) : (<p className="text-sm text-muted-foreground text-center py-10">{t("myPendingActions.noActions")}</p>)}
+            ) : (<p className="text-sm text-muted-foreground text-center py-10">No tienes ninguna acción pendiente. ¡Buen trabajo!</p>)}
         </CardContent>
       </Card>
     ),
     followedActions: (
       <Card>
         <CardHeader>
-          <CardTitle>{t("followedActions.title")}</CardTitle>
+          <CardTitle>Acciones en Seguimiento</CardTitle>
         </CardHeader>
         <CardContent className="min-h-[120px]">
             {followedActions.length > 0 ? (
@@ -172,7 +170,7 @@ export function DashboardClient({ actions, assignedActions }: DashboardClientPro
                               variant="ghost"
                               size="icon"
                               onClick={(e) => handleToggleFollow(action.id, e)}
-                              title={"Deixar de seguir"}
+                              title={"Dejar de seguir"}
                             >
                               <Star className={cn("h-5 w-5 text-yellow-400 fill-yellow-400")} />
                             </Button>
@@ -186,7 +184,7 @@ export function DashboardClient({ actions, assignedActions }: DashboardClientPro
                         </div>
                     ))}
                 </div>
-            ) : (<p className="text-sm text-muted-foreground text-center py-10">{t("followedActions.noActions")}</p>)}
+            ) : (<p className="text-sm text-muted-foreground text-center py-10">No estás siguiendo ninguna acción. Haz clic en el icono de estrella para empezar.</p>)}
         </CardContent>
       </Card>
     ),
@@ -194,7 +192,7 @@ export function DashboardClient({ actions, assignedActions }: DashboardClientPro
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-3xl font-bold tracking-tight">{t("title")}</h1>
+      <h1 className="text-3xl font-bold tracking-tight">Panel de Control</h1>
         <div className="flex flex-col gap-4">
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
                 <SortableContext items={items.filter(id => widgets[id])} strategy={verticalListSortingStrategy}>

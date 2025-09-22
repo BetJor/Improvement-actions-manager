@@ -21,7 +21,6 @@ import { Button } from "@/components/ui/button"
 import { ActionStatusBadge } from "./action-status-badge"
 import type { ImprovementAction, ImprovementActionStatus, ImprovementActionType, User } from "@/lib/types"
 import { ArrowUpDown, ChevronDown, GanttChartSquare, Star, X } from "lucide-react"
-import { useTranslations } from "next-intl"
 import { useTabs } from "@/hooks/use-tabs"
 import { getActionById, getActionTypes, getCategories, getSubcategories, getAffectedAreas, getCenters, getResponsibilityRoles, getUsers } from "@/lib/data"
 import { ActionDetailsTab } from "@/components/action-details-tab"
@@ -37,7 +36,6 @@ interface ActionsTableProps {
 type SortKey = keyof ImprovementAction | 'responsible'
 
 export function ActionsTable({ actions }: ActionsTableProps) {
-  const t = useTranslations("Actions.table")
   const { openTab } = useTabs();
   
   const { handleToggleFollow, isFollowing } = useFollowAction();
@@ -153,7 +151,7 @@ export function ActionsTable({ actions }: ActionsTableProps) {
 
       openTab({
           path: `/actions/${action.id}`,
-          title: `Acció ${action.actionId}`,
+          title: `Acción ${action.actionId}`,
           icon: GanttChartSquare,
           isClosable: true,
           loader: actionLoader
@@ -165,7 +163,7 @@ export function ActionsTable({ actions }: ActionsTableProps) {
     <div className="w-full">
       <div className="flex items-center py-4 gap-2">
         <Input
-          placeholder={t("filterPlaceholder")}
+          placeholder="Filtrar por título, ID o responsable..."
           value={searchTerm}
           onChange={e => setSearchTerm(e.target.value)}
           className="max-w-sm"
@@ -173,7 +171,7 @@ export function ActionsTable({ actions }: ActionsTableProps) {
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" className="ml-auto">
-              {t("status")} <ChevronDown className="ml-2 h-4 w-4" />
+              Estado <ChevronDown className="ml-2 h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
@@ -198,7 +196,7 @@ export function ActionsTable({ actions }: ActionsTableProps) {
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline">
-              {t("type")} <ChevronDown className="ml-2 h-4 w-4" />
+              Tipo <ChevronDown className="ml-2 h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
@@ -223,7 +221,7 @@ export function ActionsTable({ actions }: ActionsTableProps) {
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline">
-              {t("center")} <ChevronDown className="ml-2 h-4 w-4" />
+              Centro <ChevronDown className="ml-2 h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
@@ -249,36 +247,36 @@ export function ActionsTable({ actions }: ActionsTableProps) {
 
        {activeFiltersCount > 0 && (
           <div className="flex items-center gap-2 mb-4">
-              <span className="text-sm font-medium">{t('activeFilters')}:</span>
+              <span className="text-sm font-medium">Filtros activos:</span>
               <div className="flex flex-wrap gap-1">
                   {searchTerm && (
                      <Badge variant="secondary" className="pl-2 pr-1">
-                        {t('text')}: "{searchTerm}"
+                        Texto: "{searchTerm}"
                         <button onClick={() => setSearchTerm('')} className="ml-1 rounded-full hover:bg-background/80 p-0.5"><X className="h-3 w-3"/></button>
                     </Badge>
                   )}
                   {[...statusFilter].map(value => (
                       <Badge key={value} variant="secondary" className="pl-2 pr-1">
-                          {t('status')}: {value}
+                          Estado: {value}
                           <button onClick={() => removeFilter(setStatusFilter, value)} className="ml-1 rounded-full hover:bg-background/80 p-0.5"><X className="h-3 w-3"/></button>
                       </Badge>
                   ))}
                   {[...typeFilter].map(value => (
                       <Badge key={value} variant="secondary" className="pl-2 pr-1">
-                          {t('type')}: {value}
+                          Tipo: {value}
                           <button onClick={() => removeFilter(setTypeFilter, value)} className="ml-1 rounded-full hover:bg-background/80 p-0.5"><X className="h-3 w-3"/></button>
                       </Badge>
                   ))}
                   {[...centerFilter].map(value => (
                       <Badge key={value} variant="secondary" className="pl-2 pr-1">
-                          {t('center')}: {value}
+                          Centro: {value}
                           <button onClick={() => removeFilter(setCenterFilter, value)} className="ml-1 rounded-full hover:bg-background/80 p-0.5"><X className="h-3 w-3"/></button>
                       </Badge>
                   ))}
               </div>
               <Button variant="ghost" size="sm" onClick={clearAllFilters} className="ml-auto text-sm h-auto px-2 py-1">
                   <X className="mr-1 h-4 w-4" />
-                  {t('clearAll')}
+                  Limpiar filtros
               </Button>
           </div>
       )}
@@ -288,12 +286,12 @@ export function ActionsTable({ actions }: ActionsTableProps) {
           <TableHeader>
             <TableRow>
               <TableHead className="w-12"></TableHead>
-              <TableHead><Button variant="ghost" onClick={() => requestSort('actionId')}>{t("col.id")} {getSortIcon('actionId')}</Button></TableHead>
-              <TableHead><Button variant="ghost" onClick={() => requestSort('title')}>{t("col.title")} {getSortIcon('title')}</Button></TableHead>
-              <TableHead><Button variant="ghost" onClick={() => requestSort('status')}>{t("col.status")} {getSortIcon('status')}</Button></TableHead>
-              <TableHead><Button variant="ghost" onClick={() => requestSort('type')}>{t("col.type")} {getSortIcon('type')}</Button></TableHead>
-              <TableHead><Button variant="ghost" onClick={() => requestSort('responsible')}>{t("col.responsible")} {getSortIcon('responsible')}</Button></TableHead>
-              <TableHead><Button variant="ghost" onClick={() => requestSort('implementationDueDate')}>{t("col.dueDate")} {getSortIcon('implementationDueDate')}</Button></TableHead>
+              <TableHead><Button variant="ghost" onClick={() => requestSort('actionId')}>ID {getSortIcon('actionId')}</Button></TableHead>
+              <TableHead><Button variant="ghost" onClick={() => requestSort('title')}>Título {getSortIcon('title')}</Button></TableHead>
+              <TableHead><Button variant="ghost" onClick={() => requestSort('status')}>Estado {getSortIcon('status')}</Button></TableHead>
+              <TableHead><Button variant="ghost" onClick={() => requestSort('type')}>Tipo {getSortIcon('type')}</Button></TableHead>
+              <TableHead><Button variant="ghost" onClick={() => requestSort('responsible')}>Responsable {getSortIcon('responsible')}</Button></TableHead>
+              <TableHead><Button variant="ghost" onClick={() => requestSort('implementationDueDate')}>Fecha Vencimiento {getSortIcon('implementationDueDate')}</Button></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -305,7 +303,7 @@ export function ActionsTable({ actions }: ActionsTableProps) {
                         variant="ghost"
                         size="icon"
                         onClick={(e) => handleToggleFollow(action.id, e)}
-                        title={isFollowing(action.id) ? t("follow.unfollow") : t("follow.follow")}
+                        title={isFollowing(action.id) ? "Dejar de seguir la acción" : "Seguir acción"}
                       >
                         <Star className={cn("h-4 w-4", isFollowing(action.id) ? "text-yellow-400 fill-yellow-400" : "text-muted-foreground")} />
                       </Button>
@@ -327,7 +325,7 @@ export function ActionsTable({ actions }: ActionsTableProps) {
             ) : (
               <TableRow>
                 <TableCell colSpan={7} className="h-24 text-center">
-                  {t("noResults")}
+                  No se encontraron resultados.
                 </TableCell>
               </TableRow>
             )}

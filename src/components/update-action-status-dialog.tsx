@@ -25,7 +25,6 @@ import {
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
-import { useTranslations } from "next-intl";
 
 const statusUpdateSchema = z.object({
   status: z.enum(["Implementada", "Implementada Parcialment", "No Implementada"]),
@@ -48,7 +47,6 @@ export function UpdateActionStatusDialog({
   onSave,
   isSubmitting,
 }: UpdateActionStatusDialogProps) {
-  const t = useTranslations("Actions.detail.verification");
   const form = useForm<StatusUpdateFormValues>({
     resolver: zodResolver(statusUpdateSchema),
     defaultValues: {
@@ -65,9 +63,9 @@ export function UpdateActionStatusDialog({
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Actualitzar Estat de l'Acció</DialogTitle>
+          <DialogTitle>Actualizar Estado de la Acción</DialogTitle>
           <DialogDescription>
-            Selecciona el nou estat per a l'acció: "{proposedAction.description}"
+            Selecciona el nuevo estado para la acción: "{proposedAction.description}"
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -87,19 +85,19 @@ export function UpdateActionStatusDialog({
                         <FormControl>
                           <RadioGroupItem value="Implementada" />
                         </FormControl>
-                        <FormLabel className="font-normal">{t("status.implemented")}</FormLabel>
+                        <FormLabel className="font-normal">Implementada</FormLabel>
                       </FormItem>
                       <FormItem className="flex items-center space-x-3">
                         <FormControl>
                           <RadioGroupItem value="Implementada Parcialment" />
                         </FormControl>
-                        <FormLabel className="font-normal">{t("status.partiallyImplemented")}</FormLabel>
+                        <FormLabel className="font-normal">Implementada Parcialmente</FormLabel>
                       </FormItem>
                       <FormItem className="flex items-center space-x-3">
                         <FormControl>
                           <RadioGroupItem value="No Implementada" />
                         </FormControl>
-                        <FormLabel className="font-normal">{t("status.notImplemented")}</FormLabel>
+                        <FormLabel className="font-normal">No Implementada</FormLabel>
                       </FormItem>
                     </RadioGroup>
                   </FormControl>
@@ -109,12 +107,12 @@ export function UpdateActionStatusDialog({
             <DialogFooter>
               <DialogClose asChild>
                 <Button type="button" variant="outline">
-                  Cancel·lar
+                  Cancelar
                 </Button>
               </DialogClose>
               <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Guardar Canvis
+                Guardar Cambios
               </Button>
             </DialogFooter>
           </form>

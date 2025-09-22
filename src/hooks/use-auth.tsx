@@ -14,7 +14,6 @@ import {
 } from 'firebase/auth';
 import { auth, firebaseApp } from '@/lib/firebase';
 import { usePathname, useRouter } from 'next/navigation';
-import { useLocale } from 'next-intl';
 import type { User } from '@/lib/types';
 import { getUserById, updateUser } from '@/lib/data';
 
@@ -43,7 +42,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [isImpersonating, setIsImpersonating] = useState(false);
   const router = useRouter();
-  const locale = useLocale();
   const pathname = usePathname();
 
   const loadFullUser = useCallback(async (fbUser: FirebaseUser | null) => {
@@ -81,12 +79,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       await loadFullUser(fbUser);
       // After sign-in (from redirect or normal), if we are on the login page, go to dashboard.
       if (fbUser && pathname.includes('/login')) {
-        window.location.href = `/${locale}/dashboard`;
+        window.location.href = `/dashboard`;
       }
     });
 
     return () => unsubscribe();
-  }, [pathname, locale, loadFullUser]);
+  }, [pathname, loadFullUser]);
 
   const signInWithGoogle = async () => {
     const provider = new GoogleAuthProvider();
@@ -109,7 +107,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       await stopImpersonating(); 
       await signOut(auth);
-      router.push(`/${locale}/login`);
+      router.push(`/login`);
     } catch (error) {
       console.error("Error signing out", error);
     }

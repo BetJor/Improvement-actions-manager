@@ -1,6 +1,6 @@
 "use client";
 
-import { useLocale, useTranslations } from "next-intl";
+import { useState } from "react";
 import {
   Select,
   SelectContent,
@@ -11,26 +11,18 @@ import {
 import { Label } from "@/components/ui/label";
 
 export function LanguageSwitcher() {
-  const t = useTranslations("Common.LanguageSwitcher");
-  const locale = useLocale();
-
-  const onSelectChange = (value: string) => {
-    // To switch the locale, we replace the current locale in the path
-    // with the new one.
-    const newPath = window.location.pathname.replace(`/${locale}`, `/${value}`);
-    window.location.href = newPath + window.location.search;
-  };
+  const [language, setLanguage] = useState("es");
 
   return (
     <div className="grid gap-2">
-      <Label htmlFor="language-select">{t("selectLanguage")}</Label>
-      <Select defaultValue={locale} onValueChange={onSelectChange}>
+      <Label htmlFor="language-select">Selecciona un idioma</Label>
+      <Select value={language} onValueChange={setLanguage}>
         <SelectTrigger id="language-select">
-          <SelectValue placeholder={t("selectLanguage")} />
+          <SelectValue placeholder="Selecciona un idioma" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="ca">{t("catalan")}</SelectItem>
-          <SelectItem value="es">{t("spanish")}</SelectItem>
+          <SelectItem value="es">Español</SelectItem>
+          <SelectItem value="ca" disabled>Catalán (deshabilitado)</SelectItem>
         </SelectContent>
       </Select>
     </div>

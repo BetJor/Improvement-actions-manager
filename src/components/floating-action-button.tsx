@@ -1,20 +1,18 @@
 
 "use client"
 
-import { useTranslations } from "next-intl"
 import { Button } from "./ui/button"
 import { FilePlus, Plus } from "lucide-react"
 import { useTabs } from "@/hooks/use-tabs"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip"
 
 export function FloatingActionButton() {
-    const t = useTranslations("Actions.page");
     const { openTab } = useTabs();
 
     const handleNewAction = () => {
         openTab({
             path: '/actions/new',
-            title: 'Nova Acció',
+            title: 'Nueva Acción',
             icon: FilePlus,
             isClosable: true,
         });
@@ -33,7 +31,7 @@ export function FloatingActionButton() {
                     </Button>
                 </TooltipTrigger>
                 <TooltipContent side="left">
-                    <p>{t("createAction")}</p>
+                    <p>Crear Acción</p>
                 </TooltipContent>
             </Tooltip>
         </TooltipProvider>

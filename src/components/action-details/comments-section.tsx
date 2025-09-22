@@ -4,7 +4,6 @@
 import { useState } from "react"
 import { useAuth } from "@/hooks/use-auth"
 import { useToast } from "@/hooks/use-toast"
-import { useTranslations } from "next-intl"
 import { updateAction, getActionById } from "@/lib/data"
 import type { ImprovementAction, ActionComment } from "@/lib/types"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -23,7 +22,6 @@ interface CommentsSectionProps {
 }
 
 export function CommentsSection({ action, onActionUpdate }: CommentsSectionProps) {
-  const t = useTranslations("Actions.detail.comments")
   const { user } = useAuth()
   const { toast } = useToast()
 
@@ -50,8 +48,8 @@ export function CommentsSection({ action, onActionUpdate }: CommentsSectionProps
     try {
       await updateAction(action.id, { newComment: commentToAdd })
       toast({
-        title: "Comentari afegit",
-        description: "El teu comentari s'ha desat correctament.",
+        title: "Comentario añadido",
+        description: "Tu comentario se ha guardado correctamente.",
       })
       setNewComment("")
       const updatedAction = await getActionById(action.id)
@@ -61,7 +59,7 @@ export function CommentsSection({ action, onActionUpdate }: CommentsSectionProps
       toast({
         variant: "destructive",
         title: "Error",
-        description: "No s'ha pogut afegir el comentari.",
+        description: "No se ha podido añadir el comentario.",
       })
     } finally {
       setIsSubmittingComment(false)
@@ -75,7 +73,7 @@ export function CommentsSection({ action, onActionUpdate }: CommentsSectionProps
           <div className="flex justify-between items-center p-4 cursor-pointer">
             <CardTitle className="flex items-center gap-2 text-base">
               <MessageSquare className="h-5 w-5" />
-              {t('title')}
+              Comentarios
             </CardTitle>
             <div className="flex items-center gap-2">
               <Badge variant="secondary">{(action.comments || []).length}</Badge>
@@ -107,12 +105,12 @@ export function CommentsSection({ action, onActionUpdate }: CommentsSectionProps
                   </div>
                 ))
               ) : (
-                <p className="text-sm text-muted-foreground text-center py-4">{t('noComments')}</p>
+                <p className="text-sm text-muted-foreground text-center py-4">Aún no hay comentarios.</p>
               )}
             </div>
             <form onSubmit={handleCommentSubmit} className="relative pt-4">
               <Textarea
-                placeholder={t('addCommentPlaceholder')}
+                placeholder="Añade un comentario..."
                 className="pr-10"
                 value={newComment}
                 onChange={(e) => setNewComment(e.target.value)}

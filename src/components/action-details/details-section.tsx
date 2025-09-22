@@ -7,7 +7,6 @@ import { ActionStatusBadge } from "@/components/action-status-badge"
 import { Separator } from "@/components/ui/separator"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { CircleUser, Calendar, Users, Tag, CalendarClock, Info, ChevronDown } from "lucide-react"
-import { useTranslations } from "next-intl"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { Button } from "@/components/ui/button"
 
@@ -37,7 +36,6 @@ interface DetailsSectionProps {
 }
 
 export function DetailsSection({ action }: DetailsSectionProps) {
-  const t = useTranslations("Actions.detail")
 
   return (
     <Card>
@@ -46,7 +44,7 @@ export function DetailsSection({ action }: DetailsSectionProps) {
           <div className="flex justify-between items-center p-4 cursor-pointer">
             <CardTitle className="text-base flex items-center gap-2">
               <Info className="h-5 w-5" />
-              {t('details')}
+              Detalles
             </CardTitle>
             <div className="flex items-center gap-2">
               <Button variant="ghost" size="icon" className="data-[state=open]:rotate-180">
@@ -57,11 +55,11 @@ export function DetailsSection({ action }: DetailsSectionProps) {
         </CollapsibleTrigger>
         <CollapsibleContent>
           <CardContent className="space-y-4 pt-0">
-            <DetailRow icon={Tag} label={t("type")} value={action.type} />
+            <DetailRow icon={Tag} label="Tipo" value={action.type} />
             <Separator />
             <DetailRow
               icon={CircleUser}
-              label={t("creator")}
+              label="Creador/a"
               value={
                 <div className="flex items-center gap-2">
                   <Avatar className="h-6 w-6">
@@ -74,19 +72,17 @@ export function DetailsSection({ action }: DetailsSectionProps) {
             />
             <DetailRow
               icon={Users}
-              label={t("responsible")}
+              label="Responsable"
               value={action.responsibleGroupId}
             />
             <Separator />
-            <DetailRow icon={Calendar} label={t("creationDate")} value={action.creationDate} />
-            <DetailRow icon={CalendarClock} label={t("analysisDue")} value={action.analysisDueDate} />
-            <DetailRow icon={CalendarClock} label={t("implementationDue")} value={action.implementationDueDate} />
-            <DetailRow icon={CalendarClock} label={t("closureDue")} value={action.closureDueDate} />
+            <DetailRow icon={Calendar} label="Fecha Creación" value={action.creationDate} />
+            <DetailRow icon={CalendarClock} label="Vencimiento Análisis" value={action.analysisDueDate} />
+            <DetailRow icon={CalendarClock} label="Vencimiento Implantación" value={action.implementationDueDate} />
+            <DetailRow icon={CalendarClock} label="Vencimiento Cierre" value={action.closureDueDate} />
           </CardContent>
         </CollapsibleContent>
       </Collapsible>
     </Card>
   )
 }
-
-    

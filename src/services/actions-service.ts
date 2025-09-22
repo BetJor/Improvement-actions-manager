@@ -17,7 +17,6 @@ interface CreateActionData extends Omit<ImprovementAction, 'id' | 'actionId' | '
   typeId: string;
   affectedAreasIds: string[];
   centerId?: string;
-  locale: string; // Add locale here
 }
 
 
@@ -179,7 +178,7 @@ export async function createAction(data: CreateActionData, masterData: any): Pro
 
     // 8. Handle status change logic if not a draft
     if (newAction.status !== 'Borrador') {
-        await handleStatusChange(newAction, 'Borrador', data.locale);
+        await handleStatusChange(newAction, 'Borrador');
     }
     
     // Return the full object to update the local state
@@ -187,7 +186,7 @@ export async function createAction(data: CreateActionData, masterData: any): Pro
 }
 
 // Private function to handle status change logic (permissions and notifications)
-async function handleStatusChange(action: ImprovementAction, oldStatus: ImprovementActionStatus, locale: string) {
+async function handleStatusChange(action: ImprovementAction, oldStatus: ImprovementActionStatus) {
     console.log(`[ActionService] handleStatusChange called for action ${action.id} from ${oldStatus} to ${action.status}`);
     const actionDocRef = doc(db, 'actions', action.id);
     
@@ -199,14 +198,13 @@ async function handleStatusChange(action: ImprovementAction, oldStatus: Improvem
         action: action,
         oldStatus: oldStatus,
         newStatus: action.status,
-        locale: locale,
     });
     console.log(`[ActionService] Email process completed. Recipient:`, recipient);
 }
 
 
 // Function to update an existing action
-export async function updateAction(actionId: string, data: any, masterData?: any, status?: 'Borrador' | 'Pendiente Análisis', locale?: string): Promise<ImprovementAction | null> {
+export async function updateAction(actionId: string, data: any, masterData?: any, status?: 'Borrador' | 'Pendiente Análisis'): Promise<ImprovementAction | null> {
     const actionDocRef = doc(db, 'actions', actionId);
     const originalActionSnap = await getDoc(actionDocRef);
     if (!originalActionSnap.exists()) {
@@ -270,7 +268,7 @@ export async function updateAction(actionId: string, data: any, masterData?: any
         }
 
         // Handle closure logic for non-compliant actions
-        if (data.closure && !data.closure.isCompliant && locale) {
+        if (data.closure && !data.closure.isCompliant) {
             const allMasterData = {
                 categories: await getCategories(),
                 subcategories: await getSubcategories(),
@@ -281,7 +279,7 @@ export async function updateAction(actionId: string, data: any, masterData?: any
             };
             const bisActionData: CreateActionData = {
                 title: `${originalAction.title} BIS`,
-                description: `${originalAction.description}\n\n--- \nObservacions de tancament no conforme:\n${data.closure.notes}`,
+                description: `${originalAction.description}\n\n--- \nObservaciones de cierre no conforme:\n${data.closure.notes}`,
                 category: originalAction.categoryId,
                 subcategory: originalAction.subcategoryId,
                 affectedAreasIds: originalAction.affectedAreasIds,
@@ -292,7 +290,6 @@ export async function updateAction(actionId: string, data: any, masterData?: any
                 status: 'Borrador',
                 originalActionId: originalAction.id,
                 originalActionTitle: `${originalAction.actionId}: ${originalAction.title}`,
-                locale: locale,
             };
             await createAction(bisActionData, allMasterData);
         }
@@ -308,8 +305,8 @@ export async function updateAction(actionId: string, data: any, masterData?: any
     const updatedAction = { id: updatedActionDoc.id, ...updatedActionDoc.data() } as ImprovementAction;
 
     // Handle status change if it occurred
-    if (updatedAction.status !== originalAction.status && locale) {
-        await handleStatusChange(updatedAction, originalAction.status, locale);
+    if (updatedAction.status !== originalAction.status) {
+        await handleStatusChange(updatedAction, originalAction.status);
     }
 
     // Return the latest version of the document

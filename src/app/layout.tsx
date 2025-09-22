@@ -1,9 +1,9 @@
+
 import "./globals.css"
 import { Inter } from 'next/font/google'
 import { AuthProvider } from "@/hooks/use-auth"
 import { Toaster } from "@/components/ui/toaster"
-import { getLocale, getMessages } from "next-intl/server"
-import { NextIntlClientProvider } from "next-intl"
+import { ProtectedLayout } from "@/components/protected-layout"
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -12,18 +12,16 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode,
 }) {
-  const locale = await getLocale();
-  const messages = await getMessages();
 
   return (
-    <html lang={locale}>
+    <html lang="es">
       <body className={inter.className}>
-        <NextIntlClientProvider locale={locale} messages={messages}>
           <AuthProvider>
-            {children}
+            <ProtectedLayout>
+              {children}
+            </ProtectedLayout>
             <Toaster />
           </AuthProvider>
-        </NextIntlClientProvider>
       </body>
     </html>
   )

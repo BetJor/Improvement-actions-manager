@@ -5,25 +5,24 @@
 import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from './use-auth';
-import { useLocale } from 'next-intl';
 import { Loader2 } from 'lucide-react';
 
 // Import all page components that can be opened in a tab
-import DashboardPage from '@/app/[locale]/dashboard/page';
-import ActionsPage from '@/app/[locale]/actions/page';
-import NewActionPage from '@/app/[locale]/actions/new/page';
-import SettingsPage from '@/app/[locale]/settings/page';
-import AiSettingsPage from '@/app/[locale]/ai-settings/page';
-import PromptGalleryPage from '@/app/[locale]/prompt-gallery/page';
-import RoadmapPage from '@/app/[locale]/roadmap/page';
-import BacklogPage from '@/app/[locale]/backlog/page';
-import MyGroupsPage from '@/app/[locale]/my-groups/page';
-import ActionDetailPage from '@/app/[locale]/actions/[id]/page';
-import UserManagementPage from '@/app/[locale]/user-management/page';
-import ReportsPage from '@/app/[locale]/reports/page';
-import IntranetTestPage from '@/app/[locale]/intranet-test/page';
-import FirestoreRulesPage from '@/app/[locale]/firestore-rules/page';
-import WorkflowPage from '@/app/[locale]/workflow/page';
+import DashboardPage from '@/app/dashboard/page';
+import ActionsPage from '@/app/actions/page';
+import NewActionPage from '@/app/actions/new/page';
+import SettingsPage from '@/app/settings/page';
+import AiSettingsPage from '@/app/ai-settings/page';
+import PromptGalleryPage from '@/app/prompt-gallery/page';
+import RoadmapPage from '@/app/roadmap/page';
+import BacklogPage from '@/app/backlog/page';
+import MyGroupsPage from '@/app/my-groups/page';
+import ActionDetailPage from '@/app/actions/[id]/page';
+import UserManagementPage from '@/app/user-management/page';
+import ReportsPage from '@/app/reports/page';
+import IntranetTestPage from '@/app/intranet-test/page';
+import FirestoreRulesPage from '@/app/firestore-rules/page';
+import WorkflowPage from '@/app/workflow/page';
 import { getActionById, getActionTypes, getCategories, getSubcategories, getAffectedAreas } from '@/lib/data';
 
 import { Home, ListChecks, Settings, Sparkles, Library, Route, Users, BarChart3, GanttChartSquare } from 'lucide-react';
@@ -46,22 +45,9 @@ const pageComponentMapping: { [key: string]: React.ComponentType<any> | undefine
 };
 
 const getPageComponent = (path: string): React.ComponentType<any> | undefined => {
-  const locales = ['ca', 'es'];
   // Clean the path of query parameters
   let cleanPath = path.split('?')[0];
 
-  // Remove locale prefix if it exists
-  const pathSegments = cleanPath.split('/').filter(Boolean);
-  if (locales.includes(pathSegments[0])) {
-    // Reconstruct the path without the locale
-    cleanPath = `/${pathSegments.slice(1).join('/')}`;
-  }
-
-  // Handle root case which should map to dashboard
-  if (cleanPath === '/') {
-    cleanPath = '/dashboard';
-  }
-  
   if (pageComponentMapping[cleanPath]) {
     return pageComponentMapping[cleanPath];
   }
@@ -105,7 +91,6 @@ export function TabsProvider({ children, initialPath }: { children: ReactNode, i
     const { user } = useAuth();
     const [lastUser, setLastUser] = useState(user?.uid);
     const router = useRouter();
-    const locale = useLocale();
 
     const setActiveTab = useCallback((tabId: string) => {
         setActiveTabState(tabId);
@@ -170,13 +155,13 @@ export function TabsProvider({ children, initialPath }: { children: ReactNode, i
      useEffect(() => {
         if (user && tabs.length === 0) {
             openTab({
-                path: `/${locale}/dashboard`,
+                path: `/dashboard`,
                 title: 'Dashboard',
                 icon: Home,
                 isClosable: false,
             });
         }
-    }, [user, tabs.length, locale, openTab]);
+    }, [user, tabs.length, openTab]);
 
 
     useEffect(() => {
@@ -210,7 +195,7 @@ export function TabsProvider({ children, initialPath }: { children: ReactNode, i
             setActiveTab(nextActiveTabId);
         } else if (newTabs.length === 0) {
             setActiveTabState(null);
-            openTab({ path: `/${locale}/dashboard`, title: 'Dashboard', icon: Home, isClosable: false });
+            openTab({ path: `/dashboard`, title: 'Dashboard', icon: Home, isClosable: false });
         }
     };
 

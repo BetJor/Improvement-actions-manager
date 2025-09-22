@@ -40,32 +40,31 @@ function SidebarNavLink({ href, icon: Icon, label, isTab }: { href: string; icon
 }
 
 
-export function AppSidebar({ t }: { t: any }) {
-  const locale = useParams().locale as string;
+export function AppSidebar() {
   const { user, isAdmin } = useAuth(); 
   const { state } = useSidebar();
   
   if (!user) return null;
 
   const mainNavItems = [
-    { href: `/${locale}/dashboard`, icon: Home, label: "Panell de Control", isTab: true },
-    { href: `/${locale}/actions`, icon: ListChecks, label: "Accions", isTab: true },
-    { href: `/${locale}/reports`, icon: BarChart3, label: "Informes", isTab: true },
+    { href: `/dashboard`, icon: Home, label: "Panel de Control", isTab: true },
+    { href: `/actions`, icon: ListChecks, label: "Acciones", isTab: true },
+    { href: `/reports`, icon: BarChart3, label: "Informes", isTab: true },
   ]
   
   const adminSettingsNavItems = [
-    { href: `/${locale}/settings`, icon: Settings, label: "Configuració", isTab: true },
-    { href: `/${locale}/workflow`, icon: GanttChartSquare, label: "Workflow", isTab: true },
-    { href: `/${locale}/firestore-rules`, icon: FileLock2, label: "Regles de Firestore", isTab: true },
-    { href: `/${locale}/ai-settings`, icon: Sparkles, label: "Configuració IA", isTab: true },    
-    { href: `/${locale}/user-management`, icon: Users, label: "Gestió d'Usuaris", isTab: true },
+    { href: `/settings`, icon: Settings, label: "Configuración", isTab: true },
+    { href: `/workflow`, icon: GanttChartSquare, label: "Workflow", isTab: true },
+    { href: `/firestore-rules`, icon: FileLock2, label: "Reglas de Firestore", isTab: true },
+    { href: `/ai-settings`, icon: Sparkles, label: "Configuración IA", isTab: true },    
+    { href: `/user-management`, icon: Users, label: "Gestión de Usuarios", isTab: true },
   ]
 
   const adminDevNavItems = [
-    { href: `/${locale}/roadmap`, icon: Route, label: "Roadmap", isTab: true },
-    { href: `/${locale}/backlog`, icon: GanttChartSquare, label: "Backlog", isTab: true },
-    { href: `/${locale}/intranet-test`, icon: TestTubeDiagonal, label: "Intranet Test", isTab: true },
-    { href: `/${locale}/prompt-gallery`, icon: Library, label: "Galeria de Prompts", isTab: true },
+    { href: `/roadmap`, icon: Route, label: "Roadmap", isTab: true },
+    { href: `/backlog`, icon: GanttChartSquare, label: "Backlog", isTab: true },
+    { href: `/intranet-test`, icon: TestTubeDiagonal, label: "Intranet Test", isTab: true },
+    { href: `/prompt-gallery`, icon: Library, label: "Galería de Prompts", isTab: true },
   ]
 
 

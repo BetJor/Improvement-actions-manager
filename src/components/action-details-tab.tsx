@@ -6,7 +6,6 @@ import { useState, useEffect } from "react"
 import { useForm } from "react-hook-form"
 import * as z from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useTranslations } from "next-intl"
 import { getActionById, updateAction, getUsers } from "@/lib/data"
 import type { ImprovementAction, User } from "@/lib/types"
 import { ActionForm } from "@/components/action-form"
@@ -36,13 +35,9 @@ import { ActionStatusBadge } from "./action-status-badge"
 interface ActionDetailsTabProps {
     initialAction: ImprovementAction;
     masterData: any;
-    locale: string;
 }
 
-export function ActionDetailsTab({ initialAction, masterData, locale }: ActionDetailsTabProps) {
-    const t = useTranslations("Actions.detail")
-    const tForm = useTranslations("Actions.new")
-    const tActionsTable = useTranslations("Actions.table")
+export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTabProps) {
     const { toast } = useToast()
     const router = useRouter();
     const { closeCurrentTab } = useTabs();
@@ -89,7 +84,7 @@ export function ActionDetailsTab({ initialAction, masterData, locale }: ActionDe
               dataToUpdate.status = status;
             }
             
-            await updateAction(action.id, dataToUpdate, masterData, status, locale);
+            await updateAction(action.id, dataToUpdate, masterData, status);
 
             if (status === 'Pendiente Análisis') {
                 closeCurrentTab();
@@ -101,8 +96,8 @@ export function ActionDetailsTab({ initialAction, masterData, locale }: ActionDe
             console.error("Error updating action:", error);
             toast({
                 variant: "destructive",
-                title: "Error en desar",
-                description: "No s'ha pogut actualitzar l'acció.",
+                title: "Error al guardar",
+                description: "No se ha podido actualizar la acción.",
             });
         } finally {
             setIsSubmitting(false);
@@ -116,7 +111,7 @@ export function ActionDetailsTab({ initialAction, masterData, locale }: ActionDe
           await updateAction(action.id, {
             analysis: analysisData,
             status: "Pendiente Comprobación",
-          }, undefined, undefined, locale);
+          });
     
           await handleActionUpdate();
     
@@ -124,8 +119,8 @@ export function ActionDetailsTab({ initialAction, masterData, locale }: ActionDe
           console.error("Error saving analysis:", error);
           toast({
               variant: "destructive",
-              title: "Error en desar",
-              description: "No s'ha pogut desar l'anàlisi.",
+              title: "Error al guardar",
+              description: "No se pudo guardar el análisis.",
           });
         } finally {
           setIsSubmitting(false);
@@ -139,7 +134,7 @@ export function ActionDetailsTab({ initialAction, masterData, locale }: ActionDe
           await updateAction(action.id, {
             verification: verificationData,
             status: "Pendiente de Cierre",
-          }, undefined, undefined, locale);
+          });
     
           await handleActionUpdate();
     
@@ -147,8 +142,8 @@ export function ActionDetailsTab({ initialAction, masterData, locale }: ActionDe
           console.error("Error saving verification:", error);
           toast({
               variant: "destructive",
-              title: "Error en desar",
-              description: "No s'ha pogut desar la verificació.",
+              title: "Error al guardar",
+              description: "No se pudo guardar la verificación.",
           });
         } finally {
           setIsSubmitting(false);
@@ -170,7 +165,7 @@ export function ActionDetailsTab({ initialAction, masterData, locale }: ActionDe
                     date: new Date().toISOString(),
                 },
                 status: 'Finalizada',
-            }, undefined, undefined, locale);
+            });
             
             router.push("/actions");
             router.refresh();
@@ -179,8 +174,8 @@ export function ActionDetailsTab({ initialAction, masterData, locale }: ActionDe
             console.error("Error saving closure:", error);
             toast({
                 variant: "destructive",
-                title: "Error en tancar",
-                description: "No s'ha pogut tancar l'acció.",
+                title: "Error al cerrar",
+                description: "No se pudo cerrar la acción.",
             });
         } finally {
             setIsSubmitting(false);
@@ -196,11 +191,11 @@ export function ActionDetailsTab({ initialAction, masterData, locale }: ActionDe
                     proposedActionId,
                     status: newStatus,
                 }
-            }, undefined, undefined, locale);
+            });
             await handleActionUpdate();
         } catch (error) {
             console.error("Error updating proposed action status:", error);
-            toast({ variant: "destructive", title: "Error en actualitzar l'estat." });
+            toast({ variant: "destructive", title: "Error al actualizar el estado." });
         } finally {
             setIsSubmitting(false);
         }
@@ -270,7 +265,7 @@ export function ActionDetailsTab({ initialAction, masterData, locale }: ActionDe
                         variant="ghost"
                         size="icon"
                         onClick={(e) => handleToggleFollow(action.id, e)}
-                        title={isFollowing(action.id) ? "Deixar de seguir" : "Seguir acció"}
+                        title={isFollowing(action.id) ? "Dejar de seguir" : "Seguir acción"}
                         className="h-8 w-8"
                       >
                         <Star className={cn("h-5 w-5", isFollowing(action.id) ? "text-yellow-400 fill-yellow-400" : "text-muted-foreground")} />
@@ -281,10 +276,10 @@ export function ActionDetailsTab({ initialAction, masterData, locale }: ActionDe
 
                 <Tabs defaultValue="details" className="w-full">
                     <TabsList>
-                        <TabsTrigger value="details">{t('tabs.details')}</TabsTrigger>
-                        <TabsTrigger value="analysis" disabled={isAnalysisTabDisabled}>{t('tabs.causesAndProposedAction')}</TabsTrigger>
-                        <TabsTrigger value="verification" disabled={isVerificationTabDisabled}>{t('tabs.implementationVerification')}</TabsTrigger>
-                        <TabsTrigger value="closure" disabled={isClosureTabDisabled}>{t('tabs.actionClosure')}</TabsTrigger>
+                        <TabsTrigger value="details">Detalles</TabsTrigger>
+                        <TabsTrigger value="analysis" disabled={isAnalysisTabDisabled}>Causas y Acción Propuesta</TabsTrigger>
+                        <TabsTrigger value="verification" disabled={isVerificationTabDisabled}>Verificación de Implantación</TabsTrigger>
+                        <TabsTrigger value="closure" disabled={isClosureTabDisabled}>Cierre de la Acción</TabsTrigger>
                     </TabsList>
                     
                     <TabsContent value="details" className="mt-4">
@@ -292,7 +287,7 @@ export function ActionDetailsTab({ initialAction, masterData, locale }: ActionDe
                             <div className="flex items-start justify-between gap-4">
                                 {!isEditing && action.status === "Borrador" && (
                                     <Button onClick={() => setIsEditing(true)} className="ml-auto">
-                                        <FileEdit className="mr-2 h-4 w-4" /> {t("editDraft")}
+                                        <FileEdit className="mr-2 h-4 w-4" /> Editar Borrador
                                     </Button>
                                 )}
                             </div>
@@ -304,7 +299,6 @@ export function ActionDetailsTab({ initialAction, masterData, locale }: ActionDe
                                 isSubmitting={isSubmitting}
                                 onSubmit={handleEditSubmit}
                                 onCancel={() => setIsEditing(false)}
-                                t={tForm}
                             />
                         </div>
                     </TabsContent>
@@ -320,22 +314,19 @@ export function ActionDetailsTab({ initialAction, masterData, locale }: ActionDe
                         ) : action.analysis ? (
                             <Card>
                                 <CardHeader>
-                                    <CardTitle>{t('causesAndProposedAction')}</CardTitle>
+                                    <CardTitle>Causas y Acción Propuesta</CardTitle>
                                     <CardDescription>
-                                        {t('analysisPerformedBy', { 
-                                            name: action.analysis.analysisResponsible?.name, 
-                                            date: format(new Date(action.analysis.analysisDate), "PPP", { locale: es }) 
-                                        })}
+                                        Análisis realizado por {action.analysis.analysisResponsible?.name} el {format(new Date(action.analysis.analysisDate), "PPP", { locale: es })}
                                     </CardDescription>
                                 </CardHeader>
                                 <CardContent className="space-y-6">
                                     <div>
-                                        <h3 className="font-semibold text-lg mb-2">{t('causesAnalysis')}</h3>
+                                        <h3 className="font-semibold text-lg mb-2">Análisis de las Causas</h3>
                                         <p className="text-muted-foreground whitespace-pre-wrap">{action.analysis.causes}</p>
                                     </div>
                                     <Separator />
                                     <div>
-                                        <h3 className="font-semibold text-lg mb-4">{t('proposedAction')}</h3>
+                                        <h3 className="font-semibold text-lg mb-4">Acción Propuesta</h3>
                                         <div className="space-y-4">
                                             {action.analysis.proposedActions.map((pa) => (
                                                 <div key={pa.id} className={cn("p-4 border-l-4 rounded-lg bg-muted/30", getStatusColorClass(pa.status))}>
@@ -343,10 +334,10 @@ export function ActionDetailsTab({ initialAction, masterData, locale }: ActionDe
                                                         <div className="flex-1">
                                                             <p className="font-medium">{pa.description}</p>
                                                             <p className="text-sm text-muted-foreground mt-1">
-                                                                Responsable: {users.find(u => u.id === pa.responsibleUserId)?.name || pa.responsibleUserId} | Data Venciment: {format(new Date(pa.dueDate), "dd/MM/yyyy")}
+                                                                Responsable: {users.find(u => u.id === pa.responsibleUserId)?.name || pa.responsibleUserId} | Fecha Vencimiento: {format(new Date(pa.dueDate), "dd/MM/yyyy")}
                                                             </p>
                                                              <p className="text-sm text-muted-foreground mt-1">
-                                                                Estat: <span className="font-semibold">{pa.status || 'Pendent'}</span>
+                                                                Estado: <span className="font-semibold">{pa.status || 'Pendente'}</span>
                                                             </p>
                                                         </div>
                                                         {user?.id === pa.responsibleUserId && action.status !== 'Finalizada' && (
@@ -359,7 +350,7 @@ export function ActionDetailsTab({ initialAction, masterData, locale }: ActionDe
                                                             }}
                                                           >
                                                             <Edit className="mr-2 h-3 w-3" />
-                                                            Actualitzar Estat
+                                                            Actualizar Estado
                                                           </Button>
                                                         )}
                                                     </div>
@@ -369,16 +360,16 @@ export function ActionDetailsTab({ initialAction, masterData, locale }: ActionDe
                                     </div>
                                      <Separator />
                                     <div>
-                                        <h3 className="font-semibold text-lg mb-2">{t('analysis.verificationResponsible.label')}</h3>
+                                        <h3 className="font-semibold text-lg mb-2">Responsable de la Verificación</h3>
                                         <p className="text-muted-foreground">
-                                            {users.find(u => u.id === action.analysis?.verificationResponsibleUserId)?.name || action.analysis?.verificationResponsibleUserId || 'No assignat'}
+                                            {users.find(u => u.id === action.analysis?.verificationResponsibleUserId)?.name || action.analysis?.verificationResponsibleUserId || 'No asignado'}
                                         </p>
                                     </div>
                                 </CardContent>
                             </Card>
                         ) : (
                             <div className="text-center text-muted-foreground py-10">
-                            <p>L'anàlisi es podrà realitzar un cop l'acció estigui en estat 'Pendent d'Anàlisi' i siguis el responsable assignat.</p>
+                            <p>El análisis se podrá realizar una vez la acción esté en estado 'Pendiente de Análisis' y seas el responsable asignado.</p>
                             </div>
                         )}
                     </TabsContent>
@@ -394,28 +385,25 @@ export function ActionDetailsTab({ initialAction, masterData, locale }: ActionDe
                         ) : action.verification ? (
                             <Card>
                                 <CardHeader>
-                                    <CardTitle>{t('implementationVerification')}</CardTitle>
+                                    <CardTitle>Comprobación de la Implantación</CardTitle>
                                     <CardDescription>
-                                        {t('verificationPerformedBy', { 
-                                            name: action.verification.verificationResponsible?.name, 
-                                            date: format(new Date(action.verification.verificationDate), "PPP", { locale: es }) 
-                                        })}
+                                        Verificación realizada por {action.verification.verificationResponsible?.name} el {format(new Date(action.verification.verificationDate), "PPP", { locale: es })}
                                     </CardDescription>
                                 </CardHeader>
                                 <CardContent className="space-y-6">
                                     <div>
-                                        <h3 className="font-semibold text-lg mb-2">{t('verification.notesLabel')}</h3>
+                                        <h3 className="font-semibold text-lg mb-2">Observaciones Generales</h3>
                                         <p className="text-muted-foreground whitespace-pre-wrap">{action.verification.notes}</p>
                                     </div>
                                     <Separator />
                                     <div>
-                                        <h3 className="font-semibold text-lg mb-4">{t('verification.statusOfActions')}</h3>
+                                        <h3 className="font-semibold text-lg mb-4">Estado de las Acciones Propuestas</h3>
                                         <div className="space-y-4">
                                             {action.analysis?.proposedActions.map((pa, index) => (
                                                 <div key={`${pa.id}-${index}`} className={cn("p-4 border rounded-lg", getStatusColorClass(action.verification?.proposedActionsStatus[pa.id]))}>
                                                     <p className="font-medium">{pa.description}</p>
                                                     <p className="text-sm text-muted-foreground mt-1">
-                                                        Estat: <span className="font-semibold">{action.verification?.proposedActionsStatus[pa.id]}</span>
+                                                        Estado: <span className="font-semibold">{action.verification?.proposedActionsStatus[pa.id]}</span>
                                                     </p>
                                                 </div>
                                             ))}
@@ -425,7 +413,7 @@ export function ActionDetailsTab({ initialAction, masterData, locale }: ActionDe
                             </Card>
                         ) : (
                             <div className="text-center text-muted-foreground py-10">
-                                <p>La verificació es podrà realitzar un cop s'hagi completat l'anàlisi de causes i siguis el responsable assignat.</p>
+                                <p>La verificación se podrá realizar una vez se haya completado el análisis de causas y seas el responsable asignado.</p>
                             </div>
                         )}
                     </TabsContent>
@@ -439,27 +427,27 @@ export function ActionDetailsTab({ initialAction, masterData, locale }: ActionDe
                         ) : action.closure ? (
                             <Card>
                             <CardHeader>
-                                <CardTitle>{t('actionClosure')}</CardTitle>
+                                <CardTitle>Cierre de la Acción</CardTitle>
                                 <CardDescription>
-                                    Tancada per {action.closure.closureResponsible.name} el {format(new Date(action.closure.date), "PPP", { locale: es })}
+                                    Cerrada por {action.closure.closureResponsible.name} el {format(new Date(action.closure.date), "PPP", { locale: es })}
                                 </CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-4">
                                 <div>
-                                    <h3 className="font-semibold text-base mb-2">Resultat del Tancament</h3>
+                                    <h3 className="font-semibold text-base mb-2">Resultado del Cierre</h3>
                                     <p className={cn("font-medium", action.closure.isCompliant ? "text-green-600" : "text-red-600")}>
                                         {action.closure.isCompliant ? "Conforme" : "No Conforme"}
                                     </p>
                                 </div>
                                 <div>
-                                    <h3 className="font-semibold text-base mb-2">Observacions Finals</h3>
+                                    <h3 className="font-semibold text-base mb-2">Observaciones Finales</h3>
                                     <p className="text-muted-foreground whitespace-pre-wrap">{action.closure.notes}</p>
                                 </div>
                             </CardContent>
                             </Card>
                         ) : (
                              <div className="text-center text-muted-foreground py-10">
-                                <p>El tancament es podrà realitzar un cop s'hagi completat la verificació i siguis el responsable assignat.</p>
+                                <p>El cierre se podrá realizar una vez se haya completado la verificación y seas el responsable asignado.</p>
                             </div>
                         )}
                     </TabsContent>
