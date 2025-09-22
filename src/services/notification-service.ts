@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview A service for handling notifications, such as sending emails.
@@ -65,27 +66,27 @@ export async function sendStateChangeEmail(details: EmailDetails): Promise<User 
       console.log(`[NotificationService] Resolved author emails from matrix: ${recipientEmails.join(', ')}`);
       if (recipientEmails.length > 0) {
         const firstRecipientEmail = recipientEmails[0];
-        recipient = allUsers.find(u => u.email === firstRecipientEmail) || null;
+        const foundUser = allUsers.find(u => u.email === firstRecipientEmail) || null;
         
-        if (recipient) {
-            console.log(`[NotificationService] Found matching user in DB:`, recipient);
+        if (foundUser) {
+            console.log(`[NotificationService] Found matching user in DB:`, foundUser);
+            recipient = foundUser;
         } else {
-            console.log(`[NotificationService] No user found in DB for email ${firstRecipientEmail}. Creating temporary recipient.`);
-            // If no user is found, create a temporary recipient object to send the email anyway.
+            console.log(`[NotificationService] No user found in DB for email ${firstRecipientEmail}. Creating temporary recipient object.`);
             recipient = {
-                name: firstRecipientEmail.split('@')[0],
+                name: firstRecipientEmail.split('@')[0], // Use the part before @ as a name
                 email: firstRecipientEmail
             };
         }
       }
     } else {
-        console.log('[NotificationService] No specific permission rule or authors found for this state.');
+        console.log('[NotificationService] No specific permission rule or authors found for this state. Will fall back to creator.');
     }
   }
   
   if (!recipient) {
+    console.log(`[NotificationService] Recipient not determined from matrix, falling back to action creator.`);
     recipient = await getUserById(action.creator.id);
-    console.log(`[NotificationService] Falling back to creator. Found user:`, recipient);
   }
 
   console.log(`[NotificationService] Determined final recipient:`, recipient);
