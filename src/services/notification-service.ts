@@ -8,7 +8,7 @@
 
 import { google } from 'googleapis';
 import { ImprovementAction, User } from '@/lib/types';
-import { getUserById } from './users-service';
+import { getUserById, getUsers } from './users-service';
 import { doc, updateDoc, arrayUnion } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
@@ -63,11 +63,22 @@ export async function sendStateChangeEmail(details: EmailDetails): Promise<User 
   }
   console.log(`[NotificationService] Sender email is: ${senderEmail}`);
   
-  // Determine the recipient. For now, let's notify the creator.
-  // This could be made more complex, e.g., notifying the responsible person.
-  // TODO: Make recipient logic more robust based on new status
-  const recipient = await getUserById(action.creator.id);
-  console.log(`[NotificationService] Determined recipient:`, recipient);
+  // Determine the recipient
+  let recipient: User | null = null;
+  const allUsers = await getUsers();
+
+  if (newStatus === 'Pendiente Análisis' && action.responsibleGroupId) {
+    recipient = allUsers.find(u => u.email === action.responsibleGroupId) || null;
+    console.log(`[NotificationService] Attempting to notify analysis responsible: ${action.responsibleGroupId}. Found user:`, recipient);
+  }
+  
+  // Fallback to creator if no specific recipient is found
+  if (!recipient) {
+    recipient = await getUserById(action.creator.id);
+    console.log(`[NotificationService] Falling back to creator. Found user:`, recipient);
+  }
+
+  console.log(`[NotificationService] Determined final recipient:`, recipient);
 
   if (!recipient || !recipient.email) {
     console.warn(`[NotificationService] No recipient or recipient email found for action ${action.actionId}. Skipping email notification.`);
@@ -101,7 +112,7 @@ export async function sendStateChangeEmail(details: EmailDetails): Promise<User 
       'MIME-Version: 1.0',
       `Subject: ${utf8Subject}`,
       '',
-      `Hola ${action.creator.name},`,
+      `Hola ${recipient.name},`,
       '<br><br>',
       `L'estat de l'acció de millora <strong>${action.actionId}: "${action.title}"</strong> ha canviat.`,
       '<br><br>',
