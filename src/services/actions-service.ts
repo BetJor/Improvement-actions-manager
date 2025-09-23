@@ -1,6 +1,6 @@
 
 
-import { collection, doc, getDoc, getDocs, addDoc, updateDoc, query, orderBy, limit, arrayUnion, Timestamp, runTransaction, arrayRemove, where } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, addDoc, updateDoc, query, orderBy, limit, arrayUnion, Timestamp, runTransaction, arrayRemove, where, writeBatch } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { format } from 'date-fns';
 import type { ImprovementAction, ImprovementActionStatus, ActionUserInfo } from '@/lib/types';
@@ -9,6 +9,7 @@ import { getUsers, getUserById } from './users-service';
 import { getCategories, getSubcategories, getAffectedAreas, getCenters, getActionTypes, getResponsibilityRoles } from './master-data-service';
 import { getPermissionRuleForState, resolveRoles } from './permissions-service';
 import { sendStateChangeEmail } from './notification-service';
+import { seedActions } from '@/lib/actions-seed-data';
 
 interface CreateActionData extends Omit<ImprovementAction, 'id' | 'actionId' | 'status' | 'creationDate' | 'category' | 'subcategory' | 'type' | 'affectedAreas' | 'center' | 'analysisDueDate' | 'implementationDueDate' | 'closureDueDate' | 'readers' | 'authors' > {
   status: 'Borrador' | 'Pendiente Análisis';
@@ -24,7 +25,21 @@ interface CreateActionData extends Omit<ImprovementAction, 'id' | 'actionId' | '
 // Funció per obtenir les dades de Firestore
 export const getActions = async (): Promise<ImprovementAction[]> => {
     const actionsCol = collection(db, 'actions');
-    const actionsSnapshot = await getDocs(query(actionsCol, orderBy("actionId", "desc")));
+    let actionsSnapshot = await getDocs(query(actionsCol, orderBy("actionId", "desc")));
+
+    if (actionsSnapshot.empty) {
+        console.log("Actions collection is empty. Populating with seed data...");
+        const batch = writeBatch(db);
+        seedActions.forEach(action => {
+            const docRef = doc(actionsCol);
+            batch.set(docRef, action);
+        });
+        await batch.commit();
+        console.log("Actions collection populated with seed data.");
+        // Re-fetch the data after populating
+        actionsSnapshot = await getDocs(query(actionsCol, orderBy("actionId", "desc")));
+    }
+
 
     const users = await getUsers();
 
