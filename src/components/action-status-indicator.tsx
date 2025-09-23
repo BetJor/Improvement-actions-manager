@@ -1,4 +1,3 @@
-
 "use client"
 
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
@@ -18,6 +17,11 @@ export function ActionStatusIndicator({ status, isCompliant = null }: ActionStat
   
   const getStatusDetails = () => {
     switch (status) {
+      case 'Borrador':
+        return {
+          label: status,
+          bars: [ 'bg-gray-300', 'bg-gray-300', 'bg-gray-300', 'bg-gray-300' ]
+        };
       case 'Pendiente Análisis':
         return {
           label: status,
@@ -44,7 +48,6 @@ export function ActionStatusIndicator({ status, isCompliant = null }: ActionStat
           label: "Finalizada",
           bars: [ 'bg-green-500', 'bg-green-500', 'bg-green-500', 'bg-green-500' ]
         };
-      case 'Borrador':
       default:
         return { label: status, bars: null };
     }
@@ -53,7 +56,7 @@ export function ActionStatusIndicator({ status, isCompliant = null }: ActionStat
   const { label, bars } = getStatusDetails();
 
   if (!bars) {
-    return null; // No icon for 'Borrador'
+    return null; // Should not happen with the new logic, but good as a safeguard
   }
 
   return (
