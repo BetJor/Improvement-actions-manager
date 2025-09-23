@@ -1,7 +1,12 @@
 
 rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
+    // Aquesta regla permet l'accés de lectura/escriptura a tota la base de dades
+    // a qualsevol usuari que hagi iniciat sessió.
+    // És una regla adequada per a entorns de desenvolupament, però hauria de ser
+    // més restrictiva per a producció.
     match /{document=**} {
       allow read, write: if request.auth != null;
     }
