@@ -1,4 +1,5 @@
 
+
 "use client"
 
 import { useState, useMemo, useEffect } from "react"
@@ -28,12 +29,22 @@ import { useAuth } from "@/hooks/use-auth"
 import { cn } from "@/lib/utils"
 import { useFollowAction } from "@/hooks/use-follow-action"
 import { Badge } from "./ui/badge"
+import { format, parseISO } from "date-fns"
 
 interface ActionsTableProps {
   actions: ImprovementAction[];
 }
 
 type SortKey = keyof ImprovementAction | 'responsible'
+
+const safeFormatDate = (dateString?: string) => {
+    if (!dateString) return '';
+    try {
+        return format(parseISO(dateString), 'dd/MM/yyyy');
+    } catch {
+        return dateString; // Return original string if it's not a valid ISO date
+    }
+}
 
 export function ActionsTable({ actions }: ActionsTableProps) {
   const { openTab } = useTabs();
@@ -319,7 +330,7 @@ export function ActionsTable({ actions }: ActionsTableProps) {
                   </TableCell>
                   <TableCell>{action.type}</TableCell>
                   <TableCell>{action.responsibleUser?.name || action.responsibleGroupId}</TableCell>
-                  <TableCell>{action.implementationDueDate}</TableCell>
+                  <TableCell>{safeFormatDate(action.implementationDueDate)}</TableCell>
                 </TableRow>
               ))
             ) : (

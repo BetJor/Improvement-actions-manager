@@ -1,6 +1,7 @@
+
 import { collection, getDocs, doc, query, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { format, addDays, parse } from 'date-fns';
+import { format, addDays, parseISO } from 'date-fns';
 import type { ImprovementAction, WorkflowPlan, WorkflowStep, ImprovementActionType } from '@/lib/types';
 import { getActionTypes } from './master-data-service';
 
@@ -16,7 +17,7 @@ export async function planTraditionalActionWorkflow(action: Omit<ImprovementActi
     const actionTypeConfig = actionTypes.find(at => at.id === action.typeId);
 
     const steps: WorkflowStep[] = [];
-    const creationDate = parse(action.creationDate, 'dd/MM/yyyy', new Date());
+    const creationDate = parseISO(action.creationDate);
 
     // These are simplified rules. You can make them as complex as you need
     // by reading more configuration from Firestore.
@@ -28,7 +29,7 @@ export async function planTraditionalActionWorkflow(action: Omit<ImprovementActi
     steps.push({
         stepName: 'Anàlisi de Causes',
         responsibleParty: action.responsibleGroupId, // The main responsible group
-        dueDate: format(analysisDueDate, 'dd/MM/yyyy'),
+        dueDate: analysisDueDate.toISOString(),
         status: 'Pendiente',
     });
     
@@ -41,14 +42,14 @@ export async function planTraditionalActionWorkflow(action: Omit<ImprovementActi
         // The responsible party for verification might be different. 
         // This could be configured in the actionType as well.
         responsibleParty: action.responsibleGroupId, 
-        dueDate: format(implementationDueDate, 'dd/MM/yyyy'),
+        dueDate: implementationDueDate.toISOString(),
         status: 'Pendiente',
     });
 
     steps.push({
         stepName: 'Tancament de l\'Acció',
         responsibleParty: action.creator.email || action.creator.id, // Often the creator closes the action
-        dueDate: format(closureDueDate, 'dd/MM/yyyy'),
+        dueDate: closureDueDate.toISOString(),
         status: 'Pendiente',
     });
 
@@ -59,5 +60,3 @@ export async function planTraditionalActionWorkflow(action: Omit<ImprovementActi
         steps: steps,
     };
 }
-
-    

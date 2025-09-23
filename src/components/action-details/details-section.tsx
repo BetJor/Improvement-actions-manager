@@ -9,22 +9,36 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { CircleUser, Calendar, Users, Tag, CalendarClock, Info, ChevronDown } from "lucide-react"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { Button } from "@/components/ui/button"
+import { format, parseISO } from "date-fns"
+
 
 interface DetailRowProps {
   icon: React.ElementType
   label: string
   value?: string | React.ReactNode
+  isDate?: boolean
 }
 
-const DetailRow = ({ icon: Icon, label, value }: DetailRowProps) => {
+const DetailRow = ({ icon: Icon, label, value, isDate = false }: DetailRowProps) => {
   if (!value) return null
+
+  let displayValue = value;
+  if (isDate && typeof value === 'string') {
+      try {
+          displayValue = format(parseISO(value), 'dd/MM/yyyy');
+      } catch {
+          displayValue = value; // Show original string if parsing fails
+      }
+  }
+
+
   return (
     <div className="flex items-start gap-3">
       <Icon className="h-5 w-5 text-muted-foreground mt-0.5 shrink-0" />
       <div className="flex flex-col">
         <span className="text-sm text-muted-foreground">{label}</span>
         <span className="text-sm font-medium">
-          {value}
+          {displayValue}
         </span>
       </div>
     </div>
@@ -76,10 +90,10 @@ export function DetailsSection({ action }: DetailsSectionProps) {
               value={action.responsibleGroupId}
             />
             <Separator />
-            <DetailRow icon={Calendar} label="Fecha Creación" value={action.creationDate} />
-            <DetailRow icon={CalendarClock} label="Vencimiento Análisis" value={action.analysisDueDate} />
-            <DetailRow icon={CalendarClock} label="Vencimiento Implantación" value={action.implementationDueDate} />
-            <DetailRow icon={CalendarClock} label="Vencimiento Cierre" value={action.closureDueDate} />
+            <DetailRow icon={Calendar} label="Fecha Creación" value={action.creationDate} isDate />
+            <DetailRow icon={CalendarClock} label="Vencimiento Análisis" value={action.analysisDueDate} isDate />
+            <DetailRow icon={CalendarClock} label="Vencimiento Implantación" value={action.implementationDueDate} isDate />
+            <DetailRow icon={CalendarClock} label="Vencimiento Cierre" value={action.closureDueDate} isDate />
           </CardContent>
         </CollapsibleContent>
       </Collapsible>

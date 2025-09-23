@@ -1,8 +1,8 @@
 
 
-import { collection, doc, getDoc, getDocs, addDoc, updateDoc, query, orderBy, limit, arrayUnion, Timestamp, runTransaction, arrayRemove, where, writeBatch } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, addDoc, updateDoc, query, orderBy, limit, arrayUnion, Timestamp, runTransaction, arrayRemove, where, writeBatch, setDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { format } from 'date-fns';
+import { format, parse } from 'date-fns';
 import type { ImprovementAction, ImprovementActionStatus, ActionUserInfo } from '@/lib/types';
 import { planTraditionalActionWorkflow } from './workflow-service';
 import { getUsers, getUserById } from './users-service';
@@ -32,17 +32,43 @@ export const getActions = async (): Promise<ImprovementAction[]> => {
         const batch = writeBatch(db);
         const docRefs: { [key: string]: any } = {};
 
+        const actionsToSeed = seedActions.map(action => {
+            const newAction = {...action};
+            const parseAndFormat = (dateString: string) => {
+                if (!dateString) return '';
+                try {
+                    return parse(dateString, 'dd/MM/yyyy', new Date()).toISOString();
+                } catch {
+                    return dateString; 
+                }
+            }
+            newAction.creationDate = parseAndFormat(newAction.creationDate);
+            newAction.analysisDueDate = parseAndFormat(newAction.analysisDueDate);
+            newAction.implementationDueDate = parseAndFormat(newAction.implementationDueDate);
+            newAction.closureDueDate = parseAndFormat(newAction.closureDueDate);
+            if (newAction.analysis) {
+                newAction.analysis.analysisDate = parseAndFormat(newAction.analysis.analysisDate);
+            }
+             if (newAction.verification) {
+                newAction.verification.verificationDate = parseAndFormat(newAction.verification.verificationDate);
+            }
+            if (newAction.closure) {
+                newAction.closure.date = parseAndFormat(newAction.closure.date);
+            }
+            return newAction;
+        });
+
         // First pass: create all actions except the one with the placeholder
-        for (const action of seedActions) {
+        for (const action of actionsToSeed) {
             if (action.actionId === "AM-24007") continue; // Skip BIS action for now
-            const docRef = doc(actionsCol);
+            const docRef = doc(collection(db, 'actions'));
             batch.set(docRef, action);
             docRefs[action.actionId] = docRef;
         }
         await batch.commit();
 
         // Second pass: create the BIS action, linking it to the real ID of the original
-        const bisActionData = seedActions.find(a => a.actionId === "AM-24007");
+        const bisActionData = actionsToSeed.find(a => a.actionId === "AM-24007");
         if (bisActionData) {
             const originalActionRef = docRefs["AM-24006"];
             if (originalActionRef) {
@@ -50,7 +76,7 @@ export const getActions = async (): Promise<ImprovementAction[]> => {
                     ...bisActionData,
                     originalActionId: originalActionRef.id,
                 };
-                const bisDocRef = doc(actionsCol);
+                const bisDocRef = doc(collection(db, 'actions'));
                 await setDoc(bisDocRef, updatedBisActionData);
             }
         }
@@ -75,6 +101,28 @@ export const getActions = async (): Promise<ImprovementAction[]> => {
                 return pa;
             });
         }
+        if (data.creationDate && data.creationDate instanceof Timestamp) {
+            data.creationDate = data.creationDate.toDate().toISOString();
+        }
+        if (data.analysisDueDate && data.analysisDueDate instanceof Timestamp) {
+            data.analysisDueDate = data.analysisDueDate.toDate().toISOString();
+        }
+        if (data.implementationDueDate && data.implementationDueDate instanceof Timestamp) {
+            data.implementationDueDate = data.implementationDueDate.toDate().toISOString();
+        }
+        if (data.closureDueDate && data.closureDueDate instanceof Timestamp) {
+            data.closureDueDate = data.closureDueDate.toDate().toISOString();
+        }
+         if (data.analysis?.analysisDate && data.analysis.analysisDate instanceof Timestamp) {
+            data.analysis.analysisDate = data.analysis.analysisDate.toDate().toISOString();
+        }
+        if (data.verification?.verificationDate && data.verification.verificationDate instanceof Timestamp) {
+            data.verification.verificationDate = data.verification.verificationDate.toDate().toISOString();
+        }
+         if (data.closure?.date && data.closure.date instanceof Timestamp) {
+            data.closure.date = data.closure.date.toDate().toISOString();
+        }
+
 
         const responsibleUser = users.find(u => u.id === data.responsibleGroupId);
         
@@ -94,30 +142,67 @@ export const getActionById = async (id: string): Promise<ImprovementAction | nul
     if (actionDocSnap.exists()) {
         const data = actionDocSnap.data();
 
-        // Convert Timestamps to Date for client-side usage
+        // Convert any Timestamps to serializable ISO strings
+        const convertTimestamp = (date: any) => {
+            if (date instanceof Timestamp) {
+                return date.toDate().toISOString();
+            }
+            if(typeof date === 'string') {
+                return date;
+            }
+            // Fallback for dd/MM/yyyy strings - might not be needed anymore
+            if (typeof date === 'string' && date.includes('/')) {
+                try {
+                    return parse(date, 'dd/MM/yyyy', new Date()).toISOString();
+                } catch {
+                    return date; // Return original if parsing fails
+                }
+            }
+            return date;
+        }
+
         if (data.analysis && data.analysis.proposedActions) {
             data.analysis.proposedActions = data.analysis.proposedActions.map((pa: any) => ({
                 ...pa,
-                // Firestore Timestamps need to be converted to Date objects
-                dueDate: pa.dueDate instanceof Timestamp ? pa.dueDate.toDate() : new Date(pa.dueDate),
+                dueDate: convertTimestamp(pa.dueDate),
             }));
         }
-        if (data.comments) {
+         if (data.comments) {
             data.comments = data.comments.sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime());
         }
+
+        const serializableData = {
+            ...data,
+            creationDate: convertTimestamp(data.creationDate),
+            analysisDueDate: convertTimestamp(data.analysisDueDate),
+            implementationDueDate: convertTimestamp(data.implementationDueDate),
+            closureDueDate: convertTimestamp(data.closureDueDate),
+            analysis: data.analysis ? {
+                ...data.analysis,
+                analysisDate: convertTimestamp(data.analysis.analysisDate),
+            } : undefined,
+            verification: data.verification ? {
+                ...data.verification,
+                verificationDate: convertTimestamp(data.verification.verificationDate),
+            } : undefined,
+            closure: data.closure ? {
+                ...data.closure,
+                date: convertTimestamp(data.closure.date),
+            } : undefined,
+        };
 
         // Populate responsible user info
         if (data.responsibleGroupId) {
             const responsibleUser = users.find(u => u.email === data.responsibleGroupId);
             if(responsibleUser) {
-                data.responsibleUser = {
+                serializableData.responsibleUser = {
                     id: responsibleUser.id,
                     name: responsibleUser.name,
                     avatar: responsibleUser.avatar
                 }
             }
         }
-        return { ...data, id: actionDocSnap.id } as ImprovementAction;
+        return { ...serializableData, id: actionDocSnap.id } as ImprovementAction;
     } else {
         console.warn(`Action with Firestore ID ${id} not found.`);
         return null;
@@ -129,7 +214,7 @@ export async function createAction(data: CreateActionData, masterData: any): Pro
     const actionsCol = collection(db, 'actions');
   
     // 1. Get the last actionId to generate the new one
-    const lastActionQuery = query(actionsCol, orderBy("creationDate", "desc"), limit(1));
+    const lastActionQuery = query(actionsCol, orderBy("actionId", "desc"), limit(1));
     const lastActionSnapshot = await getDocs(lastActionQuery);
     
     let newActionIdNumber = 1;
@@ -145,7 +230,7 @@ export async function createAction(data: CreateActionData, masterData: any): Pro
   
     // 2. Prepare the new action object
     const today = new Date();
-    const creationDate = format(today, 'dd/MM/yyyy');
+    const creationDate = today.toISOString();
 
     const creatorDetails = await getUserById(data.creator.id);
 

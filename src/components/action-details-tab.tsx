@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useEffect } from "react"
@@ -16,7 +17,7 @@ import { Loader2, FileEdit, Edit, Star } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Separator } from "@/components/ui/separator"
-import { format } from "date-fns"
+import { format, parseISO } from "date-fns"
 import { es } from "date-fns/locale"
 import { cn } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast"
@@ -34,6 +35,25 @@ interface ActionDetailsTabProps {
     initialAction: ImprovementAction;
     masterData: any;
 }
+
+const safeParseDate = (date: any): Date | null => {
+    if (!date) return null;
+    if (date instanceof Date) return date;
+    if (typeof date === 'string') {
+        try {
+            // ISO 8601 format is preferred
+            return parseISO(date);
+        } catch (e) {
+            console.warn(`Could not parse date string: ${date}`, e);
+            return null;
+        }
+    }
+    if (date && typeof date.toDate === 'function') { // Firebase Timestamp
+        return date.toDate();
+    }
+    return null;
+}
+
 
 export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTabProps) {
     const { toast } = useToast()
@@ -337,7 +357,7 @@ export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTab
                                 <CardHeader>
                                     <CardTitle>Causas y Acción Propuesta</CardTitle>
                                     <CardDescription>
-                                        Análisis realizado por {action.analysis.analysisResponsible?.name} el {format(new Date(action.analysis.analysisDate), "PPP", { locale: es })}
+                                        Análisis realizado por {action.analysis.analysisResponsible?.name} el {safeParseDate(action.analysis.analysisDate) ? format(safeParseDate(action.analysis.analysisDate)!, "PPP", { locale: es }) : ''}
                                     </CardDescription>
                                 </CardHeader>
                                 <CardContent className="space-y-6">
@@ -355,7 +375,7 @@ export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTab
                                                         <div className="flex-1">
                                                             <p className="font-medium">{pa.description}</p>
                                                             <p className="text-sm text-muted-foreground mt-1">
-                                                                Responsable: {users.find(u => u.id === pa.responsibleUserId)?.name || pa.responsibleUserId} | Fecha Vencimiento: {format(new Date(pa.dueDate), "dd/MM/yyyy")}
+                                                                Responsable: {users.find(u => u.id === pa.responsibleUserId)?.name || pa.responsibleUserId} | Fecha Vencimiento: {safeParseDate(pa.dueDate) ? format(safeParseDate(pa.dueDate)!, "dd/MM/yyyy") : ''}
                                                             </p>
                                                              <p className="text-sm text-muted-foreground mt-1">
                                                                 Estado: <span className="font-semibold">{pa.status || 'Pendente'}</span>
@@ -408,7 +428,7 @@ export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTab
                                 <CardHeader>
                                     <CardTitle>Comprobación de la Implantación</CardTitle>
                                     <CardDescription>
-                                        Verificación realizada por {action.verification.verificationResponsible?.name} el {format(new Date(action.verification.verificationDate), "PPP", { locale: es })}
+                                        Verificación realizada por {action.verification.verificationResponsible?.name} el {safeParseDate(action.verification.verificationDate) ? format(safeParseDate(action.verification.verificationDate)!, "PPP", { locale: es }) : ''}
                                     </CardDescription>
                                 </CardHeader>
                                 <CardContent className="space-y-6">
@@ -450,7 +470,7 @@ export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTab
                             <CardHeader>
                                 <CardTitle>Cierre de la Acción</CardTitle>
                                 <CardDescription>
-                                    Cerrada por {action.closure.closureResponsible.name} el {format(new Date(action.closure.date), "PPP", { locale: es })}
+                                    Cerrada por {action.closure.closureResponsible.name} el {safeParseDate(action.closure.date) ? format(safeParseDate(action.closure.date)!, "PPP", { locale: es }) : ''}
                                 </CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-4">
