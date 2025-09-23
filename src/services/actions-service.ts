@@ -32,31 +32,7 @@ export const getActions = async (): Promise<ImprovementAction[]> => {
         const batch = writeBatch(db);
         const docRefs: { [key: string]: any } = {};
 
-        const actionsToSeed = seedActions.map(action => {
-            const newAction = {...action};
-            const parseAndFormat = (dateString: string) => {
-                if (!dateString) return '';
-                try {
-                    return parse(dateString, 'dd/MM/yyyy', new Date()).toISOString();
-                } catch {
-                    return dateString; 
-                }
-            }
-            newAction.creationDate = parseAndFormat(newAction.creationDate);
-            newAction.analysisDueDate = parseAndFormat(newAction.analysisDueDate);
-            newAction.implementationDueDate = parseAndFormat(newAction.implementationDueDate);
-            newAction.closureDueDate = parseAndFormat(newAction.closureDueDate);
-            if (newAction.analysis) {
-                newAction.analysis.analysisDate = parseAndFormat(newAction.analysis.analysisDate);
-            }
-             if (newAction.verification) {
-                newAction.verification.verificationDate = parseAndFormat(newAction.verification.verificationDate);
-            }
-            if (newAction.closure) {
-                newAction.closure.date = parseAndFormat(newAction.closure.date);
-            }
-            return newAction;
-        });
+        const actionsToSeed = seedActions;
 
         // First pass: create all actions except the one with the placeholder
         for (const action of actionsToSeed) {
