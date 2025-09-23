@@ -2,6 +2,3 @@
 import './flows/getUserGroups';
 import './flows/improveWriting';
 import './flows/improveAnalysis';
-import './flows/getIntranetData';
-
-    

@@ -62,7 +62,6 @@ export function AppSidebar() {
 
   const adminDevNavItems = [
     { href: `/backlog`, icon: GanttChartSquare, label: "Backlog", isTab: true },
-    { href: `/intranet-test`, icon: TestTubeDiagonal, label: "Intranet Test", isTab: true },
   ]
 
 

@@ -18,7 +18,6 @@ import MyGroupsPage from '@/app/my-groups/page';
 import ActionDetailPage from '@/app/actions/[id]/page';
 import UserManagementPage from '@/app/user-management/page';
 import ReportsPage from '@/app/reports/page';
-import IntranetTestPage from '@/app/intranet-test/page';
 import FirestoreRulesPage from '@/app/firestore-rules/page';
 import WorkflowPage from '@/app/workflow/page';
 import { getActionById, getActionTypes, getCategories, getSubcategories, getAffectedAreas } from '@/lib/data';
@@ -36,7 +35,6 @@ const pageComponentMapping: { [key: string]: React.ComponentType<any> | undefine
     '/reports': ReportsPage,
     '/my-groups': MyGroupsPage,
     '/user-management': UserManagementPage,
-    '/intranet-test': IntranetTestPage,
     '/firestore-rules': FirestoreRulesPage,
 };
 
