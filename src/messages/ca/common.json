@@ -19,7 +19,6 @@
       "settings": "Configuració",
       "workflow": "Workflow",
       "aiSettings": "Configuració IA",
-      "backlog": "Backlog",
       "userManagement": "Gestió d'Usuaris",
       "firestoreRules": "Regles de Firestore"
     },

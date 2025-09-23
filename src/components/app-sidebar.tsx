@@ -60,10 +60,6 @@ export function AppSidebar() {
     { href: `/user-management`, icon: Users, label: "Gestión de Usuarios", isTab: true },
   ]
 
-  const adminDevNavItems = [
-    { href: `/backlog`, icon: GanttChartSquare, label: "Backlog", isTab: true },
-  ]
-
 
   return (
     <Sidebar>
@@ -79,12 +75,6 @@ export function AppSidebar() {
                     <div className="my-4 border-t border-border -mx-2"></div>
                     <SidebarMenu>
                         {adminSettingsNavItems.map((item) => (
-                            <SidebarNavLink key={item.href} {...item} />
-                        ))}
-                    </SidebarMenu>
-                    <div className="my-4 border-t border-border -mx-2"></div>
-                    <SidebarMenu>
-                        {adminDevNavItems.map((item) => (
                             <SidebarNavLink key={item.href} {...item} />
                         ))}
                     </SidebarMenu>
