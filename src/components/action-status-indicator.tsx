@@ -1,7 +1,6 @@
 
 "use client"
 
-import { Signal, SignalHigh, SignalMedium, SignalLow, Ban } from "lucide-react"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { cn } from "@/lib/utils"
 import type { ImprovementActionStatus } from "@/lib/types"
@@ -11,36 +10,61 @@ interface ActionStatusIndicatorProps {
   isCompliant?: boolean | null;
 }
 
-export function ActionStatusIndicator({ status, isCompliant = null }: ActionStatusIndicatorProps) {
-  const getIcon = () => {
-    if (status === 'Finalizada') {
-      if (isCompliant === false) {
-        return { Icon: Ban, color: "text-red-500", label: "Finalizada (No Conforme)" };
-      }
-      return { Icon: Signal, color: "text-green-500", label: "Finalizada" };
-    }
+const Bar = ({ colorClass }: { colorClass: string }) => (
+  <div className={cn("h-4 w-1.5 rounded-sm", colorClass)} />
+);
 
+export function ActionStatusIndicator({ status, isCompliant = null }: ActionStatusIndicatorProps) {
+  
+  const getStatusDetails = () => {
     switch (status) {
-      case 'Borrador':
-        return { Icon: SignalLow, color: "text-gray-400", label: "Borrador" };
       case 'Pendiente Análisis':
-        return { Icon: SignalMedium, color: "text-green-400", label: "Pendiente Análisis" };
+        return {
+          label: status,
+          bars: [ 'bg-green-500', 'bg-gray-300', 'bg-gray-300', 'bg-gray-300' ]
+        };
       case 'Pendiente Comprobación':
-        return { Icon: SignalHigh, color: "text-green-500", label: "Pendiente Comprobación" };
+        return {
+          label: status,
+          bars: [ 'bg-green-500', 'bg-green-500', 'bg-gray-300', 'bg-gray-300' ]
+        };
       case 'Pendiente de Cierre':
-        return { Icon: SignalHigh, color: "text-green-500", label: "Pendiente de Cierre" }; // Using SignalHigh as "full"
+        return {
+          label: status,
+          bars: [ 'bg-green-500', 'bg-green-500', 'bg-green-500', 'bg-gray-300' ]
+        };
+      case 'Finalizada':
+        if (isCompliant === false) {
+          return {
+            label: "Finalizada (No Conforme)",
+            bars: [ 'bg-red-500', 'bg-red-500', 'bg-red-500', 'bg-red-500' ]
+          };
+        }
+        return {
+          label: "Finalizada",
+          bars: [ 'bg-green-500', 'bg-green-500', 'bg-green-500', 'bg-green-500' ]
+        };
+      case 'Borrador':
       default:
-        return { Icon: SignalLow, color: "text-gray-400", label: "Desconocido" };
+        return { label: status, bars: null };
     }
   };
 
-  const { Icon, color, label } = getIcon();
+  const { label, bars } = getStatusDetails();
+
+  if (!bars) {
+    return null; // No icon for 'Borrador'
+  }
 
   return (
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger>
-          <Icon className={cn("h-6 w-6", color)} />
+          <div className="flex items-center space-x-0.5">
+            {bars.map((color, index) => (
+              <Bar key={index} colorClass={color} />
+            ))}
+          </div>
         </TooltipTrigger>
         <TooltipContent>
           <p>{label}</p>
