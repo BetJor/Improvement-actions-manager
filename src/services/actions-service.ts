@@ -193,14 +193,6 @@ async function handleStatusChange(action: ImprovementAction, oldStatus: Improvem
     
     console.log(`[ActionService] Updating permissions for action ${action.id}...`);
     await updateActionPermissions(action.id, action.typeId, action.status, action);
-        
-    console.log(`[ActionService] Sending state change email for action ${action.id}...`);
-    const recipient = await sendStateChangeEmail({
-        action: action,
-        oldStatus: oldStatus,
-        newStatus: action.status,
-    });
-    console.log(`[ActionService] Email process completed. Recipient:`, recipient);
 }
 
 
@@ -412,3 +404,5 @@ export async function updateActionPermissions(actionId: string, typeId: string, 
     });
     console.log(`[ActionService] Permissions updated successfully for action ${actionId}.`);
 }
+
+    
