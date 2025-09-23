@@ -10,7 +10,8 @@ export const users: User[] = [
     { id: 'user-6', name: 'David Fernandez', role: 'Responsible', avatar: 'https://i.pravatar.cc/150?u=a042581f4e29026704f', email: 'david.fernandez@example.com' },
     { id: 'user-7', name: 'Elena Gomez', role: 'Creator', avatar: 'https://i.pravatar.cc/150?u=a04258114e29026702e', email: 'elena.gomez@example.com' },
     { id: 'user-8', name: 'Miguel Perez', role: 'Director', avatar: 'https://i.pravatar.cc/150?u=a042581f4e29026708d', email: 'miguel.perez@example.com' },
-    { id: 'user-9', name: 'Elisabet Jordana', role: 'Creator', avatar: 'https://i.pravatar.cc/150?u=a042581f4e29026709e', email: 'elisabet.jordana@example.com' }
+    { id: 'user-9', name: 'Elisabet Jordana', role: 'Creator', avatar: 'https://i.pravatar.cc/150?u=a042581f4e29026709e', email: 'elisabet.jordana@example.com' },
+    { id: 'user-admin', name: 'Admin User', role: 'Admin', avatar: 'https://i.pravatar.cc/150?u=admin', email: 'admin@example.com' }
   ];
   
   export const groups: UserGroup[] = [
