@@ -21,51 +21,62 @@ interface CreateActionData extends Omit<ImprovementAction, 'id' | 'actionId' | '
   locale?: string;
 }
 
+// Variable global para prevenir la ejecución múltiple del seeder
+let isSeeding = false;
+
 
 // Funció per obtenir les dades de Firestore
 export const getActions = async (): Promise<ImprovementAction[]> => {
     const actionsCol = collection(db, 'actions');
     let actionsSnapshot = await getDocs(query(actionsCol, orderBy("actionId", "desc")));
 
-    if (actionsSnapshot.empty) {
+    if (actionsSnapshot.empty && !isSeeding) {
+        isSeeding = true;
         console.log("Actions collection is empty. Populating with seed data...");
-        const batch = writeBatch(db);
-        const docRefs: { [key: string]: string } = {};
-
-        // 1. Generate all document references first to get their IDs
-        seedActions.forEach(action => {
-            const docRef = doc(collection(db, 'actions'));
-            docRefs[action.actionId] = docRef.id;
-        });
-
-        // 2. Prepare all actions with correct linking
-        const actionsToCreate = seedActions.map(actionSeed => {
-            let finalAction = { ...actionSeed } as any; // Use 'any' for flexibility here
-            if (actionSeed.actionId === "AM-24007" && actionSeed.originalActionTitle) {
-                const originalActionId = docRefs["AM-24006"];
-                if (originalActionId) {
-                    finalAction.originalActionId = originalActionId;
+        try {
+            const batch = writeBatch(db);
+            const docRefs: { [key: string]: string } = {};
+    
+            // 1. Generate all document references first to get their IDs
+            seedActions.forEach(action => {
+                const docRef = doc(collection(db, 'actions'));
+                docRefs[action.actionId] = docRef.id;
+            });
+    
+            // 2. Prepare all actions with correct linking
+            const actionsToCreate = seedActions.map(actionSeed => {
+                let finalAction = { ...actionSeed } as any; // Use 'any' for flexibility here
+                if (actionSeed.actionId === "AM-24007" && actionSeed.originalActionTitle) {
+                    const originalActionId = docRefs["AM-24006"];
+                    if (originalActionId) {
+                        finalAction.originalActionId = originalActionId;
+                    }
                 }
-            }
-            return {
-                id: docRefs[actionSeed.actionId],
-                data: finalAction
-            };
-        });
+                return {
+                    id: docRefs[actionSeed.actionId],
+                    data: finalAction
+                };
+            });
+    
+            // 3. Set all documents in the batch
+            actionsToCreate.forEach(action => {
+                const docRef = doc(db, 'actions', action.id);
+                batch.set(docRef, action.data);
+            });
+    
+            // 4. Commit the batch
+            await batch.commit();
+    
+            console.log("Actions collection populated with seed data.");
+            
+            // 5. Re-fetch the data after populating
+            actionsSnapshot = await getDocs(query(actionsCol, orderBy("actionId", "desc")));
+        } catch(error) {
+            console.error("Error seeding actions:", error);
+        } finally {
+            isSeeding = false;
+        }
 
-        // 3. Set all documents in the batch
-        actionsToCreate.forEach(action => {
-            const docRef = doc(db, 'actions', action.id);
-            batch.set(docRef, action.data);
-        });
-
-        // 4. Commit the batch
-        await batch.commit();
-
-        console.log("Actions collection populated with seed data.");
-        
-        // 5. Re-fetch the data after populating
-        actionsSnapshot = await getDocs(query(actionsCol, orderBy("actionId", "desc")));
     }
 
 
