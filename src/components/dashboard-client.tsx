@@ -1,4 +1,5 @@
 
+
 "use client"
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -146,7 +147,7 @@ export function DashboardClient({ actions, assignedActions }: DashboardClientPro
                                 <a href={`/actions/${action.id}`} onClick={(e) => handleOpenAction(e, action)} className="font-semibold hover:underline">{action.title}</a>
                                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                                     <span>{action.actionId}</span>
-                                    <ActionStatusBadge status={action.status}/>
+                                    <ActionStatusBadge status={action.status} isCompliant={action.closure?.isCompliant}/>
                                 </div>
                             </div>
                         </div>
@@ -178,7 +179,7 @@ export function DashboardClient({ actions, assignedActions }: DashboardClientPro
                                <a href={`/actions/${action.id}`} onClick={(e) => handleOpenAction(e, action)} className="font-semibold hover:underline">{action.title}</a>
                                <div className="flex items-center gap-2 text-sm text-muted-foreground">
                                     <span>{action.actionId}</span>
-                                    <ActionStatusBadge status={action.status}/>
+                                    <ActionStatusBadge status={action.status} isCompliant={action.closure?.isCompliant}/>
                                 </div>
                             </div>
                         </div>

@@ -313,7 +313,7 @@ export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTab
                         <Star className={cn("h-5 w-5", isFollowing(action.id) ? "text-yellow-400 fill-yellow-400" : "text-muted-foreground")} />
                       </Button>
                     <h1 className="text-3xl font-bold tracking-tight">{action.actionId}: {action.title}</h1>
-                    <ActionStatusBadge status={action.status} />
+                    <ActionStatusBadge status={action.status} isCompliant={action.closure?.isCompliant} />
                 </header>
 
                 <Tabs defaultValue="details" className="w-full">

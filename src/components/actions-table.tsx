@@ -326,7 +326,7 @@ export function ActionsTable({ actions }: ActionsTableProps) {
                   </TableCell>
                   <TableCell>{action.title}</TableCell>
                   <TableCell>
-                    <ActionStatusBadge status={action.status} />
+                    <ActionStatusBadge status={action.status} isCompliant={action.closure?.isCompliant} />
                   </TableCell>
                   <TableCell>{action.type}</TableCell>
                   <TableCell>{action.responsibleUser?.name || action.responsibleGroupId}</TableCell>
