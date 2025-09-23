@@ -1,3 +1,4 @@
+
 "use client";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -10,7 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Separator } from "@/components/ui/separator";
 
 export default function LoginPage() {
-  const { signInWithGoogle, signInWithGoogleRedirect, signInWithEmail, signUpWithEmail, sendPasswordReset } = useAuth();
+  const { signInWithGoogle, signInWithEmail, sendPasswordReset } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const { toast } = useToast();
@@ -27,19 +28,6 @@ export default function LoginPage() {
     }
   };
 
-  const handleSignUp = async () => {
-    if (!email || !password) {
-      toast({ variant: "destructive", title: "Els camps de correu i contrasenya són obligatoris." });
-      return;
-    }
-    try {
-      await signUpWithEmail(email, password);
-      toast({ title: "Compte Creat!", description: "El teu compte s'ha creat correctament. Ara pots iniciar sessió." });
-    } catch (error: any) {
-      toast({ variant: "destructive", title: "Error en el registre", description: error.message });
-    }
-  };
-  
   const handlePasswordReset = async () => {
     if (!email) {
       toast({ variant: "destructive", title: "Introdueix el teu correu electrònic per a restablir la contrasenya." });
@@ -114,10 +102,6 @@ export default function LoginPage() {
             <Button onClick={handleSignIn} className="w-full">
               <LogIn className="mr-2 h-4 w-4" />
               Iniciar Sessió
-            </Button>
-            <Button onClick={handleSignUp} variant="outline" className="w-full">
-               <UserPlus className="mr-2 h-4 w-4" />
-              Crear un compte nou
             </Button>
           </div>
         </CardContent>

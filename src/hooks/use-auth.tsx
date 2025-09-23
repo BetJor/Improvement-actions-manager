@@ -27,9 +27,7 @@ interface AuthContextType {
   impersonateUser: (userToImpersonate: User) => void;
   stopImpersonating: () => void;
   signInWithGoogle: () => Promise<void>;
-  signInWithGoogleRedirect: () => Promise<void>;
   signInWithEmail: (email: string, pass: string) => Promise<void>;
-  signUpWithEmail: (email: string, pass: string) => Promise<void>;
   sendPasswordReset: (email: string) => Promise<void>;
   logout: () => Promise<void>;
   updateDashboardLayout: (layout: string[]) => Promise<void>;
@@ -106,18 +104,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const provider = new GoogleAuthProvider();
     await signInWithPopup(auth, provider);
   };
-  
-  const signInWithGoogleRedirect = async () => {
-    const provider = new GoogleAuthProvider();
-    await signInWithRedirect(auth, provider);
-  };
 
   const signInWithEmail = async (email: string, pass: string) => {
     await signInWithEmailAndPassword(auth, email, pass);
-  };
-
-  const signUpWithEmail = async (email: string, pass: string) => {
-    await createUserWithEmailAndPassword(auth, email, pass);
   };
 
   const sendPasswordReset = async (email: string) => {
@@ -174,9 +163,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         impersonateUser,
         stopImpersonating,
         signInWithGoogle,
-        signInWithGoogleRedirect,
         signInWithEmail,
-        signUpWithEmail,
         sendPasswordReset,
         logout,
         updateDashboardLayout
