@@ -42,7 +42,7 @@ export default function LoginPage() {
 
   return (
     <div className="flex items-center justify-center h-full">
-      <Card className="w-full max-w-md">
+      <Card className="w-full max-w-md mt-20">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl">Iniciar sesión</CardTitle>
           <CardDescription>Accede a la plataforma con tus credenciales.</CardDescription>
@@ -108,4 +108,3 @@ export default function LoginPage() {
     </div>
   );
 }
-
