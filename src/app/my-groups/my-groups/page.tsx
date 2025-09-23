@@ -16,7 +16,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { useTranslations } from "next-intl"
 import { useAuth } from "@/hooks/use-auth"
 import { useEffect, useState } from "react";
 import type { UserGroup } from "@/lib/types";
@@ -25,7 +24,6 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Terminal } from "lucide-react";
 
 export default function MyGroupsPage() {
-  const t = useTranslations("MyGroups")
   const { user, loading } = useAuth();
   const [userGroups, setUserGroups] = useState<Omit<UserGroup, "userIds">[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -42,7 +40,7 @@ export default function MyGroupsPage() {
           setUserGroups(groups);
         } catch (err: any) {
           console.error("Failed to fetch user groups:", err);
-          setError(err.message || "S'ha produït un error en carregar els grups.");
+          setError(err.message || "Se ha producido un error al cargar los grupos.");
         } finally {
           setIsLoading(false);
         }
@@ -59,32 +57,32 @@ export default function MyGroupsPage() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{t("title")}</CardTitle>
-        <CardDescription>{t("description")}</CardDescription>
+        <CardTitle>Mis Grupos</CardTitle>
+        <CardDescription>Estos son los grupos de Google Workspace a los que perteneces.</CardDescription>
       </CardHeader>
       <CardContent>
         {error && (
             <Alert variant="destructive" className="mb-4">
                 <Terminal className="h-4 w-4" />
-                <AlertTitle>Error en Carregar els Grups</AlertTitle>
+                <AlertTitle>Error al Cargar los Grupos</AlertTitle>
                 <AlertDescription>
                     <p>{error}</p>
-                    <p className="mt-2 text-xs">Assegura't que la configuració de la Compte de Servei i les variables d'entorn (`GSUITE_ADMIN_EMAIL`) són correctes.</p>
+                    <p className="mt-2 text-xs">Asegúrate de que la configuración de la Cuenta de Servicio y las variables de entorno (`GSUITE_ADMIN_EMAIL`) son correctas.</p>
                 </AlertDescription>
             </Alert>
         )}
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>{t("col.name")}</TableHead>
-              <TableHead>{t("col.id")}</TableHead>
+              <TableHead>Nombre</TableHead>
+              <TableHead>ID</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {isLoading ? (
               <TableRow>
                 <TableCell colSpan={2} className="h-24 text-center">
-                  Carregant grups des de Google Workspace...
+                  Cargando grupos desde Google Workspace...
                 </TableCell>
               </TableRow>
             ) : userGroups.length > 0 ? (
@@ -97,7 +95,7 @@ export default function MyGroupsPage() {
             ) : (
               <TableRow>
                 <TableCell colSpan={2} className="h-24 text-center">
-                  {t("noGroups")}
+                  No se han encontrado grupos.
                 </TableCell>
               </TableRow>
             )}

@@ -5,7 +5,6 @@ import { useEffect, useState } from "react"
 import { useForm } from "react-hook-form"
 import * as z from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useTranslations } from "next-intl"
 import { getPrompt, updatePrompt } from "@/lib/data"
 import { useToast } from "@/hooks/use-toast"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -23,7 +22,6 @@ const formSchema = z.object({
 type PromptId = "improveWriting" | "analysisSuggestion" | "correctiveActions";
 
 export default function AiSettingsPage() {
-  const t = useTranslations("AiSettings")
   const { toast } = useToast()
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
@@ -54,7 +52,7 @@ export default function AiSettingsPage() {
         toast({
           variant: "destructive",
           title: "Error",
-          description: "No s'han pogut carregar els prompts.",
+          description: "No se han podido cargar los prompts.",
         })
       } finally {
         setIsLoading(false)
@@ -72,15 +70,15 @@ export default function AiSettingsPage() {
         updatePrompt("correctiveActions", values.correctiveActionsPrompt),
       ]);
       toast({
-        title: "Desat!",
-        description: "Els prompts s'han guardat correctament.",
+        title: "¡Guardado!",
+        description: "Los prompts se han guardado correctamente.",
       })
     } catch (error) {
       console.error("Failed to save prompts:", error)
       toast({
         variant: "destructive",
         title: "Error",
-        description: "No s'han pogut desar els prompts.",
+        description: "No se han podido guardar los prompts.",
       })
     } finally {
       setIsSaving(false)
@@ -90,14 +88,14 @@ export default function AiSettingsPage() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{t("title")}</CardTitle>
-        <CardDescription>{t("description")}</CardDescription>
+        <CardTitle>Configuración de IA</CardTitle>
+        <CardDescription>Gestiona los prompts que utiliza el sistema de inteligencia artificial.</CardDescription>
       </CardHeader>
       <CardContent>
         {isLoading ? (
           <div className="flex items-center gap-2">
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            Carregant configuració...
+            Cargando configuración...
           </div>
         ) : (
           <Form {...form}>
@@ -107,11 +105,11 @@ export default function AiSettingsPage() {
                 name="improveWritingPrompt"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t("form.improvePrompt.label")}</FormLabel>
+                    <FormLabel>Prompt para mejorar la escritura</FormLabel>
                     <FormControl>
                       <Textarea
                         rows={12}
-                        placeholder={t("form.improvePrompt.placeholder")}
+                        placeholder="Introduce el prompt para mejorar la escritura..."
                         className="resize-y"
                         {...field}
                       />
@@ -125,11 +123,11 @@ export default function AiSettingsPage() {
                 name="analysisSuggestionPrompt"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t("form.analysisPrompt.label")}</FormLabel>
+                    <FormLabel>Prompt para sugerencia de análisis</FormLabel>
                     <FormControl>
                       <Textarea
                         rows={12}
-                        placeholder={t("form.analysisPrompt.placeholder")}
+                        placeholder="Introduce el prompt para la sugerencia de análisis..."
                         className="resize-y"
                         {...field}
                       />
@@ -143,11 +141,11 @@ export default function AiSettingsPage() {
                 name="correctiveActionsPrompt"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t("form.correctiveActionsPrompt.label")}</FormLabel>
+                    <FormLabel>Prompt para acciones correctivas</FormLabel>
                     <FormControl>
                       <Textarea
                         rows={12}
-                        placeholder={t("form.correctiveActionsPrompt.placeholder")}
+                        placeholder="Introduce el prompt para las acciones correctivas..."
                         className="resize-y"
                         {...field}
                       />
@@ -158,7 +156,7 @@ export default function AiSettingsPage() {
               />
               <Button type="submit" disabled={isSaving}>
                 {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                {t("form.save")}
+                Guardar
               </Button>
             </form>
           </Form>

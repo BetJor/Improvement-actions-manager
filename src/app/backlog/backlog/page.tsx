@@ -15,41 +15,39 @@ import {
     TableHeader,
     TableRow,
   } from "@/components/ui/table"
-  import { useTranslations } from "next-intl"
   
   const backlogItems = [
     {
       id: "TASK-001",
-      title: "Connectar a l'API de Google Groups",
-      description: "Modificar el flow de Genkit 'getUserGroups' per a consultar l'API de Google Admin SDK en lloc de fer servir dades de mostra. Això requerirà configurar les credencials de servei a Google Cloud i donar permisos a l'API.",
+      title: "Conectar a la API de Google Groups",
+      description: "Modificar el flujo de Genkit 'getUserGroups' para consultar la API de Google Admin SDK en lugar de usar datos de muestra. Esto requerirá configurar las credenciales de servicio en Google Cloud y dar permisos a la API.",
       priority: "Alta",
     },
     {
       id: "TASK-002",
-      title: "Implementar formularis d'Anàlisi i Verificació",
-      description: "Crear els components de formulari (possiblement en diàlegs modals) que permetin a l'usuari realitzar l'anàlisi de causes i la verificació de la implantació. Aquests formularis haurien de desar les dades a l'acció corresponent a Firestore.",
-      priority: "Molt Alta",
+      title: "Implementar formularios de Análisis y Verificación",
+      description: "Crear los componentes de formulario (posiblemente en diálogos modales) que permitan al usuario realizar el análisis de causas y la verificación de la implantación. Estos formularios deberían guardar los datos en la acción correspondiente en Firestore.",
+      priority: "Muy Alta",
     },
     // Future tasks will be added here
   ]
   
   export default function BacklogPage() {
-    const t = useTranslations("Backlog")
   
     return (
       <Card>
         <CardHeader>
-          <CardTitle>{t("title")}</CardTitle>
-          <CardDescription>{t("description")}</CardDescription>
+          <CardTitle>Backlog</CardTitle>
+          <CardDescription>Tareas que están pendientes de ser abordadas.</CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-[100px]">{t("col.id")}</TableHead>
-                <TableHead>{t("col.title")}</TableHead>
-                <TableHead>{t("col.description")}</TableHead>
-                <TableHead className="text-right">{t("col.priority")}</TableHead>
+                <TableHead className="w-[100px]">ID</TableHead>
+                <TableHead>Título</TableHead>
+                <TableHead>Descripción</TableHead>
+                <TableHead className="text-right">Prioridad</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

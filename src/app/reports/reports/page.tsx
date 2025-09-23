@@ -3,14 +3,12 @@
 
 import { useState, useEffect } from "react"
 import { getActions } from "@/lib/data"
-import { useTranslations } from "next-intl"
 import { ReportsClient } from '@/components/reports-client';
 import type { ImprovementAction } from "@/lib/types";
 import { Loader2 } from "lucide-react";
 
 
 export default function ReportsPage() {
-  const t = useTranslations('Reports');
   const [actions, setActions] = useState<ImprovementAction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -31,21 +29,21 @@ export default function ReportsPage() {
   }, []);
 
   const translations = {
-    title: t("title"),
-    description: t("description"),
+    title: "Informes",
+    description: "Analiza las acciones de mejora con estos informes.",
     actionsByStatus: {
-      title: t("actionsByStatus.title"),
-      description: t("actionsByStatus.description"),
+      title: "Acciones por Estado",
+      description: "Distribución de las acciones de mejora según su estado actual.",
     },
     actionsByType: {
-      title: t("actionsByType.title"),
-      description: t("actionsByType.description"),
+      title: "Acciones por Tipo",
+      description: "Distribución de las acciones de mejora según su tipo.",
     },
     actionsByCategory: {
-      title: t("actionsByCategory.title"),
-      description: t("actionsByCategory.description"),
+      title: "Acciones por Categoría",
+      description: "Distribución de las acciones de mejora según su categoría.",
     },
-    chartLabel: t("chartLabel"),
+    chartLabel: "Acciones",
   }
 
   if (isLoading) {

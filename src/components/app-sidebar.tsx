@@ -4,7 +4,7 @@
 
 import Link from "next/link"
 import { usePathname, useParams } from "next/navigation"
-import { Home, ListChecks, Settings, Route, Sparkles, Library, GanttChartSquare, Users, BarChart3, TestTubeDiagonal, FileLock2 } from "lucide-react"
+import { Home, ListChecks, Settings, Sparkles, Library, GanttChartSquare, Users, BarChart3, TestTubeDiagonal, FileLock2 } from "lucide-react"
 import { useAuth } from "@/hooks/use-auth"
 import { cn } from "@/lib/utils"
 import { Sidebar, SidebarContent, SidebarHeader, SidebarMenu, SidebarMenuItem, SidebarMenuButton, useSidebar } from "./ui/sidebar"
@@ -61,7 +61,6 @@ export function AppSidebar() {
   ]
 
   const adminDevNavItems = [
-    { href: `/roadmap`, icon: Route, label: "Roadmap", isTab: true },
     { href: `/backlog`, icon: GanttChartSquare, label: "Backlog", isTab: true },
     { href: `/intranet-test`, icon: TestTubeDiagonal, label: "Intranet Test", isTab: true },
     { href: `/prompt-gallery`, icon: Library, label: "Galería de Prompts", isTab: true },

@@ -13,50 +13,49 @@ import {
     TableHeader,
     TableRow,
   } from "@/components/ui/table"
-  import { getTranslations } from "next-intl/server"
   import { CheckCircle2 } from "lucide-react"
 
   const timeline = [
     {
-      title: "Phase 1: Initial Setup & Structure",
-      duration: "Estimated: 1-2 days",
+      title: "Fase 1: Configuración Inicial y Estructura",
+      duration: "Estimado: 1-2 días",
       tasks: [
-        "Setup Next.js project with TypeScript and Tailwind CSS.",
-        "Structure the application with the App directory and i18n.",
-        "Implement the main layout, including the sidebar and header."
+        "Configurar proyecto Next.js con TypeScript y Tailwind CSS.",
+        "Estructurar la aplicación con el directorio App e i18n.",
+        "Implementar la disposición principal, incluyendo la barra lateral y la cabecera."
       ],
     },
     {
-      title: "Phase 2: Authentication & User Management",
-      duration: "Estimated: 2-3 days",
+      title: "Fase 2: Autenticación y Gestión de Usuarios",
+      duration: "Estimado: 2-3 días",
       tasks: [
-        "Integrate Firebase Authentication for Google sign-in.",
-        "Create protected routes and manage user sessions."
+        "Integrar Firebase Authentication para el inicio de sesión con Google.",
+        "Crear rutas protegidas y gestionar las sesiones de los usuarios."
       ],
     },
     {
-      title: "Phase 3: Core Functionality (Improvement Actions)",
-      duration: "Estimated: 3-5 days",
+      title: "Fase 3: Funcionalidad Principal (Acciones de Mejora)",
+      duration: "Estimado: 3-5 días",
       tasks: [
-        "Create the page to view, filter, and sort improvement actions.",
-        "Develop the form to create new improvement actions.",
-        "Implement the detail page for each improvement action."
+        "Crear la página para ver, filtrar y ordenar las acciones de mejora.",
+        "Desarrollar el formulario para crear nuevas acciones de mejora.",
+        "Implementar la página de detalle para cada acción de mejora."
       ],
     },
     {
-      title: "Phase 4: AI Integration with Genkit",
-      duration: "Estimated: 2-3 days",
+      title: "Fase 4: Integración de IA con Genkit",
+      duration: "Estimado: 2-3 días",
       tasks: [
-        "Create a Genkit flow to get a user's groups (mocked).",
-        "Implement the intelligent workflow planner to generate dynamic work plans."
+        "Crear un flujo de Genkit para obtener los grupos de un usuario (simulado).",
+        "Implementar el planificador de flujos de trabajo inteligente para generar planes de trabajo dinámicos."
       ],
     },
     {
-      title: "Phase 5: Master Data Management (CRUD)",
-      duration: "Estimated: 1-2 days",
+      title: "Fase 5: Gestión de Datos Maestros (CRUD)",
+      duration: "Estimado: 1-2 días",
       tasks: [
-          "Develop the settings page with tabs for master data tables.",
-          "Implement CRUD (Create, Read, Update, Delete) functionalities for the data."
+          "Desarrollar la página de configuración con pestañas para las tablas de datos maestros.",
+          "Implementar funcionalidades CRUD (Crear, Leer, Actualizar, Borrar) para los datos."
       ],
     }
   ];
@@ -64,34 +63,33 @@ import {
   const backlogItems = [
     {
       id: "TASK-001",
-      title: "Connectar a l'API de Google Groups",
-      description: "Modificar el flow de Genkit 'getUserGroups' per a consultar l'API de Google Admin SDK en lloc de fer servir dades de mostra. Això requerirà configurar les credencials de servei a Google Cloud i donar permisos a l'API.",
+      title: "Conectar a la API de Google Groups",
+      description: "Modificar el flujo de Genkit 'getUserGroups' para consultar la API de Google Admin SDK en lugar de usar datos de muestra. Esto requerirá configurar las credenciales de servicio en Google Cloud y dar permisos a la API.",
       priority: "Alta",
     },
     {
       id: "TASK-002",
-      title: "Implementar formularis d'Anàlisi i Verificació",
-      description: "Crear els components de formulari (possiblement en diàlegs modals) que permetin a l'usuari realitzar l'anàlisi de causes i la verificació de la implantació. Aquests formularis haurien de desar les dades a l'acció corresponent a Firestore.",
-      priority: "Molt Alta",
+      title: "Implementar formularios de Análisis y Verificación",
+      description: "Crear los componentes de formulario (posiblemente en diálogos modales) que permitan al usuario realizar el análisis de causas y la verificación de la implantación. Estos formularios deberían guardar los datos en la acción correspondiente en Firestore.",
+      priority: "Muy Alta",
     },
     // Future tasks will be added here
   ]
   
   export default async function RoadmapPage() {
-    const t = await getTranslations("RoadmapPage")
   
     return (
         <div className="flex flex-col gap-6">
             <div>
-                <h1 className="text-3xl font-bold tracking-tight">{t("title")}</h1>
-                <p className="text-muted-foreground mt-1">{t("description")}</p>
+                <h1 className="text-3xl font-bold tracking-tight">Planificación</h1>
+                <p className="text-muted-foreground mt-1">Una visión general de las fases de desarrollo completadas y las tareas pendientes.</p>
             </div>
             
             {/* Completed Phases */}
             <Card>
                 <CardHeader>
-                    <CardTitle>{t("completed.title")}</CardTitle>
-                    <CardDescription>{t("completed.description")}</CardDescription>
+                    <CardTitle>Fases Completadas</CardTitle>
+                    <CardDescription>Hitos de desarrollo que ya se han completado.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
                     {timeline.map((phase, index) => (
@@ -114,17 +112,17 @@ import {
             {/* Backlog */}
             <Card>
                 <CardHeader>
-                    <CardTitle>{t("backlog.title")}</CardTitle>
-                    <CardDescription>{t("backlog.description")}</CardDescription>
+                    <CardTitle>Backlog</CardTitle>
+                    <CardDescription>Tareas que están pendientes de ser abordadas.</CardDescription>
                 </CardHeader>
                 <CardContent>
                 <Table>
                     <TableHeader>
                     <TableRow>
-                        <TableHead className="w-[100px]">{t("backlog.col.id")}</TableHead>
-                        <TableHead>{t("backlog.col.title")}</TableHead>
-                        <TableHead>{t("backlog.col.description")}</TableHead>
-                        <TableHead className="text-right">{t("backlog.col.priority")}</TableHead>
+                        <TableHead className="w-[100px]">ID</TableHead>
+                        <TableHead>Título</TableHead>
+                        <TableHead>Descripción</TableHead>
+                        <TableHead className="text-right">Prioridad</TableHead>
                     </TableRow>
                     </TableHeader>
                     <TableBody>

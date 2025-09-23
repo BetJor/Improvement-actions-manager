@@ -8,113 +8,111 @@ import {
     CardHeader,
     CardTitle,
   } from "@/components/ui/card"
-import { useTranslations } from "next-intl"
 import { CheckCircle2, CircleDot, Wrench } from "lucide-react"
 
   
 export default function RoadmapPage() {
-    const t = useTranslations("Roadmap");
 
     const timeline = [
         {
           key: "phase1",
-          title: "Fase 1: Configuració Inicial i Estructura",
-          duration: "Estimat: 1-2 dies",
+          title: "Fase 1: Configuración Inicial y Estructura",
+          duration: "Estimado: 1-2 días",
           completed_tasks: [
-            "Configurar projecte Next.js amb TypeScript i Tailwind CSS.",
-            "Estructurar l'aplicació amb el directori App i i18n.",
-            "Implementar la disposició principal, incloent-hi la barra lateral i la capçalera."
+            "Configurar proyecto Next.js con TypeScript y Tailwind CSS.",
+            "Estructurar la aplicación con el directorio App e i18n.",
+            "Implementar la disposición principal, incluyendo la barra lateral y la cabecera."
           ],
           pending_tasks: []
         },
         {
           key: "phase2",
-          title: "Fase 2: Autenticació i Gestió d'Usuaris",
-          duration: "Estimat: 2-3 dies",
+          title: "Fase 2: Autenticación y Gestión de Usuarios",
+          duration: "Estimado: 2-3 días",
           completed_tasks: [
-            "Integrar Firebase Authentication per a l'inici de sessió amb Google.",
-            "Crear rutes protegides i gestionar les sessions dels usuaris."
+            "Integrar Firebase Authentication para el inicio de sesión con Google.",
+            "Crear rutas protegidas y gestionar las sesiones de los usuarios."
           ],
           pending_tasks: []
         },
         {
           key: "phase3",
-          title: "Fase 3: Funcionalitat Principal (Accions de Millora)",
-          duration: "Estimat: 3-5 dies",
+          title: "Fase 3: Funcionalidad Principal (Acciones de Mejora)",
+          duration: "Estimado: 3-5 días",
           completed_tasks: [
-            "Crear la pàgina per a veure, filtrar i ordenar les accions de millora.",
-            "Desenvolupar el formulari per a crear noves accions de millora.",
-            "Implementar la pàgina de detall per a cada acció de millora.",
-            "Implementar formularis d'Anàlisi i Verificació per interactuar amb el workflow.",
-            "Implementar sistema de comentaris en les accions.",
-            "Implementar la pujada de fitxers adjunts (integració amb Firebase Storage).",
-            "Refactoritzar la gestió de dades per a un estat global sincronitzat (`useActionState`).",
-            "Implementar un sistema de subscripció (seguiment) a les accions de millora.",
-            "Personalitzar i simplificar el Dashboard eliminant ginys de gràfics.",
-            "Crear un botó d'acció flotant (FAB) per a la creació ràpida d'accions."
+            "Crear la página para ver, filtrar y ordenar las acciones de mejora.",
+            "Desarrollar el formulario para crear nuevas acciones de mejora.",
+            "Implementar la página de detalle para cada acción de mejora.",
+            "Implementar formularios de Análisis y Verificación para interactuar con el workflow.",
+            "Implementar sistema de comentarios en las acciones.",
+            "Implementar la subida de archivos adjuntos (integración con Firebase Storage).",
+            "Refactorizar la gestión de datos para un estado global sincronizado (`useActionState`).",
+            "Implementar un sistema de suscripción (seguimiento) a las acciones de mejora.",
+            "Personalizar y simplificar el Dashboard eliminando widgets de gráficos.",
+            "Crear un botón de acción flotante (FAB) para la creación rápida de acciones."
           ],
           pending_tasks: []
         },
         {
           key: "phase4",
-          title: "Fase 4: Integració d'IA amb Genkit",
-          duration: "Estimat: 2-3 dies",
+          title: "Fase 4: Integración de IA con Genkit",
+          duration: "Estimado: 2-3 días",
           completed_tasks: [
-            "Crear un flux de Genkit per a obtenir els grups d'un usuari (amb dades de mostra).",
-            "Implementar el planificador de workflows intel·ligent per a generar planes de treball dinàmics.",
-            "Implementar un assistent per a millorar la redacció d'observacions.",
-            "Implementar un assistent d'IA per a la proposta d'anàlisi de causes i accions correctives."
+            "Crear un flujo de Genkit para obtener los grupos de un usuario (con datos de muestra).",
+            "Implementar el planificador de workflows inteligente para generar planes de trabajo dinámicos.",
+            "Implementar un asistente para mejorar la redacción de observaciones.",
+            "Implementar un asistente de IA para la propuesta de análisis de causas y acciones correctivas."
           ],
           pending_tasks: [
-            "Pendent: Connectar el flux de Genkit a l'API real de Google Groups.",
-            "Pendent: Crear un assistent d'IA per a la proposta d'accions correctives."
+            "Pendiente: Conectar el flujo de Genkit a la API real de Google Groups.",
+            "Pendiente: Crear un asistente de IA para la propuesta de acciones correctivas."
           ]
         },
         {
           key: "phase5",
-          title: "Fase 5: Gestió de Dades Mestres (CRUD)",
-          duration: "Estimat: 1-2 dies",
+          title: "Fase 5: Gestión de Datos Maestros (CRUD)",
+          duration: "Estimado: 1-2 días",
           completed_tasks: [
-            "Desenvolupar la pàgina de configuració amb pestanyes per a les taules de dades mestres.",
-            "Implementar funcionalitats CRUD (Crear, Llegir, Actualitzar, Esborrar) per a les dades.",
-            "Crear la pàgina de configuració dels prompts de l'IA."
+            "Desarrollar la página de configuración con pestañas para las tablas de datos maestros.",
+            "Implementar funcionalidades CRUD (Crear, Leer, Actualizar, Borrar) para los datos.",
+            "Crear la página de configuración de los prompts de la IA."
           ],
           pending_tasks: []
         },
         {
           key: "phase6",
-          title: "Fase 6: Estabilitat i Correcció d'Errors",
+          title: "Fase 6: Estabilidad y Corrección de Errores",
           icon: Wrench,
-          duration: "Continu",
+          duration: "Continuo",
           completed_tasks: [
-            "Solucionar errors de traducció (`MISSING_MESSAGE`) per a una experiència multillenguatge robusta.",
-            "Resoldre errors de compilació de Next.js (JSX a fitxers .ts).",
-            "Corregir errors d'execució i bucles infinits relacionats amb la gestió de l'estat."
+            "Solucionar errores de traducción (`MISSING_MESSAGE`) para una experiencia multilenguaje robusta.",
+            "Resolver errores de compilación de Next.js (JSX en archivos .ts).",
+            "Corregir errores de ejecución y bucles infinitos relacionados con la gestión del estado."
           ],
           pending_tasks: []
         },
         {
           key: "phase7",
-          title: "Fase 7: Rols i Permisos d'Usuari",
-          duration: "Estimat: 3-4 dies",
+          title: "Fase 7: Roles y Permisos de Usuario",
+          duration: "Estimado: 3-4 días",
           completed_tasks: [
-            "Definir una estructura de dades a Firestore per a rols i permisos.",
-            "Implementar funcionalitat de suplantació d'usuaris per a administradors."
+            "Definir una estructura de datos en Firestore para roles y permisos.",
+            "Implementar funcionalidad de suplantación de usuarios para administradores."
           ],
           pending_tasks: [
-            "Pendent: Crear un mecanisme per a assignar rols als usuaris (p. ex., en un panell d'administració).",
-            "Pendent: Protegir rutes i components de la interfície segons el rol de l'usuari."
+            "Pendiente: Crear un mecanismo para asignar roles a los usuarios (p. ej., en un panel de administración).",
+            "Pendiente: Proteger rutas y componentes de la interfaz según el rol del usuario."
           ]
         },
         {
           key: "phase8",
-          title: "Fase 8: Millores d'Experiència d'Usuari (UX)",
-          duration: "Estimat: 2-3 dies",
+          title: "Fase 8: Mejoras de Experiencia de Usuario (UX)",
+          duration: "Estimado: 2-3 días",
           completed_tasks: [
-            "Implementar la reordenació de les seccions del dashboard amb 'drag-and-drop' per a desar la preferència de l'usuari."
+            "Implementar la reordenación de las secciones del dashboard con 'drag-and-drop' para guardar la preferencia del usuario."
           ],
           pending_tasks: [
-            "Pendent: Implementar la reordenació de les seccions (Detalls, Comentaris, Adjunts) del panell lateral amb 'drag-and-drop' per a desar la preferència de l'usuari."
+            "Pendiente: Implementar la reordenación de las secciones (Detalles, Comentarios, Adjuntos) del panel lateral con 'drag-and-drop' para guardar la preferencia del usuario."
           ]
         }
     ];
@@ -122,14 +120,14 @@ export default function RoadmapPage() {
     return (
         <div className="flex flex-col gap-6">
             <div>
-                <h1 className="text-3xl font-bold tracking-tight">{t("title")}</h1>
-                <p className="text-muted-foreground mt-1">{t("description")}</p>
+                <h1 className="text-3xl font-bold tracking-tight">Hoja de Ruta</h1>
+                <p className="text-muted-foreground mt-1">Un resumen de las fases de desarrollo, tareas completadas y pendientes.</p>
             </div>
             
             <Card>
                 <CardHeader>
-                    <CardTitle>Fases del Desenvolupament</CardTitle>
-                    <CardDescription>Les grans fites de desenvolupament que ja s'han assolit i les que queden pendents.</CardDescription>
+                    <CardTitle>Fases del Desarrollo</CardTitle>
+                    <CardDescription>Los grandes hitos de desarrollo que ya se han alcanzado y los que quedan pendientes.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-8">
                     {timeline.map((phase, index) => (
@@ -162,9 +160,3 @@ export default function RoadmapPage() {
       </div>
     )
   }
-
-    
-
-
-
-    

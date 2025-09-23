@@ -14,11 +14,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { getFirestoreRules, saveFirestoreRules } from "@/services/ai-service";
 import { Loader2, Save } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 export default function FirestoreRulesPage() {
-  const t = useTranslations("FirestoreRules");
   const { toast } = useToast();
   const [rules, setRules] = useState("");
   const [isLoading, setIsLoading] = useState(true);
@@ -33,14 +31,14 @@ export default function FirestoreRulesPage() {
         const currentRules = await getFirestoreRules();
         setRules(currentRules);
       } catch (err: any) {
-        setError(t("errors.loadFailed"));
+        setError("Error al cargar las reglas de Firestore.");
         console.error(err);
       } finally {
         setIsLoading(false);
       }
     }
     loadRules();
-  }, [t]);
+  }, []);
 
   const handleSave = async () => {
     setIsSaving(true);
@@ -48,16 +46,16 @@ export default function FirestoreRulesPage() {
     try {
       await saveFirestoreRules(rules);
       toast({
-        title: t("toast.saveSuccessTitle"),
-        description: t("toast.saveSuccessDescription"),
+        title: "Reglas guardadas",
+        description: "Las reglas de Firestore se han guardado correctamente.",
       });
     } catch (err: any) {
-      setError(t("errors.saveFailed"));
+      setError("Error al guardar las reglas de Firestore.");
       console.error(err);
       toast({
         variant: "destructive",
-        title: t("errors.title"),
-        description: t("errors.saveFailed"),
+        title: "Error",
+        description: "Error al guardar las reglas de Firestore.",
       });
     } finally {
       setIsSaving(false);
@@ -67,27 +65,27 @@ export default function FirestoreRulesPage() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{t("title")}</CardTitle>
-        <CardDescription>{t("description")}</CardDescription>
+        <CardTitle>Reglas de Firestore</CardTitle>
+        <CardDescription>Edita las reglas de seguridad de Firestore directamente desde la aplicación.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         {error && (
           <Alert variant="destructive">
-            <AlertTitle>{t("errors.title")}</AlertTitle>
+            <AlertTitle>Error</AlertTitle>
             <AlertDescription>{error}</AlertDescription>
           </Alert>
         )}
         {isLoading ? (
           <div className="flex h-64 items-center justify-center">
             <Loader2 className="h-8 w-8 animate-spin" />
-            <span className="ml-2">{t("placeholder")}</span>
+            <span className="ml-2">Cargando reglas...</span>
           </div>
         ) : (
           <Textarea
             value={rules}
             onChange={(e) => setRules(e.target.value)}
             className="h-[calc(100vh-22rem)] font-mono text-xs"
-            placeholder={t("placeholder")}
+            placeholder="Cargando reglas..."
           />
         )}
         <Button onClick={handleSave} disabled={isSaving || isLoading}>
@@ -96,7 +94,7 @@ export default function FirestoreRulesPage() {
           ) : (
             <Save className="mr-2 h-4 w-4" />
           )}
-          {isSaving ? t("buttons.saving") : t("buttons.save")}
+          {isSaving ? "Guardando..." : "Guardar"}
         </Button>
       </CardContent>
     </Card>

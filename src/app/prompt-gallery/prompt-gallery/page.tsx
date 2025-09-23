@@ -17,10 +17,9 @@ import {
     TableRow,
   } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
-import { useTranslations } from "next-intl"
-import { Copy, Loader2, Pencil, PlusCircle, Trash2, ChevronDown, CheckCircle2 } from "lucide-react"
+import { Copy, Loader2, Pencil, PlusCircle, Trash2, ChevronDown } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
-import { Fragment, useEffect, useState } from "react"
+import { Fragment, useEffect, useState, useCallback } from "react"
 import { getGalleryPrompts, addGalleryPrompt, updateGalleryPrompt, deleteGalleryPrompt } from "@/lib/data"
 import type { GalleryPrompt } from "@/lib/types"
 import {
@@ -28,7 +27,6 @@ import {
     DialogContent,
     DialogHeader,
     DialogTitle,
-    DialogDescription,
     DialogFooter,
     DialogClose,
   } from "@/components/ui/dialog"
@@ -47,34 +45,39 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
-import { cn } from "@/lib/utils"
 
 function PromptFormDialog({
     isOpen,
     setIsOpen,
     prompt,
     onSave,
-    t,
   }: {
     isOpen: boolean;
     setIsOpen: (isOpen: boolean) => void;
     prompt: Partial<GalleryPrompt> | null;
     onSave: (data: Omit<GalleryPrompt, "id">) => Promise<void>;
-    t: any;
   }) {
-    const [formData, setFormData] = useState<Omit<GalleryPrompt, "id">>({
+    const [formData, setFormData] = useState<Omit<GalleryPrompt, "id">>(() => ({
       title: prompt?.title || "",
       description: prompt?.description || "",
       prompt: prompt?.prompt || "",
-    });
+    }));
     const { toast } = useToast();
+
+    useEffect(() => {
+        setFormData({
+            title: prompt?.title || "",
+            description: prompt?.description || "",
+            prompt: prompt?.prompt || "",
+        })
+    }, [prompt])
   
     const handleSave = async () => {
       if (!formData.title || !formData.prompt) {
         toast({
           variant: "destructive",
-          title: "Error de validació",
-          description: "Els camps 'Títol' i 'Prompt' són obligatoris.",
+          title: "Error de validación",
+          description: "Los campos 'Título' y 'Prompt' son obligatorios.",
         });
         return;
       }
@@ -86,11 +89,11 @@ function PromptFormDialog({
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogContent className="sm:max-w-[625px]">
           <DialogHeader>
-            <DialogTitle>{prompt?.id ? t("editTitle") : t("addTitle")}</DialogTitle>
+            <DialogTitle>{prompt?.id ? "Editar Prompt" : "Añadir Nuevo Prompt"}</DialogTitle>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
-              <Label htmlFor="title">{t("col.title")}</Label>
+              <Label htmlFor="title">Título</Label>
               <Input
                 id="title"
                 value={formData.title}
@@ -98,7 +101,7 @@ function PromptFormDialog({
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="description">{t("col.description")}</Label>
+              <Label htmlFor="description">Descripción</Label>
               <Textarea
                 id="description"
                 value={formData.description}
@@ -107,7 +110,7 @@ function PromptFormDialog({
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="prompt">{t("col.prompt")}</Label>
+              <Label htmlFor="prompt">Prompt</Label>
               <Textarea
                 id="prompt"
                 value={formData.prompt}
@@ -119,9 +122,9 @@ function PromptFormDialog({
           </div>
           <DialogFooter>
             <DialogClose asChild>
-              <Button variant="outline">{t("cancel")}</Button>
+              <Button variant="outline">Cancelar</Button>
             </DialogClose>
-            <Button onClick={handleSave}>{t("save")}</Button>
+            <Button onClick={handleSave}>Guardar</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -129,35 +132,34 @@ function PromptFormDialog({
 }
 
 export default function PromptGalleryPage() {
-    const t = useTranslations("PromptGallery");
     const { toast } = useToast();
     const [prompts, setPrompts] = useState<GalleryPrompt[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [currentItem, setCurrentItem] = useState<Partial<GalleryPrompt> | null>(null);
 
-    const loadPrompts = async () => {
+    const loadPrompts = useCallback(async () => {
         setIsLoading(true);
         try {
             const data = await getGalleryPrompts();
             setPrompts(data);
         } catch (error) {
             console.error("Failed to load gallery prompts:", error);
-            toast({ variant: "destructive", title: "Error", description: "No s'han pogut carregar els prompts."});
+            toast({ variant: "destructive", title: "Error", description: "No se han podido cargar los prompts."});
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [toast]);
 
     useEffect(() => {
         loadPrompts();
-    }, []);
+    }, [loadPrompts]);
 
     const handleCopy = (text: string) => {
         navigator.clipboard.writeText(text);
         toast({
-            title: t("copy.toastTitle"),
-            description: t("copy.toastDescription"),
+            title: "Prompt Copiado",
+            description: "El prompt se ha copiado al portapapeles.",
         });
     }
 
@@ -174,11 +176,11 @@ export default function PromptGalleryPage() {
     const handleDelete = async (promptId: string) => {
         try {
             await deleteGalleryPrompt(promptId);
-            toast({ title: t("delete.toastTitle") });
+            toast({ title: "Prompt Eliminado" });
             await loadPrompts();
         } catch (error) {
             console.error("Failed to delete prompt:", error);
-            toast({ variant: "destructive", title: "Error", description: "No s'ha pogut eliminar el prompt." });
+            toast({ variant: "destructive", title: "Error", description: "No se ha podido eliminar el prompt." });
         }
     };
     
@@ -186,58 +188,58 @@ export default function PromptGalleryPage() {
         try {
             if (currentItem?.id) {
                 await updateGalleryPrompt(currentItem.id, data);
-                toast({ title: t("edit.toastTitle") });
+                toast({ title: "Prompt Actualizado" });
             } else {
                 await addGalleryPrompt(data);
-                toast({ title: t("add.toastTitle") });
+                toast({ title: "Prompt Creado" });
             }
             await loadPrompts();
         } catch (error) {
             console.error("Failed to save prompt:", error);
-            toast({ variant: "destructive", title: "Error", description: "No s'ha pogut desar el prompt." });
+            toast({ variant: "destructive", title: "Error", description: "No se ha podido guardar el prompt." });
         }
     };
 
     return (
         <div className="flex flex-col gap-6">
             <div>
-                <h1 className="text-3xl font-bold tracking-tight">{t("title")}</h1>
-                <p className="text-muted-foreground mt-1">{t("description")}</p>
+                <h1 className="text-3xl font-bold tracking-tight">Galería de Prompts</h1>
+                <p className="text-muted-foreground mt-1">Gestiona los prompts para la IA. Estos prompts se utilizan para generar sugerencias y realizar acciones automatizadas en toda la aplicación.</p>
             </div>
 
             <Card>
                 <CardHeader>
-                    <CardTitle>{t("executionOrder.title")}</CardTitle>
-                    <CardDescription>{t("executionOrder.description")}</CardDescription>
+                    <CardTitle>Orden de Ejecución de Tareas</CardTitle>
+                    <CardDescription>Para desplegar la aplicación en un nuevo entorno, sigue estos pasos en orden. Cada paso tiene un prompt asociado que puedes usar con la IA para generar el código o los comandos necesarios.</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <ol className="space-y-4">
                         <li className="flex items-start gap-4">
                            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground font-bold shrink-0">1</div>
                            <div>
-                                <h4 className="font-semibold">{t("executionOrder.steps.layout.title")}</h4>
-                                <p className="text-sm text-muted-foreground">{t("executionOrder.steps.layout.description")}</p>
+                                <h4 className="font-semibold">Crear Layout y Páginas</h4>
+                                <p className="text-sm text-muted-foreground">Genera el layout básico de la aplicación y las páginas principales. Esto establecerá la estructura de navegación y el diseño general.</p>
                            </div>
                         </li>
                          <li className="flex items-start gap-4">
                            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground font-bold shrink-0">2</div>
                            <div>
-                                <h4 className="font-semibold">{t("executionOrder.steps.i18n.title")}</h4>
-                                <p className="text-sm text-muted-foreground">{t("executionOrder.steps.i18n.description")}</p>
+                                <h4 className="font-semibold">Configurar Internacionalización (i18n)</h4>
+                                <p className="text-sm text-muted-foreground">Configura la librería `next-intl` para soportar múltiples idiomas. Esto incluye la creación de los archivos de traducción y la configuración del middleware.</p>
                            </div>
                         </li>
                         <li className="flex items-start gap-4">
                            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground font-bold shrink-0">3</div>
                            <div>
-                                <h4 className="font-semibold">{t("executionOrder.steps.auth.title")}</h4>
-                                <p className="text-sm text-muted-foreground">{t("executionOrder.steps.auth.description")}</p>
+                                <h4 className="font-semibold">Implementar Autenticación</h4>
+                                <p className="text-sm text-muted-foreground">Configura la autenticación de Firebase y los componentes necesarios para el inicio de sesión, registro y protección de rutas.</p>
                            </div>
                         </li>
                         <li className="flex items-start gap-4">
                            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground font-bold shrink-0">4</div>
                            <div>
-                                <h4 className="font-semibold">{t("executionOrder.steps.roadmap.title")}</h4>
-                                <p className="text-sm text-muted-foreground">{t("executionOrder.steps.roadmap.description")}</p>
+                                <h4 className="font-semibold">Generar Roadmap de Implementación</h4>
+                                <p className="text-sm text-muted-foreground">Crea un roadmap detallado para la implementación de las funcionalidades pendientes, basándote en el backlog de tareas.</p>
                            </div>
                         </li>
                     </ol>
@@ -248,7 +250,7 @@ export default function PromptGalleryPage() {
                 <CardHeader>
                     <div className="flex justify-end">
                         <Button onClick={handleAddNew}>
-                            <PlusCircle className="mr-2 h-4 w-4" /> {t("addNew")}
+                            <PlusCircle className="mr-2 h-4 w-4" /> Añadir Nuevo
                         </Button>
                     </div>
                 </CardHeader>
@@ -257,9 +259,9 @@ export default function PromptGalleryPage() {
                         <TableHeader>
                             <TableRow>
                                 <TableHead className="w-8"></TableHead>
-                                <TableHead>{t("col.title")}</TableHead>
-                                <TableHead>{t("col.description")}</TableHead>
-                                <TableHead className="text-right">{t("col.actions")}</TableHead>
+                                <TableHead>Título</TableHead>
+                                <TableHead>Descripción</TableHead>
+                                <TableHead className="text-right">Acciones</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -301,14 +303,14 @@ export default function PromptGalleryPage() {
                                                             </AlertDialogTrigger>
                                                             <AlertDialogContent>
                                                             <AlertDialogHeader>
-                                                                <AlertDialogTitle>{t("delete.confirmationTitle")}</AlertDialogTitle>
+                                                                <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
                                                                 <AlertDialogDescription>
-                                                                {t("delete.confirmationMessage")}
+                                                                Esta acción no se puede deshacer. Esto eliminará permanentemente el prompt.
                                                                 </AlertDialogDescription>
                                                             </AlertDialogHeader>
                                                             <AlertDialogFooter>
-                                                                <AlertDialogCancel>{t("cancel")}</AlertDialogCancel>
-                                                                <AlertDialogAction onClick={() => handleDelete(p.id)}>{t("delete.confirm")}</AlertDialogAction>
+                                                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                                                <AlertDialogAction onClick={() => handleDelete(p.id)}>Eliminar</AlertDialogAction>
                                                             </AlertDialogFooter>
                                                             </AlertDialogContent>
                                                         </AlertDialog>
@@ -319,7 +321,7 @@ export default function PromptGalleryPage() {
                                                 <TableRow>
                                                     <TableCell colSpan={4} className="p-0">
                                                         <div className="p-4 bg-muted/50">
-                                                            <h4 className="font-semibold mb-2">{t("col.prompt")}</h4>
+                                                            <h4 className="font-semibold mb-2">Prompt</h4>
                                                             <pre className="p-4 bg-muted rounded-md overflow-x-auto text-sm whitespace-pre-wrap font-mono">
                                                                 <code>
                                                                     {p.prompt}
@@ -335,7 +337,7 @@ export default function PromptGalleryPage() {
                             ) : (
                                 <TableRow>
                                     <TableCell colSpan={4} className="h-24 text-center">
-                                        {t("noPrompts")}
+                                        No se han encontrado prompts.
                                     </TableCell>
                                 </TableRow>
                             )}
@@ -350,7 +352,6 @@ export default function PromptGalleryPage() {
                     setIsOpen={setIsFormOpen}
                     prompt={currentItem}
                     onSave={handleSave}
-                    t={t}
                 />
             )}
         </div>

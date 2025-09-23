@@ -16,7 +16,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { useTranslations } from "next-intl"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Loader2, Pencil, PlusCircle, Trash2, LogIn } from "lucide-react";
@@ -40,7 +39,6 @@ import { useAuth } from "@/hooks/use-auth"
 
 
 export default function UserManagementPage() {
-  const t = useTranslations("UserManagement")
   const { toast } = useToast();
   const { user: currentUser, isAdmin, impersonateUser } = useAuth();
   const [users, setUsers] = useState<User[]>([]);
@@ -55,7 +53,7 @@ export default function UserManagementPage() {
         setUsers(fetchedUsers);
     } catch (error) {
         console.error("Failed to load users:", error);
-        toast({ variant: "destructive", title: "Error", description: "No s'han pogut carregar els usuaris." });
+        toast({ variant: "destructive", title: "Error", description: "No se han podido cargar los usuarios." });
     } finally {
         setIsLoading(false);
     }
@@ -78,11 +76,11 @@ export default function UserManagementPage() {
   const handleDelete = async (userId: string) => {
     try {
         await deleteUser(userId);
-        toast({ title: "Usuari eliminat", description: "L'usuari s'ha eliminat correctament." });
+        toast({ title: "Usuario eliminado", description: "El usuario se ha eliminado correctamente." });
         await loadUsers();
     } catch (error) {
         console.error("Failed to delete user:", error);
-        toast({ variant: "destructive", title: "Error", description: "No s'ha pogut eliminar l'usuari." });
+        toast({ variant: "destructive", title: "Error", description: "No se ha podido eliminar el usuario." });
     }
   };
 
@@ -90,24 +88,24 @@ export default function UserManagementPage() {
     try {
         if (id) {
             await updateUser(id, data);
-            toast({ title: "Usuari actualitzat", description: "L'usuari s'ha actualitzat correctament." });
+            toast({ title: "Usuario actualizado", description: "El usuario se ha actualizado correctamente." });
         } else {
             await addUser(data);
-            toast({ title: "Usuari creat", description: "L'usuari s'ha creat correctament." });
+            toast({ title: "Usuario creado", description: "El usuario se ha creado correctamente." });
         }
         await loadUsers();
         setIsFormOpen(false);
     } catch (error) {
         console.error("Failed to save user:", error);
-        toast({ variant: "destructive", title: "Error", description: "No s'ha pogut desar l'usuari." });
+        toast({ variant: "destructive", title: "Error", description: "No se ha podido guardar el usuario." });
     }
   };
   
   const handleImpersonate = (userToImpersonate: User) => {
     impersonateUser(userToImpersonate);
     toast({
-      title: "Suplantació iniciada",
-      description: `Ara estàs actuant com ${userToImpersonate.name}.`,
+      title: "Suplantación iniciada",
+      description: `Ahora estás actuando como ${userToImpersonate.name}.`,
     });
   };
 
@@ -117,12 +115,12 @@ export default function UserManagementPage() {
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
         <div>
-          <CardTitle>{t("title")}</CardTitle>
-          <CardDescription>{t("description")}</CardDescription>
+          <CardTitle>Gestión de Usuarios</CardTitle>
+          <CardDescription>Gestiona los usuarios de la aplicación.</CardDescription>
         </div>
         <Button onClick={handleAddNew}>
             <PlusCircle className="mr-2 h-4 w-4" />
-            {t("addNewUser")}
+            Añadir Nuevo Usuario
         </Button>
       </CardHeader>
       <CardContent>
@@ -130,11 +128,11 @@ export default function UserManagementPage() {
             <Table>
             <TableHeader>
                 <TableRow>
-                <TableHead className="w-[80px]">{t("col.avatar")}</TableHead>
-                <TableHead>{t("col.name")}</TableHead>
-                <TableHead>{t("col.email")}</TableHead>
-                <TableHead>{t("col.role")}</TableHead>
-                <TableHead className="text-right">{t("col.actions")}</TableHead>
+                <TableHead className="w-[80px]">Avatar</TableHead>
+                <TableHead>Nombre</TableHead>
+                <TableHead>Email</TableHead>
+                <TableHead>Rol</TableHead>
+                <TableHead className="text-right">Acciones</TableHead>
                 </TableRow>
             </TableHeader>
             <TableBody>
@@ -158,7 +156,7 @@ export default function UserManagementPage() {
                         <TableCell>{user.role}</TableCell>
                         <TableCell className="text-right">
                              {isAdmin && currentUser?.id !== user.id && (
-                                <Button variant="ghost" size="icon" onClick={() => handleImpersonate(user)} title={`Impersonar ${user.name}`}>
+                                <Button variant="ghost" size="icon" onClick={() => handleImpersonate(user)} title={`Suplantar a ${user.name}`}>
                                     <LogIn className="h-4 w-4" />
                                 </Button>
                             )}
@@ -173,13 +171,13 @@ export default function UserManagementPage() {
                                 </AlertDialogTrigger>
                                 <AlertDialogContent>
                                 <AlertDialogHeader>
-                                    <AlertDialogTitle>Estàs segur?</AlertDialogTitle>
+                                    <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
                                     <AlertDialogDescription>
-                                    Aquesta acció no es pot desfer. Això eliminarà permanentment l'usuari.
+                                    Esta acción no se puede deshacer. Esto eliminará permanentemente al usuario.
                                     </AlertDialogDescription>
                                 </AlertDialogHeader>
                                 <AlertDialogFooter>
-                                    <AlertDialogCancel>Cancel·lar</AlertDialogCancel>
+                                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
                                     <AlertDialogAction onClick={() => handleDelete(user.id!)}>Eliminar</AlertDialogAction>
                                 </AlertDialogFooter>
                                 </AlertDialogContent>
@@ -190,7 +188,7 @@ export default function UserManagementPage() {
                 ) : (
                     <TableRow>
                         <TableCell colSpan={5} className="h-24 text-center">
-                            No s'han trobat usuaris.
+                            No se han encontrado usuarios.
                         </TableCell>
                     </TableRow>
                 )}

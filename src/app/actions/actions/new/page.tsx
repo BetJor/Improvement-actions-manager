@@ -1,7 +1,6 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useTranslations } from "next-intl"
 import { useToast } from "@/hooks/use-toast"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/hooks/use-auth"
@@ -11,15 +10,11 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Loader2 } from "lucide-react"
 import { useTabs } from "@/hooks/use-tabs"
 import { useActionState } from "@/hooks/use-action-state"
-import { useLocale } from "next-intl"
 
-
-export default function NewActionPage() {
-  const t = useTranslations("Actions.new")
+export default function NewActionPage() {  
   const { toast } = useToast()
   const router = useRouter()
   const { user } = useAuth()
-  const locale = useLocale()
   const { closeCurrentTab } = useTabs();
   const { setActions } = useActionState();
   
@@ -52,8 +47,8 @@ export default function NewActionPage() {
         console.error("Failed to load master data", error);
         toast({
           variant: "destructive",
-          title: "Error de càrrega",
-          description: "No s'han pogut carregar les dades mestres. Si us plau, recarrega la pàgina.",
+          title: "Error de carga",
+          description: "No se han podido cargar los datos maestros. Por favor, recarga la página.",
         })
       } finally {
         setIsLoadingData(false);
@@ -67,8 +62,8 @@ export default function NewActionPage() {
     if (!user) {
       toast({
         variant: "destructive",
-        title: "Error d'autenticació",
-        description: "Has d'haver iniciat sessió per a crear una acció.",
+        title: "Error de autenticación",
+        description: "Debes haber iniciado sesión para crear una acción.",
       });
       return;
     }
@@ -81,10 +76,9 @@ export default function NewActionPage() {
         status,
         creator: {
           id: user.id,
-          name: user.name || "Usuari desconegut",
+          name: user.name || "Usuario desconocido",
           avatar: user.avatar || undefined,
-        },
-        locale: locale, // Pass the current locale
+        }
       };
       const newAction = await createAction(actionData, masterData);
       
@@ -92,8 +86,8 @@ export default function NewActionPage() {
       setActions(prevActions => [newAction, ...prevActions]);
 
       toast({
-        title: t("form.toast.title"),
-        description: t("form.toast.description"),
+        title: "Acción Creada",
+        description: "La acción de mejora ha sido creada correctamente.",
       });
       
       closeCurrentTab();
@@ -103,8 +97,8 @@ export default function NewActionPage() {
       console.error("Error creating action:", error);
       toast({
         variant: "destructive",
-        title: "Error en crear l'acció",
-        description: "Hi ha hagut un problema en desar l'acció. Si us plau, torna-ho a provar.",
+        title: "Error al crear la acción",
+        description: "Ha habido un problema al guardar la acción. Por favor, vuelve a intentarlo.",
       });
     } finally {
       setIsSubmitting(false);
@@ -114,8 +108,8 @@ export default function NewActionPage() {
   return (
       <Card>
         <CardHeader>
-          <CardTitle>{t("title")}</CardTitle>
-          <CardDescription>{t("description")}</CardDescription>
+          <CardTitle>Nueva Acción de Mejora</CardTitle>
+          <CardDescription>Rellena el formulario para crear una nueva acción de mejora.</CardDescription>
         </CardHeader>
         <CardContent>
            {isLoadingData ? (
@@ -126,7 +120,6 @@ export default function NewActionPage() {
                 masterData={masterData}
                 isSubmitting={isSubmitting}
                 onSubmit={onSubmit}
-                t={t}
             />
            )}
         </CardContent>
