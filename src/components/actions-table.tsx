@@ -30,6 +30,7 @@ import { cn } from "@/lib/utils"
 import { useFollowAction } from "@/hooks/use-follow-action"
 import { Badge } from "./ui/badge"
 import { format, parseISO } from "date-fns"
+import { ActionStatusIndicator } from "./action-status-indicator"
 
 interface ActionsTableProps {
   actions: ImprovementAction[];
@@ -326,7 +327,10 @@ export function ActionsTable({ actions }: ActionsTableProps) {
                   </TableCell>
                   <TableCell>{action.title}</TableCell>
                   <TableCell>
-                    <ActionStatusBadge status={action.status} isCompliant={action.closure?.isCompliant} />
+                    <div className="flex items-center gap-2">
+                        <ActionStatusIndicator status={action.status} isCompliant={action.closure?.isCompliant} />
+                        <ActionStatusBadge status={action.status} isCompliant={action.closure?.isCompliant} />
+                    </div>
                   </TableCell>
                   <TableCell>{action.type}</TableCell>
                   <TableCell>{action.responsibleUser?.name || action.responsibleGroupId}</TableCell>
