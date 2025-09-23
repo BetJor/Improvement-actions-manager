@@ -30,11 +30,31 @@ export const getActions = async (): Promise<ImprovementAction[]> => {
     if (actionsSnapshot.empty) {
         console.log("Actions collection is empty. Populating with seed data...");
         const batch = writeBatch(db);
-        seedActions.forEach(action => {
+        const docRefs: { [key: string]: any } = {};
+
+        // First pass: create all actions except the one with the placeholder
+        for (const action of seedActions) {
+            if (action.actionId === "AM-24007") continue; // Skip BIS action for now
             const docRef = doc(actionsCol);
             batch.set(docRef, action);
-        });
+            docRefs[action.actionId] = docRef;
+        }
         await batch.commit();
+
+        // Second pass: create the BIS action, linking it to the real ID of the original
+        const bisActionData = seedActions.find(a => a.actionId === "AM-24007");
+        if (bisActionData) {
+            const originalActionRef = docRefs["AM-24006"];
+            if (originalActionRef) {
+                const updatedBisActionData = {
+                    ...bisActionData,
+                    originalActionId: originalActionRef.id,
+                };
+                const bisDocRef = doc(actionsCol);
+                await setDoc(bisDocRef, updatedBisActionData);
+            }
+        }
+        
         console.log("Actions collection populated with seed data.");
         // Re-fetch the data after populating
         actionsSnapshot = await getDocs(query(actionsCol, orderBy("actionId", "desc")));
