@@ -7,6 +7,11 @@ import { ProtectedLayout } from "@/components/protected-layout"
 
 const inter = Inter({ subsets: ['latin'] })
 
+export const metadata = {
+  title: "Gestor de Acciones de Mejora",
+  description: "Gestiona y sigue las acciones de mejora a toda tu organización.",
+}
+
 export default async function RootLayout({
   children,
 }: {

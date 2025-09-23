@@ -18,6 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { getAclEntries, setAclEntries } from "@/services/ai-service";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 type AclEntryType = "user" | "group";
 type AclAccessLevel = "No Access" | "Reader" | "Author" | "Editor" | "Manager";
@@ -97,17 +98,20 @@ export default function FirestoreRulesGeneratorPage() {
   const [generatedRules, setGeneratedRules] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     async function loadEntries() {
         setIsLoading(true);
+        setError(null);
         try {
             const savedEntries = await getAclEntries();
             setEntries(savedEntries);
             const rules = generateFirestoreRules(savedEntries);
             setGeneratedRules(rules);
-        } catch (error) {
+        } catch (error: any) {
             console.error("Failed to load ACL entries from Firestore", error);
+            setError("No se han podido cargar las entradas de la lista de acceso.");
             toast({ variant: "destructive", title: "Error", description: "No se han podido cargar las entradas de la lista de acceso." });
         } finally {
             setIsLoading(false);
@@ -214,6 +218,12 @@ export default function FirestoreRulesGeneratorPage() {
               </Button>
            </CardHeader>
            <CardContent>
+             {error && (
+                <Alert variant="destructive" className="mb-4">
+                    <AlertTitle>Error</AlertTitle>
+                    <AlertDescription>{error}</AlertDescription>
+                </Alert>
+             )}
               <Table>
                 <TableHeader>
                   <TableRow>
