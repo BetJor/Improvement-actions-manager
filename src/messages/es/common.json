@@ -20,7 +20,6 @@
       "workflow": "Workflow",
       "aiSettings": "Configuración IA",
       "backlog": "Backlog",
-      "promptGallery": "Galería de Prompts",
       "userManagement": "Gestión de Usuarios",
       "firestoreRules": "Reglas de Firestore"
     },

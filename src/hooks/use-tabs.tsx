@@ -13,7 +13,6 @@ import ActionsPage from '@/app/actions/page';
 import NewActionPage from '@/app/actions/new/page';
 import SettingsPage from '@/app/settings/page';
 import AiSettingsPage from '@/app/ai-settings/page';
-import PromptGalleryPage from '@/app/prompt-gallery/page';
 import BacklogPage from '@/app/backlog/page';
 import MyGroupsPage from '@/app/my-groups/page';
 import ActionDetailPage from '@/app/actions/[id]/page';
@@ -33,7 +32,6 @@ const pageComponentMapping: { [key: string]: React.ComponentType<any> | undefine
     '/settings': SettingsPage,
     '/workflow': WorkflowPage,
     '/ai-settings': AiSettingsPage,
-    '/prompt-gallery': PromptGalleryPage,
     '/backlog': BacklogPage,
     '/reports': ReportsPage,
     '/my-groups': MyGroupsPage,
