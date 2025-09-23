@@ -37,6 +37,7 @@ export function ActionStateProvider({ children }: { children: ReactNode }) {
                     setIsLoading(false);
                 });
         } else {
+            // If there's no user, clear actions and stop loading.
             setActions([]);
             setIsLoading(false);
         }
