@@ -2,7 +2,7 @@
 import { collection, doc, getDoc, addDoc, updateDoc, deleteDoc, setDoc, query, orderBy, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { GalleryPrompt } from '@/lib/types';
-import type { AclEntry } from '@/app/[locale]/firestore-rules/page';
+import type { AclEntry } from '@/app/firestore-rules/page';
 
 // --- CRUD for AI Prompts ---
 type PromptId = "improveWriting" | "analysisSuggestion" | "correctiveActions";
@@ -63,44 +63,22 @@ export async function deleteGalleryPrompt(promptId: string): Promise<void> {
     await deleteDoc(docRef);
 }
 
-// --- Firestore Rules Management ---
+// --- Firestore Rules ACL Management ---
 
-export async function getFirestoreRules(): Promise<string> {
-  // In a real application, you'd use the Firebase Admin SDK to fetch the rules.
-  // For this demo, we'll store/retrieve them from a Firestore document.
-  const docRef = doc(db, 'app_settings', 'firestore_rules_storage');
-  const docSnap = await getDoc(docRef);
-  if (docSnap.exists() && docSnap.data().content) {
-    return docSnap.data().content;
-  }
-  // Return the default rules if none are stored
-  return `rules_version = '2';
-service cloud.firestore {
-  match /databases/{database}/documents {
-    match /actions/{actionId} {
-      // El creador d'un esborrany pot fer-hi qualsevol cosa
-      allow read, write: if resource.data.status == 'Borrador' && request.auth.uid == resource.data.creator.id;
-      
-      // Qualsevol usuari autenticat pot llegir una acció si no és un esborrany
-      allow read: if resource.data.status != 'Borrador' && request.auth != null;
-      
-      // Només el responsable assignat pot realitzar l'anàlisi
-      allow write: if resource.data.status == 'Pendiente Análisis' && request.auth.uid == resource.data.responsibleUserId;
-      
-      // Afegeix aquí altres regles per a la resta d'estats...
+const ACL_DOC_PATH = 'app_settings/firestore_acl';
+
+export async function getAclEntries(): Promise<AclEntry[]> {
+    const docRef = doc(db, ACL_DOC_PATH);
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists() && docSnap.data().entries) {
+        return docSnap.data().entries as AclEntry[];
     }
+    return [];
+}
+
+export async function setAclEntries(entries: AclEntry[]): Promise<void> {
+    const docRef = doc(db, ACL_DOC_PATH);
+    await setDoc(docRef, { entries });
+}
+
     
-    // Default deny for all other collections
-    match /{document=**} {
-      allow read, write: if false;
-    }
-  }
-}`;
-}
-
-export async function saveFirestoreRules(rulesContent: string): Promise<void> {
-  // In a real application, you'd use the Firebase Admin SDK to deploy the rules.
-  // For this demo, we're just storing the content in a Firestore document.
-  const docRef = doc(db, 'app_settings', 'firestore_rules_storage');
-  await setDoc(docRef, { content: rulesContent });
-}
