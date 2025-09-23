@@ -182,7 +182,84 @@ export const seedActions: Omit<ImprovementAction, 'id'>[] = [
         notes: "Se da por cerrada la incidencia. El problema de software ha sido resuelto y se han tomado medidas para que no vuelva a ocurrir.",
         isCompliant: true,
         date: formatDate(addDays(today, -5)),
-        closureResponsible: { id: "user-admin", name: "Admin User", avatar: "https://i.pravatar.cc/150?u=admin" }
+        closureResponsible: { id: "user-admin", name: "Admin User", avatar: "https://i.pravatar.cc/150?u=admin", email: "admin@example.com" }
     }
+  },
+  {
+    actionId: "AM-24006",
+    title: "Errores en el consentimiento informado para pruebas de esfuerzo",
+    description: "Se han detectado varios casos en los que los pacientes firman el consentimiento para pruebas de esfuerzo sin que se les explique adecuadamente los riesgos, o utilizando una versión desactualizada del documento.",
+    creator: { id: "user-4", name: "Javier López", avatar: "https://i.pravatar.cc/150?u=a042581f4e29026708c", email: "javier.lopez@example.com" },
+    responsibleGroupId: "quality-management@example.com",
+    creationDate: formatDate(addDays(today, -60)),
+    category: "Calidad Asistencial",
+    categoryId: "cat-6",
+    subcategory: "Documentación Clínica",
+    subcategoryId: "sub-6-1",
+    type: "No Conformidad",
+    typeId: "type-nc",
+    affectedAreas: ["Cardiología", "Admisión"],
+    affectedAreasIds: ["area-cardio", "area-admin"],
+    center: "08018001 - Centre Mèdic de Cotxeres",
+    centerId: "center-2",
+    assignedTo: "quality-management@example.com",
+    status: "Finalizada",
+    readers: ["javier.lopez@example.com", "quality-management@example.com", "user-admin@example.com"],
+    authors: ["user-admin@example.com"],
+    analysisDueDate: formatDate(addDays(today, -45)),
+    implementationDueDate: formatDate(addDays(today, -20)),
+    closureDueDate: formatDate(addDays(today, -10)),
+    followers: ["user-admin"],
+    analysis: {
+        causes: "Falta de un procedimiento estandarizado para la entrega y explicación del consentimiento. El personal de admisión no ha recibido formación específica sobre este documento. La versión digital del documento no estaba actualizada en el sistema.",
+        proposedActions: [
+            { id: "pa-6", description: "Actualizar el documento de consentimiento informado en el sistema y destruir las copias físicas antiguas.", responsibleUserId: "user-5", dueDate: addDays(today, -30).toISOString(), status: "Implementada" },
+            { id: "pa-7", description: "Realizar una sesión formativa obligatoria para todo el personal de admisión sobre el protocolo de consentimiento.", responsibleUserId: "user-1", dueDate: addDays(today, -25).toISOString(), status: "No Implementada" }
+        ],
+        verificationResponsibleUserId: "user-4",
+        analysisResponsible: { id: "user-1", name: "Ana García", avatar: "https://i.pravatar.cc/150?u=a042581f4e29026024d" },
+        analysisDate: formatDate(addDays(today, -50))
+    },
+    verification: {
+        notes: "La actualización del documento se ha realizado correctamente. Sin embargo, la sesión formativa no se ha llevado a cabo por problemas de agenda del personal, por lo que el riesgo de que el problema persista es alto.",
+        isEffective: false,
+        verificationDate: formatDate(addDays(today, -15)),
+        verificationResponsible: { id: "user-4", name: "Javier López", avatar: "https://i.pravatar.cc/150?u=a042581f4e29026708c" },
+        proposedActionsStatus: { "pa-6": "Implementada", "pa-7": "No Implementada" }
+    },
+    closure: {
+        notes: "La acción no ha sido eficaz, ya que la medida formativa, considerada clave, no se ha implantado. Se procede a cerrar esta acción como 'No Conforme' y se abre una acción BIS para gestionar la formación pendiente.",
+        isCompliant: false,
+        date: formatDate(addDays(today, -10)),
+        closureResponsible: { id: "user-admin", name: "Admin User", avatar: "https://i.pravatar.cc/150?u=admin", email: "admin@example.com" }
+    }
+  },
+  {
+    actionId: "AM-24007",
+    title: "Errores en el consentimiento informado para pruebas de esfuerzo BIS",
+    description: "Esta acción es una continuación de la AM-24006. El objetivo es asegurar la impartición de la formación al personal de admisión sobre el nuevo protocolo de consentimiento informado.\n\n--- \nObservaciones de cierre no conforme:\nLa acción no ha sido eficaz, ya que la medida formativa, considerada clave, no se ha implantado. Se procede a cerrar esta acción como 'No Conforme' y se abre una acción BIS para gestionar la formación pendiente.",
+    creator: { id: "user-admin", name: "Admin User", avatar: "https://i.pravatar.cc/150?u=admin", email: "admin@example.com" },
+    responsibleGroupId: "quality-management@example.com",
+    creationDate: formatDate(addDays(today, -10)),
+    category: "Calidad Asistencial",
+    categoryId: "cat-6",
+    subcategory: "Documentación Clínica",
+    subcategoryId: "sub-6-1",
+    type: "No Conformidad",
+    typeId: "type-nc",
+    affectedAreas: ["Cardiología", "Admisión"],
+    affectedAreasIds: ["area-cardio", "area-admin"],
+    center: "08018001 - Centre Mèdic de Cotxeres",
+    centerId: "center-2",
+    assignedTo: "quality-management@example.com",
+    status: "Pendiente Análisis",
+    readers: ["admin@example.com", "quality-management@example.com"],
+    authors: ["quality-management@example.com"],
+    analysisDueDate: formatDate(addDays(today, 20)),
+    implementationDueDate: formatDate(addDays(today, 35)),
+    closureDueDate: formatDate(addDays(today, 50)),
+    followers: ["user-admin"],
+    originalActionId: "firestore-doc-id-of-am-24006", // This would be the real Firestore ID
+    originalActionTitle: "AM-24006: Errores en el consentimiento informado para pruebas de esfuerzo"
   }
 ];
