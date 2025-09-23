@@ -22,9 +22,7 @@ export default async function RootLayout({
     <html lang="es">
       <body className={inter.className}>
           <AuthProvider>
-            <ProtectedLayout>
-              {children}
-            </ProtectedLayout>
+            {children}
             <Toaster />
           </AuthProvider>
       </body>

@@ -11,6 +11,8 @@ import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   sendPasswordResetEmail,
+  signInWithRedirect,
+  getRedirectResult,
 } from 'firebase/auth';
 import { auth, firebaseApp } from '@/lib/firebase';
 import { usePathname, useRouter } from 'next/navigation';
@@ -25,6 +27,7 @@ interface AuthContextType {
   impersonateUser: (userToImpersonate: User) => void;
   stopImpersonating: () => void;
   signInWithGoogle: () => Promise<void>;
+  signInWithGoogleRedirect: () => Promise<void>;
   signInWithEmail: (email: string, pass: string) => Promise<void>;
   signUpWithEmail: (email: string, pass: string) => Promise<void>;
   sendPasswordReset: (email: string) => Promise<void>;
@@ -77,7 +80,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
       setLoading(true);
       await loadFullUser(fbUser);
-      // After sign-in (from redirect or normal), if we are on the login page, go to dashboard.
       if (fbUser && pathname.includes('/login')) {
         window.location.href = `/dashboard`;
       }
@@ -86,11 +88,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => unsubscribe();
   }, [pathname, loadFullUser]);
 
+  useEffect(() => {
+    const handleRedirectResult = async () => {
+      try {
+        const result = await getRedirectResult(auth);
+        if (result) {
+          // User is signed in. The onAuthStateChanged listener will handle loading the user data.
+        }
+      } catch (error) {
+        console.error("Error during sign-in redirect:", error);
+      }
+    };
+    handleRedirectResult();
+  }, []);
+
   const signInWithGoogle = async () => {
     const provider = new GoogleAuthProvider();
     await signInWithPopup(auth, provider);
   };
   
+  const signInWithGoogleRedirect = async () => {
+    const provider = new GoogleAuthProvider();
+    await signInWithRedirect(auth, provider);
+  };
+
   const signInWithEmail = async (email: string, pass: string) => {
     await signInWithEmailAndPassword(auth, email, pass);
   };
@@ -152,7 +173,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         isImpersonating,
         impersonateUser,
         stopImpersonating,
-        signInWithGoogle, 
+        signInWithGoogle,
+        signInWithGoogleRedirect,
         signInWithEmail,
         signUpWithEmail,
         sendPasswordReset,
