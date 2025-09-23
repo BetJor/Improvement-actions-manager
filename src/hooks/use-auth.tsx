@@ -121,9 +121,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = async () => {
     try {
-      await stopImpersonating(); 
+      await stopImpersonating();
+      
+      // Manually clear the user state before signing out
+      setUser(null);
+      setFirebaseUser(null);
+      setIsImpersonating(false);
+
       await signOut(auth);
       router.push(`/login`);
+      
     } catch (error) {
       console.error("Error signing out", error);
     }
