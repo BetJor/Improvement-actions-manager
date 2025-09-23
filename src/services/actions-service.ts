@@ -30,35 +30,41 @@ export const getActions = async (): Promise<ImprovementAction[]> => {
     if (actionsSnapshot.empty) {
         console.log("Actions collection is empty. Populating with seed data...");
         const batch = writeBatch(db);
-        const docRefs: { [key: string]: any } = {};
+        const docRefs: { [key: string]: string } = {};
 
-        const actionsToSeed = seedActions;
-
-        // First pass: create all actions except the one with the placeholder
-        for (const action of actionsToSeed) {
-            if (action.actionId === "AM-24007") continue; // Skip BIS action for now
+        // 1. Generate all document references first to get their IDs
+        seedActions.forEach(action => {
             const docRef = doc(collection(db, 'actions'));
-            batch.set(docRef, action);
-            docRefs[action.actionId] = docRef;
-        }
+            docRefs[action.actionId] = docRef.id;
+        });
+
+        // 2. Prepare all actions with correct linking
+        const actionsToCreate = seedActions.map(actionSeed => {
+            let finalAction = { ...actionSeed } as any; // Use 'any' for flexibility here
+            if (actionSeed.actionId === "AM-24007" && actionSeed.originalActionTitle) {
+                const originalActionId = docRefs["AM-24006"];
+                if (originalActionId) {
+                    finalAction.originalActionId = originalActionId;
+                }
+            }
+            return {
+                id: docRefs[actionSeed.actionId],
+                data: finalAction
+            };
+        });
+
+        // 3. Set all documents in the batch
+        actionsToCreate.forEach(action => {
+            const docRef = doc(db, 'actions', action.id);
+            batch.set(docRef, action.data);
+        });
+
+        // 4. Commit the batch
         await batch.commit();
 
-        // Second pass: create the BIS action, linking it to the real ID of the original
-        const bisActionData = actionsToSeed.find(a => a.actionId === "AM-24007");
-        if (bisActionData) {
-            const originalActionRef = docRefs["AM-24006"];
-            if (originalActionRef) {
-                const updatedBisActionData = {
-                    ...bisActionData,
-                    originalActionId: originalActionRef.id,
-                };
-                const bisDocRef = doc(collection(db, 'actions'));
-                await setDoc(bisDocRef, updatedBisActionData);
-            }
-        }
-        
         console.log("Actions collection populated with seed data.");
-        // Re-fetch the data after populating
+        
+        // 5. Re-fetch the data after populating
         actionsSnapshot = await getDocs(query(actionsCol, orderBy("actionId", "desc")));
     }
 
