@@ -1,56 +1,9 @@
+
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Helper function to check if a user is an admin
-    function isAdmin() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'Admin';
-    }
-
-    // Helper function to check if a user is in a group
-    // Note: This requires a `groups` collection where each document has a `members` array of user UIDs
-    function isMemberOf(groupId) {
-      return get(/databases/$(database)/documents/groups/$(groupId)).data.members.hasAny([request.auth.uid]);
-    }
-    
-    match /{path=**}/users/{userId} {
-      // Admins can manage all user profiles
-      allow read, write: if isAdmin();
-      // Users can read and update their own profile
-      allow read, update: if request.auth.uid == userId;
-    }
-    
-    match /app_settings/{docId} {
-      // Only admins can modify application settings
-      allow read, write: if isAdmin();
-    }
-    
-    match /prompt_gallery/{promptId} {
-       // Only admins can manage the prompt gallery
-       allow read, write: if isAdmin();
-    }
-    
-    // Master data tables (categories, etc.) can be read by any authenticated user
-    // but only modified by admins.
-    match /categories/{id} { allow read: if request.auth != null; allow write: if isAdmin(); }
-    match /subcategories/{id} { allow read: if request.auth != null; allow write: if isAdmin(); }
-    match /actionTypes/{id} { allow read: if request.auth != null; allow write: if isAdmin(); }
-    match /affectedAreas/{id} { allow read: if request.auth != null; allow write: if isAdmin(); }
-    match /responsibilityRoles/{id} { allow read: if request.auth != null; allow write: if isAdmin(); }
-    match /permissionMatrix/{id} { allow read: if request.auth != null; allow write: if isAdmin(); }
-    match /locations/{id} { allow read: if request.auth != null; allow write: if isAdmin(); }
-
-    match /actions/{actionId} {
-      // Allow read access if the user's email is in the 'readers' array.
-      allow read: if request.auth.token.email in resource.data.readers;
-
-      // Allow write access (update) if the user's email is in the 'authors' array.
-      allow update: if request.auth.token.email in resource.data.authors;
-
-      // Any authenticated user can create an action. The initial permissions
-      // for the draft state will be set by the application code.
-      allow create: if request.auth != null;
+    match /{document=**} {
+      allow read, write: if request.auth != null;
     }
   }
 }
-
-    
