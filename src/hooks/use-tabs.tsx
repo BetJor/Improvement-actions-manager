@@ -8,24 +8,24 @@ import { useAuth } from './use-auth';
 import { Loader2 } from 'lucide-react';
 
 // Import all page components that can be opened in a tab
-import DashboardPage from '@/app/dashboard/page';
-import ActionsPage from '@/app/actions/page';
-import NewActionPage from '@/app/actions/new/page';
-import SettingsPage from '@/app/settings/page';
-import AiSettingsPage from '@/app/ai-settings/page';
-import PromptGalleryPage from '@/app/prompt-gallery/page';
-import RoadmapPage from '@/app/roadmap/page';
-import BacklogPage from '@/app/backlog/page';
-import MyGroupsPage from '@/app/my-groups/page';
-import ActionDetailPage from '@/app/actions/[id]/page';
-import UserManagementPage from '@/app/user-management/page';
-import ReportsPage from '@/app/reports/page';
-import IntranetTestPage from '@/app/intranet-test/page';
-import FirestoreRulesPage from '@/app/firestore-rules/page';
-import WorkflowPage from '@/app/workflow/page';
+import DashboardPage from '@/app/[locale]/dashboard/page';
+import ActionsPage from '@/app/[locale]/actions/page';
+import NewActionPage from '@/app/[locale]/actions/new/page';
+import SettingsPage from '@/app/[locale]/settings/page';
+import AiSettingsPage from '@/app/[locale]/ai-settings/page';
+import PromptGalleryPage from '@/app/[locale]/prompt-gallery/page';
+import RoadmapPage from '@/app/[locale]/roadmap/page';
+import BacklogPage from '@/app/[locale]/backlog/page';
+import MyGroupsPage from '@/app/[locale]/my-groups/page';
+import ActionDetailPage from '@/app/[locale]/actions/[id]/page';
+import UserManagementPage from '@/app/[locale]/user-management/page';
+import ReportsPage from '@/app/[locale]/reports/page';
+import IntranetTestPage from '@/app/[locale]/intranet-test/page';
+import FirestoreRulesPage from '@/app/[locale]/firestore-rules/page';
+import WorkflowPage from '@/app/[locale]/workflow/page';
 import { getActionById, getActionTypes, getCategories, getSubcategories, getAffectedAreas } from '@/lib/data';
 
-import { Home, ListChecks, Settings, Sparkles, Library, Route, Users, BarChart3, GanttChartSquare } from 'lucide-react';
+import { Home, ListChecks, Settings, Sparkles, Library, Route, Users, BarChart3, GanttChartSquare, FileLock2 } from 'lucide-react';
 
 const pageComponentMapping: { [key: string]: React.ComponentType<any> | undefined } = {
     '/dashboard': DashboardPage,

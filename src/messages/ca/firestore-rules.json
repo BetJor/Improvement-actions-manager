@@ -1,44 +1,21 @@
 
 {
   "FirestoreRules": {
-    "title": "Generador de Regles d'Accés de Firestore",
-    "description": "Afegeix usuaris o grups, assigna'ls un nivell d'accés i genera les regles de seguretat de Firestore per a la teva aplicació.",
-    "form": {
-      "entryNamePlaceholder": "Email de l'usuari o nom del grup...",
-      "typeUser": "Usuari",
-      "typeGroup": "Grup",
-      "access": {
-        "noAccess": "Sense Accés",
-        "reader": "Lector",
-        "author": "Autor",
-        "editor": "Editor",
-        "manager": "Gestor"
-      }
-    },
+    "title": "Editor de Regles de Firestore",
+    "description": "Edita les regles de seguretat de la base de dades Firestore. Aquests canvis afectaran directament la seguretat de les dades. Fes-ho amb precaució.",
+    "placeholder": "Carregant les regles de Firestore...",
     "buttons": {
-      "add": "Afegir a la Llista",
-      "generate": "Generar Regles",
-      "copy": "Copiar Regles"
+      "save": "Desar Regles",
+      "saving": "Desant..."
     },
-    "aclListTitle": "Llista de Control d'Accés (ACL)",
-    "noEntries": "Encara no has afegit cap entrada.",
-    "col": {
-      "type": "Tipus",
-      "name": "Nom",
-      "access": "Accés"
-    },
-    "generatedRulesTitle": "Regles Generades",
-    "generatedRulesDescription": "Copia aquest contingut i enganxa'l al teu fitxer `firestore.rules`.",
-    "placeholder": "Fes clic a 'Generar Regles' per a crear les regles de seguretat.",
     "toast": {
-      "generateSuccessTitle": "Regles Generades!",
-      "copySuccessTitle": "Regles Copiades!",
-      "copySuccessDescription": "Les regles s'han copiat al porta-retalls."
+      "saveSuccessTitle": "Regles Desades",
+      "saveSuccessDescription": "Les regles de Firestore s'han actualitzat correctament."
     },
     "errors": {
-      "title": "Error"
+      "title": "Error",
+      "loadFailed": "No s'han pogut carregar les regles de Firestore des del servidor.",
+      "saveFailed": "No s'han pogut desar les regles de Firestore."
     }
   }
 }
-
-    

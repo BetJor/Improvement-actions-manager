@@ -1,37 +1,38 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-  
-    function isAuthenticated() {
-      return request.auth != null;
-    }
-
-    match /users/{userId} {
-      allow read: if isAuthenticated();
-      allow write: if isAuthenticated() && request.auth.uid == userId;
-    }
+    // Les dades mestres són de només lectura per a tothom
+    match /actionTypes/{id} { allow read: if true; allow write: if false; }
+    match /categories/{id} { allow read: if true; allow write: if false; }
+    match /subcategories/{id} { allow read: if true; allow write: if false; }
+    match /affectedAreas/{id} { allow read: if true; allow write: if false; }
+    match /locations/{id} { allow read: if true; allow write: if false; }
     
-    match /actions/{actionId} {
-      // READ: Allow if the user's email is in the document's 'readers' array.
-      allow read: if isAuthenticated() && request.auth.token.email in resource.data.readers;
-
-      // WRITE: Allow creation for any authenticated user.
-      // Allow update if the user's email is in the document's 'authors' array.
-      allow create: if isAuthenticated();
-      allow update: if isAuthenticated() && request.auth.token.email in resource.data.authors;
-
-      // DELETE: For now, we restrict deletion to prevent accidental data loss.
-      allow delete: if false;
+    // Els usuaris poden llegir el seu propi document i els administradors poden llegir-los tots
+    match /users/{userId} {
+      allow read: if request.auth.uid == userId;
+      allow read, write: if get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'Admin';
     }
 
-    match /actionTypes/{docId} { allow read: if isAuthenticated(); allow write: if isAuthenticated(); }
-    match /affectedAreas/{docId} { allow read: if isAuthenticated(); allow write: if isAuthenticated(); }
-    match /categories/{docId} { allow read: if isAuthenticated(); allow write: if isAuthenticated(); }
-    match /subcategories/{docId} { allow read: if isAuthenticated(); allow write: if isAuthenticated(); }
-    match /responsibilityRoles/{docId} { allow read: if isAuthenticated(); allow write: if isAuthenticated(); }
-    match /permissionMatrix/{docId} { allow read: if isAuthenticated(); allow write: if isAuthenticated(); }
-    match /locations/{docId} { allow read: if isAuthenticated(); }
-    match /app_settings/{docId} { allow read: if isAuthenticated(); allow write: if isAuthenticated(); }
-    match /prompt_gallery/{docId} { allow read: if isAuthenticated(); allow write: if isAuthenticated(); }
+    match /actions/{actionId} {
+      // Regles dinàmiques basades en els camps `readers` i `authors`
+      allow read: if request.auth.token.email in resource.data.readers;
+      allow create: if request.auth != null; // Qualsevol usuari autenticat pot crear
+      allow update: if request.auth.token.email in resource.data.authors;
+
+      // Un administrador pot fer-ho tot
+      allow read, write: if get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'Admin';
+    }
+
+    // Regles per a la configuració de l'aplicació (prompts, etc.)
+    match /app_settings/{docId} {
+        allow read, write: if get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'Admin';
+    }
+
+    // Galeria de prompts: accessible per a tots els usuaris autenticats
+    match /prompt_gallery/{promptId} {
+        allow read: if request.auth != null;
+        allow write: if get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'Admin';
+    }
   }
 }

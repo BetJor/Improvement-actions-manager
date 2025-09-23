@@ -1,6 +1,6 @@
 
 "use client"
-import { CircleUser, Menu, Users, Bell, Home, ListChecks, GanttChartSquare, Settings, Route, Sparkles, Library, LogIn, LogOut } from "lucide-react"
+import { CircleUser, Menu, Users, Bell, Home, ListChecks, GanttChartSquare, Settings, Route, Sparkles, Library, LogIn, LogOut, FileLock2 } from "lucide-react"
 import Link from "next/link"
 import {
   DropdownMenu,
@@ -39,6 +39,7 @@ const pageConfig: { [key: string]: { icon: React.ElementType, titleKey: string }
   '/ai-settings': { icon: Sparkles, titleKey: 'aiSettings' },
   '/prompt-gallery': { icon: Library, titleKey: 'promptGallery' },
   '/roadmap': { icon: Route, titleKey: 'roadmap' },
+  '/firestore-rules': { icon: FileLock2, titleKey: 'firestoreRules' },
 };
 
 
