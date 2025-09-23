@@ -1,4 +1,3 @@
-
 "use client";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -65,10 +64,6 @@ export default function LoginPage() {
           <Button onClick={signInWithGoogle} className="w-full">
             <Chrome className="mr-2 h-4 w-4" />
             Continua amb Google
-          </Button>
-          <Button onClick={signInWithGoogleRedirect} className="w-full">
-            <Chrome className="mr-2 h-4 w-4" />
-            Continua amb Google (Redirecció)
           </Button>
 
           <div className="relative">
