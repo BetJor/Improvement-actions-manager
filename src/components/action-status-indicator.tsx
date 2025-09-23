@@ -40,7 +40,7 @@ export function ActionStatusIndicator({ status, isCompliant = null }: ActionStat
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger>
-          <Icon className={cn("h-5 w-5", color)} />
+          <Icon className={cn("h-6 w-6", color)} />
         </TooltipTrigger>
         <TooltipContent>
           <p>{label}</p>
