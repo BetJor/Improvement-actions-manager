@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { useAuth } from "@/hooks/use-auth";
@@ -66,22 +65,25 @@ export function ProtectedLayout({
   if (!user && !isLoginPage) {
      return null; // Don't render anything until redirect happens
   }
+  
+  // This is the correct placement. The providers that depend on Auth are inside this component.
+  if (isLoginPage) {
+    return <>{children}</>;
+  }
 
   const content = (
-    <ActionStateProvider>
+      <ActionStateProvider>
         <TabsProvider initialPath={pathname}>
-        {isLoginPage ? children : 
             <LayoutWithTabs>
                 {children}
             </LayoutWithTabs>
-        }
         </TabsProvider>
-    </ActionStateProvider>
+      </ActionStateProvider>
   )
 
   return (
       <SidebarProvider>
-          {content}
+        {content}
       </SidebarProvider>
   );
 }
