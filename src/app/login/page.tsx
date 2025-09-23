@@ -4,11 +4,10 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/hooks/use-auth";
-import { Chrome, LogIn, Mail, Key, UserPlus } from "lucide-react";
+import { Chrome, LogIn, Mail, Key } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Separator } from "@/components/ui/separator";
 
 export default function LoginPage() {
   const { signInWithGoogle, signInWithEmail, sendPasswordReset } = useAuth();
@@ -43,7 +42,7 @@ export default function LoginPage() {
 
   return (
     <div className="flex items-center justify-center h-full">
-      <Card className="w-full max-w-md mt-[-10rem]">
+      <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl">Iniciar sesión</CardTitle>
           <CardDescription>Accede a la plataforma con tus credenciales.</CardDescription>
@@ -109,3 +108,4 @@ export default function LoginPage() {
     </div>
   );
 }
+
