@@ -1,13 +1,37 @@
-
 rules_version = '2';
-
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Regla per defecte: Només permet l'accés als usuaris autenticats.
-    // Això permet que les Server Actions (que s'executen en un context autenticat)
-    // puguin escriure a la base de dades (p. ex., per a afegir comentaris del sistema).
-    match /{document=**} {
-      allow read, write: if request.auth != null;
+  
+    function isAuthenticated() {
+      return request.auth != null;
     }
+
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    match /actions/{actionId} {
+      // READ: Allow if the user's email is in the document's 'readers' array.
+      allow read: if isAuthenticated() && request.auth.token.email in resource.data.readers;
+
+      // WRITE: Allow creation for any authenticated user.
+      // Allow update if the user's email is in the document's 'authors' array.
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated() && request.auth.token.email in resource.data.authors;
+
+      // DELETE: For now, we restrict deletion to prevent accidental data loss.
+      allow delete: if false;
+    }
+
+    match /actionTypes/{docId} { allow read: if isAuthenticated(); allow write: if isAuthenticated(); }
+    match /affectedAreas/{docId} { allow read: if isAuthenticated(); allow write: if isAuthenticated(); }
+    match /categories/{docId} { allow read: if isAuthenticated(); allow write: if isAuthenticated(); }
+    match /subcategories/{docId} { allow read: if isAuthenticated(); allow write: if isAuthenticated(); }
+    match /responsibilityRoles/{docId} { allow read: if isAuthenticated(); allow write: if isAuthenticated(); }
+    match /permissionMatrix/{docId} { allow read: if isAuthenticated(); allow write: if isAuthenticated(); }
+    match /locations/{docId} { allow read: if isAuthenticated(); }
+    match /app_settings/{docId} { allow read: if isAuthenticated(); allow write: if isAuthenticated(); }
+    match /prompt_gallery/{docId} { allow read: if isAuthenticated(); allow write: if isAuthenticated(); }
   }
 }
