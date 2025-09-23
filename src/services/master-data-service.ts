@@ -39,44 +39,12 @@ export const getResponsibilityRoles = async (): Promise<ResponsibilityRole[]> =>
 
 export const getCenters = async (): Promise<Center[]> => {
   const centersCol = collection(db, 'locations');
-  let snapshot = await getDocs(centersCol);
+  const snapshot = await getDocs(query(centersCol, where("estado", "==", "OPERATIVO")));
 
-  if (snapshot.empty) {
-      console.log("Locations collection is empty. Seeding with test data...");
-      const batch = writeBatch(db);
-      const seedLocations = [
-          { id: "center-1", codigo_centro: "08017001", descripcion_centro: "Acció Preventiva", estado: "OPERATIVO" },
-          { id: "center-2", codigo_centro: "08018001", descripcion_centro: "Centre Mèdic de Cotxeres", estado: "OPERATIVO" },
-          { id: "center-3", codigo_centro: "08073001", descripcion_centro: "Centre Mèdic de Cornellà", estado: "OPERATIVO" },
-          { id: "center-4", codigo_centro: "08022001", descripcion_centro: "Centre Mèdic de Balmes", estado: "OPERATIVO" },
-          { id: "center-5", codigo_centro: "08001001", descripcion_centro: "Serveis Centrals", estado: "BAJA" },
-      ];
-      seedLocations.forEach(loc => {
-          const docRef = doc(db, 'locations', loc.id);
-          batch.set(docRef, {
-              codigo_centro: loc.codigo_centro,
-              descripcion_centro: loc.descripcion_centro,
-              estado: loc.estado
-          });
-      });
-      await batch.commit();
-      console.log("Locations collection seeded.");
-      snapshot = await getDocs(centersCol);
-  }
-  
-  const allCenters = snapshot.docs.map(doc => ({ 
+  const operativeCenters = snapshot.docs.map(doc => ({ 
       id: doc.id,
       code: doc.data().codigo_centro,
-      name: doc.data().descripcion_centro,
-      estado: doc.data().estado
-    }));
-
-  const operativeCenters = allCenters
-    .filter(center => center.estado === 'OPERATIVO')
-    .map(center => ({
-      id: center.id,
-      code: center.code,
-      name: `${center.code} - ${center.name}`
+      name: `${doc.data().codigo_centro} - ${doc.data().descripcion_centro}`
     }));
 
   operativeCenters.sort((a, b) => a.name.localeCompare(b.name));
