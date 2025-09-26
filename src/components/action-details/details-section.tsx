@@ -54,19 +54,19 @@ export function DetailsSection({ action }: DetailsSectionProps) {
   return (
     <Card>
       <Collapsible defaultOpen>
-        <CollapsibleTrigger asChild>
-          <div className="flex justify-between items-center p-4 cursor-pointer">
+        <div className="flex justify-between items-center p-4">
             <CardTitle className="text-base flex items-center gap-2">
-              <Info className="h-5 w-5" />
-              Detalles
+                <Info className="h-5 w-5" />
+                Detalles
             </CardTitle>
             <div className="flex items-center gap-2">
-              <Button variant="ghost" size="icon" className="data-[state=open]:rotate-90">
-                <ChevronRight className="h-4 w-4 transition-transform" />
-              </Button>
+                <CollapsibleTrigger asChild>
+                    <Button variant="ghost" size="icon" className="data-[state=open]:rotate-90">
+                        <ChevronRight className="h-4 w-4 transition-transform" />
+                    </Button>
+                </CollapsibleTrigger>
             </div>
-          </div>
-        </CollapsibleTrigger>
+        </div>
         <CollapsibleContent>
           <CardContent className="space-y-4 pt-0">
             <DetailRow icon={Tag} label="Tipo" value={action.type} />

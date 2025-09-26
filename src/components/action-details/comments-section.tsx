@@ -69,20 +69,20 @@ export function CommentsSection({ action, onActionUpdate }: CommentsSectionProps
   return (
     <Card>
       <Collapsible>
-        <CollapsibleTrigger asChild>
-          <div className="flex justify-between items-center p-4 cursor-pointer">
-            <CardTitle className="flex items-center gap-2 text-base">
-              <MessageSquare className="h-5 w-5" />
-              Comentarios
-            </CardTitle>
-            <div className="flex items-center gap-2">
-              <Badge variant="secondary">{(action.comments || []).length}</Badge>
-              <Button variant="ghost" size="icon" className="data-[state=open]:rotate-90">
-                <ChevronRight className="h-4 w-4 transition-transform" />
-              </Button>
-            </div>
+        <div className="flex justify-between items-center p-4">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <MessageSquare className="h-5 w-5" />
+            Comentarios
+          </CardTitle>
+          <div className="flex items-center gap-2">
+            <Badge variant="secondary">{(action.comments || []).length}</Badge>
+            <CollapsibleTrigger asChild>
+                <Button variant="ghost" size="icon" className="data-[state=open]:rotate-90">
+                    <ChevronRight className="h-4 w-4 transition-transform" />
+                </Button>
+            </CollapsibleTrigger>
           </div>
-        </CollapsibleTrigger>
+        </div>
         <CollapsibleContent>
           <CardContent className="space-y-4 pt-0">
             <div className="space-y-4 max-h-60 overflow-y-auto pr-2">

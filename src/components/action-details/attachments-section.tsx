@@ -102,20 +102,20 @@ export function AttachmentsSection({ action, onActionUpdate }: AttachmentsSectio
   return (
     <Card>
       <Collapsible>
-        <CollapsibleTrigger asChild>
-          <div className="flex justify-between items-center p-4 cursor-pointer">
-            <CardTitle className="flex items-center gap-2 text-base">
-              <Paperclip className="h-5 w-5" />
-              Adjuntos
-            </CardTitle>
-             <div className="flex items-center gap-2">
-                <Badge variant="secondary">{(action.attachments || []).length}</Badge>
+        <div className="flex justify-between items-center p-4">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Paperclip className="h-5 w-5" />
+            Adjuntos
+          </CardTitle>
+          <div className="flex items-center gap-2">
+              <Badge variant="secondary">{(action.attachments || []).length}</Badge>
+              <CollapsibleTrigger asChild>
                 <Button variant="ghost" size="icon" className="data-[state=open]:rotate-90">
                     <ChevronRight className="h-4 w-4 transition-transform" />
                 </Button>
-            </div>
+              </CollapsibleTrigger>
           </div>
-        </CollapsibleTrigger>
+        </div>
         <CollapsibleContent>
           <CardContent className="space-y-4 pt-0">
             <div className="flex items-center justify-center w-full">
