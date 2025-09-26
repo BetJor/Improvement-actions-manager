@@ -3,18 +3,17 @@ rules_version = '2';
 
 service firebase.storage {
   match /b/{bucket}/o {
-    // Allow users to upload files to their own action folders
     match /actions/{actionId}/{allPaths=**} {
-      // Allow create only if the user is authenticated, the file is not too large,
-      // and the userId in the metadata matches the authenticated user's UID.
-      allow create: if request.auth != null &&
-                       request.resource.size < 5 * 1024 * 1024 &&
-                       request.resource.metadata.userId == request.auth.uid;
+      // Allow create for any authenticated user. 
+      // WARNING: This is a less secure rule for development purposes.
+      allow create: if request.auth != null && request.resource.size < 5 * 1024 * 1024;
 
-      // Allow read and delete for authenticated users.
-      // In a real application, you might want to restrict this further,
-      // e.g., only allow users involved in the action to read/delete.
-      allow read, delete: if request.auth != null;
+      // Allow read for any authenticated user.
+      allow read: if request.auth != null;
+
+      // Allow delete for authenticated users.
+      // You might want to restrict this further.
+      allow delete: if request.auth != null;
     }
   }
 }

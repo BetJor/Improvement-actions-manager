@@ -56,17 +56,19 @@ export function AttachmentsSection({ action, onActionUpdate }: AttachmentsSectio
   
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    console.log("[Attachments] handleFileChange triggered.");
+    console.log("--- [Attachments] handleFileChange triggered ---");
     const file = event.target.files?.[0]
     if (!file || !user) {
         console.error("[Attachments] No file or user. File:", file, "User:", user);
         return;
     }
 
-    console.log("[Attachments] File selected:", file.name, "User:", user);
+    console.log(`[Attachments] File selected: ${file.name}, User: ${user.id}`);
     setIsUploadingFile(true)
     try {
+      console.log("[Attachments] Calling safeUpload...");
       await safeUpload(file);
+      console.log("[Attachments] safeUpload completed successfully.");
       toast({
         title: "Archivo subido",
         description: `${file.name} se ha subido y adjuntado correctamente.`,
@@ -82,14 +84,14 @@ export function AttachmentsSection({ action, onActionUpdate }: AttachmentsSectio
       }
 
     } catch (error) {
-      console.error("[Attachments] Error uploading file:", error)
+      console.error("[Attachments] Error during upload process:", error);
       toast({
         variant: "destructive",
         title: "Error de subida",
         description: "No se ha podido subir el archivo.",
       })
     } finally {
-      console.log("[Attachments] Finally block. Setting isUploadingFile to false.");
+      console.log("--- [Attachments] Finally block. Resetting state. ---");
       setIsUploadingFile(false)
       if (fileInputRef.current) {
         fileInputRef.current.value = ""

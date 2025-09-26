@@ -1,9 +1,8 @@
 
+"use client";
 
-"use client"
-
-import { useState, useEffect } from "react"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { useState, useEffect } from "react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Table,
   TableBody,
@@ -11,10 +10,10 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
-import { Button } from "@/components/ui/button"
-import { Loader2, Pencil, PlusCircle, Trash2, Check, ChevronsUpDown } from "lucide-react"
-import type { MasterDataItem, ResponsibilityRole, ImprovementActionType, PermissionRule, ImprovementActionStatus } from "@/lib/types"
+} from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import { Loader2, Pencil, PlusCircle, Trash2, Check, ChevronsUpDown, Info, ExternalLink } from "lucide-react";
+import type { MasterDataItem, ResponsibilityRole, ImprovementActionType, PermissionRule, ImprovementActionStatus } from "@/lib/types";
 import {
   Dialog,
   DialogContent,
@@ -23,7 +22,7 @@ import {
   DialogDescription,
   DialogFooter,
   DialogClose,
-} from "@/components/ui/dialog"
+} from "@/components/ui/dialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -34,39 +33,35 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
+} from "@/components/ui/alert-dialog";
 
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { useToast } from "@/hooks/use-toast"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select"
-import { Textarea } from "./ui/textarea"
-import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover"
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "./ui/command"
-import { cn } from "@/lib/utils"
-import { Checkbox } from "./ui/checkbox"
-import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "./ui/dropdown-menu"
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useToast } from "@/hooks/use-toast";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import Link from "next/link";
+import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "./ui/dropdown-menu";
 
 const allStatuses: ImprovementActionStatus[] = ['Borrador', 'Pendiente Análisis', 'Pendiente Comprobación', 'Pendiente de Cierre', 'Finalizada'];
 
-
 interface MasterDataFormDialogProps {
-  isOpen: boolean
-  setIsOpen: (isOpen: boolean) => void
-  item: MasterDataItem | null
-  collectionName: string
-  title: string
-  onSave: (collection: string, item: MasterDataItem) => Promise<void>
+  isOpen: boolean;
+  setIsOpen: (isOpen: boolean) => void;
+  item: MasterDataItem | null;
+  collectionName: string;
+  title: string;
+  onSave: (collection: string, item: MasterDataItem) => Promise<void>;
   extraData: {
-    categories?: MasterDataItem[],
-    actionTypes?: ImprovementActionType[],
-    responsibilityRoles?: ResponsibilityRole[],
-  }
+    categories?: MasterDataItem[];
+    actionTypes?: ImprovementActionType[];
+    responsibilityRoles?: ResponsibilityRole[];
+  };
 }
 
 function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, title, onSave, extraData }: MasterDataFormDialogProps) {
-  const [formData, setFormData] = useState<MasterDataItem>({ name: "" })
-  const { toast } = useToast()
+  const [formData, setFormData] = useState<MasterDataItem>({ name: "" });
+  const { toast } = useToast();
 
   useEffect(() => {
     let defaultData: MasterDataItem = { name: "" };
@@ -74,52 +69,49 @@ function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, title, 
       defaultData = { ...defaultData, type: "Fixed" };
     }
     if (collectionName === 'actionTypes') {
-        defaultData = { ...defaultData, possibleCreationRoles: [], possibleAnalysisRoles: [], possibleClosureRoles: [] };
+      defaultData = { ...defaultData, possibleCreationRoles: [], possibleAnalysisRoles: [], possibleClosureRoles: [] };
     }
     if (collectionName === 'permissionMatrix') {
-        defaultData = { actionTypeId: '', status: 'Borrador', readerRoleIds: [], authorRoleIds: [] };
+      defaultData = { actionTypeId: '', status: 'Borrador', readerRoleIds: [], authorRoleIds: [] };
     }
     setFormData(item || defaultData);
   }, [item, collectionName]);
-
 
   const handleSave = async () => {
     if (collectionName !== 'permissionMatrix' && !formData.name) {
       toast({
         variant: "destructive",
-        title: "Error de validació",
-        description: "El camp 'Nom' és obligatori.",
-      })
-      return
+        title: "Error de validación",
+        description: "El campo 'Nombre' es obligatorio.",
+      });
+      return;
     }
-    await onSave(collectionName, formData)
-    setIsOpen(false)
-  }
+    await onSave(collectionName, formData);
+    setIsOpen(false);
+  };
 
- const renderSpecificFields = () => {
+  const renderSpecificFields = () => {
     const actionTypeData = formData as any;
 
     if (collectionName === 'subcategories' && extraData?.categories) {
-        return (
-             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor={'categoryId'} className="text-right">
-                Categoria
-              </Label>
-              <Select
-                value={formData['categoryId']}
-                onValueChange={(value) => setFormData({ ...formData, ['categoryId']: value })}
-              >
-                <SelectTrigger className="col-span-3">
-                  <SelectValue placeholder="Selecciona categoria" />
-                </SelectTrigger>
-                <SelectContent>
-                  {extraData.categories.map(option => (
-                    <SelectItem key={option.id} value={option.id!}>{option.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-        )
+      return (
+        <div className="grid grid-cols-4 items-center gap-4">
+          <Label htmlFor={'categoryId'} className="text-right">Categoría</Label>
+          <Select
+            value={formData['categoryId']}
+            onValueChange={(value) => setFormData({ ...formData, ['categoryId']: value })}
+          >
+            <SelectTrigger className="col-span-3">
+              <SelectValue placeholder="Selecciona categoría" />
+            </SelectTrigger>
+            <SelectContent>
+              {extraData.categories.map(option => (
+                <SelectItem key={option.id} value={option.id!}>{option.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      );
     }
 
     if (collectionName === 'actionTypes' && extraData?.responsibilityRoles) {
@@ -146,7 +138,7 @@ function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, title, 
                           .filter(r => selectedRoles.includes(r.id!))
                           .map(r => r.name)
                           .join(', ')
-                      : "Selecciona rols"}
+                      : "Selecciona roles"}
                   </span>
                   <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                 </Button>
@@ -171,11 +163,11 @@ function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, title, 
 
       return (
         <>
-          {renderDropdown('possibleCreationRoles', 'Rols per a la Creació')}
-          {renderDropdown('possibleAnalysisRoles', 'Rols per a l\'Anàlisi')}
-          {renderDropdown('possibleClosureRoles', 'Rols per al Tancament')}
+          {renderDropdown('possibleCreationRoles', 'Roles para Creación')}
+          {renderDropdown('possibleAnalysisRoles', 'Roles para Análisis')}
+          {renderDropdown('possibleClosureRoles', 'Roles para Cierre')}
         </>
-      )
+      );
     }
 
     if (collectionName === 'responsibilityRoles') {
@@ -183,128 +175,124 @@ function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, title, 
       return (
         <>
           <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="type" className="text-right">Tipus</Label>
-              <Select
-                value={roleData.type}
-                onValueChange={(value) => setFormData({ ...formData, type: value as ResponsibilityRole['type'] })}
-              >
-                <SelectTrigger className="col-span-3">
-                  <SelectValue placeholder="Selecciona un tipus" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Fixed">Fix</SelectItem>
-                  <SelectItem value="Pattern">Patró</SelectItem>
-                </SelectContent>
-              </Select>
+            <Label htmlFor="type" className="text-right">Tipo</Label>
+            <Select
+              value={roleData.type}
+              onValueChange={(value) => setFormData({ ...formData, type: value as ResponsibilityRole['type'] })}
+            >
+              <SelectTrigger className="col-span-3">
+                <SelectValue placeholder="Selecciona un tipo" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Fixed">Fijo</SelectItem>
+                <SelectItem value="Pattern">Patrón</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           {roleData.type === 'Fixed' && (
-             <div className="grid grid-cols-4 items-center gap-4">
+            <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="email" className="text-right">Email</Label>
               <Input
                 id="email"
                 value={roleData.email || ''}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 className="col-span-3"
-                placeholder="p.ex., qualitat@example.com"
+                placeholder="ej., calidad@ejemplo.com"
               />
             </div>
           )}
           {roleData.type === 'Pattern' && (
-             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="emailPattern" className="text-right">Patró Email</Label>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="emailPattern" className="text-right">Patrón de Email</Label>
               <Input
                 id="emailPattern"
                 value={roleData.emailPattern || ''}
                 onChange={(e) => setFormData({ ...formData, emailPattern: e.target.value })}
                 className="col-span-3"
-                placeholder="p.ex., direccio-{{center.id}}@example.com"
+                placeholder="ej., direccion-{{center.id}}@ejemplo.com"
               />
             </div>
           )}
         </>
-      )
+      );
     }
 
     if (collectionName === 'permissionMatrix') {
-        const ruleData = formData as PermissionRule;
-        
-        const handleMultiSelect = (roleId: string, field: 'readerRoleIds' | 'authorRoleIds') => {
-            const currentIds = (ruleData[field] as string[] || []);
-            const newIds = currentIds.includes(roleId)
-                ? currentIds.filter(id => id !== roleId)
-                : [...currentIds, roleId];
-            setFormData({ ...formData, [field]: newIds });
-        };
-        
-        return (
-            <>
-            <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="actionTypeId" className="text-right">Tipus d'Acció</Label>
-                <Select value={ruleData.actionTypeId} onValueChange={(value) => setFormData({ ...formData, actionTypeId: value })}>
-                    <SelectTrigger className="col-span-3"><SelectValue placeholder="Selecciona un tipus d'acció" /></SelectTrigger>
-                    <SelectContent>{extraData?.actionTypes?.map(at => <SelectItem key={at.id} value={at.id!}>{at.name}</SelectItem>)}</SelectContent>
-                </Select>
-            </div>
-             <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="status" className="text-right">Estat</Label>
-                <Select value={ruleData.status} onValueChange={(value) => setFormData({ ...formData, status: value as ImprovementActionStatus })}>
-                    <SelectTrigger className="col-span-3"><SelectValue placeholder="Selecciona un estat" /></SelectTrigger>
-                    <SelectContent>{allStatuses.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
-                </Select>
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="readerRoleIds" className="text-right">Rols Lectors</Label>
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <Button variant="outline" className="col-span-3 justify-between">
-                            {(ruleData.readerRoleIds?.length || 0) > 0 ? `${ruleData.readerRoleIds.length} seleccionats` : "Selecciona rols lectors"}
-                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                        </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent className="w-[300px]">
-                         {extraData?.responsibilityRoles?.map((role) => (
-                             <DropdownMenuCheckboxItem key={role.id} checked={ruleData.readerRoleIds?.includes(role.id!)} onCheckedChange={() => handleMultiSelect(role.id!, 'readerRoleIds')}>{role.name}</DropdownMenuCheckboxItem>
-                         ))}
-                    </DropdownMenuContent>
-                </DropdownMenu>
-            </div>
-             <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="authorRoleIds" className="text-right">Rols Autors</Label>
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                         <Button variant="outline" className="col-span-3 justify-between">
-                             {(ruleData.authorRoleIds?.length || 0) > 0 ? `${ruleData.authorRoleIds.length} seleccionats` : "Selecciona rols autors"}
-                             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                         </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent className="w-[300px]">
-                         {extraData?.responsibilityRoles?.map((role) => (
-                             <DropdownMenuCheckboxItem key={role.id} checked={ruleData.authorRoleIds?.includes(role.id!)} onCheckedChange={() => handleMultiSelect(role.id!, 'authorRoleIds')}>{role.name}</DropdownMenuCheckboxItem>
-                         ))}
-                    </DropdownMenuContent>
-                </DropdownMenu>
-            </div>
-            </>
-        )
+      const ruleData = formData as PermissionRule;
+
+      const handleMultiSelect = (roleId: string, field: 'readerRoleIds' | 'authorRoleIds') => {
+        const currentIds = (ruleData[field] as string[] || []);
+        const newIds = currentIds.includes(roleId)
+          ? currentIds.filter(id => id !== roleId)
+          : [...currentIds, roleId];
+        setFormData({ ...formData, [field]: newIds });
+      };
+
+      return (
+        <>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="actionTypeId" className="text-right">Tipo de Acción</Label>
+            <Select value={ruleData.actionTypeId} onValueChange={(value) => setFormData({ ...formData, actionTypeId: value })}>
+              <SelectTrigger className="col-span-3"><SelectValue placeholder="Selecciona un tipo de acción" /></SelectTrigger>
+              <SelectContent>{extraData?.actionTypes?.map(at => <SelectItem key={at.id} value={at.id!}>{at.name}</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="status" className="text-right">Estado</Label>
+            <Select value={ruleData.status} onValueChange={(value) => setFormData({ ...formData, status: value as ImprovementActionStatus })}>
+              <SelectTrigger className="col-span-3"><SelectValue placeholder="Selecciona un estado" /></SelectTrigger>
+              <SelectContent>{allStatuses.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="readerRoleIds" className="text-right">Roles Lectores</Label>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="col-span-3 justify-between">
+                  {(ruleData.readerRoleIds?.length || 0) > 0 ? `${ruleData.readerRoleIds.length} seleccionados` : "Selecciona roles lectores"}
+                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-[300px]">
+                {extraData?.responsibilityRoles?.map((role) => (
+                  <DropdownMenuCheckboxItem key={role.id} checked={ruleData.readerRoleIds?.includes(role.id!)} onCheckedChange={() => handleMultiSelect(role.id!, 'readerRoleIds')}>{role.name}</DropdownMenuCheckboxItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="authorRoleIds" className="text-right">Roles Autores</Label>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="col-span-3 justify-between">
+                  {(ruleData.authorRoleIds?.length || 0) > 0 ? `${ruleData.authorRoleIds.length} seleccionados` : "Selecciona roles autores"}
+                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-[300px]">
+                {extraData?.responsibilityRoles?.map((role) => (
+                  <DropdownMenuCheckboxItem key={role.id} checked={ruleData.authorRoleIds?.includes(role.id!)} onCheckedChange={() => handleMultiSelect(role.id!, 'authorRoleIds')}>{role.name}</DropdownMenuCheckboxItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </>
+      );
     }
 
-     return null;
-  }
+    return null;
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogContent className={cn(collectionName === 'actionTypes' && 'sm:max-w-2xl')}>
+      <DialogContent>
         <DialogHeader>
-          <DialogTitle>{item ? "Editar" : "Afegir Nou"} {title}</DialogTitle>
-          <DialogDescription>
-            Omple els detalls a continuació.
-          </DialogDescription>
+          <DialogTitle>{item ? "Editar" : "Añadir Nuevo"} {title}</DialogTitle>
+          <DialogDescription>Rellena los detalles a continuación.</DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
           <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="name" className="text-right">
-              Nom
-            </Label>
+            <Label htmlFor="name" className="text-right">Nombre</Label>
             <Input
               id="name"
               value={formData.name}
@@ -315,14 +303,12 @@ function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, title, 
           {renderSpecificFields()}
         </div>
         <DialogFooter>
-          <DialogClose asChild>
-            <Button variant="outline">Cancel·lar</Button>
-          </DialogClose>
-          <Button onClick={handleSave}>Desar</Button>
+          <DialogClose asChild><Button variant="outline">Cancelar</Button></DialogClose>
+          <Button onClick={handleSave}>Guardar</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  )
+  );
 }
 
 interface MasterDataTableProps {
@@ -340,12 +326,12 @@ function MasterDataTable({ data, columns, onEdit, onDelete, isLoading }: MasterD
         <TableHeader>
           <TableRow>
             {columns.map(col => <TableHead key={col.key}>{col.label}</TableHead>)}
-            <TableHead className="text-right">Accions</TableHead>
+            <TableHead className="text-right">Acciones</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {isLoading ? (
-             <TableRow>
+            <TableRow>
               <TableCell colSpan={columns.length + 1} className="h-24 text-center">
                 <Loader2 className="mx-auto h-6 w-6 animate-spin" />
               </TableCell>
@@ -354,9 +340,9 @@ function MasterDataTable({ data, columns, onEdit, onDelete, isLoading }: MasterD
             data.map((item) => (
               <TableRow key={item.id}>
                 {columns.map(col => (
-                    <TableCell key={`${item.id}-${col.key}`} className="py-2 align-top">
-                       {item[col.key]}
-                    </TableCell>
+                  <TableCell key={`${item.id}-${col.key}`} className="py-2 align-top">
+                    {item[col.key]}
+                  </TableCell>
                 ))}
                 <TableCell className="text-right py-2 align-top">
                   <Button variant="ghost" size="icon" onClick={() => onEdit(item)}>
@@ -370,13 +356,11 @@ function MasterDataTable({ data, columns, onEdit, onDelete, isLoading }: MasterD
                     </AlertDialogTrigger>
                     <AlertDialogContent>
                       <AlertDialogHeader>
-                        <AlertDialogTitle>Estàs segur?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          Aquesta acció no es pot desfer. Això eliminarà permanentment l'element.
-                        </AlertDialogDescription>
+                        <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+                        <AlertDialogDescription>Esta acción no se puede deshacer. Esto eliminará permanentemente el elemento.</AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel·lar</AlertDialogCancel>
+                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
                         <AlertDialogAction onClick={() => onDelete(item)}>Continuar</AlertDialogAction>
                       </AlertDialogFooter>
                     </AlertDialogContent>
@@ -386,15 +370,13 @@ function MasterDataTable({ data, columns, onEdit, onDelete, isLoading }: MasterD
             ))
           ) : (
             <TableRow>
-              <TableCell colSpan={columns.length + 1} className="h-24 text-center">
-                No hi ha dades per mostrar.
-              </TableCell>
+              <TableCell colSpan={columns.length + 1} className="h-24 text-center">No hay datos para mostrar.</TableCell>
             </TableRow>
           )}
         </TableBody>
       </Table>
     </div>
-  )
+  );
 }
 
 interface MasterDataManagerProps {
@@ -428,23 +410,23 @@ export function MasterDataManager({ data, onSave, onDelete, activeTab, setActive
 
   const handleDelete = async (item: MasterDataItem) => {
     if (item.id) {
-        await onDelete(activeTab, item.id);
+      await onDelete(activeTab, item.id);
     }
   };
 
   const handleSave = async (collectionName: string, item: MasterDataItem) => {
     await onSave(collectionName, item);
   };
-  
+
   const getExtraDataForTab = (tabKey: string) => {
     if (tabKey === 'subcategories' && data.categories) {
       return { categories: data.categories.data };
     }
-     if (tabKey === 'actionTypes' && data.responsibilityRoles) {
+    if (tabKey === 'actionTypes' && data.responsibilityRoles) {
       return { responsibilityRoles: data.responsibilityRoles.data };
     }
-     if (tabKey === 'permissionMatrix' && data.actionTypes && data.responsibilityRoles) {
-      return { 
+    if (tabKey === 'permissionMatrix' && data.actionTypes && data.responsibilityRoles) {
+      return {
         actionTypes: data.actionTypes.data,
         responsibilityRoles: data.responsibilityRoles.data
       };
@@ -462,11 +444,23 @@ export function MasterDataManager({ data, onSave, onDelete, activeTab, setActive
         </TabsList>
         {Object.keys(data).map(key => (
           <TabsContent key={key} value={key}>
-             <div className="flex justify-end mb-4">
+            <div className="flex justify-end mb-4">
               <Button onClick={handleAddNew}>
-                <PlusCircle className="mr-2 h-4 w-4" /> Afegeix Nou
+                <PlusCircle className="mr-2 h-4 w-4" /> Añadir Nuevo
               </Button>
             </div>
+            {key === 'permissionMatrix' && (
+              <Alert className="mb-4 bg-blue-50 border-blue-200 text-blue-800">
+                <Info className="h-4 w-4 !text-blue-800" />
+                <AlertTitle>Representación Visual</AlertTitle>
+                <AlertDescription>
+                  <p>Esta matriz de permisos es una guía visual de cómo se comportará el sistema, pero no aplica las reglas directamente. La lógica de autorización real se define en las <strong>Reglas de Seguridad de Firestore.</strong></p>
+                  <Link href="/firestore-rules" className="mt-2 inline-flex items-center gap-1 font-semibold text-blue-900 hover:underline">
+                    Configurar Reglas de Firestore <ExternalLink className="h-4 w-4" />
+                  </Link>
+                </AlertDescription>
+              </Alert>
+            )}
             <MasterDataTable
               data={data[key].data}
               columns={data[key].columns}
@@ -489,5 +483,5 @@ export function MasterDataManager({ data, onSave, onDelete, activeTab, setActive
         />
       )}
     </>
-  )
+  );
 }

@@ -20,22 +20,22 @@ export function ActionStatusIndicator({ status, isCompliant = null }: ActionStat
       case 'Borrador':
         return {
           label: status,
-          bars: [ 'bg-gray-300', 'bg-gray-300', 'bg-gray-300', 'bg-gray-300' ]
+          bars: [ 'bg-gray-200', 'bg-gray-200', 'bg-gray-200', 'bg-gray-200' ]
         };
       case 'Pendiente Análisis':
         return {
           label: status,
-          bars: [ 'bg-green-500', 'bg-gray-300', 'bg-gray-300', 'bg-gray-300' ]
+          bars: [ 'bg-green-100', 'bg-gray-300', 'bg-gray-300', 'bg-gray-300' ]
         };
       case 'Pendiente Comprobación':
         return {
           label: status,
-          bars: [ 'bg-green-500', 'bg-green-500', 'bg-gray-300', 'bg-gray-300' ]
+          bars: [ 'bg-green-200', 'bg-green-200', 'bg-gray-300', 'bg-gray-300' ]
         };
       case 'Pendiente de Cierre':
         return {
           label: status,
-          bars: [ 'bg-green-500', 'bg-green-500', 'bg-green-500', 'bg-gray-300' ]
+          bars: [ 'bg-green-300', 'bg-green-300', 'bg-green-300', 'bg-gray-300' ]
         };
       case 'Finalizada':
         if (isCompliant === false) {
@@ -56,7 +56,7 @@ export function ActionStatusIndicator({ status, isCompliant = null }: ActionStat
   const { label, bars } = getStatusDetails();
 
   if (!bars) {
-    return null; // Should not happen with the new logic, but good as a safeguard
+    return null;
   }
 
   return (
