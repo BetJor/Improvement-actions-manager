@@ -17,16 +17,22 @@ export default function DashboardPage() {
     if (!user || !actions) return [];
   
     return actions.filter(action => {
-      // It's pending if I am responsible for the analysis
-      const isResponsibleForAnalysis = action.status === 'Pendiente Análisis' && action.responsibleGroupId === user.email;
-      
-      // It's pending if it's a draft I created
+      // It's a draft I created
       const isCreatorOfDraft = action.status === 'Borrador' && action.creator.id === user.id;
 
-      // It's also pending if it's a draft assigned to me (or my group), even if I didn't create it
+      // It's a draft assigned to my group, even if I didn't create it
       const isResponsibleForDraft = action.status === 'Borrador' && action.responsibleGroupId === user.email;
 
-      return isResponsibleForAnalysis || isCreatorOfDraft || isResponsibleForDraft;
+      // I am responsible for the analysis
+      const isResponsibleForAnalysis = action.status === 'Pendiente Análisis' && action.responsibleGroupId === user.email;
+
+      // I am responsible for the verification
+      const isResponsibleForVerification = action.status === 'Pendiente Comprobación' && action.analysis?.verificationResponsibleUserId === user.id;
+
+      // I am the creator, responsible for closure
+      const isResponsibleForClosure = action.status === 'Pendiente de Cierre' && action.creator.id === user.id;
+
+      return isCreatorOfDraft || isResponsibleForDraft || isResponsibleForAnalysis || isResponsibleForVerification || isResponsibleForClosure;
     });
 
   }, [actions, user]);
