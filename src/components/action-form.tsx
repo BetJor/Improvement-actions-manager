@@ -1,5 +1,4 @@
 
-
 "use client"
 
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -128,7 +127,7 @@ export function ActionForm({
             typeId: initialData.typeId || "",
         });
     }
-  }, [initialData, form]);
+  }, [initialData, form.reset]);
 
   useEffect(() => {
     async function checkPrompts() {
@@ -675,3 +674,5 @@ export function ActionForm({
     </>
   )
 }
+
+    
