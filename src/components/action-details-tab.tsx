@@ -326,22 +326,40 @@ export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTab
                     
                     <TabsContent value="details" className="mt-4">
                        <div className="space-y-6">
-                            <div className="flex items-start justify-between gap-4">
-                                {!isEditing && action.status === "Borrador" && (
-                                    <Button onClick={() => setIsEditing(true)} className="ml-auto">
+                            {!isEditing && action.status === "Borrador" && (
+                                <div className="flex items-start justify-between gap-4">
+                                     <Button onClick={() => setIsEditing(true)} className="ml-auto">
                                         <FileEdit className="mr-2 h-4 w-4" /> Editar Borrador
                                     </Button>
-                                )}
-                            </div>
+                                </div>
+                            )}
 
-                            <ActionForm 
-                                mode={isEditing ? 'edit' : 'view'}
-                                initialData={action}
-                                masterData={masterData}
-                                isSubmitting={isSubmitting}
-                                onSubmit={handleEditSubmit}
-                                onCancel={() => setIsEditing(false)}
-                            />
+                           {isEditing ? (
+                                <Card>
+                                    <CardHeader>
+                                        <CardTitle>Editando Acción de Mejora</CardTitle>
+                                        <CardDescription>Estás modificando los detalles de esta acción. Guarda los cambios cuando hayas terminado.</CardDescription>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <ActionForm 
+                                            mode='edit'
+                                            initialData={action}
+                                            masterData={masterData}
+                                            isSubmitting={isSubmitting}
+                                            onSubmit={handleEditSubmit}
+                                            onCancel={() => setIsEditing(false)}
+                                        />
+                                    </CardContent>
+                                </Card>
+                            ) : (
+                                 <ActionForm 
+                                    mode='view'
+                                    initialData={action}
+                                    masterData={masterData}
+                                    isSubmitting={isSubmitting}
+                                    onSubmit={handleEditSubmit}
+                                />
+                            )}
                         </div>
                     </TabsContent>
 
