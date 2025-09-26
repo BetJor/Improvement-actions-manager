@@ -463,10 +463,10 @@ export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTab
                                         <h3 className="font-semibold text-lg mb-4">Estado de las Acciones Propuestas</h3>
                                         <div className="space-y-4">
                                             {action.analysis?.proposedActions.map((pa, index) => (
-                                                <div key={`${pa.id}-${index}`} className={cn("p-4 border rounded-lg", getStatusColorClass(action.verification?.proposedActionsStatus[pa.id]))}>
+                                                <div key={`${pa.id}-${index}`} className="p-4 border rounded-lg">
                                                     <p className="font-medium">{pa.description}</p>
                                                     <p className="text-sm text-muted-foreground mt-1">
-                                                        Estado: <span className="font-semibold">{action.verification?.proposedActionsStatus[pa.id]}</span>
+                                                        Estado: <span className="font-semibold">{action.verification?.proposedActionsVerificationStatus?.[pa.id] || 'Pendiente de Verificación'}</span>
                                                     </p>
                                                 </div>
                                             ))}
@@ -534,5 +534,3 @@ export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTab
         </div>
     )
 }
-
-    

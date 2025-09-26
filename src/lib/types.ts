@@ -78,6 +78,8 @@ export interface WorkflowPlan {
 }
 
 export type ProposedActionStatus = 'Pendent' | 'Implementada' | 'Implementada Parcialment' | 'No Implementada';
+export type ProposedActionVerificationStatus = 'Verificada' | 'No Verificada';
+
 
 export interface ProposedAction {
   id: string;
@@ -172,7 +174,7 @@ export interface ImprovementAction {
     isEffective: boolean;
     verificationDate: string;
     verificationResponsible: ActionUserInfo;
-    proposedActionsStatus: Record<string, ProposedActionStatus>;
+    proposedActionsVerificationStatus: Record<string, ProposedActionVerificationStatus>;
   };
   closure?: {
     notes: string;

@@ -8,12 +8,12 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import type { ImprovementAction, User, ProposedActionStatus } from "@/lib/types"
+import type { ImprovementAction, User, ProposedActionVerificationStatus } from "@/lib/types"
 import { Loader2, Save } from "lucide-react"
 
 const verificationSchema = z.object({
   notes: z.string().min(1, "Las observaciones son requeridas."),
-  proposedActionsStatus: z.record(z.string(), z.enum(["Implementada", "Implementada Parcialment", "No Implementada"])),
+  proposedActionsVerificationStatus: z.record(z.string(), z.enum(["Verificada", "No Verificada"])),
 })
 
 type VerificationFormValues = z.infer<typeof verificationSchema>
@@ -28,15 +28,15 @@ interface VerificationSectionProps {
 export function VerificationSection({ action, user, isSubmitting, onSave }: VerificationSectionProps) {
 
   const defaultStatuses = action.analysis?.proposedActions.reduce((acc, pa) => {
-    acc[pa.id] = action.verification?.proposedActionsStatus[pa.id] || "No Implementada"
+    acc[pa.id] = action.verification?.proposedActionsVerificationStatus?.[pa.id] || "No Verificada";
     return acc
-  }, {} as Record<string, ProposedActionStatus>)
+  }, {} as Record<string, ProposedActionVerificationStatus>)
 
   const form = useForm<VerificationFormValues>({
     resolver: zodResolver(verificationSchema),
     defaultValues: {
       notes: action.verification?.notes || "",
-      proposedActionsStatus: defaultStatuses,
+      proposedActionsVerificationStatus: defaultStatuses,
     },
   })
 
@@ -88,7 +88,7 @@ export function VerificationSection({ action, user, isSubmitting, onSave }: Veri
                 <FormField
                   key={pa.id}
                   control={form.control}
-                  name={`proposedActionsStatus.${pa.id}`}
+                  name={`proposedActionsVerificationStatus.${pa.id}`}
                   render={({ field }) => (
                     <FormItem className="p-4 border rounded-lg">
                       <FormLabel className="font-medium">{pa.description}</FormLabel>
@@ -100,21 +100,15 @@ export function VerificationSection({ action, user, isSubmitting, onSave }: Veri
                         >
                           <FormItem className="flex items-center space-x-2">
                             <FormControl>
-                              <RadioGroupItem value="Implementada" id={`${pa.id}-implemented`} />
+                              <RadioGroupItem value="Verificada" id={`${pa.id}-verified`} />
                             </FormControl>
-                            <FormLabel htmlFor={`${pa.id}-implemented`} className="font-normal">Implementada</FormLabel>
+                            <FormLabel htmlFor={`${pa.id}-verified`} className="font-normal">Verificada</FormLabel>
                           </FormItem>
                           <FormItem className="flex items-center space-x-2">
                             <FormControl>
-                              <RadioGroupItem value="Implementada Parcialment" id={`${pa.id}-partial`} />
+                              <RadioGroupItem value="No Verificada" id={`${pa.id}-not-verified`} />
                             </FormControl>
-                            <FormLabel htmlFor={`${pa.id}-partial`} className="font-normal">Implementada Parcialmente</FormLabel>
-                          </FormItem>
-                          <FormItem className="flex items-center space-x-2">
-                            <FormControl>
-                              <RadioGroupItem value="No Implementada" id={`${pa.id}-not-implemented`} />
-                            </FormControl>
-                            <FormLabel htmlFor={`${pa.id}-not-implemented`} className="font-normal">No Implementada</FormLabel>
+                            <FormLabel htmlFor={`${pa.id}-not-verified`} className="font-normal">No Verificada</FormLabel>
                           </FormItem>
                         </RadioGroup>
                       </FormControl>
