@@ -37,8 +37,8 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command"
+import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover"
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "./ui/command"
 import { Label } from "@/components/ui/label"
 import type { ImprovementAction, ImprovementActionType, ResponsibilityRole, AffectedArea, Center } from "@/lib/types"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "./ui/card"
@@ -102,7 +102,16 @@ export function ActionForm({
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: {
+    defaultValues: initialData ? {
+      title: initialData.title || "",
+      description: initialData.description || "",
+      assignedTo: initialData.assignedTo || "",
+      category: initialData.categoryId || "",
+      subcategory: initialData.subcategoryId || "",
+      affectedAreasIds: initialData.affectedAreasIds || [],
+      centerId: initialData.centerId || "",
+      typeId: initialData.typeId || "",
+    } : {
       title: "",
       category: "",
       subcategory: "",
@@ -114,20 +123,6 @@ export function ActionForm({
     },
   })
 
-  useEffect(() => {
-    if (initialData) {
-        form.reset({
-            title: initialData.title || "",
-            description: initialData.description || "",
-            assignedTo: initialData.assignedTo || "",
-            category: initialData.categoryId || "",
-            subcategory: initialData.subcategoryId || "",
-            affectedAreasIds: initialData.affectedAreasIds || [],
-            centerId: initialData.centerId || "",
-            typeId: initialData.typeId || "",
-        });
-    }
-  }, [initialData, form.reset]);
 
   useEffect(() => {
     async function checkPrompts() {
@@ -175,7 +170,7 @@ export function ActionForm({
                 }
             };
             const resolvedEmail = evaluatePattern(role.emailPattern, context);
-            if (resolvedEmail && !resolvedEmail.includes('{{')) {
+            if (resolvedEmail && !resolvedEmail.includes('{')) {
                options.push({ value: resolvedEmail, label: `${role.name} (${resolvedEmail})` });
             }
         }
@@ -674,5 +669,3 @@ export function ActionForm({
     </>
   )
 }
-
-    
