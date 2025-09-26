@@ -26,13 +26,19 @@ export default function DashboardPage() {
       // I am responsible for the analysis
       const isResponsibleForAnalysis = action.status === 'Pendiente Análisis' && action.responsibleGroupId === user.email;
 
+      // I am responsible for one of the proposed actions that is not yet implemented
+      const isResponsibleForProposedAction = (action.status === 'Pendiente Comprobación' || action.status === 'Pendiente Análisis') &&
+        action.analysis?.proposedActions.some(pa => 
+            pa.responsibleUserId === user.id && pa.status !== 'Implementada'
+        );
+
       // I am responsible for the verification
       const isResponsibleForVerification = action.status === 'Pendiente Comprobación' && action.analysis?.verificationResponsibleUserId === user.id;
 
       // I am the creator, responsible for closure
       const isResponsibleForClosure = action.status === 'Pendiente de Cierre' && action.creator.id === user.id;
 
-      return isCreatorOfDraft || isResponsibleForDraft || isResponsibleForAnalysis || isResponsibleForVerification || isResponsibleForClosure;
+      return isCreatorOfDraft || isResponsibleForDraft || isResponsibleForAnalysis || isResponsibleForProposedAction || isResponsibleForVerification || isResponsibleForClosure;
     });
 
   }, [actions, user]);
