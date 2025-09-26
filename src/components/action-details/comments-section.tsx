@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
-import { MessageSquare, Send, Loader2, ChevronDown } from "lucide-react"
+import { MessageSquare, Send, Loader2, ChevronRight } from "lucide-react"
 import { formatDistanceToNow } from "date-fns"
 import { es } from "date-fns/locale"
 
@@ -77,8 +77,8 @@ export function CommentsSection({ action, onActionUpdate }: CommentsSectionProps
             </CardTitle>
             <div className="flex items-center gap-2">
               <Badge variant="secondary">{(action.comments || []).length}</Badge>
-              <Button variant="ghost" size="icon" className="data-[state=open]:rotate-180">
-                <ChevronDown className="h-4 w-4 transition-transform" />
+              <Button variant="ghost" size="icon" className="data-[state=open]:rotate-90">
+                <ChevronRight className="h-4 w-4 transition-transform" />
               </Button>
             </div>
           </div>

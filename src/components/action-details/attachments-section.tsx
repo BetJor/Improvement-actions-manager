@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-import { Paperclip, Upload, Download, Loader2, ChevronDown } from "lucide-react"
+import { Paperclip, Upload, Download, Loader2, ChevronRight } from "lucide-react"
 import { Badge } from "../ui/badge"
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 
@@ -110,8 +110,8 @@ export function AttachmentsSection({ action, onActionUpdate }: AttachmentsSectio
             </CardTitle>
              <div className="flex items-center gap-2">
                 <Badge variant="secondary">{(action.attachments || []).length}</Badge>
-                <Button variant="ghost" size="icon" className="data-[state=open]:rotate-180">
-                    <ChevronDown className="h-4 w-4 transition-transform" />
+                <Button variant="ghost" size="icon" className="data-[state=open]:rotate-90">
+                    <ChevronRight className="h-4 w-4 transition-transform" />
                 </Button>
             </div>
           </div>

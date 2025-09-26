@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { ActionStatusBadge } from "@/components/action-status-badge"
 import { Separator } from "@/components/ui/separator"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { CircleUser, Calendar, Users, Tag, CalendarClock, Info, ChevronDown } from "lucide-react"
+import { CircleUser, Calendar, Users, Tag, CalendarClock, Info, ChevronRight } from "lucide-react"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { Button } from "@/components/ui/button"
 import { format, parseISO } from "date-fns"
@@ -61,8 +61,8 @@ export function DetailsSection({ action }: DetailsSectionProps) {
               Detalles
             </CardTitle>
             <div className="flex items-center gap-2">
-              <Button variant="ghost" size="icon" className="data-[state=open]:rotate-180">
-                <ChevronDown className="h-4 w-4 transition-transform" />
+              <Button variant="ghost" size="icon" className="data-[state=open]:rotate-90">
+                <ChevronRight className="h-4 w-4 transition-transform" />
               </Button>
             </div>
           </div>
