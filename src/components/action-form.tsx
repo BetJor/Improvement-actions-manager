@@ -123,7 +123,7 @@ export function ActionForm({
   }, []);
 
   useEffect(() => {
-    if (mode !== 'create' && initialData && masterData) {
+    if (mode === 'edit' && initialData) {
         form.reset({
             title: initialData.title || "",
             description: initialData.description || "",
@@ -135,7 +135,7 @@ export function ActionForm({
             typeId: initialData.typeId || "",
         });
     }
-  }, [initialData, masterData, form, mode]);
+  }, [initialData, form, mode]);
 
 
   const selectedCategoryId = form.watch("category");
