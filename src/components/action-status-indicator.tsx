@@ -20,22 +20,22 @@ export function ActionStatusIndicator({ status, isCompliant = null }: ActionStat
       case 'Borrador':
         return {
           label: status,
-          bars: [ 'bg-gray-200', 'bg-gray-200', 'bg-gray-200', 'bg-gray-200' ]
+          bars: [ 'bg-gray-300', 'bg-gray-300', 'bg-gray-300', 'bg-gray-300' ]
         };
       case 'Pendiente Análisis':
         return {
           label: status,
-          bars: [ 'bg-green-100', 'bg-gray-300', 'bg-gray-300', 'bg-gray-300' ]
+          bars: [ 'bg-green-400', 'bg-gray-300', 'bg-gray-300', 'bg-gray-300' ]
         };
       case 'Pendiente Comprobación':
         return {
           label: status,
-          bars: [ 'bg-green-200', 'bg-green-200', 'bg-gray-300', 'bg-gray-300' ]
+          bars: [ 'bg-green-500', 'bg-green-500', 'bg-gray-300', 'bg-gray-300' ]
         };
       case 'Pendiente de Cierre':
         return {
           label: status,
-          bars: [ 'bg-green-300', 'bg-green-300', 'bg-green-300', 'bg-gray-300' ]
+          bars: [ 'bg-green-600', 'bg-green-600', 'bg-green-600', 'bg-gray-300' ]
         };
       case 'Finalizada':
         if (isCompliant === false) {
@@ -46,7 +46,7 @@ export function ActionStatusIndicator({ status, isCompliant = null }: ActionStat
         }
         return {
           label: "Finalizada",
-          bars: [ 'bg-green-500', 'bg-green-500', 'bg-green-500', 'bg-green-500' ]
+          bars: [ 'bg-green-700', 'bg-green-700', 'bg-green-700', 'bg-green-700' ]
         };
       default:
         return { label: status, bars: null };
