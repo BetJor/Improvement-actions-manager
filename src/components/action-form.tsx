@@ -65,6 +65,7 @@ interface ActionFormProps {
     isSubmitting: boolean;
     onSubmit: (values: any, status?: 'Borrador' | 'Pendiente Análisis') => void;
     onCancel?: () => void;
+    key?: string; // Add key prop
 }
 
 const ReadOnlyField = ({ label, value }: { label: string, value?: string | string[] }) => {
@@ -115,15 +116,7 @@ export function ActionForm({
   })
 
   useEffect(() => {
-    async function checkPrompts() {
-      const improvePrompt = await getPrompt("improveWriting");
-      setHasImprovePrompt(!!improvePrompt);
-    }
-    checkPrompts();
-  }, []);
-
-  useEffect(() => {
-    if (mode === 'edit' && initialData) {
+    if (initialData) {
         form.reset({
             title: initialData.title || "",
             description: initialData.description || "",
@@ -135,8 +128,15 @@ export function ActionForm({
             typeId: initialData.typeId || "",
         });
     }
-  }, [initialData, form, mode]);
+  }, [initialData, form]);
 
+  useEffect(() => {
+    async function checkPrompts() {
+      const improvePrompt = await getPrompt("improveWriting");
+      setHasImprovePrompt(!!improvePrompt);
+    }
+    checkPrompts();
+  }, []);
 
   const selectedCategoryId = form.watch("category");
   const selectedActionTypeId = form.watch("typeId");

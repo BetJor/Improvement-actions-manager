@@ -326,14 +326,7 @@ export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTab
                     
                     <TabsContent value="details" className="mt-4">
                        <div className="space-y-6">
-                            {!isEditing && action.status === "Borrador" && (
-                                <div className="flex items-start justify-between gap-4">
-                                     <Button onClick={() => setIsEditing(true)} className="ml-auto">
-                                        <FileEdit className="mr-2 h-4 w-4" /> Editar Borrador
-                                    </Button>
-                                </div>
-                            )}
-
+                           
                            {isEditing ? (
                                 <Card>
                                     <CardHeader>
@@ -342,6 +335,7 @@ export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTab
                                     </CardHeader>
                                     <CardContent>
                                         <ActionForm 
+                                            key={action.id} // Add key to force re-render when action changes
                                             mode='edit'
                                             initialData={action}
                                             masterData={masterData}
@@ -352,6 +346,14 @@ export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTab
                                     </CardContent>
                                 </Card>
                             ) : (
+                                <>
+                                 {action.status === "Borrador" && (
+                                    <div className="flex items-start justify-between gap-4">
+                                        <Button onClick={() => setIsEditing(true)} className="ml-auto">
+                                            <FileEdit className="mr-2 h-4 w-4" /> Editar Borrador
+                                        </Button>
+                                    </div>
+                                 )}
                                  <ActionForm 
                                     mode='view'
                                     initialData={action}
@@ -359,6 +361,7 @@ export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTab
                                     isSubmitting={isSubmitting}
                                     onSubmit={handleEditSubmit}
                                 />
+                                </>
                             )}
                         </div>
                     </TabsContent>
