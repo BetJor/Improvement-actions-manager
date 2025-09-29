@@ -9,23 +9,13 @@ import { useEffect } from "react"
 import { usePathname, useRouter } from "next/navigation"
 import { AppSidebar } from "@/components/app-sidebar"
 import { Header } from "@/components/header"
-import { TabsProvider } from "@/hooks/use-tabs"
+import { TabsProvider, useTabs } from "@/hooks/use-tabs"
 import { DynamicTabs } from "@/components/dynamic-tabs"
 import { SidebarProvider } from "@/components/ui/sidebar"
 import { ActionStateProvider } from "@/hooks/use-action-state"
 import { Loader2 } from "lucide-react"
 
 const inter = Inter({ subsets: ['latin'] })
-
-// Metadata should be exported from a server component, so we keep it separate.
-// However, the layout itself needs to be a client component to use hooks.
-// This is a common pattern. We'll export metadata from a separate, empty layout.
-/*
-export const metadata = {
-  title: "Gestor de Acciones de Mejora",
-  description: "Gestiona y sigue las acciones de mejora a toda tu organización.",
-}
-*/
 
 function MainLayout({ children }: { children: React.ReactNode }) {
     const { tabs, activeTab } = useTabs();
