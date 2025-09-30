@@ -43,7 +43,7 @@ export function LinkedActionSection({ action }: LinkedActionSectionProps) {
 
     openTab({
         path: `/actions/${action.originalActionId}`,
-        title: `Acció ${action.originalActionTitle?.split(':')[0] || action.originalActionId}`,
+        title: `Acción ${action.originalActionTitle?.split(':')[0] || action.originalActionId}`,
         icon: GanttChartSquare,
         isClosable: true,
         loader: actionLoader
@@ -56,15 +56,15 @@ export function LinkedActionSection({ action }: LinkedActionSectionProps) {
       <CardHeader>
         <CardTitle className="text-base flex items-center gap-2">
           <LinkIcon className="h-5 w-5" />
-          Acció Original (BIS)
+          Acción Original (BIS)
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        <p className="text-sm text-muted-foreground">Aquesta acció es va crear a partir del tancament no conforme de l'acció:</p>
+        <p className="text-sm text-muted-foreground">Esta acción se creó a partir del cierre no conforme de la acción:</p>
         <p className="font-semibold">{action.originalActionTitle}</p>
         <Button onClick={handleOpenOriginalAction} variant="outline" size="sm" className="w-full">
             <ExternalLink className="mr-2 h-4 w-4" />
-            Veure Acció Original
+            Ver Acción Original
         </Button>
       </CardContent>
     </Card>
