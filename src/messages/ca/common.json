@@ -12,7 +12,7 @@
     "AppSidebar": {
       "title": "Accions de Millora",
       "toggleNotifications": "Activar/desactivar notificacions",
-      "dashboard": "Panell de Control",
+      "dashboard": "Panel de Control",
       "actions": "Accions",
       "reports": "Informes",
       "myGroups": "Els Meus Grups",
@@ -37,3 +37,4 @@
     }
   }
 }
+

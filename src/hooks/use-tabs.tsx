@@ -148,7 +148,7 @@ export function TabsProvider({ children, initialPath }: { children: ReactNode, i
         if (user && tabs.length === 0) {
             openTab({
                 path: `/dashboard`,
-                title: 'Dashboard',
+                title: 'Panel de Control',
                 icon: Home,
                 isClosable: false,
             });
@@ -187,7 +187,7 @@ export function TabsProvider({ children, initialPath }: { children: ReactNode, i
             setActiveTab(nextActiveTabId);
         } else if (newTabs.length === 0) {
             setActiveTabState(null);
-            openTab({ path: `/dashboard`, title: 'Dashboard', icon: Home, isClosable: false });
+            openTab({ path: `/dashboard`, title: 'Panel de Control', icon: Home, isClosable: false });
         }
     };
 
@@ -220,3 +220,4 @@ export function useTabs() {
     }
     return context;
 }
+
