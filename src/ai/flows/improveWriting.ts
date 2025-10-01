@@ -47,10 +47,12 @@ const improveWritingFlow = ai.defineFlow(
     });
     
     try {
+        console.log("[improveWritingFlow] Input to AI:", input);
         const { output } = await improveWritingPrompt(input);
+        console.log("[improveWritingFlow] Output from AI:", output);
         return output ?? '';
     } catch (error) {
-        console.error("Error executing improveWritingPrompt, returning empty string.", error);
+        console.error("[improveWritingFlow] Error executing improveWritingPrompt:", error);
         // Return an empty string if the prompt execution fails for any reason (e.g. safety settings)
         return '';
     }
