@@ -35,21 +35,24 @@ const improveWritingFlow = ai.defineFlow(
   },
   async (input) => {
     // Get the dynamic prompt from Firestore
-    const promptText = await getPrompt('improveWriting');
+    const promptTemplate = await getPrompt('improveWriting');
 
-    if (!promptText) {
+    if (!promptTemplate) {
       throw new Error("The 'improveWriting' prompt is not configured in the settings.");
     }
+    
+    // Manually construct the full prompt for debugging
+    const fullPrompt = `${promptTemplate}\n\nText a millorar:\n${input.text}`;
+    let debugInfo = `PROMPT CONSTRUÏT ENVIAT A LA IA:\n---------------------------------\n${fullPrompt}\n\n`;
 
     // Define the prompt dynamically to output just a string
     const improveWritingPrompt = ai.definePrompt({
         name: 'improveWritingPrompt',
         input: { schema: ImproveWritingInputSchema },
         output: { schema: z.string() }, // The AI model should return a simple string
-        prompt: `${promptText}\n\nText a millorar:\n{{{text}}}`,
+        prompt: fullPrompt, // Use the fully constructed prompt
     });
     
-    let debugInfo = `Input to AI: "${input.text}"\n`;
     let improvedText = '';
 
     try {
@@ -57,14 +60,14 @@ const improveWritingFlow = ai.defineFlow(
         const { output } = await improveWritingPrompt(input);
         
         improvedText = output ?? '';
-        debugInfo += `Raw Output from AI: "${output}"\nFinal Text: "${improvedText}"`;
+        debugInfo += `RESPOSTA CRUA REBUDA DE LA IA:\n---------------------------------\n${JSON.stringify(output, null, 2)}`;
         console.log("[improveWritingFlow] Output from AI:", output);
         
         return { improvedText, debugInfo };
 
     } catch (error: any) {
         console.error("[improveWritingFlow] Error executing improveWritingPrompt:", error);
-        debugInfo += `Error: ${error.message || 'Unknown error'}`;
+        debugInfo += `ERROR REBUT DE LA IA:\n---------------------\n${error.message || 'Unknown error'}`;
         
         // Return an empty string if the prompt execution fails for any reason
         return { improvedText: '', debugInfo };
