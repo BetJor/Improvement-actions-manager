@@ -41,16 +41,18 @@ const improveWritingFlow = ai.defineFlow(
       throw new Error("The 'improveWriting' prompt is not configured in the settings.");
     }
     
-    // Manually construct the full prompt for debugging
-    const fullPrompt = `${promptTemplate}\n\nText a millorar:\n${input.text}`;
-    let debugInfo = `PROMPT CONSTRUÏT ENVIAT A LA IA:\n---------------------------------\n${fullPrompt}\n\n`;
+    // Manually construct the full prompt for debugging by replacing the placeholder
+    const fullPromptForDebug = promptTemplate.replace('{{{text}}}', input.text);
+    let debugInfo = `PROMPT CONSTRUÏT ENVIAT A LA IA:\n---------------------------------\n${fullPromptForDebug}\n\n`;
 
-    // Define the prompt dynamically to output just a string
+    // Define the prompt dynamically, letting Genkit handle the variable substitution.
     const improveWritingPrompt = ai.definePrompt({
         name: 'improveWritingPrompt',
         input: { schema: ImproveWritingInputSchema },
-        output: { schema: z.string() }, // The AI model should return a simple string
-        prompt: fullPrompt, // Use the fully constructed prompt
+        // The AI is asked to return a JSON with a 'description' field in the prompt.
+        // Let's align the output schema to expect that.
+        output: { schema: z.object({ description: z.string() }) },
+        prompt: promptTemplate, // Use the template directly, Genkit will substitute {{{text}}}
     });
     
     let improvedText = '';
@@ -59,7 +61,8 @@ const improveWritingFlow = ai.defineFlow(
         console.log("[improveWritingFlow] Input to AI:", input);
         const { output } = await improveWritingPrompt(input);
         
-        improvedText = output ?? '';
+        // The output is now an object, e.g., { description: "..." }
+        improvedText = output?.description ?? '';
         debugInfo += `RESPOSTA CRUA REBUDA DE LA IA:\n---------------------------------\n${JSON.stringify(output, null, 2)}`;
         console.log("[improveWritingFlow] Output from AI:", output);
         
