@@ -47,6 +47,6 @@ const improveWritingFlow = ai.defineFlow(
     });
     
     const { output } = await improveWritingPrompt(input);
-    return output!;
+    return output ?? '';
   }
 );
