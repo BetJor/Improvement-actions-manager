@@ -15,8 +15,11 @@ const ImproveWritingInputSchema = z.object({
 });
 export type ImproveWritingInput = z.infer<typeof ImproveWritingInputSchema>;
 
-// The output is now a simple string with the improved description.
-const ImproveWritingOutputSchema = z.string().describe("The improved and detailed description of the non-conformity.");
+// The output is now an object containing the improved text and debug info.
+const ImproveWritingOutputSchema = z.object({
+    improvedText: z.string().describe("The improved and detailed description of the non-conformity."),
+    debugInfo: z.string().describe("Debugging information about the AI call.")
+});
 export type ImproveWritingOutput = z.infer<typeof ImproveWritingOutputSchema>;
 
 export async function improveWriting(input: ImproveWritingInput): Promise<ImproveWritingOutput> {
@@ -38,23 +41,33 @@ const improveWritingFlow = ai.defineFlow(
       throw new Error("The 'improveWriting' prompt is not configured in the settings.");
     }
 
-    // Define the prompt dynamically
+    // Define the prompt dynamically to output just a string
     const improveWritingPrompt = ai.definePrompt({
         name: 'improveWritingPrompt',
         input: { schema: ImproveWritingInputSchema },
-        output: { schema: ImproveWritingOutputSchema },
+        output: { schema: z.string() }, // The AI model should return a simple string
         prompt: `${promptText}\n\nText a millorar:\n{{{text}}}`,
     });
     
+    let debugInfo = `Input to AI: "${input.text}"\n`;
+    let improvedText = '';
+
     try {
         console.log("[improveWritingFlow] Input to AI:", input);
         const { output } = await improveWritingPrompt(input);
+        
+        improvedText = output ?? '';
+        debugInfo += `Raw Output from AI: "${output}"\nFinal Text: "${improvedText}"`;
         console.log("[improveWritingFlow] Output from AI:", output);
-        return output ?? '';
-    } catch (error) {
+        
+        return { improvedText, debugInfo };
+
+    } catch (error: any) {
         console.error("[improveWritingFlow] Error executing improveWritingPrompt:", error);
-        // Return an empty string if the prompt execution fails for any reason (e.g. safety settings)
-        return '';
+        debugInfo += `Error: ${error.message || 'Unknown error'}`;
+        
+        // Return an empty string if the prompt execution fails for any reason
+        return { improvedText: '', debugInfo };
     }
   }
 );

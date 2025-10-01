@@ -95,7 +95,7 @@ export function ActionForm({
   let finalTranscript = '';
 
   const [isImprovingText, setIsImprovingText] = useState(false);
-  const [aiSuggestion, setAiSuggestion] = useState<ImproveWritingOutput | null>(null);
+  const [aiSuggestion, setAiSuggestion] = useState<string | null>(null);
   const [isSuggestionDialogOpen, setIsSuggestionDialogOpen] = useState(false);
   const [hasImprovePrompt, setHasImprovePrompt] = useState(false);
   const [isCenterPopoverOpen, setIsCenterPopoverOpen] = useState(false);
@@ -262,8 +262,23 @@ export function ActionForm({
     setIsImprovingText(true);
     try {
         const response = await improveWriting({ text: currentDescription });
-        setAiSuggestion(response);
-        setIsSuggestionDialogOpen(true);
+        
+        toast({
+            title: "Depuración de IA",
+            description: <pre className="mt-2 w-[340px] rounded-md bg-slate-950 p-4"><code className="text-white whitespace-pre-wrap">{response.debugInfo}</code></pre>,
+            duration: 20000,
+        });
+
+        if (response.improvedText) {
+            setAiSuggestion(response.improvedText);
+            setIsSuggestionDialogOpen(true);
+        } else {
+            toast({
+                variant: "destructive",
+                title: "La IA no ha devuelto sugerencias",
+                description: "El modelo no ha podido generar una mejora para este texto.",
+            });
+        }
     } catch (error) {
         console.error("Error improving text:", error);
         toast({
