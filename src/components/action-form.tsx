@@ -262,7 +262,6 @@ export function ActionForm({
     setIsImprovingText(true);
     try {
         const improvedText = await improveWriting({ text: currentDescription });
-        
         if (improvedText) {
             setAiSuggestion(improvedText);
             setIsSuggestionDialogOpen(true);
@@ -584,7 +583,7 @@ export function ActionForm({
                   <FormControl>
                       <Textarea
                       placeholder="Describe la no conformidad o el área de mejora..."
-                      className="resize-y min-h-[120px] pr-24"
+                      className="resize-y min-h-[120px] pr-[4.5rem]"
                       {...field}
                       disabled={disableForm}
                       />

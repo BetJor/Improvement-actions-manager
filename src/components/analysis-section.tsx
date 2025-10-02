@@ -241,7 +241,7 @@ export function AnalysisSection({ action, user, isSubmitting, onSave }: Analysis
                       <Textarea
                         rows={6}
                         placeholder="Describe el análisis realizado para identificar las causas raíz del problema..."
-                        className="resize-y pr-12"
+                        className="resize-y pr-[4.5rem]"
                         {...field}
                       />
                     </FormControl>
