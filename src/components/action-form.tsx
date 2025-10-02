@@ -579,17 +579,17 @@ export function ActionForm({
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Observaciones</FormLabel>
-                 <div className="flex gap-2 items-start">
+                 <div className="relative">
                     <FormControl>
                         <Textarea
                         placeholder="Describe la no conformidad o el área de mejora..."
-                        className="resize-y min-h-[120px] flex-grow"
+                        className="resize-y min-h-[120px] pr-24"
                         {...field}
                         disabled={disableForm}
                         />
                     </FormControl>
                     {mode !== 'view' && (
-                        <div className="flex flex-col gap-2">
+                        <div className="absolute right-2 top-2 flex flex-col gap-2">
                             <Button 
                                 type="button" 
                                 size="icon" 
