@@ -579,45 +579,45 @@ export function ActionForm({
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Observaciones</FormLabel>
-                 <div className="relative">
-                  <FormControl>
-                      <Textarea
-                      placeholder="Describe la no conformidad o el área de mejora..."
-                      className="resize-y min-h-[120px] pr-[4.5rem]"
-                      {...field}
-                      disabled={disableForm}
-                      />
-                  </FormControl>
-                  {mode !== 'view' && (
-                    <div className="absolute right-2 top-2 flex flex-col gap-2">
-                        <Button 
-                            type="button" 
-                            size="icon" 
-                            variant="ghost" 
-                            onClick={toggleRecording}
-                            disabled={disableForm}
-                            className={cn("h-8 w-8", isRecording && "bg-red-500/20 text-red-500 hover:bg-red-500/30 hover:text-red-500")}
-                            title="Activar/desactivar el micrófono"
-                        >
-                            {isRecording ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
-                            <span className="sr-only">{isRecording ? "Detener grabación" : "Iniciar grabación"}</span>
-                        </Button>
-                        {hasImprovePrompt && (
-                          <Button 
-                              type="button" 
-                              size="icon" 
-                              variant="ghost" 
-                              onClick={handleImproveText}
-                              disabled={disableForm || isImprovingText}
-                              className="h-8 w-8"
-                              title="Mejorar texto con IA"
-                          >
-                              {isImprovingText ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}
-                              <span className="sr-only">Mejorar texto con IA</span>
-                          </Button>
-                        )}
-                    </div>
-                  )}
+                 <div className="flex gap-2 items-start">
+                    <FormControl>
+                        <Textarea
+                        placeholder="Describe la no conformidad o el área de mejora..."
+                        className="resize-y min-h-[120px] flex-grow"
+                        {...field}
+                        disabled={disableForm}
+                        />
+                    </FormControl>
+                    {mode !== 'view' && (
+                        <div className="flex flex-col gap-2">
+                            <Button 
+                                type="button" 
+                                size="icon" 
+                                variant="ghost" 
+                                onClick={toggleRecording}
+                                disabled={disableForm}
+                                className={cn("h-8 w-8", isRecording && "bg-red-500/20 text-red-500 hover:bg-red-500/30 hover:text-red-500")}
+                                title="Activar/desactivar el micrófono"
+                            >
+                                {isRecording ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+                                <span className="sr-only">{isRecording ? "Detener grabación" : "Iniciar grabación"}</span>
+                            </Button>
+                            {hasImprovePrompt && (
+                              <Button 
+                                  type="button" 
+                                  size="icon" 
+                                  variant="ghost" 
+                                  onClick={handleImproveText}
+                                  disabled={disableForm || isImprovingText}
+                                  className="h-8 w-8"
+                                  title="Mejorar texto con IA"
+                              >
+                                  {isImprovingText ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}
+                                  <span className="sr-only">Mejorar texto con IA</span>
+                              </Button>
+                            )}
+                        </div>
+                    )}
                  </div>
                 <FormMessage />
               </FormItem>
