@@ -589,7 +589,7 @@ export function ActionForm({
                         />
                     </FormControl>
                     {mode !== 'view' && (
-                        <div className="absolute right-2 top-2 flex flex-col gap-2">
+                        <div className="absolute right-3 top-2 flex flex-col gap-2">
                             <Button 
                                 type="button" 
                                 size="icon" 
