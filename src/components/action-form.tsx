@@ -28,7 +28,7 @@ import { useToast } from "@/hooks/use-toast"
 import { useState, useMemo, useEffect, useRef } from "react"
 import { Loader2, Mic, MicOff, Wand2, Save, Send, Ban, ChevronsUpDown, Check } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { improveWriting, type ImproveWritingOutput } from "@/ai/flows/improveWriting"
+import { improveWriting } from "@/ai/flows/improveWriting"
 import {
   Dialog,
   DialogContent,
@@ -261,16 +261,10 @@ export function ActionForm({
 
     setIsImprovingText(true);
     try {
-        const response = await improveWriting({ text: currentDescription });
+        const improvedText = await improveWriting({ text: currentDescription });
         
-        toast({
-            title: "Depuración de IA",
-            description: <pre className="mt-2 w-[340px] rounded-md bg-slate-950 p-4"><code className="text-white whitespace-pre-wrap">{response.debugInfo}</code></pre>,
-            duration: 20000,
-        });
-
-        if (response.improvedText) {
-            setAiSuggestion(response.improvedText);
+        if (improvedText) {
+            setAiSuggestion(improvedText);
             setIsSuggestionDialogOpen(true);
         } else {
             toast({

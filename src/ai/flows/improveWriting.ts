@@ -15,11 +15,8 @@ const ImproveWritingInputSchema = z.object({
 });
 export type ImproveWritingInput = z.infer<typeof ImproveWritingInputSchema>;
 
-// The output is now an object containing the improved text and debug info.
-const ImproveWritingOutputSchema = z.object({
-    improvedText: z.string().describe("The improved and detailed description of the non-conformity."),
-    debugInfo: z.string().describe("Debugging information about the AI call.")
-});
+// The output is just the improved text string.
+const ImproveWritingOutputSchema = z.string().describe("The improved and detailed description of the non-conformity.");
 export type ImproveWritingOutput = z.infer<typeof ImproveWritingOutputSchema>;
 
 export async function improveWriting(input: ImproveWritingInput): Promise<ImproveWritingOutput> {
@@ -40,10 +37,6 @@ const improveWritingFlow = ai.defineFlow(
     if (!promptTemplate) {
       throw new Error("The 'improveWriting' prompt is not configured in the settings.");
     }
-    
-    // Manually construct the full prompt for debugging by replacing the placeholder
-    const fullPromptForDebug = promptTemplate.replace('{{{text}}}', input.text);
-    let debugInfo = `PROMPT CONSTRUÏT ENVIAT A LA IA:\n---------------------------------\n${fullPromptForDebug}\n\n`;
 
     // Define the prompt dynamically, letting Genkit handle the variable substitution.
     const improveWritingPrompt = ai.definePrompt({
@@ -55,25 +48,19 @@ const improveWritingFlow = ai.defineFlow(
         prompt: promptTemplate, // Use the template directly, Genkit will substitute {{{text}}}
     });
     
-    let improvedText = '';
-
     try {
         console.log("[improveWritingFlow] Input to AI:", input);
         const { output } = await improveWritingPrompt(input);
-        
-        // The output is now an object, e.g., { description: "..." }
-        improvedText = output?.description ?? '';
-        debugInfo += `RESPOSTA CRUA REBUDA DE LA IA:\n---------------------------------\n${JSON.stringify(output, null, 2)}`;
         console.log("[improveWritingFlow] Output from AI:", output);
         
-        return { improvedText, debugInfo };
+        // Return the description field from the output object, or an empty string if it fails
+        return output?.description ?? '';
 
     } catch (error: any) {
         console.error("[improveWritingFlow] Error executing improveWritingPrompt:", error);
-        debugInfo += `ERROR REBUT DE LA IA:\n---------------------\n${error.message || 'Unknown error'}`;
         
         // Return an empty string if the prompt execution fails for any reason
-        return { improvedText: '', debugInfo };
+        return '';
     }
   }
 );
