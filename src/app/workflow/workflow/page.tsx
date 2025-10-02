@@ -73,16 +73,6 @@ export default function WorkflowPage() {
                         { key: 'emailPattern', label: 'Patró Email' },
                     ] 
                 },
-                 permissionMatrix: {
-                    title: "Matriu de Permisos",
-                    data: permissionRulesWithNames,
-                    columns: [
-                        { key: 'actionTypeName', label: "Tipus d'Acció" },
-                        { key: 'status', label: 'Estat' },
-                        { key: 'readerRoleNames', label: 'Lectors' },
-                        { key: 'authorRoleNames', label: 'Autors' },
-                    ],
-                },
             };
             setMasterData(data);
             

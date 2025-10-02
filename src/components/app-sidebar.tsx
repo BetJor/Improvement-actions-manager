@@ -55,7 +55,6 @@ export function AppSidebar() {
   const adminSettingsNavItems = [
     { href: `/settings`, icon: Settings, label: "Configuración", isTab: true },
     { href: `/workflow`, icon: GanttChartSquare, label: "Workflow", isTab: true },
-    { href: `/firestore-rules`, icon: FileLock2, label: "Reglas de Firestore", isTab: true },
     { href: `/ai-settings`, icon: Sparkles, label: "Configuración IA", isTab: true },    
     { href: `/user-management`, icon: Users, label: "Gestión de Usuarios", isTab: true },
   ]
@@ -85,4 +84,5 @@ export function AppSidebar() {
     </Sidebar>
   )
 }
+
 
