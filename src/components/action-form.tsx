@@ -177,8 +177,13 @@ export function ActionForm({
       }
     });
 
+    // Ensure the initialData.assignedTo value is in the options list if it exists
+    if (initialData?.assignedTo && !options.some(opt => opt.value === initialData.assignedTo)) {
+        options.push({ value: initialData.assignedTo, label: initialData.assignedTo });
+    }
+
     return options;
-  }, [selectedActionTypeId, selectedCenterId, masterData, user]);
+  }, [selectedActionTypeId, selectedCenterId, masterData, user, initialData?.assignedTo]);
 
   useEffect(() => {
     form.resetField("assignedTo", { defaultValue: "" });
@@ -677,5 +682,3 @@ export function ActionForm({
     </>
   )
 }
-
-    
