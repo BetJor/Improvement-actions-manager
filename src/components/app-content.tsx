@@ -19,7 +19,7 @@ function MainLayout({ children }: { children: React.ReactNode }) {
             <Header />
             <div className="flex flex-1 overflow-hidden">
                 <AppSidebar />
-                <main className="flex-1 flex flex-col bg-background/60 overflow-y-auto p-4 sm:p-6">
+                <main className="flex-1 flex flex-col overflow-y-auto p-4 sm:p-6">
                     <div className="mb-6">
                         <DynamicTabs />
                     </div>
