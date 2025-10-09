@@ -570,3 +570,5 @@ export const seedActions: ImprovementAction[] = [
 
 // Reemplazar la exportación inicial con la nueva
 export const initialActions: ImprovementAction[] = seedActions;
+
+    
