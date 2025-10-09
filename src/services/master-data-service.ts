@@ -13,9 +13,13 @@ export const getActionTypes = async (): Promise<ImprovementActionType[]> => {
   const typesCol = collection(db, 'actionTypes');
   let snapshot = await getDocs(query(typesCol, orderBy("name")));
 
-  if (snapshot.empty && !isSeedingMasterData) {
-      isSeedingMasterData = true; // Prevenir ejecuciones concurrentes
-      console.log("ActionTypes collection is empty. Populating with seed data...");
+  // Check if seed data is needed by verifying a specific document
+  const seedCheckDoc = doc(db, 'actionTypes', 'type-i');
+  const seedCheckSnap = await getDoc(seedCheckDoc);
+
+  if (!seedCheckSnap.exists() && !isSeedingMasterData) {
+      isSeedingMasterData = true; 
+      console.log("ActionTypes seed data is missing. Populating...");
       try {
           const batch = writeBatch(db);
           seedActionTypes.forEach(item => {
@@ -24,6 +28,7 @@ export const getActionTypes = async (): Promise<ImprovementActionType[]> => {
           });
           await batch.commit();
           snapshot = await getDocs(query(typesCol, orderBy("name"))); // Re-fetch
+          console.log("ActionTypes collection seeded successfully.");
       } catch(error) {
           console.error("Error seeding actionTypes:", error);
       } finally {
@@ -38,9 +43,12 @@ export const getCategories = async (): Promise<ActionCategory[]> => {
   const categoriesCol = collection(db, 'categories');
   let snapshot = await getDocs(query(categoriesCol, orderBy("name")));
 
-  if (snapshot.empty && !isSeedingMasterData) {
+  const seedCheckDoc = doc(db, 'categories', 'cat-1');
+  const seedCheckSnap = await getDoc(seedCheckDoc);
+
+  if (!seedCheckSnap.exists() && !isSeedingMasterData) {
     isSeedingMasterData = true;
-    console.log("Categories collection is empty. Populating with seed data...");
+    console.log("Categories seed data is missing. Populating...");
     try {
         const batch = writeBatch(db);
         seedCategories.forEach(item => {
@@ -49,6 +57,7 @@ export const getCategories = async (): Promise<ActionCategory[]> => {
         });
         await batch.commit();
         snapshot = await getDocs(query(categoriesCol, orderBy("name")));
+        console.log("Categories collection seeded successfully.");
     } catch(error) {
         console.error("Error seeding categories:", error);
     } finally {
@@ -63,9 +72,12 @@ export const getSubcategories = async (): Promise<ActionSubcategory[]> => {
   const subcategoriesCol = collection(db, 'subcategories');
   let snapshot = await getDocs(query(subcategoriesCol, orderBy("name")));
 
-  if (snapshot.empty && !isSeedingMasterData) {
+  const seedCheckDoc = doc(db, 'subcategories', 'sub-1-1');
+  const seedCheckSnap = await getDoc(seedCheckDoc);
+  
+  if (!seedCheckSnap.exists() && !isSeedingMasterData) {
     isSeedingMasterData = true;
-    console.log("Subcategories collection is empty. Populating with seed data...");
+    console.log("Subcategories seed data is missing. Populating...");
     try {
         const batch = writeBatch(db);
         seedSubcategories.forEach(item => {
@@ -74,6 +86,7 @@ export const getSubcategories = async (): Promise<ActionSubcategory[]> => {
         });
         await batch.commit();
         snapshot = await getDocs(query(subcategoriesCol, orderBy("name")));
+        console.log("Subcategories collection seeded successfully.");
     } catch(error) {
         console.error("Error seeding subcategories:", error);
     } finally {
@@ -87,9 +100,12 @@ export const getAffectedAreas = async (): Promise<AffectedArea[]> => {
   const affectedAreasCol = collection(db, 'affectedAreas');
   let snapshot = await getDocs(query(affectedAreasCol, orderBy("name")));
 
-  if (snapshot.empty && !isSeedingMasterData) {
+  const seedCheckDoc = doc(db, 'affectedAreas', 'area-admin');
+  const seedCheckSnap = await getDoc(seedCheckDoc);
+
+  if (!seedCheckSnap.exists() && !isSeedingMasterData) {
     isSeedingMasterData = true;
-    console.log("AffectedAreas collection is empty. Populating with seed data...");
+    console.log("AffectedAreas seed data is missing. Populating...");
     try {
         const batch = writeBatch(db);
         seedAffectedAreas.forEach(item => {
@@ -98,6 +114,7 @@ export const getAffectedAreas = async (): Promise<AffectedArea[]> => {
         });
         await batch.commit();
         snapshot = await getDocs(query(affectedAreasCol, orderBy("name")));
+        console.log("AffectedAreas collection seeded successfully.");
     } catch(error) {
         console.error("Error seeding affectedAreas:", error);
     } finally {
