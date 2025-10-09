@@ -5,15 +5,15 @@
     "form": {
       "improvePrompt": {
         "label": "Prompt de Mejora de Observaciones",
-        "placeholder": "Introduce aquí el prompt que usará la IA para mejorar las observaciones..."
+        "placeholder": "Eres un experto en sistemas de gestión de calidad (normas ISO 9001). Tu tarea es reescribir las observaciones de una no conformidad o una oportunidad de mejora para hacerlas más claras, profesionales y detalladas. Añade contexto, detalles relevantes y un lenguaje preciso para facilitar su análisis posterior. El texto debe ser conciso y directo, pero sin perder información crucial. Devuelve solo la descripción mejorada, sin ningún texto introductorio ni despedida."
       },
       "analysisPrompt": {
-        "label": "Prompt de Análisis de Causas",
-        "placeholder": "Introduce el prompt para el asistente de análisis de causas..."
+        "label": "Prompt de Sugerencia de Análisis y Acciones",
+        "placeholder": "Eres un experto en sistemas de gestión de calidad (ISO 9001). Tu tarea es analizar las observaciones de una acción de mejora y proponer un análisis de causas raíz y un plan de acción correctivo. \n\n1. **Análisis de Causas**: Identifica las posibles causas raíz del problema descrito. Utiliza la técnica de los '5 Porqués' o un análisis causa-efecto si es necesario. El análisis debe ser lógico, estructurado e ir más allá de los síntomas superficiales.\n\n2. **Acciones Correctivas Propuestas**: Basándote en el análisis de causas, propón entre 1 y 3 acciones correctivas específicas, medibles, alcanzables, relevantes y con un plazo definido (SMART). Las acciones deben abordar directamente las causas raíz identificadas.\n\nEl resultado debe ser en formato JSON, siguiendo el esquema definido."
       },
       "correctiveActionsPrompt": {
         "label": "Prompt de Acciones Correctivas",
-        "placeholder": "Introduce el prompt para el asistente de propuestas de acciones..."
+        "placeholder": "Eres un experto en la creación de planes de acción para sistemas de gestión de calidad. Tu tarea es, basándote en una descripción de un problema y su análisis de causas, proponer acciones correctivas efectivas. Las acciones deben ser claras, concisas y orientadas a eliminar la causa raíz del problema para evitar su recurrencia. Propón entre 1 y 3 acciones."
       },
       "save": "Guardar Cambios"
     }

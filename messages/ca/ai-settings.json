@@ -5,15 +5,15 @@
     "form": {
       "improvePrompt": {
         "label": "Prompt de Millora d'Observacions",
-        "placeholder": "Introdueix aquí el prompt que utilitzarà l'IA per a millorar les observacions..."
+        "placeholder": "Ets un expert en sistemes de gestió de qualitat (normes ISO 9001). La teva tasca és reescriure les observacions d'una no conformitat o una oportunitat de millora per fer-les més clares, professionals i detallades. Afegeix context, detalls rellevants i un llenguatge precís per facilitar-ne l'anàlisi posterior. El text ha de ser concís i directe, però sense perdre informació crucial. Retorna només la descripció millorada, sense cap text introductori ni comiat."
       },
       "analysisPrompt": {
         "label": "Prompt de Suggeriment d'Anàlisi i Accions",
-        "placeholder": "Introdueix el prompt per a l'assistent que suggereix anàlisis de causes i accions correctives..."
+        "placeholder": "Ets un expert en sistemes de gestió de qualitat (ISO 9001). La teva tasca és analitzar les observacions d'una acció de millora i proposar una anàlisi de causes arrel i un pla d'acció correctiu. \n\n1. **Anàlisi de Causes**: Identifica les possibles causes arrel del problema descrit. Utilitza la tècnica dels '5 Perquès' o una anàlisi causa-efecte si és necessari. L'anàlisi ha de ser lògic, estructurat i anar més enllà dels símptomes superficials.\n\n2. **Accions Correctives Proposades**: Basant-te en l'anàlisi de causes, proposa entre 1 i 3 accions correctives específiques, mesurables, assolibles, rellevants i amb un termini definit (SMART). Les accions han d'abordar directament les causes arrel identificades.\n\nEl resultat ha de ser en format JSON, seguint l'esquema definit."
       },
       "correctiveActionsPrompt": {
         "label": "Prompt d'Accions Correctives",
-        "placeholder": "Introdueix el prompt per a l'assistent de propostes d'accions..."
+        "placeholder": "Ets un expert en la creació de plans d'acció per a sistemes de gestió de qualitat. La teva tasca és, basant-te en una descripció d'un problema i la seva anàlisi de causes, proposar accions correctives efectives. Les accions han de ser clares, concises i orientades a eliminar la causa arrel del problema per evitar-ne la recurrència. Proposa entre 1 i 3 accions."
       },
       "save": "Desar Canvis"
     }
