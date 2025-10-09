@@ -1,4 +1,5 @@
 
+
 import { collection, doc, getDoc, getDocs, addDoc, updateDoc, query, orderBy, limit, arrayUnion, Timestamp, runTransaction, arrayRemove, where, writeBatch, setDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { format, parse } from 'date-fns';
@@ -339,40 +340,40 @@ export async function updateAction(actionId: string, data: any, masterData?: any
             transaction.update(actionDocRef, { "analysis.proposedActions": updatedProposedActions });
         });
     } else {
-        // This is a general update, likely from the main form or a status change
-        
-        let processedData: any = {};
-        
-        // If masterData is present, we're editing the draft details
-        if (masterData) {
-            processedData = {
-                title: data.title,
-                description: data.description,
-                assignedTo: data.assignedTo,
-                responsibleGroupId: data.assignedTo,
-                category: masterData.categories.find((c: any) => c.id === data.category)?.name || data.category,
-                categoryId: data.category,
-                subcategory: masterData.subcategories.find((s: any) => s.id === data.subcategory)?.name || data.subcategory,
-                subcategoryId: data.subcategory,
-                affectedAreas: data.affectedAreasIds.map((id: string) => masterData.affectedAreas.find((a: any) => a.id === id)?.name || id),
-                affectedAreasIds: data.affectedAreasIds,
-                center: masterData.centers.find((c: any) => c.id === data.centerId)?.name || data.centerId,
-                centerId: data.centerId,
-                type: masterData.actionTypes.find((t: any) => t.id === data.typeId)?.name || data.typeId,
-                typeId: data.typeId,
-            };
-        } else {
-            // It's a workflow step update (analysis, verification, closure)
-            processedData = { ...data };
-        }
+      let processedData: any = {};
+  
+      // If masterData is available, it means we are editing the core details
+      if (masterData) {
+          processedData = {
+              title: data.title,
+              description: data.description,
+              assignedTo: data.assignedTo,
+              responsibleGroupId: data.assignedTo,
+              category: masterData.categories.find((c: any) => c.id === data.category)?.name || data.category,
+              categoryId: data.category,
+              subcategory: masterData.subcategories.find((s: any) => s.id === data.subcategory)?.name || data.subcategory,
+              subcategoryId: data.subcategory,
+              affectedAreas: data.affectedAreasIds.map((id: string) => masterData.affectedAreas.find((a: any) => a.id === id)?.name || id),
+              affectedAreasIds: data.affectedAreasIds,
+              center: masterData.centers.find((c: any) => c.id === data.centerId)?.name || data.centerId,
+              centerId: data.centerId,
+              type: masterData.actionTypes.find((t: any) => t.id === data.typeId)?.name || data.typeId,
+              typeId: data.typeId,
+          };
+      } else {
+          // Otherwise, it's a workflow step update (analysis, verification, closure)
+          processedData = { ...data };
+      }
+  
+      // If a new status is provided (e.g., from 'Borrador' to 'Pendiente Análisis'),
+      // it must be preserved.
+      if (status) {
+          console.log(`[ActionService] A new status was provided and will be applied: ${status}`);
+          processedData.status = status;
+      }
+  
+      dataToUpdate = processedData;
 
-        // If a new status is provided, it should always take precedence.
-        if (status) {
-            processedData.status = status;
-        }
-
-        dataToUpdate = processedData;
-        
         // Auto-follow if sent to analysis
         if (status === 'Pendiente Análisis' && originalAction.creator?.id) {
             dataToUpdate.followers = arrayUnion(originalAction.creator.id);
@@ -407,6 +408,7 @@ export async function updateAction(actionId: string, data: any, masterData?: any
         
         // Apply updates to Firestore
         if (Object.keys(dataToUpdate).length > 0) {
+            console.log("[ActionService] Updating Firestore with:", dataToUpdate);
             await updateDoc(actionDocRef, dataToUpdate);
         }
     }
@@ -524,3 +526,5 @@ export async function updateActionPermissions(actionId: string, typeId: string, 
 }
 
     
+
+  

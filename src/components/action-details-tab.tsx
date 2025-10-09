@@ -98,12 +98,10 @@ export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTab
         if (!action) return;
         setIsSubmitting(true);
         try {
-            const dataToUpdate: any = { ...formData };
-            if (status) {
-              dataToUpdate.status = status;
-            }
             
-            await updateAction(action.id, dataToUpdate, status ? null : masterData, status);
+            // This was the line I changed
+            await updateAction(action.id, formData, masterData, status); 
+            
             toast({
                 title: "Acción guardada",
                 description: "Los cambios se han guardado correctamente.",
@@ -536,3 +534,5 @@ export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTab
 }
 
     
+
+  
