@@ -9,7 +9,7 @@ import { getUsers, getUserById } from './users-service';
 import { getCategories, getSubcategories, getAffectedAreas, getCenters, getActionTypes, getResponsibilityRoles } from './master-data-service';
 import { getPermissionRuleForState, resolveRoles } from './permissions-service';
 import { sendStateChangeEmail } from './notification-service';
-import { seedActions } from '@/lib/actions-seed-data';
+import { seedActionsData } from '@/lib/actions-seed-data';
 
 interface CreateActionData extends Omit<ImprovementAction, 'id' | 'actionId' | 'status' | 'creationDate' | 'category' | 'subcategory' | 'type' | 'affectedAreas' | 'center' | 'analysisDueDate' | 'implementationDueDate' | 'closureDueDate' | 'readers' | 'authors' > {
   status: 'Borrador' | 'Pendiente Análisis';
@@ -34,15 +34,21 @@ export const getActions = async (): Promise<ImprovementAction[]> => {
         isSeeding = true;
         console.log("Actions collection is empty. Populating with seed data...");
         try {
-            const batch = writeBatch(db);
-            
-            // Set all documents in the batch with predefined IDs
-            seedActions.forEach(action => {
-                const docRef = doc(db, 'actions', action.id);
-                batch.set(docRef, action);
-            });
-    
-            await batch.commit();
+            // Get all master data to resolve names
+            const allMasterData = {
+                categories: await getCategories(),
+                subcategories: await getSubcategories(),
+                affectedAreas: await getAffectedAreas(),
+                centers: await getCenters(),
+                actionTypes: await getActionTypes(),
+                responsibilityRoles: await getResponsibilityRoles(),
+            };
+
+            for (const seed of seedActionsData) {
+                // We cast to any because the seed data is partial
+                const actionToCreate = seed as any;
+                await createAction(actionToCreate, allMasterData, true);
+            }
     
             console.log("Actions collection populated with seed data.");
             
@@ -180,7 +186,7 @@ export const getActionById = async (id: string): Promise<ImprovementAction | nul
 }
 
 // Function to create a new action
-export async function createAction(data: CreateActionData, masterData: any): Promise<ImprovementAction> {
+export async function createAction(data: CreateActionData, masterData: any, isSeedingRun: boolean = false): Promise<ImprovementAction> {
     const actionsCol = collection(db, 'actions');
   
     // 1. Get the last actionId to generate the new one
@@ -191,8 +197,14 @@ export async function createAction(data: CreateActionData, masterData: any): Pro
     if (!lastActionSnapshot.empty) {
       const lastAction = lastActionSnapshot.docs[0].data();
       const lastId = lastAction.actionId || "AM-24000";
-      const lastNumber = parseInt(lastId.split('-')[1].substring(2));
-      newActionIdNumber = lastNumber + 1;
+      // Ensure we handle IDs that might not match the expected format during initial seeding
+      const parts = lastId.split('-');
+      if (parts.length > 1 && parts[1].length > 2) {
+        const lastNumber = parseInt(lastId.split('-')[1].substring(2));
+        if (!isNaN(lastNumber)) {
+            newActionIdNumber = lastNumber + 1;
+        }
+      }
     }
   
     const year = new Date().getFullYear().toString().substring(2);
@@ -205,8 +217,8 @@ export async function createAction(data: CreateActionData, masterData: any): Pro
     const creatorDetails = await getUserById(data.creator.id);
 
     // Find names from IDs
-    const categoryName = masterData.categories.find((c: any) => c.id === data.category)?.name || data.category;
-    const subcategoryName = masterData.subcategories.find((s: any) => s.id === data.subcategory)?.name || data.subcategory;
+    const categoryName = masterData.categories.find((c: any) => c.id === data.categoryId)?.name || data.categoryId;
+    const subcategoryName = masterData.subcategories.find((s: any) => s.id === data.subcategoryId)?.name || data.subcategoryId;
     const affectedAreasNames = data.affectedAreasIds.map(id => masterData.affectedAreas.find((a: any) => a.id === id)?.name || id);
     const centerName = masterData.centers.find((c: any) => c.id === data.centerId)?.name || data.centerId;
     const typeName = masterData.actionTypes.find((t: any) => t.id === data.typeId)?.name || data.typeId;
@@ -215,9 +227,9 @@ export async function createAction(data: CreateActionData, masterData: any): Pro
       actionId: newActionId,
       title: data.title,
       category: categoryName,
-      categoryId: data.category,
+      categoryId: data.categoryId,
       subcategory: subcategoryName,
-      subcategoryId: data.subcategory,
+      subcategoryId: data.subcategoryId,
       description: data.description,
       type: typeName,
       typeId: data.typeId,
@@ -241,6 +253,8 @@ export async function createAction(data: CreateActionData, masterData: any): Pro
       followers: [],
       readers: [],
       authors: [],
+      ...(data.originalActionId && { originalActionId: data.originalActionId }),
+      ...(data.originalActionTitle && { originalActionTitle: data.originalActionTitle }),
     };
   
     // 3. Plan the workflow using the traditional method
@@ -267,8 +281,8 @@ export async function createAction(data: CreateActionData, masterData: any): Pro
     const docRef = await addDoc(actionsCol, newActionData);
     const newAction = { id: docRef.id, ...newActionData } as ImprovementAction;
 
-    // 8. Handle status change logic if not a draft
-    if (newAction.status !== 'Borrador') {
+    // 8. Handle status change logic if not a draft and not a seeding run
+    if (newAction.status !== 'Borrador' && !isSeedingRun) {
         await handleStatusChange(newAction, 'Borrador');
     }
     
