@@ -73,7 +73,7 @@ function SortableItem({ id, children }: { id: string, children: React.ReactNode 
 export function DashboardClient({ actions, assignedActions }: DashboardClientProps) {
   const { openTab } = useTabs();
   const { user, updateDashboardLayout } = useAuth();
-  const [items, setItems] = useState<string[]>(user?.dashboardLayout || defaultLayout);
+  const [items, setItems] = useState<string[]>([]);
   
   const { handleToggleFollow, isFollowing } = useFollowAction();
 
@@ -84,12 +84,14 @@ export function DashboardClient({ actions, assignedActions }: DashboardClientPro
 
 
   useEffect(() => {
-    // If the user has a layout, use it. Otherwise, use the default.
-    // This ensures that even if the user prop updates, we have a sensible default.
-    if (user?.dashboardLayout && user.dashboardLayout.length > 0) {
-        setItems(user.dashboardLayout);
-    } else {
+    const userLayout = user?.dashboardLayout;
+    // Check if the user layout contains all available widgets. If not, use the default.
+    const isLayoutIncomplete = !userLayout || !defaultLayout.every(widget => userLayout.includes(widget));
+
+    if (isLayoutIncomplete) {
         setItems(defaultLayout);
+    } else {
+        setItems(userLayout);
     }
   }, [user]);
 
