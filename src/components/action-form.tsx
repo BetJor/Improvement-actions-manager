@@ -302,8 +302,7 @@ export function ActionForm({
     };
 
     const handleDraftSubmit = () => {
-        const values = form.getValues();
-        onSubmit(values, 'Borrador');
+        form.handleSubmit((values) => onSubmit(values, 'Borrador'))();
     };
   
   const disableForm = isSubmitting || mode === 'view';
