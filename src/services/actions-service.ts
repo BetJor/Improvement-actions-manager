@@ -287,7 +287,7 @@ async function handleStatusChange(action: ImprovementAction, oldStatus: Improvem
 
 
 // Function to update an existing action
-export async function updateAction(actionId: string, data: any, masterData?: any, status?: 'Borrador' | 'Pendiente Análisis'): Promise<ImprovementAction | null> {
+export async function updateAction(actionId: string, data: any, masterData: any | null = null, status?: 'Borrador' | 'Pendiente Análisis'): Promise<ImprovementAction | null> {
     const actionDocRef = doc(db, 'actions', actionId);
     const originalActionSnap = await getDoc(actionDocRef);
     if (!originalActionSnap.exists()) {
@@ -295,9 +295,8 @@ export async function updateAction(actionId: string, data: any, masterData?: any
     }
     const originalAction = { id: originalActionSnap.id, ...originalActionSnap.data() } as ImprovementAction;
     
-    let dataToUpdate: any = { ...data };
+    let dataToUpdate: any = {};
     
-    // Handle specific update types first
     if (data.newComment) {
         await updateDoc(actionDocRef, { comments: arrayUnion(data.newComment) });
     } else if (data.updateProposedActionStatus) {
@@ -317,11 +316,12 @@ export async function updateAction(actionId: string, data: any, masterData?: any
             transaction.update(actionDocRef, { "analysis.proposedActions": updatedProposedActions });
         });
     } else {
-      let processedData: any = {};
-  
-      // If masterData is available, it means we are editing the core details
-      if (masterData) {
-          processedData = {
+        // If masterData is NOT provided, it's a direct update (e.g., workflow step)
+        if (!masterData) {
+            dataToUpdate = { ...data };
+        } else {
+            // Reprocess names from IDs, but only if masterData is passed
+            dataToUpdate = {
               title: data.title,
               description: data.description,
               assignedTo: data.assignedTo,
@@ -336,23 +336,17 @@ export async function updateAction(actionId: string, data: any, masterData?: any
               centerId: data.centerId,
               type: masterData.actionTypes.find((t: any) => t.id === data.typeId)?.name || data.typeId,
               typeId: data.typeId,
-          };
-      } else {
-          // Otherwise, it's a workflow step update (analysis, verification, closure)
-          processedData = { ...data };
-      }
+            };
+        }
   
-      // If a new status is provided (e.g., from 'Borrador' to 'Pendiente Análisis'),
-      // it must be preserved.
-      if (status) {
-          console.log(`[ActionService] A new status was provided and will be applied: ${status}`);
-          processedData.status = status;
-      }
+        // Crucially, if a new status is provided, it must be preserved.
+        if (status) {
+            console.log(`[ActionService] Applying new status from parameters: ${status}`);
+            dataToUpdate.status = status;
+        }
   
-      dataToUpdate = processedData;
-
         // Auto-follow if sent to analysis
-        if (status === 'Pendiente Análisis' && originalAction.creator?.id) {
+        if (dataToUpdate.status === 'Pendiente Análisis' && originalAction.status === 'Borrador' && originalAction.creator?.id) {
             dataToUpdate.followers = arrayUnion(originalAction.creator.id);
         }
 
