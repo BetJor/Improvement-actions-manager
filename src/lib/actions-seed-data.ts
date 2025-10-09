@@ -1,6 +1,6 @@
 
 import { ImprovementAction } from './types';
-import { addDays, format } from 'date-fns';
+import { addDays, subDays, format } from 'date-fns';
 
 function formatDateISO(date: Date): string {
     return format(date, "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
@@ -8,480 +8,565 @@ function formatDateISO(date: Date): string {
 
 const today = new Date();
 
-export const initialActions: ImprovementAction[] = [
-{
-  "id": "0Kk5Au6bnIkVCvhhZ4GB",
-  "followers": [
-    "user-admin"
-  ],
-  "readers": [
-    "admin@example.com",
-    "quality-management@example.com"
-  ],
-  "affectedAreasIds": [
-    "area-cardio",
-    "area-admin"
-  ],
-  "typeId": "type-nc",
-  "creationDate": "2025-09-13T11:18:54.335Z",
-  "responsibleGroupId": "quality-management@example.com",
-  "authors": [
-    "quality-management@example.com"
-  ],
-  "actionId": "AM-24007",
-  "implementationDueDate": "2025-10-28T12:18:54.335Z",
-  "category": "Calidad Asistencial",
-  "creator": {
-    "avatar": "https://i.pravatar.cc/150?u=admin",
-    "id": "user-admin",
-    "email": "admin@example.com",
-    "name": "Admin User"
-  },
-  "title": "Errores en el consentimiento informado para pruebas de esfuerzo BIS",
-  "affectedAreas": [
-    "Cardiología",
-    "Admisión"
-  ],
-  "closureDueDate": "2025-11-12T12:18:54.335Z",
-  "assignedTo": "quality-management@example.com",
-  "originalActionId": "pfjYu0zIiN8WgeWBpxD4",
-  "status": "Pendiente Análisis",
-  "subcategoryId": "sub-6-1",
-  "originalActionTitle": "AM-24006: Errores en el consentimiento informado para pruebas de esfuerzo",
-  "analysisDueDate": "2025-10-13T11:18:54.335Z",
-  "categoryId": "cat-6",
-  "type": "No Conformidad",
-  "description": "Esta acción es una continuación de la AM-24006. El objetivo es asegurar la impartición de la formación al personal de admisión sobre el nuevo protocolo de consentimiento informado.\n\n--- \nObservaciones de cierre no conforme:\nLa acción no ha sido eficaz, ya que la medida formativa, considerada clave, no se ha implantado. Se procede a cerrar esta acción como 'No Conforme' y se abre una acción BIS para gestionar la formación pendiente.",
-  "subcategory": "Documentación Clínica",
-  "center": "0885 - Hospital Sant Cugat",
-  "centerId": "0885"
-},
-{
-  "id": "0pPUB71b2cbyrv0IOXAr",
-  "readers": [
-    "miguel.perez@example.com",
-    "it-legacy-systems@example.com",
-    "user-admin@example.com"
-  ],
-  "authors": [
-    "user-admin@example.com"
-  ],
-  "subcategoryId": "sub-5-1",
-  "analysisDueDate": "2025-08-24T11:18:54.335Z",
-  "closure": {
-    "notes": "Se da por cerrada la incidencia. El problema de software ha sido resuelto y se han tomado medidas para que no vuelva a ocurrir.",
-    "isCompliant": true,
-    "closureResponsible": {
-      "name": "Admin User",
-      "id": "user-admin",
-      "avatar": "https://i.pravatar.cc/150?u=admin",
-      "email": "admin@example.com"
+export const seedActions: ImprovementAction[] = [
+    // 1. Finalizada (Conforme) - Rápida
+    {
+        id: "seed-01",
+        actionId: "AM-24001",
+        title: "Incidencia puntual con el software de citaciones",
+        description: "El día 15/07/2024 el software de citaciones 'CitaMed' estuvo inoperativo durante 1 hora. Se resolvió reiniciando el servidor. El impacto fue menor, afectando a 5 pacientes que fueron re-citados telefónicamente.",
+        type: "Incidencia",
+        typeId: "type-i",
+        status: "Finalizada",
+        category: "Sistemas de Información",
+        categoryId: "cat-5",
+        subcategory: "Software de Gestión",
+        subcategoryId: "sub-5-1",
+        affectedAreas: ["Admisión", "IT"],
+        affectedAreasIds: ["area-admin", "area-it"],
+        center: "0885 - Hospital Sant Cugat",
+        centerId: "0885",
+        creator: { id: "user-8", name: "Miguel Perez", email: "miguel.perez@example.com", avatar: "https://i.pravatar.cc/150?u=a042581f4e29026708d" },
+        responsibleGroupId: "it-legacy-systems@example.com",
+        assignedTo: "it-legacy-systems@example.com",
+        creationDate: formatDateISO(subDays(today, 60)),
+        analysisDueDate: formatDateISO(subDays(today, 45)),
+        implementationDueDate: formatDateISO(subDays(today, 30)),
+        closureDueDate: formatDateISO(subDays(today, 15)),
+        followers: ["user-admin"],
+        readers: [], authors: [],
+        analysis: {
+            causes: "La caída del servicio se debió a una saturación de memoria puntual en el servidor de aplicaciones por un proceso no identificado.",
+            proposedActions: [{ id: "pa-seed-01", description: "Monitorizar el servidor durante una semana para identificar la causa raíz.", responsibleUserId: "user-5", dueDate: formatDateISO(subDays(today, 50)), status: "Implementada" }],
+            verificationResponsibleUserId: "user-2",
+            analysisResponsible: { id: "user-5", name: "Sofía Hernandez", avatar: "https://i.pravatar.cc/150?u=a0425e8ff4e29026704d" },
+            analysisDate: formatDateISO(subDays(today, 55)),
+        },
+        verification: {
+            notes: "La monitorización no reveló nuevas incidencias. El problema se considera puntual y resuelto.",
+            isEffective: true,
+            verificationDate: formatDateISO(subDays(today, 40)),
+            verificationResponsible: { id: "user-2", name: "Carlos Rodríguez", avatar: "https://i.pravatar.cc/150?u=a042581f4e29026704d" },
+            proposedActionsVerificationStatus: { "pa-seed-01": "Verificada" }
+        },
+        closure: {
+            notes: "Se cierra la incidencia al no haberse repetido el problema. Se atribuye a una sobrecarga puntual.",
+            isCompliant: true,
+            date: formatDateISO(subDays(today, 20)),
+            closureResponsible: { id: "user-8", name: "Miguel Perez", avatar: "https://i.pravatar.cc/150?u=a042581f4e29026708d" },
+        }
     },
-    "date": "2025-09-18T11:18:54.335Z"
-  },
-  "creator": {
-    "email": "miguel.perez@example.com",
-    "id": "user-8",
-    "avatar": "https://i.pravatar.cc/150?u=a042581f4e29026708d",
-    "name": "Miguel Perez"
-  },
-  "category": "Sistemas de Información",
-  "verification": {
-    "notes": "El script se ha modificado y monitorizado durante 2 semanas. No se han vuelto a producir picos de consumo de memoria y el servicio ha estado estable.",
-    "verificationResponsible": {
-      "avatar": "https://i.pravatar.cc/150?u=a0425e8ff4e29026704d",
-      "name": "Sofía Hernandez",
-      "id": "user-5"
+    // 2. Finalizada (No Conforme) -> Genera la #3
+    {
+        id: "seed-02",
+        actionId: "AM-24002",
+        title: "Errores en el consentimiento informado para pruebas de esfuerzo",
+        description: "Se han detectado varios casos en los que los pacientes firman el consentimiento para pruebas de esfuerzo utilizando una versión desactualizada del documento.",
+        type: "No Conformidad",
+        typeId: "type-nc",
+        status: "Finalizada",
+        category: "Calidad Asistencial",
+        categoryId: "cat-6",
+        subcategory: "Documentación Clínica",
+        subcategoryId: "sub-6-1",
+        affectedAreas: ["Cardiología", "Admisión"],
+        affectedAreasIds: ["area-cardio", "area-admin"],
+        center: "0101 - Llodio",
+        centerId: "0101",
+        creator: { id: "user-4", name: "Javier López", email: "javier.lopez@example.com", avatar: "https://i.pravatar.cc/150?u=a042581f4e29026708c" },
+        responsibleGroupId: "quality-management@example.com",
+        assignedTo: "quality-management@example.com",
+        creationDate: formatDateISO(subDays(today, 90)),
+        analysisDueDate: formatDateISO(subDays(today, 75)),
+        implementationDueDate: formatDateISO(subDays(today, 60)),
+        closureDueDate: formatDateISO(subDays(today, 45)),
+        followers: ["user-admin"],
+        readers: [], authors: [],
+        analysis: {
+            causes: "La versión digital del documento no estaba actualizada en el sistema de gestión documental.",
+            proposedActions: [
+                { id: "pa-seed-02", description: "Actualizar el documento en el sistema.", responsibleUserId: "user-5", dueDate: formatDateISO(subDays(today, 70)), status: "Implementada" },
+                { id: "pa-seed-03", description: "Realizar formación al personal de admisión.", responsibleUserId: "user-1", dueDate: formatDateISO(subDays(today, 65)), status: "No Implementada" }
+            ],
+            verificationResponsibleUserId: "user-4",
+            analysisResponsible: { id: "user-1", name: "Ana García", avatar: "https://i.pravatar.cc/150?u=a042581f4e29026024d" },
+            analysisDate: formatDateISO(subDays(today, 80)),
+        },
+        verification: {
+            notes: "El documento se actualizó, pero la formación clave no se realizó por problemas de agenda.",
+            isEffective: false,
+            verificationDate: formatDateISO(subDays(today, 55)),
+            verificationResponsible: { id: "user-4", name: "Javier López", avatar: "https://i.pravatar.cc/150?u=a042581f4e29026708c" },
+            proposedActionsVerificationStatus: { "pa-seed-02": "Verificada", "pa-seed-03": "No Verificada" }
+        },
+        closure: {
+            notes: "Cierre no conforme. La acción formativa es crucial y no se ha realizado. Se genera acción BIS para asegurar su cumplimiento.",
+            isCompliant: false,
+            date: formatDateISO(subDays(today, 50)),
+            closureResponsible: { id: "user-4", name: "Javier López", avatar: "https://i.pravatar.cc/150?u=a042581f4e29026708c" },
+        }
     },
-    "verificationDate": "2025-09-13T11:18:54.335Z",
-    "proposedActionsStatus": {
-      "pa-5": "Implementada"
+    // 3. Pendiente Análisis (BIS de la #2)
+    {
+        id: "seed-03",
+        actionId: "AM-24003",
+        title: "Errores en el consentimiento informado para pruebas de esfuerzo BIS",
+        description: "Acción creada a partir del cierre no conforme de la AM-24002. El objetivo es asegurar la impartición de la formación al personal de admisión sobre el nuevo protocolo de consentimiento informado.",
+        type: "No Conformidad",
+        typeId: "type-nc",
+        status: "Pendiente Análisis",
+        category: "Calidad Asistencial",
+        categoryId: "cat-6",
+        subcategory: "Documentación Clínica",
+        subcategoryId: "sub-6-1",
+        affectedAreas: ["Cardiología", "Admisión"],
+        affectedAreasIds: ["area-cardio", "area-admin"],
+        center: "0101 - Llodio",
+        centerId: "0101",
+        creator: { id: "user-4", name: "Javier López", email: "javier.lopez@example.com", avatar: "https://i.pravatar.cc/150?u=a042581f4e29026708c" },
+        responsibleGroupId: "quality-management@example.com",
+        assignedTo: "quality-management@example.com",
+        originalActionId: "seed-02",
+        originalActionTitle: "AM-24002: Errores en el consentimiento informado para pruebas de esfuerzo",
+        creationDate: formatDateISO(subDays(today, 49)),
+        analysisDueDate: formatDateISO(subDays(today, 19)),
+        implementationDueDate: formatDateISO(addDays(today, 26)),
+        closureDueDate: formatDateISO(addDays(today, 41)),
+        followers: ["user-admin"],
+        readers: [], authors: []
     },
-    "isEffective": true
-  },
-  "actionId": "AM-24005",
-  "status": "Finalizada",
-  "type": "Incidencia",
-  "followers": [
-    "user-admin",
-    "user-8"
-  ],
-  "affectedAreasIds": [
-    "area-admin",
-    "area-it"
-  ],
-  "affectedAreas": [
-    "Admisión",
-    "IT"
-  ],
-  "subcategory": "Software de Gestión",
-  "assignedTo": "it-legacy-systems@example.com",
-  "responsibleGroupId": "it-legacy-systems@example.com",
-  "categoryId": "cat-5",
-  "description": "El día 15/07/2024 el software de citaciones 'CitaMed' estuvo inoperativo durante 3 horas, provocando la cancelación de 25 visitas y la reasignación manual de otras 40. Los pacientes mostraron su descontento.",
-  "title": "Incidencia con el software de citaciones",
-  "creationDate": "2025-08-09T11:18:54.335Z",
-  "implementationDueDate": "2025-09-08T11:18:54.335Z",
-  "closureDueDate": "2025-09-18T11:18:54.335Z",
-  "typeId": "type-i",
-  "analysis": {
-    "analysisResponsible": {
-      "avatar": "https://i.pravatar.cc/150?u=a0425e8ff4e29026704d",
-      "name": "Sofía Hernandez",
-      "id": "user-5"
+    // 4. Pendiente Comprobación
+    {
+        id: "seed-04",
+        actionId: "AM-24004",
+        title: "Optimización del proceso de facturación a mutuas",
+        description: "El proceso actual de facturación a las mutuas colaboradoras es manual y propenso a errores, generando retrasos en los cobros. Se propone evaluar e implantar una solución de automatización.",
+        type: "Oportunidad de Mejora",
+        typeId: "type-om",
+        status: "Pendiente Comprobación",
+        category: "Procesos Financieros",
+        categoryId: "cat-2",
+        subcategory: "Facturación",
+        subcategoryId: "sub-2-1",
+        affectedAreas: ["Administración", "Finanzas"],
+        affectedAreasIds: ["area-admin", "area-finance"],
+        center: "1601 - Cuenca",
+        centerId: "1601",
+        creator: { id: "user-1", name: "Ana García", email: "ana.garcia@example.com", avatar: "https://i.pravatar.cc/150?u=a042581f4e29026024d" },
+        responsibleGroupId: "finance@example.com",
+        assignedTo: "finance@example.com",
+        creationDate: formatDateISO(subDays(today, 40)),
+        analysisDueDate: formatDateISO(subDays(today, 25)),
+        implementationDueDate: formatDateISO(subDays(today, 10)),
+        closureDueDate: formatDateISO(addDays(today, 5)),
+        followers: ["user-1"],
+        readers: [], authors: [],
+        analysis: {
+            causes: "El proceso depende de la introducción manual de datos en hojas de cálculo, sin validaciones. La falta de integración entre sistemas obliga a duplicar información.",
+            proposedActions: [
+                { id: "pa-seed-04", description: "Evaluar 3 herramientas de software para la automatización de facturas.", responsibleUserId: "user-2", dueDate: formatDateISO(subDays(today, 30)), status: "Implementada" },
+                { id: "pa-seed-05", description: "Realizar una prueba de concepto con la herramienta seleccionada.", responsibleUserId: "user-6", dueDate: formatDateISO(subDays(today, 15)), status: "Implementada" }
+            ],
+            verificationResponsibleUserId: "user-1",
+            analysisResponsible: { id: "user-2", name: "Carlos Rodríguez", avatar: "https://i.pravatar.cc/150?u=a042581f4e29026704d" },
+            analysisDate: formatDateISO(subDays(today, 35)),
+        }
     },
-    "causes": "La caída del servicio se debió a una saturación de la base de datos por un proceso nocturno de backup mal configurado que no liberaba la memoria.",
-    "proposedActions": [
-      {
-        "description": "Reprogramar y optimizar el script de backup para que se ejecute en horas de baja concurrencia.",
-        "id": "pa-5",
-        "responsibleUserId": "user-5",
-        "dueDate": "2025-09-03T11:18:54.335Z",
-        "status": "Implementada"
-      }
-    ],
-    "analysisDate": "2025-08-19T11:18:54.335Z",
-    "verificationResponsibleUserId": "user-5"
-  },
-  "center": "1601 - Cuenca",
-  "centerId": "1601"
-},
-{
-  "id": "3ktRjGLNB6Dfn7V7rFL4",
-  "assignedTo": "finance@example.com",
-  "creator": {
-    "email": "ana.garcia@example.com",
-    "name": "Ana García",
-    "id": "user-1",
-    "avatar": "https://i.pravatar.cc/150?u=a042581f4e29026024d"
-  },
-  "analysisDueDate": "2025-09-13T11:18:54.335Z",
-  "typeId": "type-om",
-  "creationDate": "2025-09-03T11:18:54.335Z",
-  "implementationDueDate": "2025-10-18T11:18:54.335Z",
-  "subcategory": "Facturación",
-  "subcategoryId": "sub-2-1",
-  "authors": [
-    "user-6@example.com"
-  ],
-  "categoryId": "cat-2",
-  "actionId": "AM-24002",
-  "readers": [
-    "ana.garcia@example.com",
-    "finance@example.com",
-    "user-6@example.com"
-  ],
-  "status": "Pendiente Comprobación",
-  "title": "Optimización del proceso de facturación a mutuas",
-  "responsibleGroupId": "finance@example.com",
-  "analysis": {
-    "analysisResponsible": {
-      "name": "Carlos Rodríguez",
-      "avatar": "https://i.pravatar.cc/150?u=a042581f4e29026704d",
-      "id": "user-2"
+    // 5. Pendiente de Cierre
+    {
+        id: "seed-05",
+        actionId: "AM-24005",
+        title: "Falta de EPIs en almacén para personal de limpieza",
+        description: "El personal de limpieza ha reportado en varias ocasiones la falta de guantes y mascarillas FFP2 en el almacén, teniendo que reutilizar material.",
+        type: "Reclamación",
+        typeId: "type-r",
+        status: "Pendiente de Cierre",
+        category: "Seguridad y Salud",
+        categoryId: "cat-3",
+        subcategory: "Equipos de Protección Individual (EPI)",
+        subcategoryId: "sub-3-1",
+        affectedAreas: ["Prevención de Riesgos", "Limpieza"],
+        affectedAreasIds: ["area-prl", "area-cleaning"],
+        center: "0702 - Manacor",
+        centerId: "0702",
+        creator: { id: "user-7", name: "Elena Gomez", email: "elena.gomez@example.com", avatar: "https://i.pravatar.cc/150?u=a04258114e29026702e" },
+        responsibleGroupId: "risk-management@example.com",
+        assignedTo: "risk-management@example.com",
+        creationDate: formatDateISO(subDays(today, 50)),
+        analysisDueDate: formatDateISO(subDays(today, 35)),
+        implementationDueDate: formatDateISO(subDays(today, 20)),
+        closureDueDate: formatDateISO(subDays(today, 5)),
+        followers: ["user-admin"],
+        readers: [], authors: [],
+        analysis: {
+            causes: "El proveedor principal de EPIs ha tenido roturas de stock. El sistema de inventario no generó alertas de stock mínimo a tiempo.",
+            proposedActions: [
+                { id: "pa-seed-06", description: "Contratar un segundo proveedor homologado para EPIs críticos.", responsibleUserId: "user-4", dueDate: formatDateISO(subDays(today, 30)), status: "Implementada" },
+                { id: "pa-seed-07", description: "Configurar alertas automáticas de stock mínimo en el sistema de gestión.", responsibleUserId: "user-5", dueDate: formatDateISO(subDays(today, 25)), status: "Implementada" }
+            ],
+            verificationResponsibleUserId: "user-1",
+            analysisResponsible: { id: "user-5", name: "Sofía Hernandez", avatar: "https://i.pravatar.cc/150?u=a0425e8ff4e29026704d" },
+            analysisDate: formatDateISO(subDays(today, 40)),
+        },
+        verification: {
+            notes: "Se ha comprobado que el segundo proveedor está dado de alta y se han recibido los primeros pedidos. Las alertas de stock funcionan correctamente.",
+            isEffective: true,
+            verificationDate: formatDateISO(subDays(today, 15)),
+            verificationResponsible: { id: "user-1", name: "Ana García", avatar: "https://i.pravatar.cc/150?u=a042581f4e29026024d" },
+            proposedActionsVerificationStatus: { "pa-seed-06": "Verificada", "pa-seed-07": "Verificada" }
+        }
     },
-    "analysisDate": "2025-09-08T11:18:54.335Z",
-    "verificationResponsibleUserId": "user-6",
-    "causes": "El proceso depende de la introducción manual de datos en hojas de cálculo, sin validaciones automáticas. La falta de integración entre el sistema de gestión de pacientes y el de facturación obliga a duplicar la información.",
-    "proposedActions": [
-      {
-        "responsibleUserId": "user-2",
-        "status": "Implementada",
-        "description": "Evaluar 3 herramientas de software para la automatización de facturas.",
-        "id": "pa-1",
-        "dueDate": "2025-09-28T11:18:54.335Z"
-      },
-      {
-        "responsibleUserId": "user-6",
-        "description": "Realizar una prueba de concepto con la herramienta seleccionada.",
-        "id": "pa-2",
-        "status": "Implementada Parcialment",
-        "dueDate": "2025-10-13T11:18:54.335Z"
-      }
-    ]
-  },
-  "affectedAreasIds": [
-    "area-admin",
-    "area-finance"
-  ],
-  "closureDueDate": "2025-11-02T12:18:54.335Z",
-  "category": "Procesos Financieros",
-  "type": "Oportunidad de Mejora",
-  "description": "El proceso actual de facturación a las mutuas colaboradoras es manual y propenso a errores, generando retrasos en los cobros. Se propone evaluar e implantar una solución de automatización.",
-  "followers": [
-    "user-5"
-  ],
-  "affectedAreas": [
-    "Administración",
-    "Finanzas"
-  ],
-  "center": "0302 - Elche-Elx",
-  "centerId": "0302"
-},
-{
-  "id": "WUQprox3GKfusVrGekIF",
-  "subcategoryId": "sub-4-1",
-  "readers": [
-    "carlos.rodriguez@example.com"
-  ],
-  "title": "Mejora del protocolo de rehabilitación para lesiones de hombro",
-  "analysisDueDate": "2025-10-18T11:18:54.335Z",
-  "description": "Los fisioterapeutas sugieren revisar y actualizar el protocolo de rehabilitación para manguito rotador, incorporando nuevas técnicas de terapia manual y ejercicios isométricos que han demostrado mayor eficacia en estudios recientes.",
-  "authors": [
-    "carlos.rodriguez@example.com"
-  ],
-  "responsibleGroupId": "quality-management@example.com",
-  "typeId": "type-s",
-  "creator": {
-    "name": "Carlos Rodríguez",
-    "id": "user-2",
-    "email": "carlos.rodriguez@example.com",
-    "avatar": "https://i.pravatar.cc/150?u=a042581f4e29026704d"
-  },
-  "categoryId": "cat-4",
-  "affectedAreasIds": [
-    "area-physio"
-  ],
-  "status": "Borrador",
-  "assignedTo": "quality-management@example.com",
-  "type": "Sugerencia",
-  "actionId": "AM-24004",
-  "affectedAreas": [
-    "Fisioterapia"
-  ],
-  "subcategory": "Protocolos Clínicos",
-  "implementationDueDate": "2025-12-02T12:18:54.335Z",
-  "followers": [],
-  "creationDate": "2025-09-18T11:18:54.335Z",
-  "category": "Asistencia Sanitaria",
-  "closureDueDate": "2025-12-17T12:18:54.335Z",
-  "center": "0702 - Manacor",
-  "centerId": "0702"
-},
-{
-  "id": "bSxXPu2G7OrgDPVMGp5j",
-  "creator": {
-    "email": "laura.martinez@example.com",
-    "id": "user-3",
-    "name": "Laura Martinez",
-    "avatar": "https://i.pravatar.cc/150?u=a04258114e29026702d"
-  },
-  "responsibleGroupId": "customer-support@example.com",
-  "subcategory": "Control de Ausentismo",
-  "followers": [
-    "user-1"
-  ],
-  "type": "No Conformidad",
-  "affectedAreas": [
-    "Recursos Humanos"
-  ],
-  "categoryId": "cat-1",
-  "category": "Gestión de Personal",
-  "creationDate": "2025-08-24T11:18:54.335Z",
-  "typeId": "type-nc",
-  "title": "Retraso en la notificación de bajas por IT",
-  "affectedAreasIds": [
-    "area-hr"
-  ],
-  "analysisDueDate": "2025-09-23T11:18:54.335Z",
-  "status": "Pendiente Análisis",
-  "assignedTo": "customer-support@example.com",
-  "closureDueDate": "2025-11-22T12:18:54.335Z",
-  "subcategoryId": "sub-1-1",
-  "readers": [
-    "laura.martinez@example.com",
-    "customer-support@example.com"
-  ],
-  "description": "Se ha detectado un retraso sistemático en la comunicación de las bajas por Incapacidad Temporal por parte de los trabajadores, lo que dificulta la gestión de sustituciones y la planificación de recursos humanos.",
-  "authors": [
-    "customer-support@example.com"
-  ],
-  "implementationDueDate": "2025-11-07T12:18:54.335Z",
-  "actionId": "AM-24001",
-  "center": "0702 - Manacor",
-  "centerId": "0702"
-},
-{
-  "id": "f6y2OMXiqdWLzULGyzoX",
-  "status": "Pendiente de Cierre",
-  "type": "Reclamación",
-  "affectedAreasIds": [
-    "area-prl",
-    "area-cleaning"
-  ],
-  "affectedAreas": [
-    "Prevención de Riesgos",
-    "Limpieza"
-  ],
-  "categoryId": "cat-3",
-  "subcategory": "Equipos de Protección Individual (EPI)",
-  "creationDate": "2025-09-13T11:18:54.335Z",
-  "responsibleGroupId": "risk-management@example.com",
-  "followers": [
-    "user-admin"
-  ],
-  "implementationDueDate": "2025-10-13T11:18:54.335Z",
-  "description": "El personal de limpieza del centro de Cornellà ha reportado en varias ocasiones la falta de guantes y mascarillas FFP2 en el almacén, teniendo que reutilizar material o utilizar EPIs de categoría inferior.",
-  "authors": [
-    "elena.gomez@example.com"
-  ],
-  "closureDueDate": "2025-10-28T12:18:54.335Z",
-  "assignedTo": "risk-management@example.com",
-  "analysis": {
-    "analysisDate": "2025-09-18T11:18:54.335Z",
-    "proposedActions": [
-      {
-        "status": "Implementada",
-        "responsibleUserId": "user-4",
-        "id": "pa-3",
-        "dueDate": "2025-10-03T11:18:54.335Z",
-        "description": "Contratar un segundo proveedor homologado para EPIs críticos."
-      },
-      {
-        "description": "Configurar alertas automáticas de stock mínimo en el sistema de gestión.",
-        "dueDate": "2025-10-08T11:18:54.335Z",
-        "id": "pa-4",
-        "responsibleUserId": "user-5",
-        "status": "Implementada"
-      }
-    ],
-    "verificationResponsibleUserId": "user-1",
-    "causes": "El proveedor de EPIs ha tenido roturas de stock. El sistema de inventario no generó alertas de stock mínimo a tiempo.",
-    "analysisResponsible": {
-      "avatar": "https://i.pravatar.cc/150?u=a0425e8ff4e29026704d",
-      "id": "user-5",
-      "name": "Sofía Hernandez"
+    // 6. Borrador
+    {
+        id: "seed-06",
+        actionId: "AM-24006",
+        title: "Mejora del protocolo de rehabilitación para lesiones de hombro",
+        description: "Los fisioterapeutas sugieren revisar y actualizar el protocolo de rehabilitación para manguito rotador, incorporando nuevas técnicas de terapia manual y ejercicios isométricos.",
+        type: "Sugerencia",
+        typeId: "type-s",
+        status: "Borrador",
+        category: "Asistencia Sanitaria",
+        categoryId: "cat-4",
+        subcategory: "Protocolos Clínicos",
+        subcategoryId: "sub-4-1",
+        affectedAreas: ["Fisioterapia"],
+        affectedAreasIds: ["area-physio"],
+        center: "0302 - Elche-Elx",
+        centerId: "0302",
+        creator: { id: "user-2", name: "Carlos Rodríguez", email: "carlos.rodriguez@example.com", avatar: "https://i.pravatar.cc/150?u=a042581f4e29026704d" },
+        responsibleGroupId: "quality-management@example.com",
+        assignedTo: "quality-management@example.com",
+        creationDate: formatDateISO(subDays(today, 5)),
+        analysisDueDate: formatDateISO(addDays(today, 25)),
+        implementationDueDate: formatDateISO(addDays(today, 70)),
+        closureDueDate: formatDateISO(addDays(today, 85)),
+        followers: [],
+        readers: [], authors: []
+    },
+    // 7. Pendiente Análisis
+    {
+        id: "seed-07",
+        actionId: "AM-24007",
+        title: "Retraso en la notificación de bajas por IT",
+        description: "Se ha detectado un retraso sistemático en la comunicación de las bajas por Incapacidad Temporal por parte de los trabajadores, lo que dificulta la gestión de sustituciones y la planificación de recursos humanos.",
+        type: "No Conformidad",
+        typeId: "type-nc",
+        status: "Pendiente Análisis",
+        category: "Gestión de Personal",
+        categoryId: "cat-1",
+        subcategory: "Control de Ausentismo",
+        subcategoryId: "sub-1-1",
+        affectedAreas: ["Recursos Humanos"],
+        affectedAreasIds: ["area-hr"],
+        center: "0885 - Hospital Sant Cugat",
+        centerId: "0885",
+        creator: { id: "user-3", name: "Laura Martinez", email: "laura.martinez@example.com", avatar: "https://i.pravatar.cc/150?u=a04258114e29026702d" },
+        responsibleGroupId: "customer-support@example.com",
+        assignedTo: "customer-support@example.com",
+        creationDate: formatDateISO(subDays(today, 12)),
+        analysisDueDate: formatDateISO(addDays(today, 18)),
+        implementationDueDate: formatDateISO(addDays(today, 63)),
+        closureDueDate: formatDateISO(addDays(today, 78)),
+        followers: ["user-1"],
+        readers: [], authors: []
+    },
+    // 8. Finalizada (Antigua)
+    {
+        id: "seed-08",
+        actionId: "AM-23050",
+        title: "Revisión anual de extintores",
+        description: "Revisión anual obligatoria de todos los extintores del centro de Manacor, según normativa de seguridad.",
+        type: "Mantenimiento",
+        typeId: "type-m",
+        status: "Finalizada",
+        category: "Seguridad y Salud",
+        categoryId: "cat-3",
+        subcategory: "Mantenimiento Preventivo",
+        subcategoryId: "sub-3-2",
+        affectedAreas: ["Mantenimiento"],
+        affectedAreasIds: ["area-maint"],
+        center: "0702 - Manacor",
+        centerId: "0702",
+        creator: { id: "user-admin", name: "Admin User", email: "admin@example.com", avatar: "https://i.pravatar.cc/150?u=admin" },
+        responsibleGroupId: "risk-management@example.com",
+        assignedTo: "risk-management@example.com",
+        creationDate: formatDateISO(subDays(today, 380)),
+        analysisDueDate: formatDateISO(subDays(today, 365)),
+        implementationDueDate: formatDateISO(subDays(today, 350)),
+        closureDueDate: formatDateISO(subDays(today, 340)),
+        followers: [],
+        readers: [], authors: [],
+        analysis: {
+            causes: "Proceso de mantenimiento programado anual.",
+            proposedActions: [{ id: "pa-seed-08", description: "Realizar inspección visual y de presión de todos los extintores y sellar.", responsibleUserId: "user-6", dueDate: formatDateISO(subDays(today, 370)), status: "Implementada" }],
+            verificationResponsibleUserId: "user-4",
+            analysisResponsible: { id: "user-6", name: "David Fernandez", avatar: "https://i.pravatar.cc/150?u=a042581f4e29026704f" },
+            analysisDate: formatDateISO(subDays(today, 375)),
+        },
+        verification: {
+            notes: "Se confirma que todos los extintores han sido revisados y están operativos.",
+            isEffective: true,
+            verificationDate: formatDateISO(subDays(today, 360)),
+            verificationResponsible: { id: "user-4", name: "Javier López", avatar: "https://i.pravatar.cc/150?u=a042581f4e29026708c" },
+            proposedActionsVerificationStatus: { "pa-seed-08": "Verificada" }
+        },
+        closure: {
+            notes: "Mantenimiento completado con éxito.",
+            isCompliant: true,
+            date: formatDateISO(subDays(today, 355)),
+            closureResponsible: { id: "user-admin", name: "Admin User", avatar: "https://i.pravatar.cc/150?u=admin" },
+        }
+    },
+    // 9. Pendiente Análisis - Riesgos Psicosociales
+    {
+        id: "seed-09",
+        actionId: "AM-24009",
+        title: "Aumento de quejas por estrés en el área de Admisión",
+        description: "En la última encuesta de clima laboral, el personal de admisión ha reportado un notable aumento del estrés debido a la carga de trabajo y a situaciones conflictivas con pacientes. Se requiere un análisis de riesgos psicosociales.",
+        type: "No Conformidad",
+        typeId: "type-nc",
+        status: "Pendiente Análisis",
+        category: "Gestión de Personal",
+        categoryId: "cat-1",
+        subcategory: "Riesgos Psicosociales",
+        subcategoryId: "sub-1-2",
+        affectedAreas: ["Recursos Humanos", "Admisión"],
+        affectedAreasIds: ["area-hr", "area-admin"],
+        center: "0302 - Elche-Elx",
+        centerId: "0302",
+        creator: { id: "user-3", name: "Laura Martinez", email: "laura.martinez@example.com", avatar: "https://i.pravatar.cc/150?u=a04258114e29026702d" },
+        responsibleGroupId: "risk-management@example.com",
+        assignedTo: "risk-management@example.com",
+        creationDate: formatDateISO(subDays(today, 20)),
+        analysisDueDate: formatDateISO(addDays(today, 10)),
+        implementationDueDate: formatDateISO(addDays(today, 55)),
+        closureDueDate: formatDateISO(addDays(today, 70)),
+        followers: ["user-admin", "user-1"],
+        readers: [], authors: []
+    },
+    // 10. Pendiente Comprobación - Formación
+    {
+        id: "seed-10",
+        actionId: "AM-24010",
+        title: "Formación en nuevo software de gestión para Fisioterapia",
+        description: "Se ha adquirido un nuevo software para la gestión de pacientes en el área de fisioterapia. Es necesario planificar y ejecutar la formación para todo el personal del departamento.",
+        type: "Oportunidad de Mejora",
+        typeId: "type-om",
+        status: "Pendiente Comprobación",
+        category: "Formación",
+        categoryId: "cat-7",
+        subcategory: "Formación Interna",
+        subcategoryId: "sub-7-1",
+        affectedAreas: ["Fisioterapia", "IT"],
+        affectedAreasIds: ["area-physio", "area-it"],
+        center: "1601 - Cuenca",
+        centerId: "1601",
+        creator: { id: "user-5", name: "Sofía Hernandez", email: "sofia.hernandez@example.com", avatar: "https://i.pravatar.cc/150?u=a0425e8ff4e29026704d" },
+        responsibleGroupId: "it-legacy-systems@example.com",
+        assignedTo: "it-legacy-systems@example.com",
+        creationDate: formatDateISO(subDays(today, 55)),
+        analysisDueDate: formatDateISO(subDays(today, 40)),
+        implementationDueDate: formatDateISO(subDays(today, 10)),
+        closureDueDate: formatDateISO(addDays(today, 5)),
+        followers: [],
+        readers: [], authors: [],
+        analysis: {
+            causes: "La implantación de un nuevo software requiere de un plan de formación para asegurar su correcta adopción y uso por parte de los empleados.",
+            proposedActions: [
+                { id: "pa-seed-10", description: "Realizar 2 sesiones formativas (mañana y tarde) con el proveedor del software.", responsibleUserId: "user-5", dueDate: formatDateISO(subDays(today, 30)), status: "Implementada" },
+                { id: "pa-seed-11", description: "Crear una guía rápida de referencia para los usuarios.", responsibleUserId: "user-2", dueDate: formatDateISO(subDays(today, 20)), status: "Implementada" }
+            ],
+            verificationResponsibleUserId: "user-4",
+            analysisResponsible: { id: "user-5", name: "Sofía Hernandez", avatar: "https://i.pravatar.cc/150?u=a0425e8ff4e29026704d" },
+            analysisDate: formatDateISO(subDays(today, 45)),
+        }
+    },
+    // 11. Borrador - Sugerencia de un usuario
+    {
+        id: "seed-11",
+        actionId: "AM-24011",
+        title: "Instalación de más dispensadores de gel hidroalcohólico",
+        description: "He notado que en la sala de espera de Traumatología solo hay un dispensador de gel y a menudo se forman colas. Sugiero instalar al menos dos más para mejorar la higiene y agilizar el flujo de pacientes.",
+        type: "Sugerencia",
+        typeId: "type-s",
+        status: "Borrador",
+        category: "Infraestructuras",
+        categoryId: "cat-8",
+        subcategory: "Instalaciones",
+        subcategoryId: "sub-8-1",
+        affectedAreas: ["Mantenimiento", "Calidad Asistencial"],
+        affectedAreasIds: ["area-maint", "area-qual"],
+        center: "0101 - Llodio",
+        centerId: "0101",
+        creator: { id: "user-9", name: "Elisabet Jordana", email: "elisabet.jordana@example.com", avatar: "https://i.pravatar.cc/150?u=a042581f4e29026709e" },
+        responsibleGroupId: "risk-management@example.com",
+        assignedTo: "risk-management@example.com",
+        creationDate: formatDateISO(subDays(today, 2)),
+        analysisDueDate: formatDateISO(addDays(today, 28)),
+        implementationDueDate: formatDateISO(addDays(today, 73)),
+        closureDueDate: formatDateISO(addDays(today, 88)),
+        followers: [],
+        readers: [], authors: []
+    },
+    // 12. Finalizada (Conforme) - Larga
+    {
+        id: "seed-12",
+        actionId: "AM-23045",
+        title: "Implantación de sistema de encuestas de satisfacción post-alta",
+        description: "Para cumplir con la ISO 9001:2015, se decide implantar un sistema automatizado para enviar encuestas de satisfacción a los pacientes 48h después del alta.",
+        type: "Oportunidad de Mejora",
+        typeId: "type-om",
+        status: "Finalizada",
+        category: "Calidad Asistencial",
+        categoryId: "cat-6",
+        subcategory: "Satisfacción del Paciente",
+        subcategoryId: "sub-6-2",
+        affectedAreas: ["Calidad Asistencial", "IT"],
+        affectedAreasIds: ["area-qual", "area-it"],
+        center: "0885 - Hospital Sant Cugat",
+        centerId: "0885",
+        creator: { id: "user-1", name: "Ana García", email: "ana.garcia@example.com", avatar: "https://i.pravatar.cc/150?u=a042581f4e29026024d" },
+        responsibleGroupId: "quality-management@example.com",
+        assignedTo: "quality-management@example.com",
+        creationDate: formatDateISO(subDays(today, 150)),
+        analysisDueDate: formatDateISO(subDays(today, 135)),
+        implementationDueDate: formatDateISO(subDays(today, 90)),
+        closureDueDate: formatDateISO(subDays(today, 75)),
+        followers: [],
+        readers: [], authors: [],
+        analysis: {
+            causes: "Necesidad de medir la satisfacción del cliente de forma sistemática para la mejora continua, como exige la normativa ISO 9001.",
+            proposedActions: [
+                { id: "pa-seed-12", description: "Contratar e integrar el software de encuestas 'SurveyPlus'.", responsibleUserId: "user-5", dueDate: formatDateISO(subDays(today, 120)), status: "Implementada" },
+                { id: "pa-seed-13", description: "Definir el cuestionario y configurar los envíos automáticos.", responsibleUserId: "user-4", dueDate: formatDateISO(subDays(today, 100)), status: "Implementada" }
+            ],
+            verificationResponsibleUserId: "user-1",
+            analysisResponsible: { id: "user-4", name: "Javier López", avatar: "https://i.pravatar.cc/150?u=a042581f4e29026708c" },
+            analysisDate: formatDateISO(subDays(today, 140)),
+        },
+        verification: {
+            notes: "El sistema está funcionando y se han recogido las primeras 200 respuestas. Los datos fluyen correctamente al dashboard de BI.",
+            isEffective: true,
+            verificationDate: formatDateISO(subDays(today, 80)),
+            verificationResponsible: { id: "user-1", name: "Ana García", avatar: "https://i.pravatar.cc/150?u=a042581f4e29026024d" },
+            proposedActionsVerificationStatus: { "pa-seed-12": "Verificada", "pa-seed-13": "Verificada" }
+        },
+        closure: {
+            notes: "El sistema de encuestas se ha implantado con éxito y proporciona datos valiosos para la mejora.",
+            isCompliant: true,
+            date: formatDateISO(subDays(today, 78)),
+            closureResponsible: { id: "user-1", name: "Ana García", avatar: "https://i.pravatar.cc/150?u=a042581f4e29026024d" },
+        }
+    },
+    // 13. Pendiente Análisis - Reclamación de paciente
+    {
+        id: "seed-13",
+        actionId: "AM-24013",
+        title: "Reclamación por tiempo de espera excesivo en Urgencias",
+        description: "Un paciente ha presentado una reclamación formal por haber esperado más de 4 horas para ser atendido en el servicio de urgencias por una torcedura de tobillo.",
+        type: "Reclamación",
+        typeId: "type-r",
+        status: "Pendiente Análisis",
+        category: "Calidad Asistencial",
+        categoryId: "cat-6",
+        subcategory: "Tiempos de Espera",
+        subcategoryId: "sub-6-3",
+        affectedAreas: ["Urgencias", "Traumatología"],
+        affectedAreasIds: ["area-urg", "area-trauma"],
+        center: "0101 - Llodio",
+        centerId: "0101",
+        creator: { id: "user-admin", name: "Admin User", email: "admin@example.com", avatar: "https://i.pravatar.cc/150?u=admin" },
+        responsibleGroupId: "quality-management@example.com",
+        assignedTo: "quality-management@example.com",
+        creationDate: formatDateISO(subDays(today, 8)),
+        analysisDueDate: formatDateISO(addDays(today, 22)),
+        implementationDueDate: formatDateISO(addDays(today, 67)),
+        closureDueDate: formatDateISO(addDays(today, 82)),
+        followers: ["user-1"],
+        readers: [], authors: []
+    },
+    // 14. Pendiente Comprobación - Oportunidad de Mejora
+    {
+        id: "seed-14",
+        actionId: "AM-24014",
+        title: "Digitalización de archivos de RRHH",
+        description: "El departamento de RRHH propone digitalizar los expedientes antiguos para reducir el espacio físico de archivadores y agilizar las consultas.",
+        type: "Oportunidad de Mejora",
+        typeId: "type-om",
+        status: "Pendiente Comprobación",
+        category: "Procesos de Soporte",
+        categoryId: "cat-9",
+        subcategory: "Digitalización",
+        subcategoryId: "sub-9-1",
+        affectedAreas: ["Recursos Humanos"],
+        affectedAreasIds: ["area-hr"],
+        center: "1601 - Cuenca",
+        centerId: "1601",
+        creator: { id: "user-3", name: "Laura Martinez", email: "laura.martinez@example.com", avatar: "https://i.pravatar.cc/150?u=a04258114e29026702d" },
+        responsibleGroupId: "customer-support@example.com",
+        assignedTo: "customer-support@example.com",
+        creationDate: formatDateISO(subDays(today, 70)),
+        analysisDueDate: formatDateISO(subDays(today, 55)),
+        implementationDueDate: formatDateISO(subDays(today, 10)),
+        closureDueDate: formatDateISO(addDays(today, 5)),
+        followers: [],
+        readers: [], authors: [],
+        analysis: {
+            causes: "Actualmente los expedientes físicos ocupan mucho espacio y su consulta es lenta y manual. La digitalización mejorará la eficiencia y seguridad.",
+            proposedActions: [
+                { id: "pa-seed-14", description: "Contratar una empresa externa para el escaneo masivo de documentos.", responsibleUserId: "user-3", dueDate: formatDateISO(subDays(today, 40)), status: "Implementada" },
+                { id: "pa-seed-15", description: "Implantar un software de gestión documental para los nuevos archivos digitales.", responsibleUserId: "user-5", dueDate: formatDateISO(subDays(today, 20)), status: "Implementada" }
+            ],
+            verificationResponsibleUserId: "user-1",
+            analysisResponsible: { id: "user-3", name: "Laura Martinez", avatar: "https://i.pravatar.cc/150?u=a04258114e29026702d" },
+            analysisDate: formatDateISO(subDays(today, 60)),
+        }
+    },
+    // 15. Pendiente de Cierre - Incidencia
+    {
+        id: "seed-15",
+        actionId: "AM-24015",
+        title: "Error en el cálculo de la nómina de julio",
+        description: "Se ha detectado un error en el cálculo de las retenciones del IRPF en la nómina de julio para 15 trabajadores, lo que ha generado un pago incorrecto.",
+        type: "Incidencia",
+        typeId: "type-i",
+        status: "Pendiente de Cierre",
+        category: "Procesos Financieros",
+        categoryId: "cat-2",
+        subcategory: "Nóminas",
+        subcategoryId: "sub-2-2",
+        affectedAreas: ["Finanzas", "Recursos Humanos"],
+        affectedAreasIds: ["area-finance", "area-hr"],
+        center: "0885 - Hospital Sant Cugat",
+        centerId: "0885",
+        creator: { id: "user-6", name: "David Fernandez", email: "david.fernandez@example.com", avatar: "https://i.pravatar.cc/150?u=a042581f4e29026704f" },
+        responsibleGroupId: "finance@example.com",
+        assignedTo: "finance@example.com",
+        creationDate: formatDateISO(subDays(today, 60)),
+        analysisDueDate: formatDateISO(subDays(today, 45)),
+        implementationDueDate: formatDateISO(subDays(today, 15)),
+        closureDueDate: formatDateISO(addDays(today, 1)),
+        followers: ["user-1"],
+        readers: [], authors: [],
+        analysis: {
+            causes: "Un cambio en la parametrización del software de nóminas no se aplicó correctamente para un colectivo específico de trabajadores.",
+            proposedActions: [
+                { id: "pa-seed-16", description: "Realizar una nómina complementaria para abonar las diferencias a los trabajadores afectados.", responsibleUserId: "user-2", dueDate: formatDateISO(subDays(today, 30)), status: "Implementada" },
+                { id: "pa-seed-17", description: "Revisar la configuración del software y establecer un protocolo de verificación por un segundo usuario.", responsibleUserId: "user-6", dueDate: formatDateISO(subDays(today, 20)), status: "Implementada" }
+            ],
+            verificationResponsibleUserId: "user-1",
+            analysisResponsible: { id: "user-2", name: "Carlos Rodríguez", avatar: "https://i.pravatar.cc/150?u=a042581f4e29026704d" },
+            analysisDate: formatDateISO(subDays(today, 50)),
+        },
+        verification: {
+            notes: "Se ha verificado que la nómina complementaria fue abonada y que el nuevo protocolo de doble verificación está implantado y documentado.",
+            isEffective: true,
+            verificationDate: formatDateISO(subDays(today, 5)),
+            verificationResponsible: { id: "user-1", name: "Ana García", avatar: "https://i.pravatar.cc/150?u=a042581f4e29026024d" },
+            proposedActionsVerificationStatus: { "pa-seed-16": "Verificada", "pa-seed-17": "Verificada" }
+        }
     }
-  },
-  "title": "Falta de EPIs en almacén para personal de limpieza",
-  "typeId": "type-r",
-  "actionId": "AM-24003",
-  "analysisDueDate": "2025-09-28T11:18:54.335Z",
-  "readers": [
-    "elena.gomez@example.com",
-    "risk-management@example.com",
-    "user-1@example.com"
-  ],
-  "subcategoryId": "sub-3-1",
-  "category": "Seguridad y Salud",
-  "verification": {
-    "notes": "Se ha comprobado que el segundo proveedor está dado de alta y se han recibido los primeros pedidos. Las alertas de stock funcionan correctamente.",
-    "verificationResponsible": {
-      "id": "user-1",
-      "avatar": "https://i.pravatar.cc/150?u=a042581f4e29026024d",
-      "name": "Ana García"
-    },
-    "isEffective": true,
-    "verificationDate": "2025-09-21T11:18:54.335Z",
-    "proposedActionsStatus": {
-      "pa-4": "Implementada",
-      "pa-3": "Implementada"
-    }
-  },
-  "creator": {
-    "email": "elena.gomez@example.com",
-    "name": "Elena Gomez",
-    "id": "user-7",
-    "avatar": "https://i.pravatar.cc/150?u=a04258114e29026702e"
-  },
-  "center": "0101 - Llodio",
-  "centerId": "0101"
-},
-{
-  "id": "pfjYu0zIiN8WgeWBpxD4",
-  "implementationDueDate": "2025-09-03T11:18:54.335Z",
-  "typeId": "type-nc",
-  "affectedAreasIds": [
-    "area-cardio",
-    "area-admin"
-  ],
-  "creationDate": "2025-07-25T11:18:54.335Z",
-  "analysis": {
-    "analysisDate": "2025-08-04T11:18:54.335Z",
-    "proposedActions": [
-      {
-        "responsibleUserId": "user-5",
-        "description": "Actualizar el documento de consentimiento informado en el sistema y destruir las copias físicas antiguas.",
-        "status": "Implementada",
-        "dueDate": "2025-08-24T11:18:54.335Z",
-        "id": "pa-6"
-      },
-      {
-        "id": "pa-7",
-        "responsibleUserId": "user-1",
-        "description": "Realizar una sesión formativa obligatoria para todo el personal de admisión sobre el protocolo de consentimiento.",
-        "status": "No Implementada",
-        "dueDate": "2025-08-29T11:18:54.335Z"
-      }
-    ],
-    "causes": "Falta de un procedimiento estandarizado para la entrega y explicación del consentimiento. El personal de admisión no ha recibido formación específica sobre este documento. La versión digital del documento no estaba actualizada en el sistema.",
-    "verificationResponsibleUserId": "user-4",
-    "analysisResponsible": {
-      "name": "Ana García",
-      "id": "user-1",
-      "avatar": "https://i.pravatar.cc/150?u=a042581f4e29026024d"
-    }
-  },
-  "creator": {
-    "name": "Javier López",
-    "avatar": "https://i.pravatar.cc/150?u=a042581f4e29026708c",
-    "id": "user-4",
-    "email": "javier.lopez@example.com"
-  },
-  "subcategoryId": "sub-6-1",
-  "title": "Errores en el consentimiento informado para pruebas de esfuerzo",
-  "assignedTo": "quality-management@example.com",
-  "categoryId": "cat-6",
-  "affectedAreas": [
-    "Cardiología",
-    "Admisión"
-  ],
-  "authors": [
-    "user-admin@example.com"
-  ],
-  "actionId": "AM-24006",
-  "readers": [
-    "javier.lopez@example.com",
-    "quality-management@example.com",
-    "user-admin@example.com"
-  ],
-  "type": "No Conformidad",
-  "description": "Se han detectado varios casos en los que los pacientes firman el consentimiento para pruebas de esfuerzo sin que se les explique adecuadamente los riesgos, o utilizando una versión desactualizada del documento.",
-  "responsibleGroupId": "quality-management@example.com",
-  "category": "Calidad Asistencial",
-  "analysisDueDate": "2025-08-09T11:18:54.335Z",
-  "closureDueDate": "2025-09-13T11:18:54.335Z",
-  "subcategory": "Documentación Clínica",
-  "followers": [
-    "user-admin"
-  ],
-  "status": "Finalizada",
-  "verification": {
-    "verificationResponsible": {
-      "name": "Javier López",
-      "avatar": "https://i.pravatar.cc/150?u=a042581f4e29026708c",
-      "id": "user-4"
-    },
-    "notes": "La actualización del documento se ha realizado correctamente. Sin embargo, la sesión formativa no se ha llevado a cabo por problemas de agenda del personal, por lo que el riesgo de que el problema persista es alto.",
-    "isEffective": false,
-    "verificationDate": "2025-09-08T11:18:54.335Z",
-    "proposedActionsStatus": {
-      "pa-7": "No Implementada",
-      "pa-6": "Implementada"
-    }
-  },
-  "closure": {
-    "date": "2025-09-13T11:18:54.335Z",
-    "isCompliant": false,
-    "notes": "La acción no ha sido eficaz, ya que la medida formativa, considerada clave, no se ha implantado. Se procede a cerrar esta acción como 'No Conforme' y se abre una acción BIS para gestionar la formación pendiente.",
-    "closureResponsible": {
-      "email": "admin@example.com",
-      "name": "Admin User",
-      "avatar": "https://i.pravatar.cc/150?u=admin",
-      "id": "user-admin"
-    }
-  },
-  "center": "0885 - Hospital Sant Cugat",
-  "centerId": "0885"
-}
 ];
+
+// Reemplazar la exportación inicial con la nueva
+export const initialActions: ImprovementAction[] = seedActions;
