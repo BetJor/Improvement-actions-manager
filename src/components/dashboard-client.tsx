@@ -84,8 +84,14 @@ export function DashboardClient({ actions, assignedActions }: DashboardClientPro
 
 
   useEffect(() => {
-    setItems(user?.dashboardLayout || defaultLayout);
-  }, [user?.dashboardLayout]);
+    // If the user has a layout, use it. Otherwise, use the default.
+    // This ensures that even if the user prop updates, we have a sensible default.
+    if (user?.dashboardLayout && user.dashboardLayout.length > 0) {
+        setItems(user.dashboardLayout);
+    } else {
+        setItems(defaultLayout);
+    }
+  }, [user]);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
