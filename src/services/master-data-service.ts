@@ -1,11 +1,11 @@
 
 
-import { collection, getDocs, doc, addDoc, query, orderBy, updateDoc, deleteDoc, writeBatch, where } from 'firebase/firestore';
+import { collection, getDocs, doc, addDoc, query, orderBy, updateDoc, deleteDoc, writeBatch, where, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { ImprovementActionType, ActionCategory, ActionSubcategory, AffectedArea, MasterDataItem, ResponsibilityRole, Center } from '@/lib/types';
 import { seedActionTypes, seedCategories, seedSubcategories, seedAffectedAreas } from '@/lib/master-seed-data';
 
-// Variable global para prevenir la ejecución múltiple del seeder
+// Variable global per a prevenir la execució múltiple del seeder
 let isSeedingMasterData = false;
 
 
@@ -13,13 +13,9 @@ export const getActionTypes = async (): Promise<ImprovementActionType[]> => {
   const typesCol = collection(db, 'actionTypes');
   let snapshot = await getDocs(query(typesCol, orderBy("name")));
 
-  // Check if seed data is needed by verifying a specific document
-  const seedCheckDoc = doc(db, 'actionTypes', 'type-i');
-  const seedCheckSnap = await getDoc(seedCheckDoc);
-
-  if (!seedCheckSnap.exists() && !isSeedingMasterData) {
+  if (snapshot.empty && !isSeedingMasterData) {
       isSeedingMasterData = true; 
-      console.log("ActionTypes seed data is missing. Populating...");
+      console.log("ActionTypes collection is empty. Populating with seed data...");
       try {
           const batch = writeBatch(db);
           seedActionTypes.forEach(item => {
@@ -43,12 +39,9 @@ export const getCategories = async (): Promise<ActionCategory[]> => {
   const categoriesCol = collection(db, 'categories');
   let snapshot = await getDocs(query(categoriesCol, orderBy("name")));
 
-  const seedCheckDoc = doc(db, 'categories', 'cat-1');
-  const seedCheckSnap = await getDoc(seedCheckDoc);
-
-  if (!seedCheckSnap.exists() && !isSeedingMasterData) {
+  if (snapshot.empty && !isSeedingMasterData) {
     isSeedingMasterData = true;
-    console.log("Categories seed data is missing. Populating...");
+    console.log("Categories collection is empty. Populating with seed data...");
     try {
         const batch = writeBatch(db);
         seedCategories.forEach(item => {
@@ -71,13 +64,10 @@ export const getCategories = async (): Promise<ActionCategory[]> => {
 export const getSubcategories = async (): Promise<ActionSubcategory[]> => {
   const subcategoriesCol = collection(db, 'subcategories');
   let snapshot = await getDocs(query(subcategoriesCol, orderBy("name")));
-
-  const seedCheckDoc = doc(db, 'subcategories', 'sub-1-1');
-  const seedCheckSnap = await getDoc(seedCheckDoc);
   
-  if (!seedCheckSnap.exists() && !isSeedingMasterData) {
+  if (snapshot.empty && !isSeedingMasterData) {
     isSeedingMasterData = true;
-    console.log("Subcategories seed data is missing. Populating...");
+    console.log("Subcategories collection is empty. Populating with seed data...");
     try {
         const batch = writeBatch(db);
         seedSubcategories.forEach(item => {
@@ -100,12 +90,9 @@ export const getAffectedAreas = async (): Promise<AffectedArea[]> => {
   const affectedAreasCol = collection(db, 'affectedAreas');
   let snapshot = await getDocs(query(affectedAreasCol, orderBy("name")));
 
-  const seedCheckDoc = doc(db, 'affectedAreas', 'area-admin');
-  const seedCheckSnap = await getDoc(seedCheckDoc);
-
-  if (!seedCheckSnap.exists() && !isSeedingMasterData) {
+  if (snapshot.empty && !isSeedingMasterData) {
     isSeedingMasterData = true;
-    console.log("AffectedAreas seed data is missing. Populating...");
+    console.log("AffectedAreas collection is empty. Populating with seed data...");
     try {
         const batch = writeBatch(db);
         seedAffectedAreas.forEach(item => {
