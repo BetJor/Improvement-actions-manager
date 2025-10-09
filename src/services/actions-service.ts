@@ -341,10 +341,11 @@ export async function updateAction(actionId: string, data: any, masterData?: any
     } else {
         // This is a general update, likely from the main form or a status change
         
+        let processedData: any = {};
+        
         // If masterData is present, we're editing the draft details
         if (masterData) {
-            dataToUpdate = {
-                ...dataToUpdate,
+            processedData = {
                 title: data.title,
                 description: data.description,
                 assignedTo: data.assignedTo,
@@ -360,12 +361,17 @@ export async function updateAction(actionId: string, data: any, masterData?: any
                 type: masterData.actionTypes.find((t: any) => t.id === data.typeId)?.name || data.typeId,
                 typeId: data.typeId,
             };
+        } else {
+            // It's a workflow step update (analysis, verification, closure)
+            processedData = { ...data };
         }
 
-        // If a new status is provided, update it
+        // If a new status is provided, it should always take precedence.
         if (status) {
-            dataToUpdate.status = status;
+            processedData.status = status;
         }
+
+        dataToUpdate = processedData;
         
         // Auto-follow if sent to analysis
         if (status === 'Pendiente Análisis' && originalAction.creator?.id) {
