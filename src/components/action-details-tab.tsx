@@ -273,11 +273,11 @@ export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTab
     const getStatusColorClass = (status?: ProposedActionStatus) => {
       if (!status) return "border-gray-300";
       switch (status) {
-        case "Pendent":
+        case "Pendiente":
           return "border-gray-400";
         case "Implementada":
           return "border-green-500";
-        case "Implementada Parcialment":
+        case "Implementada Parcialmente":
           return "border-yellow-500";
         case "No Implementada":
           return "border-red-500";
@@ -400,7 +400,7 @@ export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTab
                                                                 Responsable: {users.find(u => u.id === pa.responsibleUserId)?.name || pa.responsibleUserId} | Fecha Vencimiento: {safeParseDate(pa.dueDate) ? format(safeParseDate(pa.dueDate)!, "dd/MM/yyyy") : ''}
                                                             </p>
                                                              <p className="text-sm text-muted-foreground mt-1">
-                                                                Estado: <span className="font-semibold">{pa.status || 'Pendente'}</span>
+                                                                Estado: <span className="font-semibold">{pa.status || 'Pendiente'}</span>
                                                             </p>
                                                         </div>
                                                         {user?.id === pa.responsibleUserId && action.status !== 'Finalizada' && (

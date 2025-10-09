@@ -77,7 +77,7 @@ export interface WorkflowPlan {
   steps: WorkflowStep[];
 }
 
-export type ProposedActionStatus = 'Pendent' | 'Implementada' | 'Implementada Parcialment' | 'No Implementada';
+export type ProposedActionStatus = 'Pendiente' | 'Implementada' | 'Implementada Parcialmente' | 'No Implementada';
 export type ProposedActionVerificationStatus = 'Verificada' | 'No Verificada';
 
 

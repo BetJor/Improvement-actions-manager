@@ -27,7 +27,7 @@ import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 
 const statusUpdateSchema = z.object({
-  status: z.enum(["Implementada", "Implementada Parcialment", "No Implementada"]),
+  status: z.enum(["Implementada", "Implementada Parcialmente", "No Implementada"]),
 });
 
 type StatusUpdateFormValues = z.infer<typeof statusUpdateSchema>;
@@ -50,7 +50,7 @@ export function UpdateActionStatusDialog({
   const form = useForm<StatusUpdateFormValues>({
     resolver: zodResolver(statusUpdateSchema),
     defaultValues: {
-      status: proposedAction.status === 'Pendent' ? 'Implementada' : proposedAction.status,
+      status: proposedAction.status === 'Pendiente' ? 'Implementada' : proposedAction.status,
     },
   });
 
@@ -89,7 +89,7 @@ export function UpdateActionStatusDialog({
                       </FormItem>
                       <FormItem className="flex items-center space-x-3">
                         <FormControl>
-                          <RadioGroupItem value="Implementada Parcialment" />
+                          <RadioGroupItem value="Implementada Parcialmente" />
                         </FormControl>
                         <FormLabel className="font-normal">Implementada Parcialmente</FormLabel>
                       </FormItem>

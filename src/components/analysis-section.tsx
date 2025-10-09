@@ -41,7 +41,7 @@ const analysisSchema = z.object({
       description: z.string().min(1, "La descripción es requerida."),
       responsibleUserId: z.string().min(1, "El responsable es requerido."),
       dueDate: z.date({ required_error: "La fecha de vencimiento es requerida." }),
-      status: z.enum(["Pendent", "Implementada", "Implementada Parcialment", "No Implementada"]).default("Pendent"),
+      status: z.enum(["Pendiente", "Implementada", "Implementada Parcialmente", "No Implementada"]).default("Pendiente"),
     })
   ).min(1, "Se debe proponer al menos una acción."),
   verificationResponsibleUserId: z.string().min(1, "El responsable de verificación es requerido."),
@@ -75,7 +75,7 @@ export function AnalysisSection({ action, user, isSubmitting, onSave }: Analysis
     resolver: zodResolver(analysisSchema),
     defaultValues: {
       causes: action.analysis?.causes || "",
-      proposedActions: action.analysis?.proposedActions.map(pa => ({...pa, dueDate: new Date(pa.dueDate), status: pa.status || 'Pendent'})) || [],
+      proposedActions: action.analysis?.proposedActions.map(pa => ({...pa, dueDate: new Date(pa.dueDate), status: pa.status || 'Pendiente'})) || [],
       verificationResponsibleUserId: action.analysis?.verificationResponsibleUserId || "",
     },
   })
@@ -174,7 +174,7 @@ export function AnalysisSection({ action, user, isSubmitting, onSave }: Analysis
         description: action.description,
         responsibleUserId: '', // User must select this
         dueDate: new Date(), // Defaults to today, user must change
-        status: 'Pendent' as const
+        status: 'Pendiente' as const
       }));
       replace(newActions);
     }
@@ -356,7 +356,7 @@ export function AnalysisSection({ action, user, isSubmitting, onSave }: Analysis
                 type="button"
                 variant="outline"
                 size="sm"
-                onClick={() => append({ description: "", responsibleUserId: "", dueDate: new Date(), status: 'Pendent' })}
+                onClick={() => append({ description: "", responsibleUserId: "", dueDate: new Date(), status: 'Pendiente' })}
               >
                 <PlusCircle className="mr-2 h-4 w-4" />
                 Añadir Acción
