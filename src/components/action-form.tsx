@@ -177,14 +177,12 @@ export function ActionForm({
       }
     });
 
-    // Ensure the initialData.assignedTo value is in the options list if it exists,
-    // especially important for 'edit' mode.
-    if (initialData?.assignedTo && !options.some(opt => opt.value === initialData.assignedTo)) {
+    if (mode === 'edit' && initialData?.assignedTo && !options.some(opt => opt.value === initialData.assignedTo)) {
         options.push({ value: initialData.assignedTo, label: initialData.assignedTo });
     }
 
     return options;
-  }, [selectedActionTypeId, selectedCenterId, masterData, user, initialData?.assignedTo]);
+  }, [selectedActionTypeId, selectedCenterId, masterData, user, initialData?.assignedTo, mode]);
 
   useEffect(() => {
     form.resetField("assignedTo", { defaultValue: "" });
@@ -644,11 +642,11 @@ export function ActionForm({
                     <Ban className="mr-2 h-4 w-4" />
                     Cancelar
                 </Button>
-                <Button type="button" onClick={() => handleFormSubmit('Borrador')} disabled={isSubmitting}>
+                <Button type="button" onClick={() => onSubmit(form.getValues(), 'Borrador')} disabled={isSubmitting}>
                     {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                     Guardar Borrador
                 </Button>
-                 <Button type="button" onClick={() => handleFormSubmit('Pendiente Análisis')} disabled={isSubmitting}>
+                 <Button type="button" onClick={() => onSubmit(form.getValues(), 'Pendiente Análisis')} disabled={isSubmitting}>
                     {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
                     Enviar para Análisis
                 </Button>
