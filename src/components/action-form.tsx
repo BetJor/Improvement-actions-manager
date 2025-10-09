@@ -297,14 +297,10 @@ export function ActionForm({
     setAiSuggestion(null);
   };
 
-    const handleSendForAnalysisSubmit = () => {
-        form.handleSubmit((values) => onSubmit(values, 'Pendiente Análisis'))();
+    const handleFormSubmit = (status: 'Borrador' | 'Pendiente Análisis') => {
+        form.handleSubmit((values) => onSubmit(values, status))();
     };
 
-    const handleDraftSubmit = () => {
-        form.handleSubmit((values) => onSubmit(values, 'Borrador'))();
-    };
-  
   const disableForm = isSubmitting || mode === 'view';
 
   if (mode === 'view' && initialData) {
@@ -630,11 +626,11 @@ export function ActionForm({
           
           {mode === 'create' && (
               <div className="flex gap-2">
-                  <Button type="button" variant="outline" onClick={handleDraftSubmit} disabled={disableForm}>
+                  <Button type="button" variant="outline" onClick={() => handleFormSubmit('Borrador')} disabled={disableForm}>
                       {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                       Guardar Borrador
                   </Button>
-                  <Button type="button" onClick={handleSendForAnalysisSubmit} disabled={disableForm}>
+                  <Button type="button" onClick={() => handleFormSubmit('Pendiente Análisis')} disabled={disableForm}>
                       {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
                       Enviar para Análisis
                   </Button>
@@ -647,11 +643,11 @@ export function ActionForm({
                     <Ban className="mr-2 h-4 w-4" />
                     Cancelar
                 </Button>
-                <Button type="button" onClick={handleDraftSubmit} disabled={isSubmitting}>
+                <Button type="button" onClick={() => handleFormSubmit('Borrador')} disabled={isSubmitting}>
                     {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                     Guardar Borrador
                 </Button>
-                 <Button type="button" onClick={handleSendForAnalysisSubmit} disabled={isSubmitting}>
+                 <Button type="button" onClick={() => handleFormSubmit('Pendiente Análisis')} disabled={isSubmitting}>
                     {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
                     Enviar para Análisis
                 </Button>
