@@ -103,7 +103,7 @@ export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTab
               dataToUpdate.status = status;
             }
             
-            await updateAction(action.id, dataToUpdate, masterData, status);
+            await updateAction(action.id, dataToUpdate, status ? null : masterData, status);
             toast({
                 title: "Acción guardada",
                 description: "Los cambios se han guardado correctamente.",
@@ -534,3 +534,5 @@ export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTab
         </div>
     )
 }
+
+    
