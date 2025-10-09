@@ -6,6 +6,7 @@ import React, { createContext, useContext, useState, ReactNode, useEffect, useCa
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from './use-auth';
 import { Loader2 } from 'lucide-react';
+import { useActionState } from './use-action-state';
 
 // Import all page components that can be opened in a tab
 import DashboardPage from '@/app/dashboard/page';
@@ -19,7 +20,7 @@ import UserManagementPage from '@/app/user-management/page';
 import ReportsPage from '@/app/reports/page';
 import FirestoreRulesPage from '@/app/firestore-rules/page';
 import WorkflowPage from '@/app/workflow/page';
-import { getActionById, getActionTypes, getCategories, getSubcategories, getAffectedAreas } from '@/lib/data';
+import { getActions } from '@/lib/data';
 
 import { Home, ListChecks, Settings, Sparkles, Library, Route, Users, BarChart3, GanttChartSquare, FileLock2 } from 'lucide-react';
 
@@ -81,12 +82,24 @@ export function TabsProvider({ children, initialPath }: { children: ReactNode, i
     const [tabs, setTabs] = useState<Tab[]>([]);
     const [activeTab, setActiveTabState] = useState<string | null>(null);
     const { user } = useAuth();
+    const { setActions } = useActionState();
     const [lastUser, setLastUser] = useState(user?.uid);
     const router = useRouter();
 
+    const reloadAllActions = useCallback(async () => {
+        console.log("Reloading all actions for all tabs...");
+        try {
+            const freshActions = await getActions();
+            setActions(freshActions);
+        } catch (error) {
+            console.error("Failed to reload actions:", error);
+        }
+    }, [setActions]);
+
     const setActiveTab = useCallback((tabId: string) => {
         setActiveTabState(tabId);
-    }, []);
+        reloadAllActions();
+    }, [reloadAllActions]);
 
     const openTab = useCallback((tabData: TabInput) => {
         const tabId = tabData.path;
@@ -189,6 +202,9 @@ export function TabsProvider({ children, initialPath }: { children: ReactNode, i
             setActiveTabState(null);
             openTab({ path: `/dashboard`, title: 'Panel de Control', icon: Home, isClosable: false });
         }
+        
+        // Reload actions after closing a tab to reflect changes
+        reloadAllActions();
     };
 
     const closeCurrentTab = () => {
@@ -220,4 +236,3 @@ export function useTabs() {
     }
     return context;
 }
-
