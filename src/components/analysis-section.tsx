@@ -21,6 +21,7 @@ import { format } from "date-fns"
 import { es } from "date-fns/locale"
 import { useToast } from "@/hooks/use-toast"
 import { suggestAnalysisAndActions, type SuggestAnalysisOutput } from "@/ai/flows/improveAnalysis"
+import { improveWriting } from "@/ai/flows/improveWriting"
 import {
   Dialog,
   DialogContent,
@@ -65,10 +66,17 @@ export function AnalysisSection({ action, user, isSubmitting, onSave }: Analysis
   // States for AI and Mic functionality
   const [isRecording, setIsRecording] = useState(false);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const [activeMicField, setActiveMicField] = useState<string | null>(null);
   let finalTranscript = '';
+
+  const [isImprovingText, setIsImprovingText] = useState(false);
+  const [aiSuggestion, setAiSuggestion] = useState<string | null>(null);
+  const [activeImproveField, setActiveImproveField] = useState<string | null>(null);
+
   const [isGeneratingSuggestion, setIsGeneratingSuggestion] = useState(false);
-  const [aiSuggestion, setAiSuggestion] = useState<SuggestAnalysisOutput | null>(null);
+  const [analysisAiSuggestion, setAnalysisAiSuggestion] = useState<SuggestAnalysisOutput | null>(null);
   const [isSuggestionDialogOpen, setIsSuggestionDialogOpen] = useState(false);
+  const [hasImprovePrompt, setHasImprovePrompt] = useState(false);
   const [hasAnalysisPrompt, setHasAnalysisPrompt] = useState(false);
 
   const form = useForm<AnalysisFormValues>({
@@ -103,7 +111,11 @@ export function AnalysisSection({ action, user, isSubmitting, onSave }: Analysis
 
   useEffect(() => {
     async function checkPrompts() {
-      const analysisPrompt = await getPrompt("analysisSuggestion");
+      const [improvePrompt, analysisPrompt] = await Promise.all([
+        getPrompt("improveWriting"),
+        getPrompt("analysisSuggestion")
+      ]);
+      setHasImprovePrompt(!!improvePrompt);
       setHasAnalysisPrompt(!!analysisPrompt);
     }
     checkPrompts();
@@ -118,6 +130,8 @@ export function AnalysisSection({ action, user, isSubmitting, onSave }: Analysis
       recognition.lang = 'es-ES';
 
       recognition.onresult = (event) => {
+        if (!activeMicField) return;
+
         let interimTranscript = '';
         for (let i = event.resultIndex; i < event.results.length; ++i) {
           if (event.results[i].isFinal) {
@@ -126,36 +140,76 @@ export function AnalysisSection({ action, user, isSubmitting, onSave }: Analysis
             interimTranscript += event.results[i][0].transcript;
           }
         }
-        form.setValue('causes', finalTranscript + interimTranscript);
+        form.setValue(activeMicField as any, finalTranscript + interimTranscript);
       };
 
-      recognition.onend = () => setIsRecording(false);
+      recognition.onend = () => {
+        setIsRecording(false);
+        setActiveMicField(null);
+      };
       recognition.onerror = (event) => {
         console.error("Speech recognition error", event.error);
         toast({ variant: "destructive", title: "Error de reconocimiento de voz" });
         setIsRecording(false);
+        setActiveMicField(null);
       };
       recognitionRef.current = recognition;
     }
     return () => recognitionRef.current?.stop();
-  }, [form, toast, finalTranscript]);
+  }, [form, toast, activeMicField]);
 
-  const toggleRecording = () => {
+  const toggleRecording = (fieldName: string) => {
     if (!recognitionRef.current) return;
+    
     if (isRecording) {
       recognitionRef.current.stop();
     } else {
-      finalTranscript = form.getValues('causes');
+      finalTranscript = form.getValues(fieldName as any);
+      setActiveMicField(fieldName);
+      setIsRecording(true);
       recognitionRef.current.start();
     }
-    setIsRecording(!isRecording);
   };
 
-  const handleGenerateSuggestion = async () => {
+  const handleImproveText = async (fieldName: string) => {
+    const currentText = form.getValues(fieldName as any);
+    if (!currentText?.trim()) {
+      toast({ variant: "destructive", title: "Campo vacío", description: "No hay texto para mejorar." });
+      return;
+    }
+    setIsImprovingText(true);
+    setActiveImproveField(fieldName);
+    try {
+      const improvedText = await improveWriting({ text: currentText });
+      if (improvedText) {
+        setAiSuggestion(improvedText);
+        setIsSuggestionDialogOpen(true);
+      } else {
+        toast({ variant: "destructive", title: "La IA no ha devuelto sugerencias" });
+      }
+    } catch (error) {
+      console.error("Error improving text:", error);
+      toast({ variant: "destructive", title: "Error de la IA" });
+    } finally {
+      setIsImprovingText(false);
+    }
+  };
+
+  const handleAcceptSuggestion = () => {
+    if (aiSuggestion && activeImproveField) {
+        form.setValue(activeImproveField as any, aiSuggestion, { shouldValidate: true });
+    }
+    setIsSuggestionDialogOpen(false);
+    setAiSuggestion(null);
+    setActiveImproveField(null);
+  };
+
+
+  const handleGenerateAnalysis = async () => {
     setIsGeneratingSuggestion(true);
     try {
       const response = await suggestAnalysisAndActions({ observations: action.description });
-      setAiSuggestion(response);
+      setAnalysisAiSuggestion(response);
       setIsSuggestionDialogOpen(true);
     } catch (error) {
       console.error("Error generating analysis suggestion:", error);
@@ -165,21 +219,21 @@ export function AnalysisSection({ action, user, isSubmitting, onSave }: Analysis
     }
   };
 
-  const handleAcceptSuggestion = () => {
-    if (aiSuggestion) {
-      form.setValue('causes', aiSuggestion.causesAnalysis, { shouldValidate: true });
+  const handleAcceptAnalysisSuggestion = () => {
+    if (analysisAiSuggestion) {
+      form.setValue('causes', analysisAiSuggestion.causesAnalysis, { shouldValidate: true });
       
-      const newActions = aiSuggestion.proposedActions.map(action => ({
+      const newActions = analysisAiSuggestion.proposedActions.map(action => ({
         id: crypto.randomUUID(),
         description: action.description,
-        responsibleUserId: '', // User must select this
-        dueDate: new Date(), // Defaults to today, user must change
+        responsibleUserId: '',
+        dueDate: new Date(), 
         status: 'Pendiente' as const
       }));
       replace(newActions);
     }
     setIsSuggestionDialogOpen(false);
-    setAiSuggestion(null);
+    setAnalysisAiSuggestion(null);
   };
 
 
@@ -217,7 +271,7 @@ export function AnalysisSection({ action, user, isSubmitting, onSave }: Analysis
             <Button
               type="button"
               variant="outline"
-              onClick={handleGenerateSuggestion}
+              onClick={handleGenerateAnalysis}
               disabled={isGeneratingSuggestion}
               title="Generar Análisis con IA"
             >
@@ -236,26 +290,18 @@ export function AnalysisSection({ action, user, isSubmitting, onSave }: Analysis
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="text-lg font-semibold">Análisis de las Causas</FormLabel>
-                  <div className="relative">
+                   <div className="flex items-center rounded-md border border-input focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2">
                     <FormControl>
                       <Textarea
                         rows={6}
                         placeholder="Describe el análisis realizado para identificar las causas raíz del problema..."
-                        className="resize-y pr-[4.5rem]"
+                        className="flex-grow resize-y border-none focus-visible:ring-0 focus-visible:ring-offset-0"
                         {...field}
                       />
                     </FormControl>
-                    <div className="absolute right-2 top-2 flex flex-col gap-2">
-                      <Button
-                        type="button"
-                        size="icon"
-                        variant="ghost"
-                        onClick={toggleRecording}
-                        className={cn("h-8 w-8", isRecording && "bg-red-500/20 text-red-500 hover:bg-red-500/30 hover:text-red-500")}
-                        title="Activar/desactivar el micrófono"
-                      >
-                        {isRecording ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
-                      </Button>
+                    <div className="flex flex-col gap-2 p-2 self-start">
+                      <Button type="button" size="icon" variant="ghost" onClick={() => toggleRecording('causes')} className={cn("h-8 w-8", isRecording && activeMicField === 'causes' && "bg-red-500/20 text-red-500 hover:bg-red-500/30 hover:text-red-500")} title="Micrófono para análisis de causas"><Mic className="h-4 w-4" /></Button>
+                      {hasImprovePrompt && <Button type="button" size="icon" variant="ghost" onClick={() => handleImproveText('causes')} disabled={isImprovingText && activeImproveField === 'causes'} className="h-8 w-8" title="Mejorar análisis de causas con IA">{isImprovingText && activeImproveField === 'causes' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}</Button>}
                     </div>
                   </div>
                   <FormMessage />
@@ -273,10 +319,16 @@ export function AnalysisSection({ action, user, isSubmitting, onSave }: Analysis
                         name={`proposedActions.${index}.description`}
                         render={({ field }) => (
                             <FormItem>
-                                <FormLabel>Descripción de la acción</FormLabel>
-                                <FormControl>
-                                    <Textarea {...field} placeholder="p. ej., Revisar y actualizar el procedimiento P-01" rows={2} className="resize-y" />
-                                </FormControl>
+                                <FormLabel>Descripción de la acción {index + 1}</FormLabel>
+                                <div className="flex items-center rounded-md border border-input focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2">
+                                  <FormControl>
+                                      <Textarea {...field} placeholder="p. ej., Revisar y actualizar el procedimiento P-01" rows={2} className="flex-grow resize-y border-none focus-visible:ring-0 focus-visible:ring-offset-0" />
+                                  </FormControl>
+                                  <div className="flex flex-col gap-2 p-2 self-start">
+                                      <Button type="button" size="icon" variant="ghost" onClick={() => toggleRecording(`proposedActions.${index}.description`)} className={cn("h-8 w-8", isRecording && activeMicField === `proposedActions.${index}.description` && "bg-red-500/20 text-red-500 hover:bg-red-500/30 hover:text-red-500")} title={`Micrófono para acción ${index + 1}`}><Mic className="h-4 w-4" /></Button>
+                                      {hasImprovePrompt && <Button type="button" size="icon" variant="ghost" onClick={() => handleImproveText(`proposedActions.${index}.description`)} disabled={isImprovingText && activeImproveField === `proposedActions.${index}.description`} className="h-8 w-8" title={`Mejorar acción ${index + 1} con IA`}>{isImprovingText && activeImproveField === `proposedActions.${index}.description` ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}</Button>}
+                                  </div>
+                                </div>
                                 <FormMessage />
                             </FormItem>
                         )}
@@ -399,29 +451,46 @@ export function AnalysisSection({ action, user, isSubmitting, onSave }: Analysis
         <DialogContent className="sm:max-w-2xl">
           <DialogHeader>
             <DialogTitle>Sugerencia de la IA</DialogTitle>
-            <DialogDescription>El asistente ha generado el siguiente análisis y plan de acción. ¿Quieres aceptar estos cambios?</DialogDescription>
+            <DialogDescription>
+              {analysisAiSuggestion
+                ? "El asistente ha generado el siguiente análisis y plan de acción. ¿Quieres aceptar estos cambios?"
+                : "El asistente ha generado la siguiente descripción. ¿Quieres aceptar estos cambios?"}
+            </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4 max-h-[60vh] overflow-y-auto pr-6">
-            <div className="space-y-2">
-              <Label htmlFor="suggestion-causes" className="font-semibold text-base">Análisis de Causas Sugerido</Label>
-              <Textarea id="suggestion-causes" readOnly value={aiSuggestion?.causesAnalysis || ''} rows={8} className="resize-y bg-muted/50" />
-            </div>
-            <Separator />
-            <div className="space-y-4">
-               <h4 className="font-semibold text-base">Acciones Correctivas Sugeridas</h4>
-               <ul className="space-y-2 list-disc pl-5">
-                {aiSuggestion?.proposedActions.map((action, index) => (
-                    <li key={index}>{action.description}</li>
-                ))}
-               </ul>
-            </div>
+            {analysisAiSuggestion ? (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="suggestion-causes" className="font-semibold text-base">Análisis de Causas Sugerido</Label>
+                  <Textarea id="suggestion-causes" readOnly value={analysisAiSuggestion.causesAnalysis || ''} rows={8} className="resize-y bg-muted/50" />
+                </div>
+                <Separator />
+                <div className="space-y-4">
+                   <h4 className="font-semibold text-base">Acciones Correctivas Sugeridas</h4>
+                   <ul className="space-y-2 list-disc pl-5">
+                    {analysisAiSuggestion.proposedActions.map((action, index) => (
+                        <li key={index}>{action.description}</li>
+                    ))}
+                   </ul>
+                </div>
+              </>
+            ) : (
+               <div className="space-y-2">
+                  <Label htmlFor="suggestion-text">Texto mejorado</Label>
+                  <Textarea id="suggestion-text" readOnly value={aiSuggestion || ''} rows={10} className="resize-y bg-muted/50" />
+              </div>
+            )}
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsSuggestionDialogOpen(false)}>Cancelar</Button>
-            <Button onClick={handleAcceptSuggestion}>Aceptar y Rellenar Formulario</Button>
+            <Button variant="outline" onClick={() => { setIsSuggestionDialogOpen(false); setAiSuggestion(null); setAnalysisAiSuggestion(null); setActiveImproveField(null); }}>Cancelar</Button>
+            <Button onClick={analysisAiSuggestion ? handleAcceptAnalysisSuggestion : handleAcceptSuggestion}>
+              {analysisAiSuggestion ? 'Aceptar y Rellenar Formulario' : 'Aceptar Sugerencia'}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
     </>
   )
 }
+
+    
