@@ -32,7 +32,7 @@ export const getActions = async (): Promise<ImprovementAction[]> => {
 
     if (actionsSnapshot.empty && !isSeeding) {
         isSeeding = true;
-        console.log("Actions collection is empty. Populating with seed data using a batch operation...");
+        console.log("Actions collection is empty. Populating with seed data...");
         try {
             const allMasterData = {
                 categories: await getCategories(),
@@ -48,15 +48,14 @@ export const getActions = async (): Promise<ImprovementAction[]> => {
             let actionCounter = 1;
 
             const createdActionIds: Record<string, string> = {};
+            const actionsToCreate: ImprovementAction[] = [];
 
-            // First pass: create all documents and map old seed IDs to new Firestore IDs
-            seedActionsData.forEach((seed, index) => {
+            // First pass: Prepare all action objects and map old seed IDs to new Firestore IDs
+            for (const [index, seed] of seedActionsData.entries()) {
                 const newActionId = `AM-${year}${(actionCounter + index).toString().padStart(3, '0')}`;
                 const docRef = doc(collection(db, "actions")); // Auto-generate Firestore ID
                 
-                // Store the mapping from the temporary seed ID to the new Firestore ID
-                const tempSeedId = `seed-${(index + 1).toString().padStart(2, '0')}`;
-                createdActionIds[tempSeedId] = docRef.id;
+                createdActionIds[seed.seedId] = docRef.id;
 
                 const categoryName = allMasterData.categories.find(c => c.id === seed.categoryId)?.name || seed.categoryId;
                 const subcategoryName = allMasterData.subcategories.find(s => s.id === seed.subcategoryId)?.name || seed.subcategoryId;
@@ -64,7 +63,7 @@ export const getActions = async (): Promise<ImprovementAction[]> => {
                 const centerName = allMasterData.centers.find(c => c.id === seed.centerId)?.name || seed.centerId;
                 const affectedAreasNames = seed.affectedAreasIds.map(id => allMasterData.affectedAreas.find(a => a.id === id)?.name || id);
 
-                const newActionData: Omit<ImprovementAction, 'id'> = {
+                const baseActionData: Omit<ImprovementAction, 'id'> = {
                     ...(seed as any),
                     actionId: newActionId,
                     creationDate: new Date().toISOString(),
@@ -76,32 +75,32 @@ export const getActions = async (): Promise<ImprovementAction[]> => {
                     type: typeName,
                     center: centerName,
                     affectedAreas: affectedAreasNames,
+                    responsibleGroupId: seed.assignedTo,
                 };
                 
-                batch.set(docRef, newActionData);
-            });
-
-            // Commit the first batch to create all documents
-            await batch.commit();
-
-            // Second pass: update documents that have dependencies (like `originalActionId`)
-            const updateBatch = writeBatch(db);
-            const actionsToUpdate = seedActionsData.filter(seed => seed.originalActionId);
-
-            for (const seed of actionsToUpdate) {
-                const tempSeedId = `seed-${(seedActionsData.indexOf(seed) + 1).toString().padStart(2, '0')}`;
-                const firestoreId = createdActionIds[tempSeedId];
-                const originalTempId = seed.originalActionId;
-
-                if (firestoreId && originalTempId && createdActionIds[originalTempId]) {
-                    const originalFirestoreId = createdActionIds[originalTempId];
-                    const docRef = doc(db, 'actions', firestoreId);
-                    updateBatch.update(docRef, { originalActionId: originalFirestoreId });
-                }
+                // Generate workflow and dates for each action
+                const workflowPlan = await planTraditionalActionWorkflow(baseActionData);
+                baseActionData.workflowPlan = workflowPlan;
+                baseActionData.analysisDueDate = workflowPlan.steps.find(s => s.stepName.includes('Anàlisi'))?.dueDate || '';
+                baseActionData.implementationDueDate = workflowPlan.steps.find(s => s.stepName.includes('Implantació'))?.dueDate || '';
+                baseActionData.closureDueDate = workflowPlan.steps.find(s => s.stepName.includes('Tancament'))?.dueDate || '';
+                
+                actionsToCreate.push({ ...baseActionData, id: docRef.id });
             }
 
-            // Commit the second batch to update dependencies
-            await updateBatch.commit();
+            // Second pass: Create documents in batch, resolving dependencies like originalActionId
+            for (const action of actionsToCreate) {
+                const docRef = doc(db, 'actions', action.id);
+                
+                // If there's an originalActionId, resolve it to the new Firestore ID
+                if (action.originalActionId && createdActionIds[action.originalActionId]) {
+                    action.originalActionId = createdActionIds[action.originalActionId];
+                }
+
+                batch.set(docRef, action);
+            }
+            
+            await batch.commit();
     
             console.log("Actions collection populated with seed data.");
             
@@ -112,7 +111,6 @@ export const getActions = async (): Promise<ImprovementAction[]> => {
         } finally {
             isSeeding = false;
         }
-
     }
 
 
