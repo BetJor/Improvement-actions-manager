@@ -9,7 +9,6 @@ import { getUsers, getUserById } from './users-service';
 import { getCategories, getSubcategories, getAffectedAreas, getCenters, getActionTypes, getResponsibilityRoles } from './master-data-service';
 import { getPermissionRuleForState, resolveRoles } from './permissions-service';
 import { sendStateChangeEmail } from './notification-service';
-import { seedActionsData } from '@/lib/actions-seed-data';
 
 interface CreateActionData extends Omit<ImprovementAction, 'id' | 'actionId' | 'status' | 'creationDate' | 'category' | 'subcategory' | 'type' | 'affectedAreas' | 'center' | 'analysisDueDate' | 'implementationDueDate' | 'closureDueDate' | 'readers' | 'authors' > {
   status: 'Borrador' | 'Pendiente Análisis';
@@ -21,29 +20,10 @@ interface CreateActionData extends Omit<ImprovementAction, 'id' | 'actionId' | '
   locale?: string;
 }
 
-// Variable global para prevenir la ejecución múltiple del seeder
-let isSeeding = false;
-
-
 // Funció per obtenir les dades de Firestore
 export const getActions = async (): Promise<ImprovementAction[]> => {
     const actionsCol = collection(db, 'actions');
     let actionsSnapshot = await getDocs(query(actionsCol, orderBy("actionId", "desc")));
-
-    if (actionsSnapshot.empty && !isSeeding) {
-        isSeeding = true;
-        console.log("Actions collection is empty. Populating with seed data...");
-        try {
-            await createActionSeeds();
-            // Re-fetch the data after populating
-            actionsSnapshot = await getDocs(query(actionsCol, orderBy("actionId", "desc")));
-        } catch(error) {
-            console.error("Error seeding actions:", error);
-        } finally {
-            isSeeding = false;
-        }
-    }
-
 
     const users = await getUsers();
 
@@ -92,60 +72,6 @@ export const getActions = async (): Promise<ImprovementAction[]> => {
     });
 }
 
-async function createActionSeeds() {
-    const allMasterData = {
-        categories: await getCategories(),
-        subcategories: await getSubcategories(),
-        affectedAreas: await getAffectedAreas(),
-        centers: await getCenters(),
-        actionTypes: await getActionTypes(),
-        responsibilityRoles: await getResponsibilityRoles(),
-    };
-
-    const batch = writeBatch(db);
-    const year = new Date().getFullYear().toString().substring(2);
-    let actionCounter = 1;
-
-    for (const seed of seedActionsData) {
-        const actionId = `AM-${year}${(actionCounter++).toString().padStart(3, '0')}`;
-        const docRef = doc(collection(db, "actions"));
-
-        const categoryName = allMasterData.categories.find(c => c.id === seed.categoryId)?.name || seed.categoryId;
-        const subcategoryName = allMasterData.subcategories.find(s => s.id === seed.subcategoryId)?.name || seed.subcategoryId;
-        const typeName = allMasterData.actionTypes.find(t => t.id === seed.typeId)?.name || seed.typeId;
-        const centerName = allMasterData.centers.find(c => c.id === seed.centerId)?.name || seed.centerId;
-        const affectedAreasNames = seed.affectedAreasIds.map(id => allMasterData.affectedAreas.find(a => a.id === id)?.name || id);
-
-        const baseActionData: Omit<ImprovementAction, 'id'> = {
-            ...(seed as any),
-            actionId: actionId,
-            creationDate: subDays(new Date(), 30).toISOString(),
-            followers: [],
-            readers: [],
-            authors: [],
-            category: categoryName,
-            subcategory: subcategoryName,
-            type: typeName,
-            center: centerName,
-            affectedAreas: affectedAreasNames,
-            responsibleGroupId: seed.assignedTo,
-            analysisDueDate: '',
-            implementationDueDate: '',
-            closureDueDate: '',
-        };
-
-        const workflowPlan = await planTraditionalActionWorkflow(baseActionData);
-        baseActionData.workflowPlan = workflowPlan;
-        baseActionData.analysisDueDate = workflowPlan.steps.find(s => s.stepName.includes('Anàlisi'))?.dueDate || '';
-        baseActionData.implementationDueDate = workflowPlan.steps.find(s => s.stepName.includes('Implantació'))?.dueDate || '';
-        baseActionData.closureDueDate = workflowPlan.steps.find(s => s.stepName.includes('Tancament'))?.dueDate || '';
-
-        batch.set(docRef, baseActionData);
-    }
-    
-    await batch.commit();
-    console.log("Actions collection populated with simple seed data.");
-}
 
 export const getActionById = async (id: string): Promise<ImprovementAction | null> => {
     const actionDocRef = doc(db, 'actions', id);
@@ -223,7 +149,7 @@ export const getActionById = async (id: string): Promise<ImprovementAction | nul
 }
 
 // Function to create a new action
-export async function createAction(data: CreateActionData, masterData: any, isSeedingRun: boolean = false): Promise<ImprovementAction> {
+export async function createAction(data: CreateActionData, masterData: any): Promise<ImprovementAction> {
     const actionsCol = collection(db, 'actions');
   
     // 1. Get the last actionId to generate the new one
@@ -234,14 +160,8 @@ export async function createAction(data: CreateActionData, masterData: any, isSe
     if (!lastActionSnapshot.empty) {
       const lastAction = lastActionSnapshot.docs[0].data();
       const lastId = lastAction.actionId || "AM-24000";
-      // Ensure we handle IDs that might not match the expected format during initial seeding
-      const parts = lastId.split('-');
-      if (parts.length > 1 && parts[1].length > 2) {
-        const lastNumber = parseInt(lastId.split('-')[1].substring(2));
-        if (!isNaN(lastNumber)) {
-            newActionIdNumber = lastNumber + 1;
-        }
-      }
+      const lastNumber = parseInt(lastId.split('-')[1].substring(2));
+      newActionIdNumber = lastNumber + 1;
     }
   
     const year = new Date().getFullYear().toString().substring(2);
@@ -290,8 +210,6 @@ export async function createAction(data: CreateActionData, masterData: any, isSe
       followers: [],
       readers: [],
       authors: [],
-      ...(data.originalActionId && { originalActionId: data.originalActionId }),
-      ...(data.originalActionTitle && { originalActionTitle: data.originalActionTitle }),
     };
   
     // 3. Plan the workflow using the traditional method
@@ -318,8 +236,8 @@ export async function createAction(data: CreateActionData, masterData: any, isSe
     const docRef = await addDoc(actionsCol, newActionData);
     const newAction = { id: docRef.id, ...newActionData } as ImprovementAction;
 
-    // 8. Handle status change logic if not a draft and not a seeding run
-    if (newAction.status !== 'Borrador' && !isSeedingRun) {
+    // 8. Handle status change logic if not a draft
+    if (newAction.status !== 'Borrador') {
         await handleStatusChange(newAction, 'Borrador');
     }
     
@@ -546,11 +464,3 @@ export async function updateActionPermissions(actionId: string, typeId: string, 
     });
     console.log(`[ActionService] Permissions updated successfully for action ${actionId}.`);
 }
-
-    
-
-  
-
-    
-
-    
