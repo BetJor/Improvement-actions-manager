@@ -32,9 +32,8 @@ export const getActions = async (): Promise<ImprovementAction[]> => {
 
     if (actionsSnapshot.empty && !isSeeding) {
         isSeeding = true;
-        console.log("Actions collection is empty. Populating with seed data...");
+        console.log("Actions collection is empty. Populating with seed data using a batch operation...");
         try {
-            // Get all master data to resolve names
             const allMasterData = {
                 categories: await getCategories(),
                 subcategories: await getSubcategories(),
@@ -44,11 +43,65 @@ export const getActions = async (): Promise<ImprovementAction[]> => {
                 responsibilityRoles: await getResponsibilityRoles(),
             };
 
-            for (const seed of seedActionsData) {
-                // We cast to any because the seed data is partial
-                const actionToCreate = seed as any;
-                await createAction(actionToCreate, allMasterData, true);
+            const batch = writeBatch(db);
+            const year = new Date().getFullYear().toString().substring(2);
+            let actionCounter = 1;
+
+            const createdActionIds: Record<string, string> = {};
+
+            // First pass: create all documents and map old seed IDs to new Firestore IDs
+            seedActionsData.forEach((seed, index) => {
+                const newActionId = `AM-${year}${(actionCounter + index).toString().padStart(3, '0')}`;
+                const docRef = doc(collection(db, "actions")); // Auto-generate Firestore ID
+                
+                // Store the mapping from the temporary seed ID to the new Firestore ID
+                const tempSeedId = `seed-${(index + 1).toString().padStart(2, '0')}`;
+                createdActionIds[tempSeedId] = docRef.id;
+
+                const categoryName = allMasterData.categories.find(c => c.id === seed.categoryId)?.name || seed.categoryId;
+                const subcategoryName = allMasterData.subcategories.find(s => s.id === seed.subcategoryId)?.name || seed.subcategoryId;
+                const typeName = allMasterData.actionTypes.find(t => t.id === seed.typeId)?.name || seed.typeId;
+                const centerName = allMasterData.centers.find(c => c.id === seed.centerId)?.name || seed.centerId;
+                const affectedAreasNames = seed.affectedAreasIds.map(id => allMasterData.affectedAreas.find(a => a.id === id)?.name || id);
+
+                const newActionData: Omit<ImprovementAction, 'id'> = {
+                    ...(seed as any),
+                    actionId: newActionId,
+                    creationDate: new Date().toISOString(),
+                    followers: [],
+                    readers: [],
+                    authors: [],
+                    category: categoryName,
+                    subcategory: subcategoryName,
+                    type: typeName,
+                    center: centerName,
+                    affectedAreas: affectedAreasNames,
+                };
+                
+                batch.set(docRef, newActionData);
+            });
+
+            // Commit the first batch to create all documents
+            await batch.commit();
+
+            // Second pass: update documents that have dependencies (like `originalActionId`)
+            const updateBatch = writeBatch(db);
+            const actionsToUpdate = seedActionsData.filter(seed => seed.originalActionId);
+
+            for (const seed of actionsToUpdate) {
+                const tempSeedId = `seed-${(seedActionsData.indexOf(seed) + 1).toString().padStart(2, '0')}`;
+                const firestoreId = createdActionIds[tempSeedId];
+                const originalTempId = seed.originalActionId;
+
+                if (firestoreId && originalTempId && createdActionIds[originalTempId]) {
+                    const originalFirestoreId = createdActionIds[originalTempId];
+                    const docRef = doc(db, 'actions', firestoreId);
+                    updateBatch.update(docRef, { originalActionId: originalFirestoreId });
+                }
             }
+
+            // Commit the second batch to update dependencies
+            await updateBatch.commit();
     
             console.log("Actions collection populated with seed data.");
             
@@ -517,3 +570,4 @@ export async function updateActionPermissions(actionId: string, typeId: string, 
     
 
     
+
