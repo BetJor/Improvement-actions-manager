@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form"
 import * as z from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Switch } from "@/components/ui/switch"
@@ -20,7 +20,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
+  DialogDescription as DialogDescriptionComponent,
   DialogFooter,
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
@@ -205,7 +205,7 @@ export function ClosureSection({ isSubmitting, onSave }: ClosureSectionProps) {
         <DialogContent className="sm:max-w-2xl">
           <DialogHeader>
             <DialogTitle>Sugerencia de la IA</DialogTitle>
-            <DialogDescription>El asistente ha generado la siguiente descripción. ¿Quieres aceptar estos cambios?</DialogDescription>
+            <DialogDescriptionComponent>El asistente ha generado la siguiente descripción. ¿Quieres aceptar estos cambios?</DialogDescriptionComponent>
           </DialogHeader>
           <div className="grid gap-4 py-4 max-h-[60vh] overflow-y-auto pr-4">
             <div className="space-y-2">
@@ -222,5 +222,3 @@ export function ClosureSection({ isSubmitting, onSave }: ClosureSectionProps) {
     </>
   )
 }
-
-    

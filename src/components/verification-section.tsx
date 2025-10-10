@@ -21,7 +21,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
+  DialogDescription as DialogDescriptionComponent,
   DialogFooter,
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
@@ -243,7 +243,7 @@ export function VerificationSection({ action, user, isSubmitting, onSave }: Veri
         <DialogContent className="sm:max-w-2xl">
           <DialogHeader>
             <DialogTitle>Sugerencia de la IA</DialogTitle>
-            <DialogDescription>El asistente ha generado la siguiente descripción. ¿Quieres aceptar estos cambios?</DialogDescription>
+            <DialogDescriptionComponent>El asistente ha generado la siguiente descripción. ¿Quieres aceptar estos cambios?</DialogDescriptionComponent>
           </DialogHeader>
           <div className="grid gap-4 py-4 max-h-[60vh] overflow-y-auto pr-4">
             <div className="space-y-2">
@@ -260,5 +260,3 @@ export function VerificationSection({ action, user, isSubmitting, onSave }: Veri
     </>
   )
 }
-
-    
