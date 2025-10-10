@@ -2,8 +2,8 @@
 
 import { collection, doc, getDoc, getDocs, addDoc, updateDoc, query, orderBy, limit, arrayUnion, Timestamp, runTransaction, arrayRemove, where, writeBatch, setDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { format, parse } from 'date-fns';
-import type { ImprovementAction, ImprovementActionStatus, ActionUserInfo } from '@/lib/types';
+import { format, parse, subDays } from 'date-fns';
+import type { ImprovementAction, ImprovementActionStatus, ActionUserInfo, ProposedAction } from '@/lib/types';
 import { planTraditionalActionWorkflow } from './workflow-service';
 import { getUsers, getUserById } from './users-service';
 import { getCategories, getSubcategories, getAffectedAreas, getCenters, getActionTypes, getResponsibilityRoles } from './master-data-service';
@@ -42,13 +42,14 @@ export const getActions = async (): Promise<ImprovementAction[]> => {
                 actionTypes: await getActionTypes(),
                 responsibilityRoles: await getResponsibilityRoles(),
             };
+            const allUsers = await getUsers();
 
             const batch = writeBatch(db);
             const year = new Date().getFullYear().toString().substring(2);
             let actionCounter = 1;
 
             const createdActionIds: Record<string, string> = {};
-            const actionsToCreate: ImprovementAction[] = [];
+            const actionsToCreate: Partial<ImprovementAction>[] = [];
 
             // First pass: Prepare all action objects and map old seed IDs to new Firestore IDs
             for (const [index, seed] of seedActionsData.entries()) {
@@ -63,10 +64,11 @@ export const getActions = async (): Promise<ImprovementAction[]> => {
                 const centerName = allMasterData.centers.find(c => c.id === seed.centerId)?.name || seed.centerId;
                 const affectedAreasNames = seed.affectedAreasIds.map(id => allMasterData.affectedAreas.find(a => a.id === id)?.name || id);
 
-                const baseActionData: Omit<ImprovementAction, 'id'> = {
+                const baseActionData: Partial<ImprovementAction> = {
+                    id: docRef.id,
                     ...(seed as any),
                     actionId: newActionId,
-                    creationDate: new Date().toISOString(),
+                    creationDate: subDays(new Date(), 30).toISOString(), // Created 30 days ago
                     followers: [],
                     readers: [],
                     authors: [],
@@ -79,17 +81,68 @@ export const getActions = async (): Promise<ImprovementAction[]> => {
                 };
                 
                 // Generate workflow and dates for each action
-                const workflowPlan = await planTraditionalActionWorkflow(baseActionData);
+                const workflowPlan = await planTraditionalActionWorkflow(baseActionData as Omit<ImprovementAction, 'id'>);
                 baseActionData.workflowPlan = workflowPlan;
                 baseActionData.analysisDueDate = workflowPlan.steps.find(s => s.stepName.includes('Anàlisi'))?.dueDate || '';
                 baseActionData.implementationDueDate = workflowPlan.steps.find(s => s.stepName.includes('Implantació'))?.dueDate || '';
                 baseActionData.closureDueDate = workflowPlan.steps.find(s => s.stepName.includes('Tancament'))?.dueDate || '';
+
+                // Add realistic workflow data based on status
+                const analysisUser = allUsers.find(u => u.id === 'user-1')!; // Ana García
+                const verificationUser = allUsers.find(u => u.id === 'user-2')!; // Carlos Rodríguez
+                const closureUser = allUsers.find(u => u.id === seed.creator.id)!;
                 
-                actionsToCreate.push({ ...baseActionData, id: docRef.id });
+                if (['Pendiente Comprobación', 'Pendiente de Cierre', 'Finalizada'].includes(seed.status)) {
+                    baseActionData.analysis = {
+                        causes: "Anàlisi de causes arrel realitzat mitjançant la tècnica dels '5 Perquès'. La causa principal identificada és la manca de formació específica del personal i la desactualització dels procediments interns.",
+                        proposedActions: [{
+                            id: crypto.randomUUID(),
+                            description: "Actualitzar el procediment P-01 i P-02 relacionats amb el procés.",
+                            responsibleUserId: 'user-3', // Laura Martinez
+                            dueDate: subDays(new Date(), 15).toISOString(),
+                            status: 'Implementada'
+                        }, {
+                            id: crypto.randomUUID(),
+                            description: "Realitzar sessió formativa amb tot el personal implicat.",
+                            responsibleUserId: 'user-4', // Javier López
+                            dueDate: subDays(new Date(), 10).toISOString(),
+                            status: 'Implementada'
+                        }],
+                        verificationResponsibleUserId: verificationUser.id,
+                        analysisResponsible: { id: analysisUser.id, name: analysisUser.name, avatar: analysisUser.avatar },
+                        analysisDate: subDays(new Date(), 25).toISOString()
+                    };
+                }
+                
+                if (['Pendiente de Cierre', 'Finalizada'].includes(seed.status)) {
+                    baseActionData.verification = {
+                        notes: "S'ha verificat que el procediment ha estat actualitzat i comunicat. La formació s'ha realitzat amb èxit, amb un 100% d'assistència i avaluació positiva.",
+                        isEffective: true,
+                        verificationDate: subDays(new Date(), 8).toISOString(),
+                        verificationResponsible: { id: verificationUser.id, name: verificationUser.name, avatar: verificationUser.avatar },
+                        proposedActionsVerificationStatus: {
+                           [(baseActionData.analysis?.proposedActions[0] as ProposedAction).id]: "Verificada",
+                           [(baseActionData.analysis?.proposedActions[1] as ProposedAction).id]: "Verificada"
+                        }
+                    };
+                }
+
+                if (seed.status === 'Finalizada') {
+                    const isCompliant = seed.closure?.isCompliant !== false;
+                    baseActionData.closure = {
+                        notes: isCompliant ? "L'acció es tanca com a eficaç. S'ha comprovat la correcta aplicació del nou procediment i no s'han detectat noves desviacions en el darrer mes." : "L'acció de formació clau no s'ha realitzat. Es tanca com a No Conforme i es genera una nova acció (BIS) per a fer-ne el seguiment.",
+                        isCompliant: isCompliant,
+                        date: subDays(new Date(), 2).toISOString(),
+                        closureResponsible: { id: closureUser.id, name: closureUser.name, avatar: closureUser.avatar },
+                    };
+                }
+
+                actionsToCreate.push(baseActionData);
             }
 
             // Second pass: Create documents in batch, resolving dependencies like originalActionId
             for (const action of actionsToCreate) {
+                if (!action.id) continue;
                 const docRef = doc(db, 'actions', action.id);
                 
                 // If there's an originalActionId, resolve it to the new Firestore ID
@@ -568,4 +621,3 @@ export async function updateActionPermissions(actionId: string, typeId: string, 
     
 
     
-
