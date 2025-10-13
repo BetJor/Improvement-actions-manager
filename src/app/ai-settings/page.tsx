@@ -2,38 +2,27 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useForm } from "react-hook-form"
-import * as z from "zod"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { getPrompt, updatePrompt } from "@/lib/data"
+import { getPrompt } from "@/lib/data"
 import { useToast } from "@/hooks/use-toast"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Button } from "@/components/ui/button"
 import { Loader2 } from "lucide-react"
 
-const formSchema = z.object({
-  improveWritingPrompt: z.string(),
-  analysisSuggestionPrompt: z.string(),
-  correctiveActionsPrompt: z.string(),
-})
-
-type PromptId = "improveWriting" | "analysisSuggestion" | "correctiveActions";
+interface PromptsState {
+  improveWritingPrompt: string;
+  analysisSuggestionPrompt: string;
+  correctiveActionsPrompt: string;
+}
 
 export default function AiSettingsPage() {
   const { toast } = useToast()
   const [isLoading, setIsLoading] = useState(true)
-  const [isSaving, setIsSaving] = useState(false)
-
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      improveWritingPrompt: "",
-      analysisSuggestionPrompt: "",
-      correctiveActionsPrompt: "",
-    },
-  })
+  const [prompts, setPrompts] = useState<PromptsState>({
+    improveWritingPrompt: "",
+    analysisSuggestionPrompt: "",
+    correctiveActionsPrompt: "",
+  });
 
   useEffect(() => {
     async function loadPrompts() {
@@ -44,9 +33,11 @@ export default function AiSettingsPage() {
           getPrompt("analysisSuggestion"),
           getPrompt("correctiveActions"),
         ]);
-        form.setValue("improveWritingPrompt", improvePrompt);
-        form.setValue("analysisSuggestionPrompt", analysisPrompt);
-        form.setValue("correctiveActionsPrompt", correctiveActionsPrompt);
+        setPrompts({
+          improveWritingPrompt: improvePrompt,
+          analysisSuggestionPrompt: analysisPrompt,
+          correctiveActionsPrompt: correctiveActionsPrompt,
+        });
       } catch (error) {
         console.error("Failed to load prompts:", error)
         toast({
@@ -59,31 +50,7 @@ export default function AiSettingsPage() {
       }
     }
     loadPrompts()
-  }, [form, toast])
-
-  const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    setIsSaving(true)
-    try {
-      await Promise.all([
-        updatePrompt("improveWriting", values.improveWritingPrompt),
-        updatePrompt("analysisSuggestion", values.analysisSuggestionPrompt),
-        updatePrompt("correctiveActions", values.correctiveActionsPrompt),
-      ]);
-      toast({
-        title: "¡Guardado!",
-        description: "Los prompts se han guardado correctamente.",
-      })
-    } catch (error) {
-      console.error("Failed to save prompts:", error)
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "No se han podido guardar los prompts.",
-      })
-    } finally {
-      setIsSaving(false)
-    }
-  }
+  }, [toast])
 
   return (
     <Card>
@@ -98,68 +65,38 @@ export default function AiSettingsPage() {
             Cargando configuración...
           </div>
         ) : (
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-              <FormField
-                control={form.control}
-                name="improveWritingPrompt"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Prompt de Mejora de Observaciones</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        rows={12}
-                        placeholder="Introduce aquí el prompt que usará la IA para mejorar las observaciones..."
-                        className="resize-y"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+          <div className="space-y-8">
+            <div className="space-y-2">
+              <Label htmlFor="improveWritingPrompt">Prompt de Mejora de Observaciones</Label>
+              <Textarea
+                id="improveWritingPrompt"
+                readOnly
+                value={prompts.improveWritingPrompt}
+                rows={12}
+                className="resize-y bg-muted/50"
               />
-              <FormField
-                control={form.control}
-                name="analysisSuggestionPrompt"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Prompt de Análisis de Causas</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        rows={12}
-                        placeholder="Introduce el prompt para el asistente de análisis de causas..."
-                        className="resize-y"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="analysisSuggestionPrompt">Prompt de Análisis de Causas</Label>
+              <Textarea
+                id="analysisSuggestionPrompt"
+                readOnly
+                value={prompts.analysisSuggestionPrompt}
+                rows={12}
+                className="resize-y bg-muted/50"
               />
-              <FormField
-                control={form.control}
-                name="correctiveActionsPrompt"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Prompt de Acciones Correctivas</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        rows={12}
-                        placeholder="Introduce el prompt para el asistente de propuestas de acciones..."
-                        className="resize-y"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+            </div>
+             <div className="space-y-2">
+              <Label htmlFor="correctiveActionsPrompt">Prompt de Acciones Correctivas</Label>
+              <Textarea
+                id="correctiveActionsPrompt"
+                readOnly
+                value={prompts.correctiveActionsPrompt}
+                rows={12}
+                className="resize-y bg-muted/50"
               />
-              <Button type="submit" disabled={isSaving}>
-                {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Guardar Cambios
-              </Button>
-            </form>
-          </Form>
+            </div>
+          </div>
         )}
       </CardContent>
     </Card>
