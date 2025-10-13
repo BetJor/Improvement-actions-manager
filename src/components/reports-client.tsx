@@ -73,7 +73,6 @@ export function ReportsClient() {
                 <TabsList>
                     <TabsTrigger value="efficiency">Análisis de Eficiencia</TabsTrigger>
                     <TabsTrigger value="quality">Análisis de Calidad e Impacto</TabsTrigger>
-                    <TabsTrigger value="adoption">Uso y Adopción</TabsTrigger>
                 </TabsList>
 
                 {/* PESTAÑA 1: EFICIENCIA */}
@@ -154,47 +153,6 @@ export function ReportsClient() {
                                 </LineChart>
                             </ResponsiveContainer>
                         </CardContent>
-                    </Card>
-                </TabsContent>
-
-                {/* PESTAÑA 3: USO Y ADOPCIÓN */}
-                <TabsContent value="adoption" className="space-y-8">
-                    <Card>
-                        <CardHeader><CardTitle>Indicadores Clave de Adopción</CardTitle></CardHeader>
-                        <CardContent className="grid gap-4 md:grid-cols-3">
-                            <Card className="bg-blue-50 border-blue-200">
-                                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                                    <CardTitle className="text-sm font-medium">Usuarios Activos (Mensual)</CardTitle>
-                                    <Users className="h-5 w-5 text-blue-600" />
-                                </CardHeader>
-                                <CardContent><p className="text-3xl font-bold">N/D</p><p className="text-xs text-muted-foreground">Requiere integración con Analytics</p></CardContent>
-                            </Card>
-                             <Card className="bg-green-50 border-green-200">
-                                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                                    <CardTitle className="text-sm font-medium">Reportes Generados</CardTitle>
-                                    <FileText className="h-5 w-5 text-green-600" />
-                                </CardHeader>
-                                <CardContent><p className="text-3xl font-bold">N/D</p><p className="text-xs text-muted-foreground">Requiere integración con Analytics</p></CardContent>
-                            </Card>
-                             <Card className="bg-orange-50 border-orange-200">
-                                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                                    <CardTitle className="text-sm font-medium">Tiempo Medio de Sesión</CardTitle>
-                                    <Clock className="h-5 w-5 text-orange-600" />
-                                </CardHeader>
-                                <CardContent><p className="text-3xl font-bold">N/D</p><p className="text-xs text-muted-foreground">Requiere integración con Analytics</p></CardContent>
-                            </Card>
-                        </CardContent>
-                    </Card>
-                    <Card className="bg-amber-50 border-amber-200">
-                         <CardHeader><CardTitle className="text-amber-800">Próximo Paso: Integración de Analíticas</CardTitle></CardHeader>
-                         <CardContent>
-                            <div className="text-sm text-amber-900">
-                                <p>Estos indicadores miden cómo los usuarios interactúan con la aplicación. Para obtener datos reales, es necesario integrar un servicio de analítica de producto.</p>
-                                <br/>
-                                <p><strong>Recomendación:</strong> Integrar la aplicación con <a href="https://firebase.google.com/docs/analytics" target="_blank" rel="noopener noreferrer" className="font-bold underline">Google Analytics para Firebase</a>. Esta herramienta le permitirá registrar eventos, monitorizar la actividad de los usuarios en tiempo real y entender la adopción de la herramienta en su organización.</p>
-                                <p className="mt-2">Una vez integrado, podremos visualizar aquí los datos reales de uso.</p>
-                            </div>
-                         </CardContent>
                     </Card>
                 </TabsContent>
             </Tabs>
