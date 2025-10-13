@@ -532,9 +532,3 @@ export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTab
         </div>
     )
 }
-
-    
-
-  
-
-
