@@ -174,19 +174,19 @@ export async function createAction(data: CreateActionData, masterData: any): Pro
     const creatorDetails = await getUserById(data.creator.id);
 
     // Find names from IDs
-    const categoryName = masterData.categories.find((c: any) => c.id === data.categoryId)?.name || data.categoryId;
-    const subcategoryName = masterData.subcategories.find((s: any) => s.id === data.subcategoryId)?.name || data.subcategoryId;
+    const categoryName = masterData.categories.find((c: any) => c.id === data.category)?.name || data.category || '';
+    const subcategoryName = masterData.subcategories.find((s: any) => s.id === data.subcategory)?.name || data.subcategory || '';
     const affectedAreasNames = data.affectedAreasIds.map(id => masterData.affectedAreas.find((a: any) => a.id === id)?.name || id);
-    const centerName = masterData.centers.find((c: any) => c.id === data.centerId)?.name || data.centerId;
-    const typeName = masterData.actionTypes.find((t: any) => t.id === data.typeId)?.name || data.typeId;
+    const centerName = masterData.centers.find((c: any) => c.id === data.centerId)?.name || data.centerId || '';
+    const typeName = masterData.actionTypes.find((t: any) => t.id === data.typeId)?.name || data.typeId || '';
 
     const newActionData: Omit<ImprovementAction, 'id'> = {
       actionId: newActionId,
       title: data.title,
       category: categoryName,
-      categoryId: data.categoryId,
+      categoryId: data.category,
       subcategory: subcategoryName,
-      subcategoryId: data.subcategoryId,
+      subcategoryId: data.subcategory,
       description: data.description,
       type: typeName,
       typeId: data.typeId,
@@ -295,15 +295,15 @@ export async function updateAction(actionId: string, data: any, masterData: any 
               description: data.description,
               assignedTo: data.assignedTo,
               responsibleGroupId: data.assignedTo,
-              category: masterData.categories.find((c: any) => c.id === data.category)?.name || data.category,
+              category: masterData.categories.find((c: any) => c.id === data.category)?.name || data.category || '',
               categoryId: data.category,
-              subcategory: masterData.subcategories.find((s: any) => s.id === data.subcategory)?.name || data.subcategory,
+              subcategory: masterData.subcategories.find((s: any) => s.id === data.subcategory)?.name || data.subcategory || '',
               subcategoryId: data.subcategory,
               affectedAreas: data.affectedAreasIds.map((id: string) => masterData.affectedAreas.find((a: any) => a.id === id)?.name || id),
               affectedAreasIds: data.affectedAreasIds,
-              center: masterData.centers.find((c: any) => c.id === data.centerId)?.name || data.centerId,
+              center: masterData.centers.find((c: any) => c.id === data.centerId)?.name || data.centerId || '',
               centerId: data.centerId,
-              type: masterData.actionTypes.find((t: any) => t.id === data.typeId)?.name || data.typeId,
+              type: masterData.actionTypes.find((t: any) => t.id === data.typeId)?.name || data.typeId || '',
               typeId: data.typeId,
             };
         }
