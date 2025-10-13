@@ -391,15 +391,15 @@ export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTab
                                         <div className="space-y-4">
                                             {action.analysis.proposedActions.map((pa) => (
                                                 <div key={pa.id} className={cn("p-4 border-l-4 rounded-lg bg-muted/30", getStatusColorClass(pa.status))}>
-                                                    <div className="flex justify-between items-start">
-                                                        <div className="flex-1">
+                                                    <div className="flex justify-between items-start gap-4">
+                                                        <div className="flex-1 space-y-3">
                                                             <p className="font-medium whitespace-pre-wrap">{pa.description}</p>
-                                                            <p className="text-sm text-muted-foreground mt-1">
-                                                                Responsable: {users.find(u => u.id === pa.responsibleUserId)?.name || pa.responsibleUserId} | Fecha Vencimiento: {safeParseDate(pa.dueDate) ? format(safeParseDate(pa.dueDate)!, "dd/MM/yyyy") : ''}
-                                                            </p>
-                                                             <p className="text-sm text-muted-foreground mt-1">
-                                                                Estado: <span className="font-semibold">{pa.status || 'Pendiente'}</span>
-                                                            </p>
+                                                            <Separator />
+                                                            <div className="text-sm text-muted-foreground">
+                                                              <p>Responsable: {users.find(u => u.id === pa.responsibleUserId)?.name || pa.responsibleUserId}</p>
+                                                              <p>Fecha Vencimiento: {safeParseDate(pa.dueDate) ? format(safeParseDate(pa.dueDate)!, "dd/MM/yyyy") : ''}</p>
+                                                              <p>Estado: <span className="font-semibold">{pa.status || 'Pendiente'}</span></p>
+                                                            </div>
                                                         </div>
                                                         {user?.id === pa.responsibleUserId && action.status !== 'Finalizada' && (
                                                           <Button
