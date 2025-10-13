@@ -55,7 +55,7 @@ export function ReportsClient() {
         actions.forEach(action => { const openedMonth = format(parseISO(action.creationDate), 'MMM yy'); if(monthlyFlowMap[openedMonth]) monthlyFlowMap[openedMonth].opened++; if(action.status === 'Finalizada' && action.closure?.date){ const closedMonth = format(parseISO(action.closure.date), 'MMM yy'); if(monthlyFlowMap[closedMonth]) monthlyFlowMap[closedMonth].closed++; } });
         const efficiencyStats = { avgResolutionTime: finalizedActions.length > 0 ? Math.round(totalResolutionTime / finalizedActions.length) : 0, maxResolutionTime: Math.max(...resolutionTimes), firstAttemptSuccessRate: firstAttemptActions.length > 0 ? Math.round((successfulFirstAttempt / firstAttemptActions.length) * 100) : 0, monthlyFlow: Object.values(monthlyFlowMap) };
 
-        const problemCounts = actions.reduce((acc, action) => { const title = action.title.trim(); acc[title] = (acc[title] || 0) + 1; return acc; }, {} as Record<string, number>);
+        const problemCounts = actions.reduce((acc, action) => { const subcategory = action.subcategory || 'Sin Subcategoría'; acc[subcategory] = (acc[subcategory] || 0) + 1; return acc; }, {} as Record<string, number>);
         const top5Problems = Object.entries(problemCounts).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value).slice(0, 5);
         const qualityStats = { top5Problems };
 
@@ -122,7 +122,7 @@ export function ReportsClient() {
                         <CardHeader><CardTitle>Análisis de Problemas Recurrentes</CardTitle></CardHeader>
                         <CardContent className="space-y-6">
                             <div>
-                                <h4 className="font-semibold mb-4 text-center text-sm text-muted-foreground">Top 5 - Problemas Más Frecuentes</h4>
+                                <h4 className="font-semibold mb-4 text-center text-sm text-muted-foreground">Top 5 - Problemas Más Frecuentes (por Subcategoría)</h4>
                                 <ResponsiveContainer width="100%" height={300}>
                                     <BarChart layout="vertical" data={qualityStats.top5Problems} margin={{ top: 5, right: 30, left: 200, bottom: 5 }}>
                                         <CartesianGrid strokeDasharray="3 3" horizontal={false} />
