@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useForm } from "react-hook-form"
@@ -24,6 +25,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
+import { Separator } from "./ui/separator"
 
 const verificationSchema = z.object({
   notes: z.string().min(1, "Las observaciones son requeridas."),
@@ -205,8 +207,9 @@ export function VerificationSection({ action, user, isSubmitting, onSave }: Veri
                     control={form.control}
                     name={`proposedActionsVerificationStatus.${pa.id}`}
                     render={({ field }) => (
-                      <FormItem className="p-4 border rounded-lg">
+                      <FormItem className="p-4 border rounded-lg space-y-4">
                         <FormattedDescription text={pa.description} />
+                        <Separator />
                         <FormControl>
                           <RadioGroup
                             onValueChange={field.onChange}
