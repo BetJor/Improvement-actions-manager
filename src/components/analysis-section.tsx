@@ -247,7 +247,7 @@ export function AnalysisSection({ action, user, isSubmitting, onSave }: Analysis
         analysisResponsible: {
             id: user.id,
             name: user.name || "Usuario desconocido",
-            avatar: user.avatar || undefined,
+            avatar: user.avatar || "",
         },
         analysisDate: new Date().toISOString(),
     }
@@ -492,5 +492,3 @@ export function AnalysisSection({ action, user, isSubmitting, onSave }: Analysis
     </>
   )
 }
-
-    
