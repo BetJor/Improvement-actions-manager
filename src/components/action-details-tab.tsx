@@ -191,7 +191,7 @@ export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTab
                     closureResponsible: {
                         id: user.id,
                         name: user.name || 'Unknown User',
-                        avatar: user.avatar || undefined,
+                        avatar: user.avatar || "",
                     },
                     date: new Date().toISOString(),
                 },
@@ -393,7 +393,7 @@ export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTab
                                                 <div key={pa.id} className={cn("p-4 border-l-4 rounded-lg bg-muted/30", getStatusColorClass(pa.status))}>
                                                     <div className="flex justify-between items-start">
                                                         <div className="flex-1">
-                                                            <p className="font-medium">{pa.description}</p>
+                                                            <p className="font-medium whitespace-pre-wrap">{pa.description}</p>
                                                             <p className="text-sm text-muted-foreground mt-1">
                                                                 Responsable: {users.find(u => u.id === pa.responsibleUserId)?.name || pa.responsibleUserId} | Fecha Vencimiento: {safeParseDate(pa.dueDate) ? format(safeParseDate(pa.dueDate)!, "dd/MM/yyyy") : ''}
                                                             </p>
