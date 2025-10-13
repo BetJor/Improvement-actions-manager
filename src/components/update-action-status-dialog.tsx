@@ -64,8 +64,11 @@ export function UpdateActionStatusDialog({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Actualizar Estado de la Acción</DialogTitle>
-          <DialogDescription>
-            Selecciona el nuevo estado para la acción: "{proposedAction.description}"
+          <DialogDescription asChild>
+            <div className="space-y-2">
+              <p>Selecciona el nuevo estado para la acción:</p>
+              <p className="font-medium bg-muted/50 p-2 rounded-md whitespace-pre-wrap text-sm">"{proposedAction.description}"</p>
+            </div>
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
