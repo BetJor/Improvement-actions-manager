@@ -462,7 +462,7 @@ export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTab
                                         <div className="space-y-4">
                                             {action.analysis?.proposedActions.map((pa, index) => (
                                                 <div key={`${pa.id}-${index}`} className="p-4 border rounded-lg">
-                                                    <p className="font-medium">{pa.description}</p>
+                                                    <p className="font-medium whitespace-pre-wrap">{pa.description}</p>
                                                     <p className="text-sm text-muted-foreground mt-1">
                                                         Estado: <span className="font-semibold">{action.verification?.proposedActionsVerificationStatus?.[pa.id] || 'Pendiente de Verificación'}</span>
                                                     </p>
@@ -536,3 +536,4 @@ export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTab
     
 
   
+
