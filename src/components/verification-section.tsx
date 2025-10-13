@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useForm } from "react-hook-form"
@@ -26,7 +25,6 @@ import {
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 
-
 const verificationSchema = z.object({
   notes: z.string().min(1, "Las observaciones son requeridas."),
   proposedActionsVerificationStatus: z.record(z.string(), z.enum(["Verificada", "No Verificada"])),
@@ -40,6 +38,11 @@ interface VerificationSectionProps {
   isSubmitting: boolean
   onSave: (data: any) => void
 }
+
+// Componente dedicado para mostrar la descripción con el formato correcto
+const FormattedDescription = ({ text }: { text: string }) => {
+  return <p className="font-medium whitespace-pre-wrap">{text}</p>;
+};
 
 export function VerificationSection({ action, user, isSubmitting, onSave }: VerificationSectionProps) {
   const { toast } = useToast();
@@ -203,7 +206,7 @@ export function VerificationSection({ action, user, isSubmitting, onSave }: Veri
                     name={`proposedActionsVerificationStatus.${pa.id}`}
                     render={({ field }) => (
                       <FormItem className="p-4 border rounded-lg">
-                        <FormLabel className="font-medium">{pa.description}</FormLabel>
+                        <FormattedDescription text={pa.description} />
                         <FormControl>
                           <RadioGroup
                             onValueChange={field.onChange}
