@@ -14,7 +14,7 @@ import { AnalysisSection } from "@/components/analysis-section"
 import { VerificationSection } from "@/components/verification-section"
 import { ClosureSection } from "@/components/closure-section"
 import { ActionDetailsPanel } from "@/components/action-details-panel"
-import { Loader2, FileEdit, Edit, Star } from "lucide-react"
+import { Loader2, FileEdit, Edit, Star, Printer } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Separator } from "@/components/ui/separator"
@@ -30,6 +30,13 @@ import { useFollowAction } from "@/hooks/use-follow-action"
 import { useActionState } from "@/hooks/use-action-state"
 import { useTabs } from "@/hooks/use-tabs"
 import { ActionStatusBadge } from "./action-status-badge"
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
+import type { UserOptions } from 'jspdf-autotable';
+
+interface jsPDFWithAutoTable extends jsPDF {
+  autoTable: (options: UserOptions) => jsPDF;
+}
 
 
 interface ActionDetailsTabProps {
@@ -42,7 +49,6 @@ const safeParseDate = (date: any): Date | null => {
     if (date instanceof Date) return date;
     if (typeof date === 'string') {
         try {
-            // ISO 8601 format is preferred
             return parseISO(date);
         } catch (e) {
             console.warn(`Could not parse date string: ${date}`, e);
@@ -99,7 +105,6 @@ export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTab
         setIsSubmitting(true);
         try {
             
-            // This was the line I changed
             await updateAction(action.id, formData, masterData, status); 
             
             toast({
@@ -241,6 +246,165 @@ export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTab
         }
     };
     
+    const generatePdf = () => {
+        if (!action) return;
+
+        const doc = new jsPDF() as jsPDFWithAutoTable;
+        const pageHeight = doc.internal.pageSize.height || doc.internal.pageSize.getHeight();
+        const pageWidth = doc.internal.pageSize.width || doc.internal.pageSize.getWidth();
+        const margin = 15;
+        let y = 20;
+
+        // Header
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(18);
+        doc.text(`Informe de Acción de Mejora: ${action.actionId}`, margin, y);
+        y += 8;
+        doc.setFontSize(12);
+        doc.setFont('helvetica', 'normal');
+        doc.text(`Estado: ${action.status}`, margin, y);
+        y += 10;
+        doc.setLineWidth(0.5);
+        doc.line(margin, y, pageWidth - margin, y);
+        y += 10;
+    
+        // Helper function for sections
+        const addSection = (title: string, body: string | string[][], isTable = false) => {
+            if (y > pageHeight - 40) { // Check for page break
+                doc.addPage();
+                y = 20;
+            }
+            doc.setFontSize(14);
+            doc.setFont('helvetica', 'bold');
+            doc.text(title, margin, y);
+            y += 8;
+            if (isTable) {
+                doc.autoTable({
+                    startY: y,
+                    body: body as string[][],
+                    theme: 'grid',
+                    headStyles: { fillColor: [55, 71, 79], textColor: 255 },
+                    styles: { fontSize: 9, cellPadding: 2 },
+                    margin: { left: margin, right: margin },
+                });
+                y = doc.autoTable.previous.finalY + 10;
+            } else {
+                doc.setFontSize(10);
+                doc.setFont('helvetica', 'normal');
+                const splitText = doc.splitTextToSize(body as string, pageWidth - (margin * 2));
+                doc.text(splitText, margin, y);
+                y += (splitText.length * 4) + 10; // Adjust spacing
+            }
+        };
+        
+        // --- SECTIONS ---
+        addSection('1. Detalles de la Acción', [
+            ['ID de Acción', action.actionId],
+            ['Título', action.title],
+            ['Tipo', action.type],
+            ['Categoría', action.category],
+            ['Subcategoría', action.subcategory],
+            ['Centro', action.center || 'N/A'],
+            ['Áreas Implicadas', action.affectedAreas.join(', ')],
+        ], true);
+        addSection('Observaciones Iniciales', action.description);
+
+        // --- AUDIT TRAIL ---
+        if (action.creator) {
+            const creationDate = safeParseDate(action.creationDate);
+            addSection('2. Creación y Asignación', [
+                ['Creado por', `${action.creator.name} (${action.creator.email})`],
+                ['Fecha de Creación', creationDate ? format(creationDate, 'dd/MM/yyyy HH:mm') : 'N/A'],
+                ['Asignado a (Análisis)', action.responsibleGroupId],
+            ], true);
+        }
+
+        // --- ANALYSIS SECTION ---
+        if (action.analysis) {
+            addSection('3. Análisis de Causas y Plan de Acción', action.analysis.causes);
+            if (action.analysis.analysisResponsible) {
+                const analysisDate = safeParseDate(action.analysis.analysisDate);
+                doc.autoTable({
+                    startY: y,
+                    body: [
+                        ['Análisis Realizado por', `${action.analysis.analysisResponsible.name}`],
+                        ['Fecha de Análisis', analysisDate ? format(analysisDate, 'dd/MM/yyyy') : 'N/A'],
+                        ['Responsable Verificación', users.find(u => u.id === action.analysis?.verificationResponsibleUserId)?.name || 'N/A'],
+                    ],
+                    theme: 'striped',
+                    styles: { fontSize: 9, cellPadding: 2 },
+                    margin: { left: margin, right: margin },
+                });
+                y = doc.autoTable.previous.finalY + 10;
+            }
+            if (action.analysis.proposedActions?.length > 0) {
+                addSection('Acciones Propuestas', action.analysis.proposedActions.map(pa => [
+                    pa.description,
+                    users.find(u => u.id === pa.responsibleUserId)?.name || 'N/A',
+                    safeParseDate(pa.dueDate) ? format(safeParseDate(pa.dueDate)!, 'dd/MM/yyyy') : 'N/A',
+                    pa.status || 'Pendiente'
+                ]), true);
+            }
+        }
+        
+        // --- VERIFICATION SECTION ---
+        if(action.verification) {
+            addSection('4. Verificación de la Implantación', action.verification.notes);
+            const verificationDate = safeParseDate(action.verification.verificationDate);
+            doc.autoTable({
+                startY: y,
+                body: [
+                    ['Verificado por', `${action.verification.verificationResponsible.name}`],
+                    ['Fecha de Verificación', verificationDate ? format(verificationDate, 'dd/MM/yyyy') : 'N/A'],
+                ],
+                theme: 'striped',
+                styles: { fontSize: 9, cellPadding: 2 },
+                margin: { left: margin, right: margin },
+            });
+            y = doc.autoTable.previous.finalY + 10;
+        }
+
+        // --- CLOSURE SECTION ---
+        if(action.closure) {
+            addSection('5. Cierre de la Acción', action.closure.notes);
+            const closureDate = safeParseDate(action.closure.date);
+            doc.autoTable({
+                startY: y,
+                body: [
+                    ['Cerrado por', `${action.closure.closureResponsible.name}`],
+                    ['Fecha de Cierre', closureDate ? format(closureDate, 'dd/MM/yyyy') : 'N/A'],
+                    ['Resultado Final', action.closure.isCompliant ? 'Conforme' : 'No Conforme'],
+                ],
+                theme: 'striped',
+                styles: { fontSize: 9, cellPadding: 2 },
+                margin: { left: margin, right: margin },
+            });
+            y = doc.autoTable.previous.finalY + 10;
+        }
+
+
+        // --- FOOTER AND SAVE ---
+        const pageCount = doc.internal.pages.length;
+        for (let i = 1; i <= pageCount; i++) {
+            doc.setPage(i);
+            doc.setFontSize(8);
+            doc.setTextColor(150);
+            doc.text(
+                `Página ${i} de ${pageCount}`,
+                pageWidth / 2,
+                pageHeight - 10,
+                { align: 'center' }
+            );
+            doc.text(
+                `Informe generado el: ${format(new Date(), 'dd/MM/yyyy HH:mm')}`,
+                margin,
+                pageHeight - 10
+            );
+        }
+        
+        doc.save(`Accion_Mejora_${action.actionId}.pdf`);
+    };
+
     if (!action) {
         return (
             <div className="flex h-full w-full items-center justify-center">
@@ -312,6 +476,10 @@ export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTab
                       </Button>
                     <h1 className="text-3xl font-bold tracking-tight">{action.actionId}: {action.title}</h1>
                     <ActionStatusBadge status={action.status} isCompliant={action.closure?.isCompliant} />
+                    <Button variant="outline" size="sm" onClick={generatePdf} className="ml-auto">
+                        <Printer className="mr-2 h-4 w-4" />
+                        Exportar a PDF
+                    </Button>
                 </header>
 
                 <Tabs defaultValue="details" className="w-full">
@@ -333,7 +501,7 @@ export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTab
                                     </CardHeader>
                                     <CardContent>
                                         <ActionForm 
-                                            key={action.id} // Add key to force re-render when action changes
+                                            key={action.id}
                                             mode='edit'
                                             initialData={action}
                                             masterData={masterData}
