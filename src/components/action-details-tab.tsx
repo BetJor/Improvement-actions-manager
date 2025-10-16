@@ -318,28 +318,34 @@ export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTab
       };
 
       const addTextBlock = (title: string, text: string) => {
-          if (!text) return;
-          if (y > pageHeight - 40) { doc.addPage(); y = 20; }
-          doc.setFillColor(lightGrayColor);
-          doc.setDrawColor(borderColor);
-          
-          const splitText = doc.splitTextToSize(text, pageWidth - (margin * 2) - 10);
-          const textHeight = splitText.length * 5;
-          const cardHeight = textHeight + 20;
-
-          doc.rect(margin, y, pageWidth - (margin * 2), cardHeight, 'FD');
-          
-          doc.setFontSize(11);
-          doc.setFont('helvetica', 'bold');
-          doc.setTextColor(darkGrayColor);
-          doc.text(title, margin + 5, y + 8);
-          
-          doc.setFont('helvetica', 'normal');
-          doc.setTextColor(grayColor);
-          doc.text(splitText, margin + 5, y + 18);
-
-          y += cardHeight + 10;
-      };
+        if (!text) return;
+        const textBlockMargin = margin + 5;
+        const blockWidth = pageWidth - (margin * 2);
+        
+        const splitText = doc.splitTextToSize(text, blockWidth - 10);
+        const textHeight = splitText.length * 5;
+        const cardHeight = textHeight + 20;
+    
+        if (y + cardHeight > pageHeight - 20) {
+            doc.addPage();
+            y = 20;
+        }
+    
+        doc.setFillColor(lightGrayColor);
+        doc.setDrawColor(borderColor);
+        doc.rect(margin, y, blockWidth, cardHeight, 'FD');
+    
+        doc.setFontSize(11);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(darkGrayColor);
+        doc.text(title, textBlockMargin, y + 8);
+    
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(grayColor);
+        doc.text(splitText, textBlockMargin, y + 18);
+    
+        y += cardHeight + 10;
+    };
 
       const addAuditInfo = (label: string, name: string | undefined, date: string | null, email?: string) => {
         if (!name && !date) return;
