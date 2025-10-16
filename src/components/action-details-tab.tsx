@@ -248,157 +248,196 @@ export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTab
     
     const generatePdf = () => {
         if (!action) return;
-
+    
         const doc = new jsPDF() as jsPDFWithAutoTable;
         const pageHeight = doc.internal.pageSize.height || doc.internal.pageSize.getHeight();
         const pageWidth = doc.internal.pageSize.width || doc.internal.pageSize.getWidth();
         const margin = 15;
         let y = 20;
-
-        // Header
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(18);
-        doc.text(`Informe de Acción de Mejora: ${action.actionId}`, margin, y);
-        y += 8;
-        doc.setFontSize(12);
-        doc.setFont('helvetica', 'normal');
-        doc.text(`Estado: ${action.status}`, margin, y);
-        y += 10;
-        doc.setLineWidth(0.5);
-        doc.line(margin, y, pageWidth - margin, y);
-        y += 10;
     
-        // Helper function for sections
-        const addSection = (title: string, body: string | string[][], isTable = false) => {
-            if (y > pageHeight - 40) { // Check for page break
-                doc.addPage();
-                y = 20;
-            }
-            doc.setFontSize(14);
-            doc.setFont('helvetica', 'bold');
-            doc.text(title, margin, y);
-            y += 8;
-            if (isTable) {
-                doc.autoTable({
-                    startY: y,
-                    body: body as string[][],
-                    theme: 'grid',
-                    headStyles: { fillColor: [55, 71, 79], textColor: 255 },
-                    styles: { fontSize: 9, cellPadding: 2 },
-                    margin: { left: margin, right: margin },
-                });
-                y = doc.autoTable.previous.finalY + 10;
-            } else {
-                doc.setFontSize(10);
-                doc.setFont('helvetica', 'normal');
-                const splitText = doc.splitTextToSize(body as string, pageWidth - (margin * 2));
-                doc.text(splitText, margin, y);
-                y += (splitText.length * 4) + 10; // Adjust spacing
-            }
+        const primaryColor = '#1D4ED8'; // Blue-700
+        const grayColor = '#6B7280'; // Gray-500
+        const lightGrayColor = '#F3F4F6'; // Gray-100
+        const borderColor = '#E5E7EB'; // Gray-200
+    
+        // --- HEADER ---
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(20);
+        doc.setTextColor(primaryColor);
+        doc.text(`Informe de Acción de Mejora`, margin, y);
+        y += 8;
+        doc.setFontSize(14);
+        doc.setTextColor('#374151'); // Gray-700
+        doc.text(`${action.actionId}: ${action.title}`, margin, y);
+        y += 12;
+    
+        // --- HELPER FUNCTIONS ---
+        const addSectionCard = (title: string, contentCallback: () => void, options?: { y?: number, height?: number }) => {
+            const startY = options?.y || y;
+            const cardHeight = options?.height || 0; // Will calculate if not provided
+    
+            // We draw the content first to know its height
+            const contentStartY = startY + 12;
+            doc.autoTable({
+                startY: contentStartY,
+                theme: 'plain',
+                styles: { cellPadding: 0, fontSize: 10 },
+                didDrawPage: (data) => {
+                    // Draw card background and border *after* content to get correct height
+                    doc.setFillColor(lightGrayColor);
+                    doc.setDrawColor(borderColor);
+                    const finalY = data.cursor?.y ?? contentStartY;
+                    const calculatedHeight = finalY - startY + 5;
+                    doc.rect(margin - 5, startY - 8, pageWidth - 2 * (margin-5), cardHeight || calculatedHeight, 'FD');
+    
+                    // Draw title on top
+                    doc.setFontSize(12);
+                    doc.setFont('helvetica', 'bold');
+                    doc.setTextColor(primaryColor);
+                    doc.text(title, margin, startY);
+                },
+                didParseCell: (data) => {
+                  if (data.cell.section === 'body' && data.column.index === 0) {
+                      data.cell.styles.fontStyle = 'bold';
+                      data.cell.styles.textColor = '#374151'; // Gray-700
+                  }
+                },
+                margin: { left: margin, right: margin },
+                tableWidth: 'auto',
+                body: contentCallback(),
+            });
+            y = doc.autoTable.previous.finalY + 12;
         };
-        
-        // --- SECTIONS ---
-        addSection('1. Detalles de la Acción', [
+
+        const addTextBlock = (title: string, text: string) => {
+          y += 5;
+          doc.setFillColor(lightGrayColor);
+          doc.setDrawColor(borderColor);
+          
+          doc.setFontSize(10);
+          const splitText = doc.splitTextToSize(text, pageWidth - (margin * 2) - 10);
+          const textHeight = splitText.length * 5;
+          const cardHeight = textHeight + 20;
+
+          if (y + cardHeight > pageHeight - 20) {
+            doc.addPage();
+            y = 20;
+          }
+
+          doc.rect(margin-5, y, pageWidth - 2 * (margin-5), cardHeight, 'FD');
+          
+          doc.setFontSize(12);
+          doc.setFont('helvetica', 'bold');
+          doc.setTextColor(primaryColor);
+          doc.text(title, margin, y + 8);
+          
+          doc.setFont('helvetica', 'normal');
+          doc.setTextColor('#374151');
+          doc.text(splitText, margin, y + 18);
+
+          y += cardHeight + 8;
+        };
+    
+        // --- REPORT CONTENT ---
+    
+        addSectionCard('Detalles de la Acción', () => [
             ['ID de Acción', action.actionId],
-            ['Título', action.title],
+            ['Estado Actual', action.status],
             ['Tipo', action.type],
             ['Categoría', action.category],
             ['Subcategoría', action.subcategory],
             ['Centro', action.center || 'N/A'],
             ['Áreas Implicadas', action.affectedAreas.join(', ')],
-        ], true);
-        addSection('Observaciones Iniciales', action.description);
-
-        // --- AUDIT TRAIL ---
-        if (action.creator) {
-            const creationDate = safeParseDate(action.creationDate);
-            addSection('2. Creación y Asignación', [
-                ['Creado por', `${action.creator.name} (${action.creator.email})`],
-                ['Fecha de Creación', creationDate ? format(creationDate, 'dd/MM/yyyy HH:mm') : 'N/A'],
-                ['Asignado a (Análisis)', action.responsibleGroupId],
-            ], true);
-        }
-
-        // --- ANALYSIS SECTION ---
+            ['Creado por', `${action.creator.name} (${action.creator.email})`],
+            ['Fecha de Creación', safeParseDate(action.creationDate) ? format(safeParseDate(action.creationDate)!, 'dd/MM/yyyy HH:mm') : 'N/A'],
+            ['Responsable Análisis', action.responsibleGroupId],
+        ]);
+        
+        addTextBlock('Observaciones Iniciales', action.description);
+    
         if (action.analysis) {
-            addSection('3. Análisis de Causas y Plan de Acción', action.analysis.causes);
-            if (action.analysis.analysisResponsible) {
-                const analysisDate = safeParseDate(action.analysis.analysisDate);
+            addTextBlock('Análisis de Causas', action.analysis.causes);
+            
+            const analysisDate = safeParseDate(action.analysis.analysisDate);
+            const verifier = users.find(u => u.id === action.analysis?.verificationResponsibleUserId)?.name || 'N/A';
+            addSectionCard('Responsables del Análisis', () => [
+              ['Análisis Realizado por', `${action.analysis!.analysisResponsible.name}`],
+              ['Fecha de Análisis', analysisDate ? format(analysisDate, 'dd/MM/yyyy') : 'N/A'],
+              ['Responsable Verificación', verifier],
+            ]);
+
+            if (action.analysis.proposedActions?.length > 0) {
+                y += 5;
+                doc.setFontSize(12);
+                doc.setFont('helvetica', 'bold');
+                doc.setTextColor(primaryColor);
+                doc.text('Acciones Propuestas', margin, y);
+                y += 6;
+
                 doc.autoTable({
                     startY: y,
-                    body: [
-                        ['Análisis Realizado por', `${action.analysis.analysisResponsible.name}`],
-                        ['Fecha de Análisis', analysisDate ? format(analysisDate, 'dd/MM/yyyy') : 'N/A'],
-                        ['Responsable Verificación', users.find(u => u.id === action.analysis?.verificationResponsibleUserId)?.name || 'N/A'],
-                    ],
-                    theme: 'striped',
-                    styles: { fontSize: 9, cellPadding: 2 },
-                    margin: { left: margin, right: margin },
+                    head: [['Descripción', 'Responsable', 'Vencimiento', 'Estado']],
+                    body: action.analysis.proposedActions.map(pa => [
+                        pa.description,
+                        users.find(u => u.id === pa.responsibleUserId)?.name || 'N/A',
+                        safeParseDate(pa.dueDate) ? format(safeParseDate(pa.dueDate)!, 'dd/MM/yyyy') : 'N/A',
+                        pa.status || 'Pendiente'
+                    ]),
+                    theme: 'grid',
+                    headStyles: { fillColor: primaryColor, textColor: 255, fontStyle: 'bold' },
+                    styles: { fontSize: 9 },
+                    margin: { left: margin },
                 });
-                y = doc.autoTable.previous.finalY + 10;
-            }
-            if (action.analysis.proposedActions?.length > 0) {
-                addSection('Acciones Propuestas', action.analysis.proposedActions.map(pa => [
-                    pa.description,
-                    users.find(u => u.id === pa.responsibleUserId)?.name || 'N/A',
-                    safeParseDate(pa.dueDate) ? format(safeParseDate(pa.dueDate)!, 'dd/MM/yyyy') : 'N/A',
-                    pa.status || 'Pendiente'
-                ]), true);
+                y = doc.autoTable.previous.finalY + 12;
             }
         }
         
-        // --- VERIFICATION SECTION ---
-        if(action.verification) {
-            addSection('4. Verificación de la Implantación', action.verification.notes);
+        if (action.verification) {
+            addTextBlock('Verificación de la Implantación', action.verification.notes);
             const verificationDate = safeParseDate(action.verification.verificationDate);
-            doc.autoTable({
-                startY: y,
-                body: [
-                    ['Verificado por', `${action.verification.verificationResponsible.name}`],
-                    ['Fecha de Verificación', verificationDate ? format(verificationDate, 'dd/MM/yyyy') : 'N/A'],
-                ],
-                theme: 'striped',
-                styles: { fontSize: 9, cellPadding: 2 },
-                margin: { left: margin, right: margin },
-            });
-            y = doc.autoTable.previous.finalY + 10;
+            addSectionCard('Responsable de la Verificación', () => [
+              ['Verificado por', `${action.verification!.verificationResponsible.name}`],
+              ['Fecha de Verificación', verificationDate ? format(verificationDate, 'dd/MM/yyyy') : 'N/A'],
+            ]);
         }
-
-        // --- CLOSURE SECTION ---
-        if(action.closure) {
-            addSection('5. Cierre de la Acción', action.closure.notes);
+    
+        if (action.closure) {
+            addTextBlock('Cierre de la Acción', action.closure.notes);
             const closureDate = safeParseDate(action.closure.date);
-            doc.autoTable({
-                startY: y,
-                body: [
-                    ['Cerrado por', `${action.closure.closureResponsible.name}`],
-                    ['Fecha de Cierre', closureDate ? format(closureDate, 'dd/MM/yyyy') : 'N/A'],
-                    ['Resultado Final', action.closure.isCompliant ? 'Conforme' : 'No Conforme'],
-                ],
-                theme: 'striped',
-                styles: { fontSize: 9, cellPadding: 2 },
-                margin: { left: margin, right: margin },
-            });
-            y = doc.autoTable.previous.finalY + 10;
+            addSectionCard('Detalles del Cierre', () => [
+              ['Cerrado por', `${action.closure!.closureResponsible.name}`],
+              ['Fecha de Cierre', closureDate ? format(closureDate, 'dd/MM/yyyy') : 'N/A'],
+              ['Resultado Final', action.closure!.isCompliant ? 'Conforme' : 'No Conforme'],
+            ]);
         }
-
-
-        // --- FOOTER AND SAVE ---
-        const pageCount = doc.internal.pages.length;
+    
+        // --- FOOTER ---
+        const pageCount = doc.internal.pages.length > 1 ? doc.internal.pages.length-1 : 1;
         for (let i = 1; i <= pageCount; i++) {
             doc.setPage(i);
+            const footerY = pageHeight - 15;
+            doc.setLineWidth(0.2);
+            doc.setDrawColor(borderColor);
+            doc.line(margin, footerY, pageWidth - margin, footerY);
+            
             doc.setFontSize(8);
-            doc.setTextColor(150);
+            doc.setTextColor(grayColor);
             doc.text(
                 `Página ${i} de ${pageCount}`,
                 pageWidth / 2,
-                pageHeight - 10,
+                footerY + 5,
                 { align: 'center' }
             );
             doc.text(
                 `Informe generado el: ${format(new Date(), 'dd/MM/yyyy HH:mm')}`,
                 margin,
-                pageHeight - 10
+                footerY + 5
+            );
+            doc.text(
+                `Acción de Mejora ${action.actionId}`,
+                pageWidth - margin,
+                footerY + 5,
+                { align: 'right' }
             );
         }
         
