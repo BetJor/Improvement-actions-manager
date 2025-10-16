@@ -318,34 +318,28 @@ export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTab
       };
 
       const addTextBlock = (title: string, text: string) => {
-        if (!text) return;
-        const textBlockMargin = margin + 5;
-        const blockWidth = pageWidth - (margin * 2);
-        
-        const splitText = doc.splitTextToSize(text, blockWidth - 10);
-        const textHeight = splitText.length * 5;
-        const cardHeight = textHeight + 20;
-    
-        if (y + cardHeight > pageHeight - 20) {
-            doc.addPage();
-            y = 20;
-        }
-    
-        doc.setFillColor(lightGrayColor);
-        doc.setDrawColor(borderColor);
-        doc.rect(margin, y, blockWidth, cardHeight, 'FD');
-    
-        doc.setFontSize(11);
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor(darkGrayColor);
-        doc.text(title, textBlockMargin, y + 8);
-    
-        doc.setFont('helvetica', 'normal');
-        doc.setTextColor(grayColor);
-        doc.text(splitText, textBlockMargin, y + 18);
-    
-        y += cardHeight + 10;
-    };
+          if (!text) return;
+          const blockWidth = pageWidth - (margin * 2);
+          
+          if (y > pageHeight - 30) {
+              doc.addPage();
+              y = 20;
+          }
+          
+          doc.setFontSize(11);
+          doc.setFont('helvetica', 'bold');
+          doc.setTextColor(darkGrayColor);
+          doc.text(title, margin, y);
+          y += 6;
+      
+          doc.setFont('helvetica', 'normal');
+          doc.setFontSize(10);
+          doc.setTextColor(grayColor);
+          const splitText = doc.splitTextToSize(text, blockWidth);
+          doc.text(splitText, margin, y);
+          const textHeight = splitText.length * 5; 
+          y += textHeight + 8;
+      };
 
       const addAuditInfo = (label: string, name: string | undefined, date: string | null, email?: string) => {
         if (!name && !date) return;
@@ -452,19 +446,19 @@ export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTab
       }
 
       // --- FOOTER ---
-      const pageCount = doc.internal.pages.length > 1 ? doc.internal.pages.length-1 : 1;
+      const pageCount = doc.internal.pages.length > 1 ? doc.internal.pages.length - 1 : 1;
       for (let i = 1; i <= pageCount; i++) {
-          doc.setPage(i);
-          const footerY = pageHeight - 15;
-          doc.setDrawColor(borderColor);
-          doc.line(margin, footerY, pageWidth - margin, footerY);
-          
-          doc.setFontSize(8);
-          doc.setTextColor(grayColor);
-          doc.text(`Informe generado el: ${format(new Date(), 'dd/MM/yyyy HH:mm')} | ID: ${action.actionId}`, margin, footerY + 5);
-          doc.text(`Página ${i} de ${pageCount}`, pageWidth - margin, footerY + 5, { align: 'right' });
+        doc.setPage(i);
+        const footerY = pageHeight - 15;
+        doc.setDrawColor(borderColor);
+        doc.line(margin, footerY, pageWidth - margin, footerY);
+        
+        doc.setFontSize(8);
+        doc.setTextColor(grayColor);
+        doc.text(`Informe generado el: ${format(new Date(), 'dd/MM/yyyy HH:mm')} | ID: ${action.actionId}`, margin, footerY + 5);
+        doc.text(`Página ${i} de ${pageCount}`, pageWidth - margin, footerY + 5, { align: 'right' });
       }
-      
+
       doc.save(`Accion_Mejora_${action.actionId}.pdf`);
   };
 
@@ -764,3 +758,5 @@ export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTab
         </div>
     )
 }
+
+    
