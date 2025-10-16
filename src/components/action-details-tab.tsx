@@ -247,202 +247,220 @@ export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTab
     };
     
     const generatePdf = () => {
-        if (!action) return;
-    
-        const doc = new jsPDF() as jsPDFWithAutoTable;
-        const pageHeight = doc.internal.pageSize.height || doc.internal.pageSize.getHeight();
-        const pageWidth = doc.internal.pageSize.width || doc.internal.pageSize.getWidth();
-        const margin = 15;
-        let y = 20;
-    
-        const primaryColor = '#1D4ED8'; // Blue-700
-        const grayColor = '#6B7280'; // Gray-500
-        const lightGrayColor = '#F3F4F6'; // Gray-100
-        const borderColor = '#E5E7EB'; // Gray-200
-    
-        // --- HEADER ---
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(20);
-        doc.setTextColor(primaryColor);
-        doc.text(`Informe de Acción de Mejora`, margin, y);
-        y += 8;
-        doc.setFontSize(14);
-        doc.setTextColor('#374151'); // Gray-700
-        doc.text(`${action.actionId}: ${action.title}`, margin, y);
-        y += 12;
-    
-        // --- HELPER FUNCTIONS ---
-        const addSectionCard = (title: string, contentCallback: () => void, options?: { y?: number, height?: number }) => {
-            const startY = options?.y || y;
-            const cardHeight = options?.height || 0; // Will calculate if not provided
-    
-            // We draw the content first to know its height
-            const contentStartY = startY + 12;
-            doc.autoTable({
-                startY: contentStartY,
-                theme: 'plain',
-                styles: { cellPadding: 0, fontSize: 10 },
-                didDrawPage: (data) => {
-                    // Draw card background and border *after* content to get correct height
-                    doc.setFillColor(lightGrayColor);
-                    doc.setDrawColor(borderColor);
-                    const finalY = data.cursor?.y ?? contentStartY;
-                    const calculatedHeight = finalY - startY + 5;
-                    doc.rect(margin - 5, startY - 8, pageWidth - 2 * (margin-5), cardHeight || calculatedHeight, 'FD');
-    
-                    // Draw title on top
-                    doc.setFontSize(12);
-                    doc.setFont('helvetica', 'bold');
-                    doc.setTextColor(primaryColor);
-                    doc.text(title, margin, startY);
-                },
-                didParseCell: (data) => {
-                  if (data.cell.section === 'body' && data.column.index === 0) {
-                      data.cell.styles.fontStyle = 'bold';
-                      data.cell.styles.textColor = '#374151'; // Gray-700
-                  }
-                },
-                margin: { left: margin, right: margin },
-                tableWidth: 'auto',
-                body: contentCallback(),
-            });
-            y = doc.autoTable.previous.finalY + 12;
-        };
+      if (!action) return;
+  
+      const doc = new jsPDF() as jsPDFWithAutoTable;
+      const pageHeight = doc.internal.pageSize.height || doc.internal.pageSize.getHeight();
+      const pageWidth = doc.internal.pageSize.width || doc.internal.pageSize.getWidth();
+      const margin = 15;
+      let y = 20;
 
-        const addTextBlock = (title: string, text: string) => {
-          y += 5;
+      // --- COLORS & STYLES ---
+      const primaryColor = '#2563EB'; // blue-600
+      const grayColor = '#6B7280'; // gray-500
+      const darkGrayColor = '#374151'; // gray-700
+      const lightGrayColor = '#F9FAFB'; // gray-50
+      const borderColor = '#E5E7EB'; // gray-200
+      const statusGreen = '#16A34A'; // green-600
+      const statusRed = '#DC2626'; // red-600
+      
+      // --- HEADER ---
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(22);
+      doc.setTextColor(darkGrayColor);
+      doc.text(`Informe de Acción de Mejora`, margin, y);
+      y += 8;
+  
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(11);
+      doc.setTextColor(grayColor);
+      doc.text(`ID: ${action.actionId}`, margin, y);
+      y += 6;
+      
+      const statusText = action.status;
+      const statusColor = statusText === 'Finalizada' ? (action.closure?.isCompliant ? statusGreen : statusRed) : grayColor;
+      const statusTextWidth = doc.getTextWidth(statusText) + 8;
+      doc.setFillColor(statusColor);
+      doc.setDrawColor(statusColor);
+      doc.roundedRect(margin, y - 2, statusTextWidth, 8, 3, 3, 'FD');
+      doc.setTextColor('#FFFFFF');
+      doc.setFontSize(10);
+      doc.text(statusText, margin + 4, y + 3.5);
+      y += 12;
+
+      doc.setDrawColor(primaryColor);
+      doc.setLineWidth(0.5);
+      doc.line(margin, y, pageWidth - margin, y);
+      y += 10;
+
+      // --- HELPER FUNCTIONS ---
+      const addSectionTitle = (title: string, number: number) => {
+          if (y > pageHeight - 30) { doc.addPage(); y = 20; }
+          doc.setFont('helvetica', 'bold');
+          doc.setFontSize(14);
+          doc.setTextColor(primaryColor);
+          doc.text(`${number}. ${title}`, margin, y);
+          y += 8;
+      };
+
+      const addTwoColumnRow = (label: string, value: string) => {
+          if (!value) return;
+          if (y > pageHeight - 20) { doc.addPage(); y = 20; }
+          doc.setFont('helvetica', 'bold');
+          doc.setFontSize(10);
+          doc.setTextColor(grayColor);
+          doc.text(label, margin + 5, y);
+          
+          doc.setFont('helvetica', 'normal');
+          doc.setTextColor(darkGrayColor);
+          doc.text(value, margin + 50, y);
+          y += 7;
+      };
+
+      const addTextBlock = (title: string, text: string) => {
+          if (!text) return;
+          if (y > pageHeight - 40) { doc.addPage(); y = 20; }
           doc.setFillColor(lightGrayColor);
           doc.setDrawColor(borderColor);
           
-          doc.setFontSize(10);
           const splitText = doc.splitTextToSize(text, pageWidth - (margin * 2) - 10);
           const textHeight = splitText.length * 5;
           const cardHeight = textHeight + 20;
 
-          if (y + cardHeight > pageHeight - 20) {
-            doc.addPage();
-            y = 20;
-          }
-
-          doc.rect(margin-5, y, pageWidth - 2 * (margin-5), cardHeight, 'FD');
+          doc.rect(margin, y, pageWidth - (margin * 2), cardHeight, 'FD');
           
-          doc.setFontSize(12);
+          doc.setFontSize(11);
           doc.setFont('helvetica', 'bold');
-          doc.setTextColor(primaryColor);
-          doc.text(title, margin, y + 8);
+          doc.setTextColor(darkGrayColor);
+          doc.text(title, margin + 5, y + 8);
           
           doc.setFont('helvetica', 'normal');
-          doc.setTextColor('#374151');
-          doc.text(splitText, margin, y + 18);
+          doc.setTextColor(grayColor);
+          doc.text(splitText, margin + 5, y + 18);
 
-          y += cardHeight + 8;
-        };
-    
-        // --- REPORT CONTENT ---
-    
-        addSectionCard('Detalles de la Acción', () => [
-            ['ID de Acción', action.actionId],
-            ['Estado Actual', action.status],
-            ['Tipo', action.type],
-            ['Categoría', action.category],
-            ['Subcategoría', action.subcategory],
-            ['Centro', action.center || 'N/A'],
-            ['Áreas Implicadas', action.affectedAreas.join(', ')],
-            ['Creado por', `${action.creator.name} (${action.creator.email})`],
-            ['Fecha de Creación', safeParseDate(action.creationDate) ? format(safeParseDate(action.creationDate)!, 'dd/MM/yyyy HH:mm') : 'N/A'],
-            ['Responsable Análisis', action.responsibleGroupId],
-        ]);
+          y += cardHeight + 10;
+      };
+
+      const addAuditInfo = (label: string, name: string | undefined, date: string | null, email?: string) => {
+        if (!name && !date) return;
+        if (y > pageHeight - 30) { doc.addPage(); y = 20; }
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(10);
+        doc.setTextColor(grayColor);
+        doc.text(label, margin, y);
+        y += 5;
+
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(darkGrayColor);
+        if (name) doc.text(name, margin, y);
+        if (email) doc.text(email, margin, y + 5);
         
-        addTextBlock('Observaciones Iniciales', action.description);
-    
-        if (action.analysis) {
-            addTextBlock('Análisis de Causas', action.analysis.causes);
-            
-            const analysisDate = safeParseDate(action.analysis.analysisDate);
-            const verifier = users.find(u => u.id === action.analysis?.verificationResponsibleUserId)?.name || 'N/A';
-            addSectionCard('Responsables del Análisis', () => [
-              ['Análisis Realizado por', `${action.analysis!.analysisResponsible.name}`],
-              ['Fecha de Análisis', analysisDate ? format(analysisDate, 'dd/MM/yyyy') : 'N/A'],
-              ['Responsable Verificación', verifier],
-            ]);
+        doc.setFontSize(9);
+        doc.setTextColor(grayColor);
+        if (date) doc.text(date, pageWidth - margin, y + 2.5, { align: 'right' });
+        y += email ? 12 : 8;
+      }
 
-            if (action.analysis.proposedActions?.length > 0) {
-                y += 5;
-                doc.setFontSize(12);
-                doc.setFont('helvetica', 'bold');
-                doc.setTextColor(primaryColor);
-                doc.text('Acciones Propuestas', margin, y);
-                y += 6;
+      // --- SECTION 1: DETALLES ---
+      addSectionTitle('Detalles de la Acción', 1);
+      addTwoColumnRow('Título:', action.title);
+      addTwoColumnRow('ID de Acción:', action.actionId);
+      addTwoColumnRow('Tipo:', action.type);
+      addTwoColumnRow('Categoría:', action.category);
+      addTwoColumnRow('Subcategoría:', action.subcategory);
+      addTwoColumnRow('Centro:', action.center || 'N/D');
+      addTwoColumnRow('Áreas Implicadas:', action.affectedAreas.join(', '));
+      y += 5;
 
-                doc.autoTable({
-                    startY: y,
-                    head: [['Descripción', 'Responsable', 'Vencimiento', 'Estado']],
-                    body: action.analysis.proposedActions.map(pa => [
-                        pa.description,
-                        users.find(u => u.id === pa.responsibleUserId)?.name || 'N/A',
-                        safeParseDate(pa.dueDate) ? format(safeParseDate(pa.dueDate)!, 'dd/MM/yyyy') : 'N/A',
-                        pa.status || 'Pendiente'
-                    ]),
-                    theme: 'grid',
-                    headStyles: { fillColor: primaryColor, textColor: 255, fontStyle: 'bold' },
-                    styles: { fontSize: 9 },
-                    margin: { left: margin },
-                });
-                y = doc.autoTable.previous.finalY + 12;
+      // --- SECTION 2: OBSERVACIONES ---
+      addSectionTitle('Observaciones Iniciales', 2);
+      addTextBlock('Hallazgo Inicial', action.description);
+      
+      // --- SECTION 3: CREACIÓN Y ANÁLISIS ---
+      addSectionTitle('Creación, Asignación y Análisis', 3);
+      addAuditInfo('Creado por:', action.creator.name, safeParseDate(action.creationDate) ? format(safeParseDate(action.creationDate)!, 'dd/MM/yyyy HH:mm') : 'N/D', action.creator.email);
+      addAuditInfo('Asignado a (Análisis):', action.responsibleGroupId, null);
+      if (action.analysis) {
+        addTextBlock('Análisis de Causa Raíz', action.analysis.causes);
+        addAuditInfo('Análisis Realizado por:', action.analysis.analysisResponsible.name, safeParseDate(action.analysis.analysisDate) ? format(safeParseDate(action.analysis.analysisDate)!, 'dd/MM/yyyy') : 'N/D');
+        addAuditInfo('Responsable Verificación:', users.find(u => u.id === action.analysis?.verificationResponsibleUserId)?.name, null);
+      }
+      y+= 5;
+      
+      // --- SECTION 4: ACCIONES PROPUESTAS ---
+      if (action.analysis?.proposedActions && action.analysis.proposedActions.length > 0) {
+        addSectionTitle('Acciones Propuestas e Implantación', 4);
+        doc.autoTable({
+            startY: y,
+            head: [['ACCIÓN DETALLADA', 'RESPONSABLE', 'FECHA LÍMITE', 'ESTADO']],
+            body: action.analysis.proposedActions.map(pa => [
+                pa.description,
+                users.find(u => u.id === pa.responsibleUserId)?.name || 'N/D',
+                safeParseDate(pa.dueDate) ? format(safeParseDate(pa.dueDate)!, 'dd/MM/yyyy') : 'N/D',
+                pa.status || 'Pendiente'
+            ]),
+            theme: 'grid',
+            headStyles: { fillColor: darkGrayColor, textColor: 255, fontStyle: 'bold', fontSize: 9 },
+            styles: { fontSize: 9, cellPadding: 2.5, lineColor: borderColor, lineWidth: 0.2 },
+            margin: { left: margin, right: margin },
+            didParseCell: (data) => {
+                if (data.column.dataKey === 'ESTADO' && data.cell.section === 'body') {
+                    const statusText = data.cell.text[0];
+                    if (statusText === 'Implementada') data.cell.styles.fillColor = '#D1FAE5'; // green-100
+                    if (statusText === 'No Implementada') data.cell.styles.fillColor = '#FEE2E2'; // red-100
+                    if (statusText === 'Implementada Parcialmente') data.cell.styles.fillColor = '#FEF3C7'; // yellow-100
+                }
             }
-        }
-        
+        });
+        y = doc.autoTable.previous.finalY + 10;
+      }
+      
+      // --- SECTION 5: VERIFICACIÓN Y CIERRE ---
+      if (action.verification || action.closure) {
+        addSectionTitle('Verificación y Cierre Final', 5);
         if (action.verification) {
-            addTextBlock('Verificación de la Implantación', action.verification.notes);
-            const verificationDate = safeParseDate(action.verification.verificationDate);
-            addSectionCard('Responsable de la Verificación', () => [
-              ['Verificado por', `${action.verification!.verificationResponsible.name}`],
-              ['Fecha de Verificación', verificationDate ? format(verificationDate, 'dd/MM/yyyy') : 'N/A'],
-            ]);
+            addTextBlock('Comentarios de Verificación', action.verification.notes);
+            addAuditInfo('Verificado por:', action.verification.verificationResponsible.name, safeParseDate(action.verification.verificationDate) ? format(safeParseDate(action.verification.verificationDate)!, 'dd/MM/yyyy') : 'N/D');
         }
-    
         if (action.closure) {
-            addTextBlock('Cierre de la Acción', action.closure.notes);
-            const closureDate = safeParseDate(action.closure.date);
-            addSectionCard('Detalles del Cierre', () => [
-              ['Cerrado por', `${action.closure!.closureResponsible.name}`],
-              ['Fecha de Cierre', closureDate ? format(closureDate, 'dd/MM/yyyy') : 'N/A'],
-              ['Resultado Final', action.closure!.isCompliant ? 'Conforme' : 'No Conforme'],
-            ]);
-        }
-    
-        // --- FOOTER ---
-        const pageCount = doc.internal.pages.length > 1 ? doc.internal.pages.length-1 : 1;
-        for (let i = 1; i <= pageCount; i++) {
-            doc.setPage(i);
-            const footerY = pageHeight - 15;
-            doc.setLineWidth(0.2);
-            doc.setDrawColor(borderColor);
-            doc.line(margin, footerY, pageWidth - margin, footerY);
+            addAuditInfo('Cerrado por:', action.closure.closureResponsible.name, safeParseDate(action.closure.date) ? format(safeParseDate(action.closure.date)!, 'dd/MM/yyyy') : 'N/D');
+            y += 5;
             
-            doc.setFontSize(8);
-            doc.setTextColor(grayColor);
-            doc.text(
-                `Página ${i} de ${pageCount}`,
-                pageWidth / 2,
-                footerY + 5,
-                { align: 'center' }
-            );
-            doc.text(
-                `Informe generado el: ${format(new Date(), 'dd/MM/yyyy HH:mm')}`,
-                margin,
-                footerY + 5
-            );
-            doc.text(
-                `Acción de Mejora ${action.actionId}`,
-                pageWidth - margin,
-                footerY + 5,
-                { align: 'right' }
-            );
+            const closureStatus = action.closure.isCompliant ? 'Conforme' : 'No Conforme';
+            const closureColor = action.closure.isCompliant ? '#ECFDF5' : '#FEF2F2'; // green-50 or red-50
+            const closureTextColor = action.closure.isCompliant ? '#065F46' : '#991B1B'; // green-800 or red-800
+            
+            doc.setFillColor(closureColor);
+            doc.rect(margin, y, pageWidth - (margin * 2), 20, 'F');
+
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(closureTextColor);
+            doc.text('Resultado Final del Proceso:', margin + 5, y + 8);
+            
+            doc.setFontSize(14);
+            doc.setFont('helvetica', 'bold');
+            doc.text(closureStatus, margin + 5, y + 15);
+            y += 25;
         }
-        
-        doc.save(`Accion_Mejora_${action.actionId}.pdf`);
-    };
+      }
+
+      // --- FOOTER ---
+      const pageCount = doc.internal.pages.length > 1 ? doc.internal.pages.length-1 : 1;
+      for (let i = 1; i <= pageCount; i++) {
+          doc.setPage(i);
+          const footerY = pageHeight - 15;
+          doc.setDrawColor(borderColor);
+          doc.line(margin, footerY, pageWidth - margin, footerY);
+          
+          doc.setFontSize(8);
+          doc.setTextColor(grayColor);
+          doc.text(`Informe generado el: ${format(new Date(), 'dd/MM/yyyy HH:mm')} | ID: ${action.actionId}`, margin, footerY + 5);
+          doc.text(`Página ${i} de ${pageCount}`, pageWidth - margin, footerY + 5, { align: 'right' });
+      }
+      
+      doc.save(`Accion_Mejora_${action.actionId}.pdf`);
+  };
 
     if (!action) {
         return (
