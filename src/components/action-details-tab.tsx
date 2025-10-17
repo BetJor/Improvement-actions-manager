@@ -20,7 +20,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Separator } from "@/components/ui/separator"
 import { format, parseISO } from "date-fns"
 import { es } from "date-fns/locale"
-import { cn } from "@/lib/utils"
+import { cn, safeParseDate } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast"
 import { useAuth } from "@/hooks/use-auth"
 import type { ProposedActionStatus } from "@/lib/types"
@@ -42,23 +42,6 @@ interface jsPDFWithAutoTable extends jsPDF {
 interface ActionDetailsTabProps {
     initialAction: ImprovementAction;
     masterData: any;
-}
-
-const safeParseDate = (date: any): Date | null => {
-    if (!date) return null;
-    if (date instanceof Date) return date;
-    if (typeof date === 'string') {
-        try {
-            return parseISO(date);
-        } catch (e) {
-            console.warn(`Could not parse date string: ${date}`, e);
-            return null;
-        }
-    }
-    if (date && typeof date.toDate === 'function') { // Firebase Timestamp
-        return date.toDate();
-    }
-    return null;
 }
 
 
@@ -314,7 +297,7 @@ export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTab
             doc.setTextColor(grayColor);
             const splitText = doc.splitTextToSize(text, pageWidth - (margin * 2));
             doc.text(splitText, margin, y);
-            y += doc.getTextDimensions(text, { maxWidth: pageWidth - (margin * 2) }).h + 10;
+            y += doc.getTextDimensions(splitText, { maxWidth: pageWidth - (margin * 2) }).h + 10;
         };
 
         const addTwoColumnRow = (label: string, value: string | undefined) => {
@@ -358,12 +341,13 @@ export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTab
 
                 doc.autoTable({
                     startY: y,
-                    head: [['ACCIÓN DETALLADA', 'RESPONSABLE', 'FECHA LÍMITE', 'ESTADO']],
+                    head: [['ACCIÓN DETALLADA', 'RESPONSABLE', 'FECHA LÍMITE', 'ESTADO', 'DATA ESTAT']],
                     body: action.analysis.proposedActions.map(pa => [
                         pa.description,
                         users.find(u => u.id === pa.responsibleUserId)?.name || 'N/D',
                         safeParseDate(pa.dueDate) ? format(safeParseDate(pa.dueDate)!, 'dd/MM/yyyy') : 'N/D',
-                        pa.status || 'Pendiente'
+                        pa.status || 'Pendiente',
+                        pa.statusUpdateDate ? format(safeParseDate(pa.statusUpdateDate)!, 'dd/MM/yyyy HH:mm') : 'N/D'
                     ]),
                     theme: 'grid',
                     headStyles: { fillColor: darkGrayColor, textColor: 255, fontStyle: 'bold', fontSize: 9 },
