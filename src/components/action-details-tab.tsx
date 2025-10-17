@@ -588,7 +588,9 @@ export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTab
                                                             <div className="text-sm text-muted-foreground">
                                                               <p>Responsable: {users.find(u => u.id === pa.responsibleUserId)?.name || pa.responsibleUserId}</p>
                                                               <p>Fecha Vencimiento: {safeParseDate(pa.dueDate) ? format(safeParseDate(pa.dueDate)!, "dd/MM/yyyy") : ''}</p>
-                                                              <p>Estado: <span className="font-semibold">{pa.status || 'Pendiente'}</span></p>
+                                                              <p>Estado: <span className="font-semibold">{pa.status || 'Pendiente'}</span> 
+                                                                {pa.statusUpdateDate && ` (el ${format(safeParseDate(pa.statusUpdateDate)!, "dd/MM/yyyy HH:mm")})`}
+                                                              </p>
                                                             </div>
                                                         </div>
                                                         {user?.id === pa.responsibleUserId && action.status !== 'Finalizada' && (
