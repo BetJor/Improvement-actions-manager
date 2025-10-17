@@ -289,7 +289,7 @@ export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTab
             y += 10;
         };
         
-        const addAuditInfo = (text: string) => {
+        const addAuditInfo = (text: string | undefined) => {
             if (!text || text.includes('N/D')) return;
             if (y > pageHeight - 20) { doc.addPage(); y = 20; }
             doc.setFont('helvetica', 'italic');
@@ -297,20 +297,6 @@ export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTab
             doc.setTextColor(grayColor);
             doc.text(text, margin, y);
             y += 8;
-        };
-
-        const addTwoColumnRow = (label: string, value: string | undefined) => {
-            if (!value) return;
-            if (y > pageHeight - 20) { doc.addPage(); y = 20; }
-            doc.setFont('helvetica', 'bold');
-            doc.setFontSize(10);
-            doc.setTextColor(darkGrayColor);
-            doc.text(label, margin + 2, y);
-            
-            doc.setFont('helvetica', 'normal');
-            doc.text(value, margin + 50, y, { maxWidth: pageWidth - margin - 70 });
-            const textDimensions = doc.getTextDimensions(value, { maxWidth: pageWidth - margin - 70, font: doc.getFont() });
-            y += textDimensions.h + 4;
         };
         
         const addTextBlock = (title: string, text: string | undefined) => {
@@ -331,6 +317,20 @@ export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTab
             y += doc.getTextDimensions(text, { maxWidth: pageWidth - (margin * 2) }).h + 10;
         };
 
+        const addTwoColumnRow = (label: string, value: string | undefined) => {
+            if (!value) return;
+            if (y > pageHeight - 20) { doc.addPage(); y = 20; }
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(10);
+            doc.setTextColor(darkGrayColor);
+            doc.text(label, margin + 2, y);
+            
+            doc.setFont('helvetica', 'normal');
+            doc.text(value, margin + 50, y, { maxWidth: pageWidth - margin - 70 });
+            const textDimensions = doc.getTextDimensions(value, { maxWidth: pageWidth - margin - 70, font: doc.getFont() });
+            y += textDimensions.h + 4;
+        };
+        
         // --- SECTION 1: DETALLES DE LA ACCIÓN ---
         addSectionTitle('Detalles de la Acción', 1);
         addAuditInfo(`Creado por ${action.creator.name} el ${safeParseDate(action.creationDate) ? format(safeParseDate(action.creationDate)!, 'dd/MM/yyyy HH:mm') : 'N/D'}`);
@@ -373,7 +373,7 @@ export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTab
                 y = doc.autoTable.previous.finalY + 10;
             }
 
-            addTwoColumnRow('Responsable Verificación:', users.find(u => u.id === action.analysis?.verificationResponsibleUserId)?.name);
+            addTextBlock('Responsable Verificación:', users.find(u => u.id === action.analysis?.verificationResponsibleUserId)?.name);
             y += 5;
         }
         
@@ -383,7 +383,7 @@ export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTab
             addAuditInfo(`Verificado por ${action.verification.verificationResponsible.name} el ${safeParseDate(action.verification.verificationDate) ? format(safeParseDate(action.verification.verificationDate)!, 'dd/MM/yyyy') : 'N/D'}`);
         
             if (action.analysis?.proposedActions && action.analysis.proposedActions.length > 0) {
-                doc.autoTable({
+                 doc.autoTable({
                     startY: y,
                     head: [['ACCIÓN PROPUESTA', 'ESTADO VERIFICACIÓN', 'FECHA DE ESTADO']],
                     body: action.analysis.proposedActions.map(pa => [
@@ -407,7 +407,18 @@ export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTab
         if (action.closure) {
             addSectionTitle('Cierre de la Acción', 4);
             addAuditInfo(`Cerrado por ${action.closure.closureResponsible.name} el ${safeParseDate(action.closure.date) ? format(safeParseDate(action.closure.date)!, 'dd/MM/yyyy') : 'N/D'}`);
-            addTwoColumnRow('Resultado Final:', action.closure.isCompliant ? 'Conforme' : 'No Conforme');
+            
+            doc.setFontSize(11);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(darkGrayColor);
+            doc.text("Resultado Final:", margin, y);
+            
+            doc.setFontSize(11);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(action.closure.isCompliant ? '#16A34A' : '#DC2626'); // green-600 or red-600
+            doc.text(action.closure.isCompliant ? 'Conforme' : 'No Conforme', margin + 35, y);
+            y += 10;
+
             addTextBlock('Observaciones de Cierre:', action.closure.notes);
         }
         
