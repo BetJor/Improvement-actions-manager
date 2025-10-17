@@ -341,7 +341,7 @@ export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTab
 
                 doc.autoTable({
                     startY: y,
-                    head: [['ACCIÓN DETALLADA', 'RESPONSABLE', 'FECHA LÍMITE', 'ESTADO', 'DATA ESTAT']],
+                    head: [['ACCIÓN DETALLADA', 'RESPONSABLE', 'FECHA LÍMITE', 'ESTADO', 'FECHA ESTADO']],
                     body: action.analysis.proposedActions.map(pa => [
                         pa.description,
                         users.find(u => u.id === pa.responsibleUserId)?.name || 'N/D',
