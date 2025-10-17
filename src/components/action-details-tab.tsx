@@ -259,72 +259,63 @@ export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTab
       const primaryColor = '#2563EB'; // blue-600
       const grayColor = '#6B7280'; // gray-500
       const darkGrayColor = '#374151'; // gray-700
-      const lightGrayColor = '#F9FAFB'; // gray-50
-      const borderColor = '#E5E7EB'; // gray-200
-      const statusGreen = '#16A34A'; // green-600
-      const statusRed = '#DC2626'; // red-600
       
       // --- HEADER ---
-      doc.setFont('helvetica', 'bold');
       doc.setFontSize(22);
+      doc.setFont('helvetica', 'bold');
       doc.setTextColor(darkGrayColor);
-      doc.text(`Informe de Acción de Mejora`, margin, y);
+      doc.text(`Acción de Mejora: ${action.actionId}`, margin, y);
       y += 8;
   
+      const statusText = action.status === 'Finalizada' && action.closure?.isCompliant === false ? 'Finalizada (No Conforme)' : action.status;
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(11);
       doc.setTextColor(grayColor);
-      doc.text(`ID: ${action.actionId}`, margin, y);
-      y += 6;
-      
-      const statusText = action.status;
-      const statusColor = statusText === 'Finalizada' ? (action.closure?.isCompliant ? statusGreen : statusRed) : grayColor;
-      const statusTextWidth = doc.getTextWidth(statusText) + 8;
-      doc.setFillColor(statusColor);
-      doc.setDrawColor(statusColor);
-      doc.roundedRect(margin, y - 2, statusTextWidth, 8, 3, 3, 'FD');
-      doc.setTextColor('#FFFFFF');
-      doc.setFontSize(10);
-      doc.text(statusText, margin + 4, y + 3.5);
-      y += 12;
-
-      doc.setDrawColor(primaryColor);
-      doc.setLineWidth(0.5);
-      doc.line(margin, y, pageWidth - margin, y);
-      y += 10;
+      doc.text(`Estado actual: ${statusText}`, margin, y);
+      y += 15;
 
       // --- HELPER FUNCTIONS ---
-      const addSectionTitle = (title: string, number: number) => {
+      const addSectionTitle = (title: string, number?: number) => {
           if (y > pageHeight - 30) { doc.addPage(); y = 20; }
+          doc.setFontSize(16);
           doc.setFont('helvetica', 'bold');
-          doc.setFontSize(14);
           doc.setTextColor(primaryColor);
-          doc.text(`${number}. ${title}`, margin, y);
+          const text = number ? `${number}. ${title}` : title;
+          doc.text(text, margin, y);
+          y += 6;
+          doc.setDrawColor(primaryColor);
+          doc.setLineWidth(0.3);
+          doc.line(margin, y, pageWidth - margin, y);
+          y += 10;
+      };
+      
+      const addAuditInfo = (text: string) => {
+          if (y > pageHeight - 20) { doc.addPage(); y = 20; }
+          doc.setFont('helvetica', 'italic');
+          doc.setFontSize(9);
+          doc.setTextColor(grayColor);
+          doc.text(text, margin, y);
           y += 8;
       };
 
-      const addTwoColumnRow = (label: string, value: string) => {
+      const addTwoColumnRow = (label: string, value: string | undefined) => {
           if (!value) return;
           if (y > pageHeight - 20) { doc.addPage(); y = 20; }
           doc.setFont('helvetica', 'bold');
           doc.setFontSize(10);
-          doc.setTextColor(grayColor);
-          doc.text(label, margin + 5, y);
+          doc.setTextColor(darkGrayColor);
+          doc.text(label, margin + 2, y);
           
           doc.setFont('helvetica', 'normal');
-          doc.setTextColor(darkGrayColor);
-          doc.text(value, margin + 50, y);
-          y += 7;
+          doc.text(value, margin + 50, y, { maxWidth: pageWidth - margin - 70 });
+          y += doc.getTextDimensions(value, { maxWidth: pageWidth - margin - 70, font: doc.getFont() }).h + 4;
       };
 
-      const addTextBlock = (title: string, text: string) => {
+      const addTextBlock = (title: string, text: string | undefined) => {
           if (!text) return;
           const blockWidth = pageWidth - (margin * 2);
           
-          if (y > pageHeight - 30) {
-              doc.addPage();
-              y = 20;
-          }
+          if (y > pageHeight - 30) { doc.addPage(); y = 20; }
           
           doc.setFontSize(11);
           doc.setFont('helvetica', 'bold');
@@ -338,121 +329,72 @@ export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTab
           const splitText = doc.splitTextToSize(text, blockWidth);
           doc.text(splitText, margin, y);
           const textHeight = splitText.length * 5; 
-          y += textHeight + 8;
+          y += textHeight + 10;
       };
 
-      const addAuditInfo = (label: string, name: string | undefined, date: string | null, email?: string) => {
-        if (!name && !date) return;
-        if (y > pageHeight - 30) { doc.addPage(); y = 20; }
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(10);
-        doc.setTextColor(grayColor);
-        doc.text(label, margin, y);
-        y += 5;
-
-        doc.setFont('helvetica', 'normal');
-        doc.setTextColor(darkGrayColor);
-        if (name) doc.text(name, margin, y);
-        if (email) doc.text(email, margin, y + 5);
-        
-        doc.setFontSize(9);
-        doc.setTextColor(grayColor);
-        if (date) doc.text(date, pageWidth - margin, y + 2.5, { align: 'right' });
-        y += email ? 12 : 8;
-      }
-
-      // --- SECTION 1: DETALLES ---
+      // --- SECTION 1: DETALLES DE LA ACCIÓN ---
       addSectionTitle('Detalles de la Acción', 1);
+      addAuditInfo(`Creado por ${action.creator.name} el ${safeParseDate(action.creationDate) ? format(safeParseDate(action.creationDate)!, 'dd/MM/yyyy HH:mm') : 'N/D'}`);
       addTwoColumnRow('Título:', action.title);
-      addTwoColumnRow('ID de Acción:', action.actionId);
       addTwoColumnRow('Tipo:', action.type);
       addTwoColumnRow('Categoría:', action.category);
       addTwoColumnRow('Subcategoría:', action.subcategory);
-      addTwoColumnRow('Centro:', action.center || 'N/D');
+      addTwoColumnRow('Centro:', action.center);
       addTwoColumnRow('Áreas Implicadas:', action.affectedAreas.join(', '));
+      addTextBlock('Hallazgo / Observaciones Iniciales:', action.description);
       y += 5;
-
-      // --- SECTION 2: OBSERVACIONES ---
-      addSectionTitle('Observaciones Iniciales', 2);
-      addTextBlock('Hallazgo Inicial', action.description);
       
-      // --- SECTION 3: CREACIÓN Y ANÁLISIS ---
-      addSectionTitle('Creación, Asignación y Análisis', 3);
-      addAuditInfo('Creado por:', action.creator.name, safeParseDate(action.creationDate) ? format(safeParseDate(action.creationDate)!, 'dd/MM/yyyy HH:mm') : 'N/D', action.creator.email);
-      addAuditInfo('Asignado a (Análisis):', action.responsibleGroupId, null);
+      // --- SECTION 2: CAUSAS Y ACCIÓN PROPUESTA ---
       if (action.analysis) {
-        addTextBlock('Análisis de Causa Raíz', action.analysis.causes);
-        addAuditInfo('Análisis Realizado por:', action.analysis.analysisResponsible.name, safeParseDate(action.analysis.analysisDate) ? format(safeParseDate(action.analysis.analysisDate)!, 'dd/MM/yyyy') : 'N/D');
-        addAuditInfo('Responsable Verificación:', users.find(u => u.id === action.analysis?.verificationResponsibleUserId)?.name, null);
-      }
-      y+= 5;
-      
-      // --- SECTION 4: ACCIONES PROPUESTAS ---
-      if (action.analysis?.proposedActions && action.analysis.proposedActions.length > 0) {
-        addSectionTitle('Acciones Propuestas e Implantación', 4);
-        doc.autoTable({
-            startY: y,
-            head: [['ACCIÓN DETALLADA', 'RESPONSABLE', 'FECHA LÍMITE', 'ESTADO']],
-            body: action.analysis.proposedActions.map(pa => [
-                pa.description,
-                users.find(u => u.id === pa.responsibleUserId)?.name || 'N/D',
-                safeParseDate(pa.dueDate) ? format(safeParseDate(pa.dueDate)!, 'dd/MM/yyyy') : 'N/D',
-                pa.status || 'Pendiente'
-            ]),
-            theme: 'grid',
-            headStyles: { fillColor: darkGrayColor, textColor: 255, fontStyle: 'bold', fontSize: 9 },
-            styles: { fontSize: 9, cellPadding: 2.5, lineColor: borderColor, lineWidth: 0.2 },
-            margin: { left: margin, right: margin },
-            didParseCell: (data) => {
-                if (data.column.dataKey === 'ESTADO' && data.cell.section === 'body') {
-                    const statusText = data.cell.text[0];
-                    if (statusText === 'Implementada') data.cell.styles.fillColor = '#D1FAE5'; // green-100
-                    if (statusText === 'No Implementada') data.cell.styles.fillColor = '#FEE2E2'; // red-100
-                    if (statusText === 'Implementada Parcialmente') data.cell.styles.fillColor = '#FEF3C7'; // yellow-100
-                }
-            }
-        });
-        y = doc.autoTable.previous.finalY + 10;
+        addSectionTitle('Causas y Acción Propuesta', 2);
+        addAuditInfo(`Análisis realizado por ${action.analysis.analysisResponsible.name} el ${safeParseDate(action.analysis.analysisDate) ? format(safeParseDate(action.analysis.analysisDate)!, 'dd/MM/yyyy') : 'N/D'}`);
+        addTextBlock('Análisis de Causa Raíz:', action.analysis.causes);
+
+        if(action.analysis.proposedActions && action.analysis.proposedActions.length > 0) {
+            doc.autoTable({
+                startY: y,
+                head: [['ACCIÓN DETALLADA', 'RESPONSABLE', 'FECHA LÍMITE', 'ESTADO']],
+                body: action.analysis.proposedActions.map(pa => [
+                    pa.description,
+                    users.find(u => u.id === pa.responsibleUserId)?.name || 'N/D',
+                    safeParseDate(pa.dueDate) ? format(safeParseDate(pa.dueDate)!, 'dd/MM/yyyy') : 'N/D',
+                    pa.status || 'Pendiente'
+                ]),
+                theme: 'grid',
+                headStyles: { fillColor: darkGrayColor, textColor: 255, fontStyle: 'bold', fontSize: 9 },
+                styles: { fontSize: 9, cellPadding: 2.5, lineColor: '#E5E7EB', lineWidth: 0.2 },
+                margin: { left: margin, right: margin },
+            });
+            y = doc.autoTable.previous.finalY + 10;
+        }
+
+        addTwoColumnRow('Responsable Verificación:', users.find(u => u.id === action.analysis?.verificationResponsibleUserId)?.name);
+        y += 5;
       }
       
-      // --- SECTION 5: VERIFICACIÓN Y CIERRE ---
-      if (action.verification || action.closure) {
-        addSectionTitle('Verificación y Cierre Final', 5);
-        if (action.verification) {
-            addTextBlock('Comentarios de Verificación', action.verification.notes);
-            addAuditInfo('Verificado por:', action.verification.verificationResponsible.name, safeParseDate(action.verification.verificationDate) ? format(safeParseDate(action.verification.verificationDate)!, 'dd/MM/yyyy') : 'N/D');
-        }
-        if (action.closure) {
-            addAuditInfo('Cerrado por:', action.closure.closureResponsible.name, safeParseDate(action.closure.date) ? format(safeParseDate(action.closure.date)!, 'dd/MM/yyyy') : 'N/D');
-            y += 5;
-            
-            const closureStatus = action.closure.isCompliant ? 'Conforme' : 'No Conforme';
-            const closureColor = action.closure.isCompliant ? '#ECFDF5' : '#FEF2F2'; // green-50 or red-50
-            const closureTextColor = action.closure.isCompliant ? '#065F46' : '#991B1B'; // green-800 or red-800
-            
-            doc.setFillColor(closureColor);
-            doc.rect(margin, y, pageWidth - (margin * 2), 20, 'F');
-
-            doc.setFontSize(10);
-            doc.setFont('helvetica', 'normal');
-            doc.setTextColor(closureTextColor);
-            doc.text('Resultado Final del Proceso:', margin + 5, y + 8);
-            
-            doc.setFontSize(14);
-            doc.setFont('helvetica', 'bold');
-            doc.text(closureStatus, margin + 5, y + 15);
-            y += 25;
-        }
+      // --- SECTION 3: VERIFICACIÓN DE IMPLANTACIÓN ---
+      if (action.verification) {
+        addSectionTitle('Verificación de Implantación', 3);
+        addAuditInfo(`Verificado por ${action.verification.verificationResponsible.name} el ${safeParseDate(action.verification.verificationDate) ? format(safeParseDate(action.verification.verificationDate)!, 'dd/MM/yyyy') : 'N/D'}`);
+        addTextBlock('Comentarios de Verificación:', action.verification.notes);
+        y += 5;
       }
 
+      // --- SECTION 4: CIERRE DE LA ACCIÓN ---
+      if (action.closure) {
+        addSectionTitle('Cierre de la Acción', 4);
+        addAuditInfo(`Cerrado por ${action.closure.closureResponsible.name} el ${safeParseDate(action.closure.date) ? format(safeParseDate(action.closure.date)!, 'dd/MM/yyyy') : 'N/D'}`);
+        addTwoColumnRow('Resultado Final:', action.closure.isCompliant ? 'Conforme' : 'No Conforme');
+        addTextBlock('Observaciones de Cierre:', action.closure.notes);
+      }
+      
       // --- FOOTER ---
       const pageCount = doc.internal.pages.length > 1 ? doc.internal.pages.length - 1 : 1;
       for (let i = 1; i <= pageCount; i++) {
         doc.setPage(i);
         const footerY = pageHeight - 15;
-        doc.setDrawColor(borderColor);
+        doc.setDrawColor('#E5E7EB');
         doc.line(margin, footerY, pageWidth - margin, footerY);
-        
         doc.setFontSize(8);
         doc.setTextColor(grayColor);
         doc.text(`Informe generado el: ${format(new Date(), 'dd/MM/yyyy HH:mm')} | ID: ${action.actionId}`, margin, footerY + 5);
@@ -758,5 +700,3 @@ export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTab
         </div>
     )
 }
-
-    
