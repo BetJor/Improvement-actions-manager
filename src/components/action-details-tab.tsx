@@ -381,15 +381,24 @@ export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTab
         if (action.verification) {
             addSectionTitle('Verificación de Implantación', 3);
             addAuditInfo(`Verificado por ${action.verification.verificationResponsible.name} el ${safeParseDate(action.verification.verificationDate) ? format(safeParseDate(action.verification.verificationDate)!, 'dd/MM/yyyy') : 'N/D'}`);
-            
-            action.analysis?.proposedActions.forEach(pa => {
-                const status = action.verification?.proposedActionsVerificationStatus?.[pa.id] || 'Pendiente de Verificación';
-                const statusDate = pa.statusUpdateDate ? format(safeParseDate(pa.statusUpdateDate)!, 'dd/MM/yyyy HH:mm') : 'N/D';
-                const statusInfo = `${status} (el ${statusDate})`;
-                addTwoColumnRow(pa.description, statusInfo);
-            });
-            y+= 5;
-            
+        
+            if (action.analysis?.proposedActions && action.analysis.proposedActions.length > 0) {
+                doc.autoTable({
+                    startY: y,
+                    head: [['ACCIÓN PROPUESTA', 'ESTADO VERIFICACIÓN', 'FECHA DE ESTADO']],
+                    body: action.analysis.proposedActions.map(pa => [
+                        pa.description,
+                        action.verification?.proposedActionsVerificationStatus?.[pa.id] || 'Pendiente de Verificación',
+                        pa.statusUpdateDate ? format(safeParseDate(pa.statusUpdateDate)!, 'dd/MM/yyyy HH:mm') : 'N/D'
+                    ]),
+                    theme: 'grid',
+                    headStyles: { fillColor: darkGrayColor, textColor: 255, fontStyle: 'bold', fontSize: 9 },
+                    styles: { fontSize: 9, cellPadding: 2.5, lineColor: '#E5E7EB', lineWidth: 0.2 },
+                    margin: { left: margin, right: margin },
+                });
+                y = doc.autoTable.previous.finalY + 10;
+            }
+        
             addTextBlock('Comentarios Generales de Verificación:', action.verification.notes);
             y += 5;
         }
