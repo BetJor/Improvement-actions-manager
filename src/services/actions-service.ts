@@ -36,6 +36,9 @@ export const getActions = async (): Promise<ImprovementAction[]> => {
                 if (pa.dueDate instanceof Timestamp) {
                     return { ...pa, dueDate: pa.dueDate.toDate().toISOString() };
                 }
+                if (pa.statusUpdateDate instanceof Timestamp) {
+                    return { ...pa, statusUpdateDate: pa.statusUpdateDate.toDate().toISOString() };
+                }
                 return pa;
             });
         }
@@ -104,6 +107,7 @@ export const getActionById = async (id: string): Promise<ImprovementAction | nul
             data.analysis.proposedActions = data.analysis.proposedActions.map((pa: any) => ({
                 ...pa,
                 dueDate: convertTimestamp(pa.dueDate),
+                statusUpdateDate: convertTimestamp(pa.statusUpdateDate),
             }));
         }
          if (data.comments) {
@@ -278,7 +282,11 @@ export async function updateAction(actionId: string, data: any, masterData: any 
             
             const updatedProposedActions = proposedActions.map(pa => 
                 pa.id === data.updateProposedActionStatus.proposedActionId 
-                    ? { ...pa, status: data.updateProposedActionStatus.status } 
+                    ? { 
+                        ...pa, 
+                        status: data.updateProposedActionStatus.status,
+                        statusUpdateDate: new Date().toISOString() // Add the update date
+                      } 
                     : pa
             );
             

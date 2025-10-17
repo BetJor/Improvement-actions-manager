@@ -87,6 +87,7 @@ export interface ProposedAction {
   responsibleUserId: string;
   dueDate: Date | string; // Acceptem string per a la inicialització des de Firestore
   status?: ProposedActionStatus;
+  statusUpdateDate?: string; // ISO String
 }
 
 export interface ActionComment {

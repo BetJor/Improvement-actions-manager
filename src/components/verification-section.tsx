@@ -26,6 +26,9 @@ import {
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { Separator } from "./ui/separator"
+import { format } from "date-fns"
+import { es } from "date-fns/locale"
+import { safeParseDate } from "@/lib/utils"
 
 const verificationSchema = z.object({
   notes: z.string().min(1, "Las observaciones son requeridas."),
@@ -42,8 +45,16 @@ interface VerificationSectionProps {
 }
 
 // Componente dedicado para mostrar la descripción con el formato correcto
-const FormattedDescription = ({ text }: { text: string }) => {
-  return <p className="font-medium whitespace-pre-wrap">{text}</p>;
+const FormattedDescription = ({ text, status, statusUpdateDate }: { text: string, status?: string, statusUpdateDate?: string }) => {
+  const formattedDate = statusUpdateDate ? format(safeParseDate(statusUpdateDate)!, "dd/MM/yyyy HH:mm") : 'N/D';
+  return (
+    <div>
+        <p className="font-medium whitespace-pre-wrap">{text}</p>
+        <p className="text-xs text-muted-foreground mt-2">
+            Estado actual: <span className="font-semibold">{status || 'Pendiente'}</span> (act. el {formattedDate})
+        </p>
+    </div>
+  );
 };
 
 export function VerificationSection({ action, user, isSubmitting, onSave }: VerificationSectionProps) {
@@ -208,7 +219,7 @@ export function VerificationSection({ action, user, isSubmitting, onSave }: Veri
                     name={`proposedActionsVerificationStatus.${pa.id}`}
                     render={({ field }) => (
                       <FormItem className="p-4 border rounded-lg space-y-4">
-                        <FormattedDescription text={pa.description} />
+                        <FormattedDescription text={pa.description} status={pa.status} statusUpdateDate={pa.statusUpdateDate} />
                         <Separator />
                         <FormControl>
                           <RadioGroup

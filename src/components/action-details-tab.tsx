@@ -7,7 +7,7 @@ import { useForm } from "react-hook-form"
 import * as z from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { getActionById, updateAction, getUsers } from "@/lib/data"
-import type { ImprovementAction, User } from "@/lib/types"
+import type { ImprovementAction, ProposedActionVerificationStatus, User } from "@/lib/types"
 import { ActionForm } from "@/components/action-form"
 import { Button } from "@/components/ui/button"
 import { AnalysisSection } from "@/components/analysis-section"
@@ -247,162 +247,176 @@ export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTab
     };
     
     const generatePdf = () => {
-      if (!action) return;
-  
-      const doc = new jsPDF() as jsPDFWithAutoTable;
-      const pageHeight = doc.internal.pageSize.height || doc.internal.pageSize.getHeight();
-      const pageWidth = doc.internal.pageSize.width || doc.internal.pageSize.getWidth();
-      const margin = 15;
-      let y = 20;
+        if (!action) return;
+    
+        const doc = new jsPDF() as jsPDFWithAutoTable;
+        const pageHeight = doc.internal.pageSize.height || doc.internal.pageSize.getHeight();
+        const pageWidth = doc.internal.pageSize.width || doc.internal.pageSize.getWidth();
+        const margin = 15;
+        let y = 20;
 
-      // --- COLORS & STYLES ---
-      const primaryColor = '#2563EB'; // blue-600
-      const grayColor = '#6B7280'; // gray-500
-      const darkGrayColor = '#374151'; // gray-700
-      
-      // --- HEADER ---
-      doc.setFontSize(22);
-      doc.setFont('helvetica', 'bold');
-      doc.setTextColor(darkGrayColor);
-      doc.text(`Acción de Mejora: ${action.actionId}`, margin, y);
-      y += 8;
-  
-      const statusText = action.status === 'Finalizada' && action.closure?.isCompliant === false ? 'Finalizada (No Conforme)' : action.status;
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(11);
-      doc.setTextColor(grayColor);
-      doc.text(`Estado actual: ${statusText}`, margin, y);
-      y += 15;
+        // --- COLORS & STYLES ---
+        const primaryColor = '#2563EB'; // blue-600
+        const grayColor = '#6B7280'; // gray-500
+        const darkGrayColor = '#374151'; // gray-700
+        
+        // --- HEADER ---
+        doc.setFontSize(22);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(darkGrayColor);
+        doc.text(`Acción de Mejora: ${action.actionId}`, margin, y);
+        y += 8;
+    
+        const statusText = action.status === 'Finalizada' && action.closure?.isCompliant === false ? 'Finalizada (No Conforme)' : action.status;
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(11);
+        doc.setTextColor(grayColor);
+        doc.text(`Estado actual: ${statusText}`, margin, y);
+        y += 15;
 
-      // --- HELPER FUNCTIONS ---
-      const addSectionTitle = (title: string, number?: number) => {
-          if (y > pageHeight - 30) { doc.addPage(); y = 20; }
-          doc.setFontSize(16);
-          doc.setFont('helvetica', 'bold');
-          doc.setTextColor(primaryColor);
-          const text = number ? `${number}. ${title}` : title;
-          doc.text(text, margin, y);
-          y += 6;
-          doc.setDrawColor(primaryColor);
-          doc.setLineWidth(0.3);
-          doc.line(margin, y, pageWidth - margin, y);
-          y += 10;
-      };
-      
-      const addAuditInfo = (text: string) => {
-          if (y > pageHeight - 20) { doc.addPage(); y = 20; }
-          doc.setFont('helvetica', 'italic');
-          doc.setFontSize(9);
-          doc.setTextColor(grayColor);
-          doc.text(text, margin, y);
-          y += 8;
-      };
+        // --- HELPER FUNCTIONS ---
+        const addSectionTitle = (title: string, number?: number) => {
+            if (y > pageHeight - 30) { doc.addPage(); y = 20; }
+            doc.setFontSize(16);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(primaryColor);
+            const text = number ? `${number}. ${title}` : title;
+            doc.text(text, margin, y);
+            y += 6;
+            doc.setDrawColor(primaryColor);
+            doc.setLineWidth(0.3);
+            doc.line(margin, y, pageWidth - margin, y);
+            y += 10;
+        };
+        
+        const addAuditInfo = (text: string) => {
+            if (!text || text.includes('N/D')) return;
+            if (y > pageHeight - 20) { doc.addPage(); y = 20; }
+            doc.setFont('helvetica', 'italic');
+            doc.setFontSize(9);
+            doc.setTextColor(grayColor);
+            doc.text(text, margin, y);
+            y += 8;
+        };
 
-      const addTwoColumnRow = (label: string, value: string | undefined) => {
-          if (!value) return;
-          if (y > pageHeight - 20) { doc.addPage(); y = 20; }
-          doc.setFont('helvetica', 'bold');
-          doc.setFontSize(10);
-          doc.setTextColor(darkGrayColor);
-          doc.text(label, margin + 2, y);
-          
-          doc.setFont('helvetica', 'normal');
-          doc.text(value, margin + 50, y, { maxWidth: pageWidth - margin - 70 });
-          y += doc.getTextDimensions(value, { maxWidth: pageWidth - margin - 70, font: doc.getFont() }).h + 4;
-      };
+        const addTwoColumnRow = (label: string, value: string | undefined) => {
+            if (!value) return;
+            if (y > pageHeight - 20) { doc.addPage(); y = 20; }
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(10);
+            doc.setTextColor(darkGrayColor);
+            doc.text(label, margin + 2, y);
+            
+            doc.setFont('helvetica', 'normal');
+            doc.text(value, margin + 50, y, { maxWidth: pageWidth - margin - 70 });
+            const textDimensions = doc.getTextDimensions(value, { maxWidth: pageWidth - margin - 70, font: doc.getFont() });
+            y += textDimensions.h + 4;
+        };
+        
+        const addTextBlock = (title: string, text: string | undefined) => {
+            if (!text) return;
+            if (y > pageHeight - 30) { doc.addPage(); y = 20; }
+            
+            doc.setFontSize(11);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(darkGrayColor);
+            doc.text(title, margin, y);
+            y += 6;
+        
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(10);
+            doc.setTextColor(grayColor);
+            const splitText = doc.splitTextToSize(text, pageWidth - (margin * 2));
+            doc.text(splitText, margin, y);
+            y += doc.getTextDimensions(text, { maxWidth: pageWidth - (margin * 2) }).h + 10;
+        };
 
-      const addTextBlock = (title: string, text: string | undefined) => {
-          if (!text) return;
-          const blockWidth = pageWidth - (margin * 2);
-          
-          if (y > pageHeight - 30) { doc.addPage(); y = 20; }
-          
-          doc.setFontSize(11);
-          doc.setFont('helvetica', 'bold');
-          doc.setTextColor(darkGrayColor);
-          doc.text(title, margin, y);
-          y += 6;
-      
-          doc.setFont('helvetica', 'normal');
-          doc.setFontSize(10);
-          doc.setTextColor(grayColor);
-          const splitText = doc.splitTextToSize(text, blockWidth);
-          doc.text(splitText, margin, y);
-          const textHeight = splitText.length * 5; 
-          y += textHeight + 10;
-      };
+        // --- SECTION 1: DETALLES DE LA ACCIÓN ---
+        addSectionTitle('Detalles de la Acción', 1);
+        addAuditInfo(`Creado por ${action.creator.name} el ${safeParseDate(action.creationDate) ? format(safeParseDate(action.creationDate)!, 'dd/MM/yyyy HH:mm') : 'N/D'}`);
+        addTwoColumnRow('Título:', action.title);
+        addTwoColumnRow('Tipo:', action.type);
+        addTwoColumnRow('Categoría:', action.category);
+        addTwoColumnRow('Subcategoría:', action.subcategory);
+        addTwoColumnRow('Centro:', action.center);
+        addTwoColumnRow('Áreas Implicadas:', action.affectedAreas.join(', '));
+        addTextBlock('Hallazgo / Observaciones Iniciales:', action.description);
+        y += 5;
+        
+        // --- SECTION 2: CAUSAS Y ACCIÓN PROPUESTA ---
+        if (action.analysis) {
+            addSectionTitle('Causas y Acción Propuesta', 2);
+            addAuditInfo(`Análisis realizado por ${action.analysis.analysisResponsible.name} el ${safeParseDate(action.analysis.analysisDate) ? format(safeParseDate(action.analysis.analysisDate)!, 'dd/MM/yyyy') : 'N/D'}`);
+            addTextBlock('Análisis de Causa Raíz:', action.analysis.causes);
 
-      // --- SECTION 1: DETALLES DE LA ACCIÓN ---
-      addSectionTitle('Detalles de la Acción', 1);
-      addAuditInfo(`Creado por ${action.creator.name} el ${safeParseDate(action.creationDate) ? format(safeParseDate(action.creationDate)!, 'dd/MM/yyyy HH:mm') : 'N/D'}`);
-      addTwoColumnRow('Título:', action.title);
-      addTwoColumnRow('Tipo:', action.type);
-      addTwoColumnRow('Categoría:', action.category);
-      addTwoColumnRow('Subcategoría:', action.subcategory);
-      addTwoColumnRow('Centro:', action.center);
-      addTwoColumnRow('Áreas Implicadas:', action.affectedAreas.join(', '));
-      addTextBlock('Hallazgo / Observaciones Iniciales:', action.description);
-      y += 5;
-      
-      // --- SECTION 2: CAUSAS Y ACCIÓN PROPUESTA ---
-      if (action.analysis) {
-        addSectionTitle('Causas y Acción Propuesta', 2);
-        addAuditInfo(`Análisis realizado por ${action.analysis.analysisResponsible.name} el ${safeParseDate(action.analysis.analysisDate) ? format(safeParseDate(action.analysis.analysisDate)!, 'dd/MM/yyyy') : 'N/D'}`);
-        addTextBlock('Análisis de Causa Raíz:', action.analysis.causes);
+            if(action.analysis.proposedActions && action.analysis.proposedActions.length > 0) {
+                doc.setFontSize(11);
+                doc.setFont('helvetica', 'bold');
+                doc.setTextColor(darkGrayColor);
+                doc.text("Acciones Propuestas", margin, y);
+                y += 8;
 
-        if(action.analysis.proposedActions && action.analysis.proposedActions.length > 0) {
-            doc.autoTable({
-                startY: y,
-                head: [['ACCIÓN DETALLADA', 'RESPONSABLE', 'FECHA LÍMITE', 'ESTADO']],
-                body: action.analysis.proposedActions.map(pa => [
-                    pa.description,
-                    users.find(u => u.id === pa.responsibleUserId)?.name || 'N/D',
-                    safeParseDate(pa.dueDate) ? format(safeParseDate(pa.dueDate)!, 'dd/MM/yyyy') : 'N/D',
-                    pa.status || 'Pendiente'
-                ]),
-                theme: 'grid',
-                headStyles: { fillColor: darkGrayColor, textColor: 255, fontStyle: 'bold', fontSize: 9 },
-                styles: { fontSize: 9, cellPadding: 2.5, lineColor: '#E5E7EB', lineWidth: 0.2 },
-                margin: { left: margin, right: margin },
+                doc.autoTable({
+                    startY: y,
+                    head: [['ACCIÓN DETALLADA', 'RESPONSABLE', 'FECHA LÍMITE', 'ESTADO']],
+                    body: action.analysis.proposedActions.map(pa => [
+                        pa.description,
+                        users.find(u => u.id === pa.responsibleUserId)?.name || 'N/D',
+                        safeParseDate(pa.dueDate) ? format(safeParseDate(pa.dueDate)!, 'dd/MM/yyyy') : 'N/D',
+                        pa.status || 'Pendiente'
+                    ]),
+                    theme: 'grid',
+                    headStyles: { fillColor: darkGrayColor, textColor: 255, fontStyle: 'bold', fontSize: 9 },
+                    styles: { fontSize: 9, cellPadding: 2.5, lineColor: '#E5E7EB', lineWidth: 0.2 },
+                    margin: { left: margin, right: margin },
+                });
+                y = doc.autoTable.previous.finalY + 10;
+            }
+
+            addTwoColumnRow('Responsable Verificación:', users.find(u => u.id === action.analysis?.verificationResponsibleUserId)?.name);
+            y += 5;
+        }
+        
+        // --- SECTION 3: VERIFICACIÓN DE IMPLANTACIÓN ---
+        if (action.verification) {
+            addSectionTitle('Verificación de Implantación', 3);
+            addAuditInfo(`Verificado por ${action.verification.verificationResponsible.name} el ${safeParseDate(action.verification.verificationDate) ? format(safeParseDate(action.verification.verificationDate)!, 'dd/MM/yyyy') : 'N/D'}`);
+            
+            action.analysis?.proposedActions.forEach(pa => {
+                const status = action.verification?.proposedActionsVerificationStatus?.[pa.id] || 'Pendiente de Verificación';
+                const statusDate = pa.statusUpdateDate ? format(safeParseDate(pa.statusUpdateDate)!, 'dd/MM/yyyy HH:mm') : 'N/D';
+                const statusInfo = `${status} (el ${statusDate})`;
+                addTwoColumnRow(pa.description, statusInfo);
             });
-            y = doc.autoTable.previous.finalY + 10;
+            y+= 5;
+            
+            addTextBlock('Comentarios Generales de Verificación:', action.verification.notes);
+            y += 5;
         }
 
-        addTwoColumnRow('Responsable Verificación:', users.find(u => u.id === action.analysis?.verificationResponsibleUserId)?.name);
-        y += 5;
-      }
-      
-      // --- SECTION 3: VERIFICACIÓN DE IMPLANTACIÓN ---
-      if (action.verification) {
-        addSectionTitle('Verificación de Implantación', 3);
-        addAuditInfo(`Verificado por ${action.verification.verificationResponsible.name} el ${safeParseDate(action.verification.verificationDate) ? format(safeParseDate(action.verification.verificationDate)!, 'dd/MM/yyyy') : 'N/D'}`);
-        addTextBlock('Comentarios de Verificación:', action.verification.notes);
-        y += 5;
-      }
+        // --- SECTION 4: CIERRE DE LA ACCIÓN ---
+        if (action.closure) {
+            addSectionTitle('Cierre de la Acción', 4);
+            addAuditInfo(`Cerrado por ${action.closure.closureResponsible.name} el ${safeParseDate(action.closure.date) ? format(safeParseDate(action.closure.date)!, 'dd/MM/yyyy') : 'N/D'}`);
+            addTwoColumnRow('Resultado Final:', action.closure.isCompliant ? 'Conforme' : 'No Conforme');
+            addTextBlock('Observaciones de Cierre:', action.closure.notes);
+        }
+        
+        // --- FOOTER ---
+        const pageCount = doc.internal.pages.length > 1 ? doc.internal.pages.length - 1 : 1;
+        for (let i = 1; i <= pageCount; i++) {
+            doc.setPage(i);
+            const footerY = pageHeight - 15;
+            doc.setDrawColor('#E5E7EB');
+            doc.line(margin, footerY, pageWidth - margin, footerY);
+            doc.setFontSize(8);
+            doc.setTextColor(grayColor);
+            doc.text(`Informe generado el: ${format(new Date(), 'dd/MM/yyyy HH:mm')} | ID: ${action.actionId}`, margin, footerY + 5);
+            doc.text(`Página ${i} de ${pageCount}`, pageWidth - margin, footerY + 5, { align: 'right' });
+        }
 
-      // --- SECTION 4: CIERRE DE LA ACCIÓN ---
-      if (action.closure) {
-        addSectionTitle('Cierre de la Acción', 4);
-        addAuditInfo(`Cerrado por ${action.closure.closureResponsible.name} el ${safeParseDate(action.closure.date) ? format(safeParseDate(action.closure.date)!, 'dd/MM/yyyy') : 'N/D'}`);
-        addTwoColumnRow('Resultado Final:', action.closure.isCompliant ? 'Conforme' : 'No Conforme');
-        addTextBlock('Observaciones de Cierre:', action.closure.notes);
-      }
-      
-      // --- FOOTER ---
-      const pageCount = doc.internal.pages.length > 1 ? doc.internal.pages.length - 1 : 1;
-      for (let i = 1; i <= pageCount; i++) {
-        doc.setPage(i);
-        const footerY = pageHeight - 15;
-        doc.setDrawColor('#E5E7EB');
-        doc.line(margin, footerY, pageWidth - margin, footerY);
-        doc.setFontSize(8);
-        doc.setTextColor(grayColor);
-        doc.text(`Informe generado el: ${format(new Date(), 'dd/MM/yyyy HH:mm')} | ID: ${action.actionId}`, margin, footerY + 5);
-        doc.text(`Página ${i} de ${pageCount}`, pageWidth - margin, footerY + 5, { align: 'right' });
-      }
-
-      doc.save(`Accion_Mejora_${action.actionId}.pdf`);
-  };
+        doc.save(`Accion_Mejora_${action.actionId}.pdf`);
+    };
 
     if (!action) {
         return (
@@ -627,15 +641,22 @@ export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTab
                                     <div>
                                         <h3 className="font-semibold text-lg mb-4">Estado de las Acciones Propuestas</h3>
                                         <div className="space-y-4">
-                                            {action.analysis?.proposedActions.map((pa, index) => (
-                                                <div key={`${pa.id}-${index}`} className="p-4 border rounded-lg space-y-4">
-                                                    <p className="font-medium whitespace-pre-wrap">{pa.description}</p>
-                                                    <Separator />
-                                                    <p className="text-sm text-muted-foreground">
-                                                        Estado: <span className="font-semibold">{action.verification?.proposedActionsVerificationStatus?.[pa.id] || 'Pendiente de Verificación'}</span>
-                                                    </p>
-                                                </div>
-                                            ))}
+                                            {action.analysis?.proposedActions.map((pa, index) => {
+                                                const verificationStatus = action.verification?.proposedActionsVerificationStatus?.[pa.id] || 'Pendiente de Verificación';
+                                                const statusUpdateDate = pa.statusUpdateDate ? format(safeParseDate(pa.statusUpdateDate)!, "dd/MM/yyyy HH:mm") : 'N/D';
+                                                return (
+                                                    <div key={`${pa.id}-${index}`} className="p-4 border rounded-lg space-y-4">
+                                                        <p className="font-medium whitespace-pre-wrap">{pa.description}</p>
+                                                        <Separator />
+                                                        <p className="text-sm text-muted-foreground">
+                                                            Estado: <span className="font-semibold">{pa.status}</span> (act. el {statusUpdateDate})
+                                                        </p>
+                                                        <p className="text-sm text-muted-foreground">
+                                                            Verificación: <span className="font-semibold">{verificationStatus}</span>
+                                                        </p>
+                                                    </div>
+                                                );
+                                            })}
                                         </div>
                                     </div>
                                 </CardContent>
