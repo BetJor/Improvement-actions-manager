@@ -1,0 +1,207 @@
+
+{
+  "Actions": {
+    "login": {
+      "title": "Inicia sesión",
+      "description": "Accede a la plataforma con tus credenciales.",
+      "googleSignIn": "Continuar con Google",
+      "orContinueWith": "o continuar con",
+      "email": "Correo electrónico",
+      "password": "Contraseña",
+      "signIn": "Iniciar Sesión",
+      "signUp": "Crear una cuenta nueva",
+      "forgotPassword": "¿Has olvidado la contraseña?",
+      "errors": {
+        "fieldsRequired": "Los campos de correo y contraseña son obligatorios.",
+        "signInFailed": "Error al iniciar sesión",
+        "signUpFailed": "Error en el registro",
+        "emailRequiredForReset": "Introduce tu correo electrónico para restablecer la contraseña.",
+        "passwordResetFailed": "Error al restablecer la contraseña"
+      },
+      "success": {
+        "signUpSuccessTitle": "¡Cuenta Creada!",
+        "signUpSuccessDescription": "Tu cuenta se ha creado correctamente. Ahora puedes iniciar sesión.",
+        "passwordResetSentTitle": "Correo enviado",
+        "passwordResetSentDescription": "Se ha enviado un correo para restablecer tu contraseña."
+      }
+    },
+    "page": {
+      "title": "Acciones de Mejora",
+      "description": "Aquí puedes encontrar todas las acciones de mejora. Usa los filtros para acotar tu búsqueda.",
+      "createAction": "Crear Acción"
+    },
+    "new": {
+      "title": "Crear Nueva Acción de Mejora",
+      "description": "Rellena el formulario para crear una nueva acción. Empezará en estado 'Borrador'.",
+      "form": {
+        "title": {
+          "label": "Asunto",
+          "placeholder": "p. ej., Optimización del proceso de facturación"
+        },
+        "description": {
+          "label": "Observaciones",
+          "placeholder": "Describe la no conformidad o el área de mejora..."
+        },
+        "type": {
+          "label": "Ámbito",
+          "placeholder": "Selecciona un ámbito",
+          "description": "Categoriza la acción de mejora."
+        },
+        "responsible": {
+          "label": "Persona Responsable",
+          "placeholder": "Selecciona una persona responsable",
+          "description": "Asigna a la persona encargada del análisis."
+        },
+        "submit": "Crear Acción",
+        "saveAsDraft": "Guardar Borrador",
+        "sendForAnalysis": "Enviar para Análisis",
+        "toast": {
+          "title": "Acción Creada",
+          "description": "La nueva acción de mejora se ha creado correctamente."
+        },
+        "mic": {
+          "toggle": "Activar/desactivar el micrófono"
+        },
+        "improve": {
+          "button": "Mejorar texto con IA"
+        },
+        "suggestion": {
+          "title": "Sugerencia de la IA",
+          "description": "El asistente ha generado la siguiente descripción. ¿Quieres aceptar estos cambios?",
+          "improvedDescription": "Descripción mejorada",
+          "accept": "Aceptar Sugerencia",
+          "cancel": "Cancelar"
+        },
+        "cancel": "Cancelar"
+      }
+    },
+    "table": {
+      "filterPlaceholder": "Filtrar por título, ID o responsable...",
+      "status": "Estado",
+      "type": "Ámbito",
+      "center": "Centro",
+      "noResults": "No se encontraron resultados.",
+      "activeFilters": "Filtros activos",
+      "text": "Texto",
+      "clearAll": "Limpiar filtros",
+      "col": {
+        "id": "ID",
+        "title": "Título",
+        "status": "Estado",
+        "type": "Ámbito",
+        "responsible": "Responsable",
+        "dueDate": "Fecha Vencimiento"
+      },
+       "follow": {
+        "follow": "Seguir acción",
+        "unfollow": "Dejar de seguir la acción"
+      }
+    },
+    "detail": {
+      "editDraft": "Editar Borrador",
+      "performAnalysis": "Realizar Análisis",
+      "verifyImplementation": "Verificar Implantación",
+      "closeAction": "Cerrar Acción",
+      "causesAndProposedAction": "Causas y Acción Propuesta",
+      "causesAnalysis": "Análisis de las Causas",
+      "proposedAction": "Acción Propuesta",
+      "analysisPerformedBy": "Análisis realizado por {name} el {date}",
+      "verificationPerformedBy": "Verificación realizada por {name} el {date}",
+      "implementationVerification": "Comprobación de la Implantación",
+      "followUpAndNotes": "Seguimiento y Anotaciones",
+      "actionClosure": "Cierre de la Acción",
+      "details": "Detalles",
+      "status": "Estado",
+      "type": "Ámbito",
+      "creator": "Creador/a",
+      "responsible": "Responsable",
+      "creationDate": "Fecha Creación",
+      "analysisDue": "Vencimiento Análisis",
+      "implementationDue": "Vencimiento Implantación",
+      "closureDue": "Vencimiento Cierre",
+      "workflowPlan": {
+        "title": "Plan de Trabajo",
+        "description": "Este es el plan de trabajo generado automáticamente para esta acción."
+      },
+      "editingTitle": "Editando Acción de Mejora",
+      "editingDescription": "Estás modificando los detalles de esta acción. Guarda los cambios cuando hayas terminado.",
+      "viewingDescription": "Visualizando los detalles de la acción. Para modificar, haz clic en 'Editar'.",
+      "analysis": {
+        "title": "Análisis de Causas y Plan de Acción",
+        "description": "Realiza el análisis de las causas raíz y define las acciones a emprender.",
+        "causes": {
+          "label": "Análisis de las Causas",
+          "placeholder": "Describe el análisis realizado para identificar las causas raíz del problema..."
+        },
+        "proposedActions": {
+          "title": "Acciones Propuestas",
+          "description": "Descripción de la acción",
+          "descriptionPlaceholder": "p. ej., Revisar y actualizar el procedimiento P-01",
+          "responsible": "Responsable",
+          "responsiblePlaceholder": "Selecciona un usuario",
+          "dueDate": "Fecha Vencimiento",
+          "dueDatePlaceholder": "Selecciona una fecha",
+          "add": "Añadir Acción"
+        },
+        "verificationResponsible": {
+          "label": "Responsable de la Verificación",
+          "placeholder": "Selecciona el usuario que verificará la eficacia"
+        },
+        "saveButton": "Guardar Análisis y Avanzar",
+        "mic": {
+          "toggle": "Activar/desactivar el micrófono"
+        },
+        "improve": {
+          "button": "Generar Análisis con IA"
+        },
+        "suggestion": {
+          "title": "Sugerencia de la IA",
+          "description": "El asistente ha generado el siguiente análisis y plan de acción. ¿Quieres aceptar estos cambios?",
+          "suggestedAnalysis": "Análisis de Causas Sugerido",
+          "suggestedActions": "Acciones Correctivas Sugeridas",
+          "accept": "Aceptar y Rellenar Formulario",
+          "cancel": "Cancelar"
+        }
+      },
+      "verification": {
+        "title": "Verificación de la Implantación",
+        "description": "Comprueba si las acciones propuestas se han implantado y si han sido eficaces.",
+        "notesLabel": "Observaciones Generales",
+        "notesPlaceholder": "Añade aquí tus observaciones sobre el proceso de verificación...",
+        "statusOfActions": "Estado de las Acciones Propuestas",
+        "saveButton": "Guardar Verificación y Avanzar",
+        "status": {
+          "implemented": "Implementada",
+          "partiallyImplemented": "Implementada Parcialmente",
+          "notImplemented": "No Implementada"
+        }
+      },
+      "closure": {
+        "title": "Cierre de la Acción",
+        "description": "Finaliza la acción de mejora registrando las conclusiones finales.",
+        "notesLabel": "Observaciones del Cierre",
+        "notesPlaceholder": "Describe el resultado final, lecciones aprendidas, etc.",
+        "isCompliantLabel": "¿El resultado final es conforme?",
+        "isCompliantDescription": "Si se marca como 'No Conforme', se generará automáticamente una nueva acción (BIS) para continuar el seguimiento.",
+        "saveButton": "Guardar y Cerrar Acción"
+      },
+      "tabs": {
+        "details": "Detalles",
+        "causesAndProposedAction": "Causas y Acción Propuesta",
+        "implementationVerification": "Verificación de Implantación",
+        "actionClosure": "Cierre de la Acción"
+      },
+      "comments": {
+        "title": "Comentarios",
+        "addCommentPlaceholder": "Añade un comentario...",
+        "noComments": "Aún no hay comentarios."
+      },
+      "attachments": {
+        "title": "Adjuntos",
+        "clickToUpload": "Haz clic para subir",
+        "dragAndDrop": "o arrastra y suelta",
+        "noAttachments": "Aún no hay archivos adjuntos."
+      }
+    }
+  }
+}

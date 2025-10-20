@@ -2,15 +2,17 @@
 {
   "Settings": {
     "title": "Configuración",
-    "description": "Aquí podrás gestionar las tablas maestras de la aplicación, como categorías, tipos de acción, etc.",
+    "description": "Aquí podrás gestionar las tablas maestras de la aplicación, como orígenes, clasificaciones, etc.",
     "tabs": {
-      "categories": "Categorías",
-      "subcategories": "Subcategorías",
-      "affectedAreas": "Áreas Afectadas"
+      "actionTypes": "Ámbitos",
+      "categories": "Orígenes",
+      "subcategories": "Clasificaciones",
+      "affectedAreas": "Áreas Afectadas",
+      "responsibilityRoles": "Roles de Responsabilidad"
     },
     "col": {
       "name": "Nombre",
-      "category": "Categoría",
+      "category": "Origen",
       "actions": "Acciones"
     },
     "addNew": "Añadir Nuevo",

@@ -2,15 +2,17 @@
 {
   "Settings": {
     "title": "Configuració",
-    "description": "Aquí podràs gestionar les taules mestres de l'aplicació, com ara categories, tipus d'acció, etc.",
+    "description": "Aquí podràs gestionar les taules mestres de l'aplicació, com ara orígens, classificacions, etc.",
     "tabs": {
-      "categories": "Categories",
-      "subcategories": "Subcategories",
-      "affectedAreas": "Àrees Afectades"
+      "actionTypes": "Àmbits",
+      "categories": "Orígens",
+      "subcategories": "Classificacions",
+      "affectedAreas": "Àrees Afectades",
+      "responsibilityRoles": "Rols de Responsabilitat"
     },
     "col": {
       "name": "Nom",
-      "category": "Categoria",
+      "category": "Origen",
       "actions": "Accions"
     },
     "addNew": "Afegeix Nou",

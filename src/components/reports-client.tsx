@@ -41,7 +41,7 @@ export function ReportsClient() {
         const compliantActions = finalizedActions.filter(a => a.closure?.isCompliant === true).length;
         const globalStats = { totalActions: actions.length, activeActions: actions.length - finalizedActions.length, totalFinalized: finalizedActions.length, compliantActions };
 
-        const actionsByType = actions.reduce((acc, action) => { const type = action.type || 'Sin Tipo'; if (!acc[type]) acc[type] = []; acc[type].push(action); return acc; }, {} as Record<string, ImprovementAction[]>);
+        const actionsByType = actions.reduce((acc, action) => { const type = action.type || 'Sin Ámbito'; if (!acc[type]) acc[type] = []; acc[type].push(action); return acc; }, {} as Record<string, ImprovementAction[]>);
         const typeStats = Object.keys(actionsByType).map(type => { const typeActions = actionsByType[type]; const finalized = typeActions.filter(a => a.status === 'Finalizada'); const compliant = finalized.filter(a => a.closure?.isCompliant === true).length; const successRate = finalized.length > 0 ? (compliant / finalized.length) * 100 : 0; return { name: type, total: typeActions.length, active: typeActions.length - finalized.length, successRate: Math.round(successRate) }; });
         const pieChartData = Object.keys(actionsByType).map(type => ({ name: type, value: actionsByType[type].length }));
 
@@ -55,7 +55,7 @@ export function ReportsClient() {
         actions.forEach(action => { const openedMonth = format(parseISO(action.creationDate), 'MMM yy'); if(monthlyFlowMap[openedMonth]) monthlyFlowMap[openedMonth].opened++; if(action.status === 'Finalizada' && action.closure?.date){ const closedMonth = format(parseISO(action.closure.date), 'MMM yy'); if(monthlyFlowMap[closedMonth]) monthlyFlowMap[closedMonth].closed++; } });
         const efficiencyStats = { avgResolutionTime: finalizedActions.length > 0 ? Math.round(totalResolutionTime / finalizedActions.length) : 0, maxResolutionTime: Math.max(...resolutionTimes), firstAttemptSuccessRate: firstAttemptActions.length > 0 ? Math.round((successfulFirstAttempt / firstAttemptActions.length) * 100) : 0, monthlyFlow: Object.values(monthlyFlowMap) };
 
-        const problemCounts = actions.reduce((acc, action) => { const subcategory = action.subcategory || 'Sin Subcategoría'; acc[subcategory] = (acc[subcategory] || 0) + 1; return acc; }, {} as Record<string, number>);
+        const problemCounts = actions.reduce((acc, action) => { const subcategory = action.subcategory || 'Sin Clasificación'; acc[subcategory] = (acc[subcategory] || 0) + 1; return acc; }, {} as Record<string, number>);
         const top5Problems = Object.entries(problemCounts).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value).slice(0, 5);
         const qualityStats = { top5Problems };
 
@@ -103,16 +103,16 @@ export function ReportsClient() {
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between">
                             <CardTitle>Análisis de Datos</CardTitle>
-                            <div className="flex items-center gap-2"><span className="text-sm font-medium text-muted-foreground">Agrupar por</span><Select value={groupBy} onValueChange={(value: GroupByOption) => setGroupBy(value)}><SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="phase">Fase</SelectItem><SelectItem value="type">Tipo</SelectItem><SelectItem value="status">Estado</SelectItem><SelectItem value="center">Centro</SelectItem></SelectContent></Select></div>
+                            <div className="flex items-center gap-2"><span className="text-sm font-medium text-muted-foreground">Agrupar por</span><Select value={groupBy} onValueChange={(value: GroupByOption) => setGroupBy(value)}><SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="phase">Fase</SelectItem><SelectItem value="type">Ámbito</SelectItem><SelectItem value="status">Estado</SelectItem><SelectItem value="center">Centro</SelectItem></SelectContent></Select></div>
                         </CardHeader>
                         <CardContent className="grid grid-cols-1 lg:grid-cols-5 gap-6">
                             <div className="lg:col-span-3"><ResponsiveContainer width="100%" height={350}><BarChart data={mainChartData} margin={{ top: 20, right: 10, left: 0, bottom: 20 }}><CartesianGrid strokeDasharray="3 3" vertical={false} /><XAxis dataKey="name" tick={{fontSize: 12}} angle={-15} textAnchor="end" interval={0} /><YAxis allowDecimals={false}/><Tooltip cursor={{fill: 'rgba(240, 240, 240, 0.5)'}}/><Bar dataKey="value" name="Nº Acciones">{mainChartData.map((entry, index) => (<Cell key={`cell-${index}`} fill={entry.fill} />))}</Bar></BarChart></ResponsiveContainer></div>
-                            <div className="lg:col-span-2"><h4 className="font-semibold mb-2 text-center text-sm text-muted-foreground">Distribución por Tipo</h4><ResponsiveContainer width="100%" height={350}><PieChart><Pie data={pieChartData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={100} labelLine={false} label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}>{pieChartData.map((entry, index) => (<Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />))}</Pie><Tooltip /></PieChart></ResponsiveContainer></div>
+                            <div className="lg:col-span-2"><h4 className="font-semibold mb-2 text-center text-sm text-muted-foreground">Distribución por Ámbito</h4><ResponsiveContainer width="100%" height={350}><PieChart><Pie data={pieChartData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={100} labelLine={false} label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}>{pieChartData.map((entry, index) => (<Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />))}</Pie><Tooltip /></PieChart></ResponsiveContainer></div>
                         </CardContent>
                     </Card>
                     <Card>
-                        <CardHeader><CardTitle>Resumen por Tipo de Acción</CardTitle></CardHeader>
-                        <CardContent><Table><TableHeader><TableRow><TableHead>Tipo de Acción</TableHead><TableHead className="text-right">Total</TableHead><TableHead className="text-right">Activas</TableHead><TableHead className="text-right">Tasa Éxito</TableHead></TableRow></TableHeader><TableBody>{typeStats.map(stat => (<TableRow key={stat.name}><TableCell className="font-medium">{stat.name}</TableCell><TableCell className="text-right">{stat.total}</TableCell><TableCell className="text-right">{stat.active}</TableCell><TableCell className="text-right font-semibold">{stat.successRate}%</TableCell></TableRow>))}</TableBody></Table></CardContent>
+                        <CardHeader><CardTitle>Resumen por Ámbito</CardTitle></CardHeader>
+                        <CardContent><Table><TableHeader><TableRow><TableHead>Ámbito</TableHead><TableHead className="text-right">Total</TableHead><TableHead className="text-right">Activas</TableHead><TableHead className="text-right">Tasa Éxito</TableHead></TableRow></TableHeader><TableBody>{typeStats.map(stat => (<TableRow key={stat.name}><TableCell className="font-medium">{stat.name}</TableCell><TableCell className="text-right">{stat.total}</TableCell><TableCell className="text-right">{stat.active}</TableCell><TableCell className="text-right font-semibold">{stat.successRate}%</TableCell></TableRow>))}</TableBody></Table></CardContent>
                     </Card>
                 </TabsContent>
 
@@ -122,7 +122,7 @@ export function ReportsClient() {
                         <CardHeader><CardTitle>Análisis de Problemas Recurrentes</CardTitle></CardHeader>
                         <CardContent className="space-y-6">
                             <div>
-                                <h4 className="font-semibold mb-4 text-center text-sm text-muted-foreground">Top 5 - Problemas Más Frecuentes (por Subcategoría)</h4>
+                                <h4 className="font-semibold mb-4 text-center text-sm text-muted-foreground">Top 5 - Problemas Más Frecuentes (por Clasificación)</h4>
                                 <ResponsiveContainer width="100%" height={300}>
                                     <BarChart layout="vertical" data={qualityStats.top5Problems} margin={{ top: 5, right: 30, left: 200, bottom: 5 }}>
                                         <CartesianGrid strokeDasharray="3 3" horizontal={false} />

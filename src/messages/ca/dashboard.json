@@ -1,3 +1,4 @@
+
 {
   "Dashboard": {
     "title": "Panell de Control",
@@ -10,8 +11,8 @@
       "description": "Distribució d'accions en diferents estats del flux de treball."
     },
     "actionsByType": {
-      "title": "Accions per Tipus",
-      "description": "Desglossament d'accions segons el seu tipus designat."
+      "title": "Accions per Àmbit",
+      "description": "Desglossament d'accions segons el seu àmbit designat."
     },
     "myPendingActions": {
       "title": "Les Meves Accions Pendents",

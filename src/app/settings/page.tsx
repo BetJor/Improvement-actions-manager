@@ -47,14 +47,14 @@ export default function SettingsPage() {
 
             const data = {
                 categories: { 
-                    title: "Categorías", 
+                    title: "Orígenes", 
                     data: categories, 
                     columns: [{ key: 'name', label: "Nombre" }] 
                 },
                 subcategories: { 
-                    title: "Subcategorías", 
+                    title: "Clasificaciones", 
                     data: subcategoriesWithCategoryName, 
-                    columns: [{ key: 'name', label: "Nombre" }, { key: 'categoryName', label: "Categoría" }] 
+                    columns: [{ key: 'name', label: "Nombre" }, { key: 'categoryName', label: "Origen" }] 
                 },
                 affectedAreas: { 
                     title: "Áreas Afectadas", 
@@ -129,7 +129,7 @@ export default function SettingsPage() {
         <div className="flex flex-col gap-4">
             <h1 className="text-3xl font-bold tracking-tight">Configuración</h1>
             <p className="text-muted-foreground">
-                Aquí podrás gestionar las tablas maestras de la aplicación, como categorías, tipos de acción, etc.
+                Aquí podrás gestionar las tablas maestras de la aplicación, como orígenes, clasificaciones, etc.
             </p>
             {isLoading && !masterData ? (
                 <div className="flex items-center justify-center h-64">

@@ -208,7 +208,7 @@ export function ActionsTable({ actions }: ActionsTableProps) {
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline">
-              Tipo <ChevronDown className="ml-2 h-4 w-4" />
+              Ámbito <ChevronDown className="ml-2 h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
@@ -275,7 +275,7 @@ export function ActionsTable({ actions }: ActionsTableProps) {
                   ))}
                   {[...typeFilter].map(value => (
                       <Badge key={value} variant="secondary" className="pl-2 pr-1">
-                          Tipo: {value}
+                          Ámbito: {value}
                           <button onClick={() => removeFilter(setTypeFilter, value)} className="ml-1 rounded-full hover:bg-background/80 p-0.5"><X className="h-3 w-3"/></button>
                       </Badge>
                   ))}
@@ -301,7 +301,7 @@ export function ActionsTable({ actions }: ActionsTableProps) {
               <TableHead><Button variant="ghost" onClick={() => requestSort('actionId')}>ID {getSortIcon('actionId')}</Button></TableHead>
               <TableHead><Button variant="ghost" onClick={() => requestSort('title')}>Título {getSortIcon('title')}</Button></TableHead>
               <TableHead><Button variant="ghost" onClick={() => requestSort('status')}>Estado {getSortIcon('status')}</Button></TableHead>
-              <TableHead><Button variant="ghost" onClick={() => requestSort('type')}>Tipo {getSortIcon('type')}</Button></TableHead>
+              <TableHead><Button variant="ghost" onClick={() => requestSort('type')}>Ámbito {getSortIcon('type')}</Button></TableHead>
               <TableHead><Button variant="ghost" onClick={() => requestSort('responsible')}>Responsable {getSortIcon('responsible')}</Button></TableHead>
               <TableHead><Button variant="ghost" onClick={() => requestSort('implementationDueDate')}>Fecha Vencimiento {getSortIcon('implementationDueDate')}</Button></TableHead>
             </TableRow>

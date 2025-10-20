@@ -49,13 +49,13 @@ import { evaluatePattern } from "@/lib/pattern-evaluator"
 
 const formSchema = z.object({
   title: z.string().min(1, "El título es requerido."),
-  category: z.string().min(1, "La categoría es requerida."),
-  subcategory: z.string().min(1, "La subcategoría es requerida."),
+  category: z.string().min(1, "El origen es requerido."),
+  subcategory: z.string().min(1, "La clasificación es requerida."),
   affectedAreasIds: z.array(z.string()).min(1, "Debes seleccionar al menos un área implicada."),
   centerId: z.string().optional(),
   assignedTo: z.string({ required_error: "Debes seleccionar un grupo responsable." }).min(1, "Debes seleccionar un grupo responsable."),
   description: z.string().min(1, "Las observaciones son requeridas."),
-  typeId: z.string().min(1, "El tipo de acción es requerido."),
+  typeId: z.string().min(1, "El ámbito es requerido."),
 })
 
 interface ActionFormProps {
@@ -311,9 +311,9 @@ export function ActionForm({
                     <CardTitle>Detalles de la Acción</CardTitle>
                 </CardHeader>
                 <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
-                    <ReadOnlyField label="Tipo de Acción" value={initialData.type} />
-                    <ReadOnlyField label="Categoría" value={initialData.category} />
-                    <ReadOnlyField label="Subcategoría" value={initialData.subcategory} />
+                    <ReadOnlyField label="Ámbito" value={initialData.type} />
+                    <ReadOnlyField label="Origen" value={initialData.category} />
+                    <ReadOnlyField label="Clasificación" value={initialData.subcategory} />
                     <ReadOnlyField label="Áreas Funcionales Implicadas" value={initialData.affectedAreas} />
                     <ReadOnlyField label="Centro" value={initialData.center} />
                     <ReadOnlyField label="Asignado A (Responsable Análisis)" value={initialData.assignedTo} />
@@ -343,11 +343,11 @@ export function ActionForm({
             name="typeId"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Tipo de Acción</FormLabel>
+                <FormLabel>Ámbito</FormLabel>
                 <Select onValueChange={field.onChange} value={field.value} disabled={disableForm}>
                   <FormControl>
                     <SelectTrigger>
-                      <SelectValue placeholder="Selecciona un tipo de acción" />
+                      <SelectValue placeholder="Selecciona un ámbito" />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
@@ -384,11 +384,11 @@ export function ActionForm({
               name="category"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Categoría</FormLabel>
+                  <FormLabel>Origen</FormLabel>
                   <Select onValueChange={field.onChange} value={field.value} disabled={disableForm}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Selecciona una categoría" />
+                        <SelectValue placeholder="Selecciona un origen" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
@@ -406,11 +406,11 @@ export function ActionForm({
               name="subcategory"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Subcategoría</FormLabel>
+                  <FormLabel>Clasificación</FormLabel>
                   <Select onValueChange={field.onChange} value={field.value} disabled={disableForm || !selectedCategoryId}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Selecciona una subcategoría" />
+                        <SelectValue placeholder="Selecciona una clasificación" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>

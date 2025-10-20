@@ -96,13 +96,13 @@ function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, title, 
     if (collectionName === 'subcategories' && extraData?.categories) {
       return (
         <div className="grid grid-cols-4 items-center gap-4">
-          <Label htmlFor={'categoryId'} className="text-right">Categoría</Label>
+          <Label htmlFor={'categoryId'} className="text-right">Origen</Label>
           <Select
             value={formData['categoryId']}
             onValueChange={(value) => setFormData({ ...formData, ['categoryId']: value })}
           >
             <SelectTrigger className="col-span-3">
-              <SelectValue placeholder="Selecciona categoría" />
+              <SelectValue placeholder="Selecciona origen" />
             </SelectTrigger>
             <SelectContent>
               {extraData.categories.map(option => (
@@ -231,9 +231,9 @@ function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, title, 
       return (
         <>
           <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="actionTypeId" className="text-right">Tipo de Acción</Label>
+            <Label htmlFor="actionTypeId" className="text-right">Ámbito</Label>
             <Select value={ruleData.actionTypeId} onValueChange={(value) => setFormData({ ...formData, actionTypeId: value })}>
-              <SelectTrigger className="col-span-3"><SelectValue placeholder="Selecciona un tipo de acción" /></SelectTrigger>
+              <SelectTrigger className="col-span-3"><SelectValue placeholder="Selecciona un ámbito" /></SelectTrigger>
               <SelectContent>{extraData?.actionTypes?.map(at => <SelectItem key={at.id} value={at.id!}>{at.name}</SelectItem>)}</SelectContent>
             </Select>
           </div>

@@ -69,7 +69,7 @@ export function DetailsSection({ action }: DetailsSectionProps) {
         </div>
         <CollapsibleContent>
           <CardContent className="space-y-4 pt-0">
-            <DetailRow icon={Tag} label="Tipo" value={action.type} />
+            <DetailRow icon={Tag} label="Ámbito" value={action.type} />
             <Separator />
             <DetailRow
               icon={CircleUser}

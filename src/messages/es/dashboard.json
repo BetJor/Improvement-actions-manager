@@ -1,3 +1,4 @@
+
 {
   "Dashboard": {
     "title": "Panel de Control",
@@ -10,8 +11,8 @@
       "description": "Distribución de acciones en diferentes estados del flujo de trabajo."
     },
     "actionsByType": {
-      "title": "Acciones por Tipo",
-      "description": "Desglose de acciones según su tipo designado."
+      "title": "Acciones por Ámbito",
+      "description": "Desglose de acciones según su ámbito designado."
     },
     "myPendingActions": {
       "title": "Mis Acciones Pendientes",
