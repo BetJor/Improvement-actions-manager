@@ -1,9 +1,16 @@
 
 import type { ActionCategory, ActionSubcategory, AffectedArea, Center, ImprovementActionType } from './types';
 
-export const seedActionTypes: ImprovementActionType[] = [
-    // La llista s'ha buidat a petició de l'usuari.
+export const seedActionTypes: Omit<ImprovementActionType, 'id'>[] = [
+    { name: 'Calidad', order: 0 },
+    { name: 'Medioambiente', order: 1 },
+    { name: 'Responsabilidad social', order: 2 },
+    { name: 'Seguridad de la Información', order: 3 },
+    { name: 'ENS', order: 4 },
+    { name: 'Seguridad y Salud Laboral', order: 5 },
+    { name: 'Riesgos de Seguridad del Paciente', order: 6 },
 ];
+
 
 export const seedCategories: ActionCategory[] = [
     // La llista s'ha buidat a petició de l'usuari.
@@ -28,3 +35,4 @@ export const seedAffectedAreas: AffectedArea[] = [
     { id: 'area-11', name: 'Urgencias' },
     { id: 'area-12', name: 'Traumatología' },
 ];
+

@@ -3,7 +3,7 @@
 import { collection, getDocs, doc, addDoc, query, orderBy, updateDoc, deleteDoc, writeBatch, where, getDoc, setDoc, limit } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { ImprovementActionType, ActionCategory, ActionSubcategory, AffectedArea, MasterDataItem, ResponsibilityRole, Center } from '@/lib/types';
-import { seedAffectedAreas } from '@/lib/master-seed-data';
+import { seedAffectedAreas, seedActionTypes } from '@/lib/master-seed-data';
 
 // Variable global per a prevenir la execució múltiple del seeder
 let isSeedingMasterData = false;
@@ -11,8 +11,26 @@ let isSeedingMasterData = false;
 
 export const getActionTypes = async (): Promise<ImprovementActionType[]> => {
   const typesCol = collection(db, 'ambits');
-  // Order by 'order' first, then by 'name' as a fallback.
   let snapshot = await getDocs(query(typesCol, orderBy("order", "asc"), orderBy("name", "asc")));
+
+  if (snapshot.empty && !isSeedingMasterData) {
+    isSeedingMasterData = true;
+    console.log("ActionTypes (ambits) collection is empty. Populating with seed data...");
+    try {
+        const batch = writeBatch(db);
+        seedActionTypes.forEach(item => {
+            const docRef = doc(collection(db, 'ambits')); // Let Firestore generate ID
+            batch.set(docRef, item);
+        });
+        await batch.commit();
+        snapshot = await getDocs(query(typesCol, orderBy("order", "asc"), orderBy("name", "asc")));
+        console.log("ActionTypes (ambits) collection seeded successfully.");
+    } catch(error) {
+        console.error("Error seeding actionTypes:", error);
+    } finally {
+        isSeedingMasterData = false;
+    }
+  }
 
   return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ImprovementActionType));
 };
@@ -114,3 +132,4 @@ export async function deleteMasterDataItem(collectionName: string, itemId: strin
     const docRef = doc(db, collectionName, itemId);
     await deleteDoc(docRef);
 }
+
