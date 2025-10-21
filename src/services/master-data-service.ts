@@ -1,9 +1,7 @@
-
-
 import { collection, getDocs, doc, addDoc, query, orderBy, updateDoc, deleteDoc, writeBatch, where, getDoc, setDoc, limit } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { ImprovementActionType, ActionCategory, ActionSubcategory, AffectedArea, MasterDataItem, ResponsibilityRole, Center } from '@/lib/types';
-import { seedAffectedAreas, seedActionTypes, seedCategories } from '@/lib/master-seed-data';
+import { seedAffectedAreas, seedActionTypes, seedCategories, seedSubcategories } from '@/lib/master-seed-data';
 
 // Variable global per a prevenir la execució múltiple del seeder
 let isSeedingMasterData = false;
@@ -78,6 +76,45 @@ export const getSubcategories = async (): Promise<ActionSubcategory[]> => {
   const subcategoriesCol = collection(db, 'classifications');
   let snapshot = await getDocs(query(subcategoriesCol, orderBy("order")));
   
+  if (snapshot.empty && !isSeedingMasterData) {
+    isSeedingMasterData = true;
+    console.log("Subcategories (classifications) collection is empty. Populating with seed data...");
+    try {
+        const allAmbits = await getActionTypes();
+        const allOrigins = await getCategories();
+        const batch = writeBatch(db);
+
+        seedSubcategories.forEach(subcatSeed => {
+            const parentAmbit = allAmbits.find(a => a.name === subcatSeed.ambitName);
+            if (!parentAmbit) {
+                console.warn(`Subcategory seed error: Ambit '${subcatSeed.ambitName}' not found. Skipping '${subcatSeed.name}'.`);
+                return;
+            }
+
+            const parentOrigin = allOrigins.find(o => o.name === subcatSeed.originName && o.actionTypeIds?.includes(parentAmbit.id!));
+            if (parentOrigin && parentOrigin.id) {
+                 const docRef = doc(collection(db, 'classifications'));
+                 const newSubcategory: Omit<ActionSubcategory, 'id' | 'ambitName' | 'originName'> = {
+                     name: subcatSeed.name,
+                     order: subcatSeed.order,
+                     categoryId: parentOrigin.id,
+                 };
+                 batch.set(docRef, newSubcategory);
+            } else {
+                 console.warn(`Subcategory seed error: Origin '${subcatSeed.originName}' within Ambit '${subcatSeed.ambitName}' not found. Skipping '${subcatSeed.name}'.`);
+            }
+        });
+        
+        await batch.commit();
+        snapshot = await getDocs(query(subcategoriesCol, orderBy("order")));
+        console.log("Subcategories (classifications) collection seeded successfully.");
+    } catch(error) {
+        console.error("Error seeding subcategories:", error);
+    } finally {
+        isSeedingMasterData = false;
+    }
+  }
+
   return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ActionSubcategory));
 };
 
