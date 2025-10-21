@@ -31,12 +31,13 @@ export const seedSubcategories: ActionSubcategory[] = [
 ];
 
 export const seedActionTypes: ImprovementActionType[] = [
-    { id: 'type-i', name: 'Incidencia' },
-    { id: 'type-nc', name: 'No Conformidad' },
-    { id: 'type-om', name: 'Oportunidad de Mejora' },
-    { id: 'type-r', name: 'Reclamación' },
-    { id: 'type-s', name: 'Sugerencia' },
-    { id: 'type-m', name: 'Mantenimiento' },
+    { id: 'calidad', name: 'Calidad' },
+    { id: 'medioambiente', name: 'Medioambiente' },
+    { id: 'responsabilidad-social', name: 'Responsabilidad social' },
+    { id: 'seguridad-de-la-informacion', name: 'Seguridad de la Información' },
+    { id: 'ens', name: 'ENS' },
+    { id: 'seguridad-y-salud-laboral', name: 'Seguridad y Salud Laboral' },
+    { id: 'riesgos-de-seguridad-del-paciente', name: 'Riesgos de Seguridad del Paciente' },
 ];
 
 export const seedAffectedAreas: AffectedArea[] = [
