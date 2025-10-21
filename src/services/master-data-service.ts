@@ -141,12 +141,8 @@ export async function addMasterDataItem(collectionName: string, item: Omit<Maste
     if (!item.name) {
         throw new Error("Item name cannot be empty.");
     }
-    const generatedId = item.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-    if (!generatedId) {
-        throw new Error("Could not generate a valid ID from the item name.");
-    }
-    const docRef = doc(db, collectionName, generatedId);
-    await setDoc(docRef, item);
+    const collectionRef = collection(db, collectionName);
+    await addDoc(collectionRef, item);
 }
 
 export async function updateMasterDataItem(collectionName: string, itemId: string, item: Omit<MasterDataItem, 'id'>): Promise<void> {
