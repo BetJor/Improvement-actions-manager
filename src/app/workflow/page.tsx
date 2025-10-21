@@ -12,7 +12,7 @@ import {
     getResponsibilityRoles,
 } from "@/lib/data";
 import { useToast } from "@/hooks/use-toast";
-import type { MasterDataItem, ResponsibilityRole, ImprovementActionType } from "@/lib/types";
+import type { MasterDataItem, ImprovementActionType, ResponsibilityRole } from "@/lib/types";
 import { Loader2 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 
@@ -21,7 +21,7 @@ export default function WorkflowPage() {
     const { isAdmin, userRoles } = useAuth();
     const [masterData, setMasterData] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(true);
-    const [activeTab, setActiveTab] = useState<string>("");
+    const [activeTab, setActiveTab] = useState<string>("ambits");
 
     const loadData = useCallback(async (currentTab?: string) => {
         setIsLoading(true);
@@ -39,7 +39,7 @@ export default function WorkflowPage() {
             }));
 
             const data = {
-                actionTypes: { 
+                ambits: { 
                     title: "Àmbits", 
                     data: actionTypesWithRoleNames, 
                     columns: [
@@ -60,9 +60,7 @@ export default function WorkflowPage() {
             };
             setMasterData(data);
             
-            if (!activeTab || !data[activeTab]) {
-                setActiveTab(Object.keys(data)[0]);
-            } else if (currentTab) {
+            if (currentTab) {
                 setActiveTab(currentTab);
             }
 
@@ -76,7 +74,7 @@ export default function WorkflowPage() {
         } finally {
             setIsLoading(false);
         }
-    }, [activeTab, toast]);
+    }, [toast]);
     
     useEffect(() => {
         if(!masterData) {
@@ -150,3 +148,4 @@ export default function WorkflowPage() {
         </div>
     );
 }
+

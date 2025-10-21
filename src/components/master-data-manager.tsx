@@ -67,7 +67,7 @@ export function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, 
     if (collectionName === 'responsibilityRoles') {
       defaultData = { ...defaultData, type: "Fixed" };
     }
-    if (collectionName === 'actionTypes') { // Correspon a 'ambits'
+    if (collectionName === 'ambits') { // Correspon a 'ambits'
       defaultData = { ...defaultData, configAdminRoleIds: [] };
     }
     if (collectionName === 'origins') {
@@ -165,7 +165,7 @@ export function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, 
     }
     
     // Camp per a Admins de Configuració a la pantalla de Workflow
-    if (collectionName === 'actionTypes' && extraData?.responsibilityRoles) {
+    if (collectionName === 'ambits' && extraData?.responsibilityRoles) {
         const handleRoleSelection = (roleId: string, fieldName: keyof ImprovementActionType) => {
             const currentRoles = (actionTypeData[fieldName] as string[] || []);
             const newRoles = currentRoles.includes(roleId)
@@ -267,7 +267,7 @@ export function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, 
 
   const nameFieldLabel = collectionName === 'origins' ? 'Origen' :
                          collectionName === 'classifications' ? 'Clasificación' :
-                         collectionName === 'actionTypes' ? 'Ámbito' : // 'ambits' internament
+                         collectionName === 'ambits' ? 'Ámbito' : // 'ambits' internament
                          'Nombre';
 
 
@@ -425,8 +425,7 @@ export function MasterDataManager({ data, onSave, onDelete, activeTab, setActive
     if (tabKey === 'origins' && data.ambits) {
       extraData.actionTypes = data.ambits.data;
     }
-    // Per a la gestió de permisos a la pantalla de workflow
-    if (tabKey === 'actionTypes' && data.responsibilityRoles) {
+    if (tabKey === 'ambits' && data.responsibilityRoles) {
       extraData.responsibilityRoles = data.responsibilityRoles.data;
     }
     return extraData;
@@ -476,3 +475,4 @@ export function MasterDataManager({ data, onSave, onDelete, activeTab, setActive
     </Tabs>
   );
 }
+
