@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -13,7 +14,7 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Loader2, Pencil, PlusCircle, Trash2, Check, ChevronsUpDown, Info, ExternalLink } from "lucide-react";
-import type { MasterDataItem, ResponsibilityRole, ImprovementActionType, PermissionRule, ImprovementActionStatus } from "@/lib/types";
+import type { MasterDataItem, ResponsibilityRole, ImprovementActionType, PermissionRule, ImprovementActionStatus, ActionCategory } from "@/lib/types";
 import {
   Dialog,
   DialogContent,
@@ -71,6 +72,9 @@ function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, title, 
     if (collectionName === 'actionTypes') {
       defaultData = { ...defaultData, possibleCreationRoles: [], possibleAnalysisRoles: [], possibleClosureRoles: [] };
     }
+    if (collectionName === 'categories') {
+      defaultData = { ...defaultData, actionTypeIds: [] };
+    }
     if (collectionName === 'permissionMatrix') {
       defaultData = { actionTypeId: '', status: 'Borrador', readerRoleIds: [], authorRoleIds: [] };
     }
@@ -92,6 +96,51 @@ function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, title, 
 
   const renderSpecificFields = () => {
     const actionTypeData = formData as any;
+    const categoryData = formData as ActionCategory;
+
+    if (collectionName === 'categories' && extraData?.actionTypes) {
+      const handleActionTypeSelection = (actionTypeId: string) => {
+        const currentIds = categoryData.actionTypeIds || [];
+        const newIds = currentIds.includes(actionTypeId)
+          ? currentIds.filter((id: string) => id !== actionTypeId)
+          : [...currentIds, actionTypeId];
+        setFormData({ ...formData, actionTypeIds: newIds });
+      };
+
+      return (
+        <div className="grid grid-cols-4 items-center gap-4">
+          <Label htmlFor="actionTypeIds" className="text-right">Ámbitos relacionados</Label>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="col-span-3 justify-between">
+                <span className="truncate">
+                  {categoryData.actionTypeIds && categoryData.actionTypeIds.length > 0
+                    ? extraData.actionTypes
+                        .filter(at => categoryData.actionTypeIds!.includes(at.id!))
+                        .map(at => at.name)
+                        .join(', ')
+                    : "Selecciona ámbitos"}
+                </span>
+                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-[300px]">
+              <DropdownMenuLabel>Ámbitos</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {extraData.actionTypes.map((at) => (
+                <DropdownMenuCheckboxItem
+                  key={at.id}
+                  checked={categoryData.actionTypeIds?.includes(at.id!)}
+                  onCheckedChange={() => handleActionTypeSelection(at.id!)}
+                >
+                  {at.name}
+                </DropdownMenuCheckboxItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      );
+    }
 
     if (collectionName === 'subcategories' && extraData?.categories) {
       return (
@@ -283,6 +332,11 @@ function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, title, 
     return null;
   };
 
+  const nameFieldLabel = collectionName === 'categories' ? 'Origen' :
+                         collectionName === 'subcategories' ? 'Clasificación' :
+                         'Nombre';
+
+
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogContent>
@@ -292,7 +346,7 @@ function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, title, 
         </DialogHeader>
         <div className="grid gap-4 py-4">
           <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="name" className="text-right">Nombre</Label>
+            <Label htmlFor="name" className="text-right">{nameFieldLabel}</Label>
             <Input
               id="name"
               value={formData.name}
@@ -341,7 +395,7 @@ function MasterDataTable({ data, columns, onEdit, onDelete, isLoading }: MasterD
               <TableRow key={item.id}>
                 {columns.map(col => (
                   <TableCell key={`${item.id}-${col.key}`} className="py-2 align-top">
-                    {item[col.key]}
+                    {Array.isArray(item[col.key]) ? (item[col.key] as string[]).join(', ') : item[col.key]}
                   </TableCell>
                 ))}
                 <TableCell className="text-right py-2 align-top">
@@ -419,19 +473,21 @@ export function MasterDataManager({ data, onSave, onDelete, activeTab, setActive
   };
 
   const getExtraDataForTab = (tabKey: string) => {
+    let extraData: any = {};
     if (tabKey === 'subcategories' && data.categories) {
-      return { categories: data.categories.data };
+      extraData.categories = data.categories.data;
+    }
+    if (tabKey === 'categories' && data.actionTypes) {
+      extraData.actionTypes = data.actionTypes.data;
     }
     if (tabKey === 'actionTypes' && data.responsibilityRoles) {
-      return { responsibilityRoles: data.responsibilityRoles.data };
+      extraData.responsibilityRoles = data.responsibilityRoles.data;
     }
     if (tabKey === 'permissionMatrix' && data.actionTypes && data.responsibilityRoles) {
-      return {
-        actionTypes: data.actionTypes.data,
-        responsibilityRoles: data.responsibilityRoles.data
-      };
+      extraData.actionTypes = data.actionTypes.data;
+      extraData.responsibilityRoles = data.responsibilityRoles.data;
     }
-    return {};
+    return extraData;
   };
 
   return (
@@ -485,3 +541,4 @@ export function MasterDataManager({ data, onSave, onDelete, activeTab, setActive
     </>
   );
 }
+

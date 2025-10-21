@@ -11,10 +11,10 @@ import {
     addMasterDataItem,
     updateMasterDataItem,
     deleteMasterDataItem,
-    getResponsibilityRoles,
+    getActionTypes,
 } from "@/lib/data";
 import { useToast } from "@/hooks/use-toast";
-import type { MasterDataItem } from "@/lib/types";
+import type { MasterDataItem, ActionCategory } from "@/lib/types";
 import { Loader2 } from "lucide-react";
 
 export default function SettingsPage() {
@@ -26,10 +26,11 @@ export default function SettingsPage() {
     const loadData = useCallback(async (currentTab?: string) => {
         setIsLoading(true);
         try {
-            const [categories, subcategories, affectedAreas] = await Promise.all([
+            const [categories, subcategories, affectedAreas, actionTypes] = await Promise.all([
                 getCategories(),
                 getSubcategories(),
                 getAffectedAreas(),
+                getActionTypes(),
             ]);
 
             const subcategoriesWithCategoryName = subcategories.map(s => ({
@@ -45,20 +46,33 @@ export default function SettingsPage() {
               return 0;
             });
 
+            const categoriesWithActionTypeNames = categories.map((c: ActionCategory) => ({
+                ...c,
+                actionTypeNames: (c.actionTypeIds || [])
+                    .map(id => actionTypes.find(at => at.id === id)?.name || id)
+                    .join(', ')
+            }));
+
+
             const data = {
                 categories: { 
-                    title: "Orígenes", 
-                    data: categories, 
-                    columns: [{ key: 'name', label: "Nombre" }] 
+                    title: "Orígens", 
+                    data: categoriesWithActionTypeNames, 
+                    columns: [{ key: 'name', label: "Origen" }, { key: 'actionTypeNames', label: 'Àmbits Relacionats' }] 
                 },
                 subcategories: { 
                     title: "Clasificaciones", 
                     data: subcategoriesWithCategoryName, 
-                    columns: [{ key: 'name', label: "Nombre" }, { key: 'categoryName', label: "Origen" }] 
+                    columns: [{ key: 'name', label: "Clasificación" }, { key: 'categoryName', label: "Origen" }] 
                 },
                 affectedAreas: { 
                     title: "Áreas Afectadas", 
                     data: affectedAreas, 
+                    columns: [{ key: 'name', label: "Nombre" }] 
+                },
+                 actionTypes: { 
+                    title: "Ámbitos", 
+                    data: actionTypes, 
                     columns: [{ key: 'name', label: "Nombre" }] 
                 },
             };
@@ -93,7 +107,7 @@ export default function SettingsPage() {
         try {
             const { id, ...dataToSave } = item as any;
             
-            const propertiesToRemove = ['categoryName', 'creationRoleNames', 'analysisRoleNames', 'closureRoleNames'];
+            const propertiesToRemove = ['categoryName', 'creationRoleNames', 'analysisRoleNames', 'closureRoleNames', 'actionTypeNames'];
             propertiesToRemove.forEach(prop => {
                 if (prop in dataToSave) {
                     delete dataToSave[prop];
@@ -150,3 +164,4 @@ export default function SettingsPage() {
         </div>
     );
 }
+

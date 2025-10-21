@@ -40,7 +40,9 @@ export interface UserGroup {
   userIds: string[];
 }
 
-export interface ActionCategory extends MasterDataItem {}
+export interface ActionCategory extends MasterDataItem {
+  actionTypeIds?: string[];
+}
 
 export interface ActionSubcategory extends MasterDataItem {
   categoryId: string;
@@ -187,3 +189,4 @@ export interface ImprovementAction {
   comments?: ActionComment[];
   attachments?: ActionAttachment[];
 };
+

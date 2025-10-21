@@ -41,7 +41,7 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover"
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "./ui/command"
 import { Label } from "@/components/ui/label"
-import type { ImprovementAction, ImprovementActionType, ResponsibilityRole, AffectedArea, Center } from "@/lib/types"
+import type { ImprovementAction, ImprovementActionType, ResponsibilityRole, AffectedArea, Center, ActionCategory } from "@/lib/types"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "./ui/card"
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "./ui/dropdown-menu"
 import { useAuth } from "@/hooks/use-auth"
@@ -133,15 +133,29 @@ export function ActionForm({
     checkPrompts();
   }, []);
 
-  const selectedCategoryId = form.watch("category");
   const selectedActionTypeId = form.watch("typeId");
+  const selectedCategoryId = form.watch("category");
   const selectedCenterId = form.watch("centerId");
+
+  const filteredCategories = useMemo(() => {
+    if (!selectedActionTypeId || !masterData?.categories) return [];
+    return masterData.categories.filter((c: ActionCategory) => 
+        !c.actionTypeIds || c.actionTypeIds.length === 0 || c.actionTypeIds.includes(selectedActionTypeId)
+    );
+  }, [selectedActionTypeId, masterData]);
+
 
   const filteredSubcategories = useMemo(() => {
     if (!selectedCategoryId || !masterData?.subcategories) return [];
     return masterData.subcategories.filter((sc: any) => sc.categoryId === selectedCategoryId);
   }, [selectedCategoryId, masterData]);
   
+  useEffect(() => {
+    if (form.getValues("typeId") !== initialData?.typeId) {
+       form.resetField("category", { defaultValue: "" });
+    }
+  }, [selectedActionTypeId, form, initialData]);
+
   useEffect(() => {
     if (form.getValues("category") !== initialData?.categoryId) {
        form.resetField("subcategory", { defaultValue: "" });
@@ -385,14 +399,14 @@ export function ActionForm({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Origen</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value} disabled={disableForm}>
+                  <Select onValueChange={field.onChange} value={field.value} disabled={disableForm || !selectedActionTypeId}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Selecciona un origen" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {masterData?.categories.map((cat: any) => (
+                      {filteredCategories.map((cat: any) => (
                         <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
                       ))}
                     </SelectContent>
@@ -677,3 +691,4 @@ export function ActionForm({
     </>
   )
 }
+
