@@ -112,6 +112,88 @@ const medioambienteClassifications = [
     "14. Revisión por la Dirección",
 ];
 
+const responsabilidadSocialInternaClassifications = [
+    "4.1 Comprensión de la organización",
+    "4.2 Comprensión de las necesidades y expectativas de las partes interesadas",
+    "4.3 Determinación del alcance del sistema de gestión de respoonsabilidad social",
+    "4.4 Sistema de gestión de la responsabilidad social",
+    "4.5 Obligaciones de responsabilidad social",
+    "5.1 Liderazgo y compromiso",
+    "5.2 Política de responsabilidad social",
+    "5.3 Roles, responsabilidades y autoridades en la organización",
+    "5.4 Código de conducta",
+    "6.1 Acciones para abordar riesgos y oportunidades",
+    "6.2 Identificación y evaluación de asuntos",
+    "6.3 Objetivos y planificación para lograrlos",
+    "6.3 Planificación de los cambios",
+    "7.1 Recursos",
+    "7.2 Competencia",
+    "7.3 Toma de conciencia",
+    "7.4 Comunicaciones",
+    "7.5 Información documentada",
+    "8.1 Planificación y control operativo",
+    "8.2 Propietarios y accionistas",
+    "8.3 Empleados",
+    "8.4 Clientes, usuarios y consumidores",
+    "8.5 Proveedores de productos y servicios, colaboradores y aliados",
+    "8.6 Gobiernos, Administraciones Publicas y organismos reguladores",
+    "8.7 Comunidad, sociedad y organizaciones sociales",
+    "8.8 Medio ambiente",
+    "8.9 Competidores",
+    "9.1 Seguimiento, medición, análisis y evaluación",
+    "9.2 Expectativas de los grupos de interés",
+    "9.3 Auditoria interna",
+    "9.4 Revisión por la dirección",
+    "10.1 No conformidad y acción correctiva",
+    "10.2 Mejora continua"
+];
+
+const responsabilidadSocialExternaClassifications = [
+    "4.1 Comprensión de la organización",
+    "4.2 Comprensión de las necesidades y expectativas de las partes interesadas",
+    "4.3 Determinación del alcance del sistema de gestión de respoonsabilidad social",
+    "4.4 Sistema de gestión de la responsabilidad social",
+    "4.5 Obligaciones de responsabilidad social",
+    "5.1 Liderazgo y compromiso",
+    "5.2 Política de responsabilidad social",
+    "5.3 Roles, responsabilidades y autoridades en la organización",
+    "5.4 Código de conducta",
+    "6.1 Acciones para abordar riesgos y oportunidades",
+    "6.2 Identificación y evaluación de asuntos",
+    "6.3 Objetivos y planificación para lograrlos",
+    "6.3 Planificación de los cambios",
+    "7.1 Recursos",
+    "7.2 Competencia",
+    "7.3 Toma de conciencia",
+    "7.4 Comunicaciones",
+    "7.5 Información documentada",
+    "8.1 Planificación y control operativo",
+    "8.2 Propietarios y accionistas",
+    "8.3 Empleados",
+    "8.4 Clientes, usuarios y consumidores",
+    "8.5 Proveedores de productos y servicios, colaboradores y aliados",
+    "8.6 Gobiernos, Administraciones Publicas y organismos reguladores",
+    "8.7 Comunidad, sociedad y organizaciones sociales",
+    "8.8 Medio ambiente",
+    "8.9 Competidores",
+    "9.1 Seguimiento, medición, análisis y evaluación",
+    "9.2 Expectativas de los grupos de interés",
+    "9.3 Auditoria interna",
+    "9.4 Revisión por la dirección",
+    "10.1 No conformidad y acción correctiva",
+    "10.2 Mejora continua"
+];
+
+const riesgosPenalesClassifications = [
+    "Formación Cumplimiento",
+    "Mejoras de controles",
+    "Mejoras en los procesos",
+    "Mejoras en cumpliento"
+];
+
+const auditoriaInternaRiesgosClassifications = [
+    "Auditoría interna de riesgos penales"
+];
 
 export const seedSubcategories: SeedSubcategory[] = [
     // Calidad -> ISO 9001 - Auditoría Interna
@@ -141,6 +223,34 @@ export const seedSubcategories: SeedSubcategory[] = [
         order: index,
         ambitName: 'Medioambiente',
         originName: 'ISO 14001 - Auditoría Externa'
+    })),
+    // Responsabilidad Social -> SR10 - Auditoría Interna
+    ...responsabilidadSocialInternaClassifications.map((name, index) => ({
+        name: name,
+        order: index,
+        ambitName: 'Responsabilidad social',
+        originName: 'SR10 - Auditoría Interna'
+    })),
+    // Responsabilidad Social -> SR10 - Auditoría Externa
+    ...responsabilidadSocialExternaClassifications.map((name, index) => ({
+        name: name,
+        order: index,
+        ambitName: 'Responsabilidad social',
+        originName: 'SR10 - Auditoría Externa'
+    })),
+    // Responsabilidad Social -> Planes de mejora de gestión de Riesgos Penales
+    ...riesgosPenalesClassifications.map((name, index) => ({
+        name: name,
+        order: index,
+        ambitName: 'Responsabilidad social',
+        originName: 'Planes de mejora de gestión de Riesgos Penales'
+    })),
+    // Responsabilidad Social -> Auditoría interna
+    ...auditoriaInternaRiesgosClassifications.map((name, index) => ({
+        name: name,
+        order: index,
+        ambitName: 'Responsabilidad social',
+        originName: 'Auditoría interna'
     })),
 ];
 
