@@ -88,14 +88,6 @@ export function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, 
       });
       return;
     }
-    if (!item && !formData.id) {
-        toast({
-            variant: "destructive",
-            title: "Error de validación",
-            description: "El campo 'ID Codificado' es obligatorio.",
-        });
-        return;
-    }
     await onSave(collectionName, formData);
     setIsOpen(false);
   };
@@ -292,17 +284,6 @@ export function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, 
           <DialogDescription>Rellena los detalles a continuación.</DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="id" className="text-right">ID Codificado</Label>
-            <Input
-              id="id"
-              value={formData.id || ''}
-              onChange={(e) => setFormData({ ...formData, id: e.target.value.toLowerCase().replace(/\s+/g, '-') })}
-              className="col-span-3"
-              disabled={!!item}
-              placeholder="ej. calidad-externa"
-            />
-          </div>
           {collectionName !== 'permissionMatrix' && (
              <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="name" className="text-right">{nameFieldLabel}</Label>

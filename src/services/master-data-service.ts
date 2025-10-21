@@ -137,13 +137,16 @@ export const getCenters = async (): Promise<Center[]> => {
 
 
 // --- CRUD for Master Data ---
-export async function addMasterDataItem(collectionName: string, item: MasterDataItem): Promise<void> {
-    if (!item.id) {
-        throw new Error("Cannot add master data item without a specified ID.");
+export async function addMasterDataItem(collectionName: string, item: Omit<MasterDataItem, 'id'>): Promise<void> {
+    if (!item.name) {
+        throw new Error("Item name cannot be empty.");
     }
-    const docRef = doc(db, collectionName, item.id);
-    const { id, ...dataToSave } = item;
-    await setDoc(docRef, dataToSave);
+    const generatedId = item.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+    if (!generatedId) {
+        throw new Error("Could not generate a valid ID from the item name.");
+    }
+    const docRef = doc(db, collectionName, generatedId);
+    await setDoc(docRef, item);
 }
 
 export async function updateMasterDataItem(collectionName: string, itemId: string, item: Omit<MasterDataItem, 'id'>): Promise<void> {
