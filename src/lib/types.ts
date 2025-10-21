@@ -3,6 +3,7 @@
 export interface MasterDataItem {
   id?: string;
   name: string;
+  order?: number;
   [key: string]: any; // Permet altres propietats
 }
     
@@ -190,4 +191,3 @@ export interface ImprovementAction {
   comments?: ActionComment[];
   attachments?: ActionAttachment[];
 };
-
