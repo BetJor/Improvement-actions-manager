@@ -13,52 +13,12 @@ export const getActionTypes = async (): Promise<ImprovementActionType[]> => {
   const typesCol = collection(db, 'ambits');
   let snapshot = await getDocs(query(typesCol, orderBy("name")));
 
-  if (snapshot.empty && !isSeedingMasterData) {
-      isSeedingMasterData = true; 
-      console.log("Ambits collection is empty. Populating with seed data...");
-      try {
-          const batch = writeBatch(db);
-          seedActionTypes.forEach(item => {
-              const { id, ...data } = item; // Exclude the temporary seed ID
-              const docRef = doc(db, 'ambits', id); // Use the hardcoded ID
-              batch.set(docRef, data);
-          });
-          await batch.commit();
-          snapshot = await getDocs(query(typesCol, orderBy("name"))); // Re-fetch
-          console.log("Ambits collection seeded successfully.");
-      } catch(error) {
-          console.error("Error seeding ambits:", error);
-      } finally {
-          isSeedingMasterData = false;
-      }
-  }
-
   return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ImprovementActionType));
 };
 
 export const getCategories = async (): Promise<ActionCategory[]> => {
   const categoriesCol = collection(db, 'origins');
   let snapshot = await getDocs(query(categoriesCol, orderBy("name")));
-
-  if (snapshot.empty && !isSeedingMasterData) {
-    isSeedingMasterData = true;
-    console.log("Origins collection is empty. Populating with seed data...");
-    try {
-        const batch = writeBatch(db);
-        seedCategories.forEach(item => {
-            const { id, ...data } = item; // Exclude the temporary seed ID
-            const docRef = doc(db, 'origins', id); // Use the hardcoded ID
-            batch.set(docRef, data);
-        });
-        await batch.commit();
-        snapshot = await getDocs(query(categoriesCol, orderBy("name")));
-        console.log("Origins collection seeded successfully.");
-    } catch(error) {
-        console.error("Error seeding origins:", error);
-    } finally {
-        isSeedingMasterData = false;
-    }
-  }
 
   return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ActionCategory));
 };
@@ -67,25 +27,6 @@ export const getSubcategories = async (): Promise<ActionSubcategory[]> => {
   const subcategoriesCol = collection(db, 'classifications');
   let snapshot = await getDocs(query(subcategoriesCol, orderBy("name")));
   
-  if (snapshot.empty && !isSeedingMasterData) {
-    isSeedingMasterData = true;
-    console.log("Classifications collection is empty. Populating with seed data...");
-    try {
-        const batch = writeBatch(db);
-        seedSubcategories.forEach(item => {
-            const { id, ...data } = item; // Exclude the temporary seed ID
-            const docRef = doc(db, 'classifications', id); // Use the hardcoded ID
-            batch.set(docRef, data);
-        });
-        await batch.commit();
-        snapshot = await getDocs(query(subcategoriesCol, orderBy("name")));
-        console.log("Classifications collection seeded successfully.");
-    } catch(error) {
-        console.error("Error seeding classifications:", error);
-    } finally {
-        isSeedingMasterData = false;
-    }
-  }
   return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ActionSubcategory));
 };
 
@@ -99,9 +40,8 @@ export const getAffectedAreas = async (): Promise<AffectedArea[]> => {
     try {
         const batch = writeBatch(db);
         seedAffectedAreas.forEach(item => {
-            const { id, ...data } = item; // Exclude the temporary seed ID
-            const docRef = doc(db, 'affectedAreas', id); // Use the hardcoded ID
-            batch.set(docRef, data);
+            const docRef = doc(db, 'affectedAreas', item.id); // Use the hardcoded ID
+            batch.set(docRef, item);
         });
         await batch.commit();
         snapshot = await getDocs(query(affectedAreasCol, orderBy("name")));
@@ -146,9 +86,10 @@ export async function addMasterDataItem(collectionName: string, item: Omit<Maste
         throw new Error("Item name cannot be empty.");
     }
     const collectionRef = collection(db, collectionName);
-    // Use addDoc to let Firestore generate a unique ID
+    // Let firestore generate the ID
     await addDoc(collectionRef, item);
 }
+
 
 export async function updateMasterDataItem(collectionName: string, itemId: string, item: Omit<MasterDataItem, 'id'>): Promise<void> {
     const docRef = doc(db, collectionName, itemId);

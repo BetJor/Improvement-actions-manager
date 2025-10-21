@@ -2,25 +2,15 @@
 import type { ActionCategory, ActionSubcategory, AffectedArea, Center, ImprovementActionType } from './types';
 
 export const seedActionTypes: ImprovementActionType[] = [
-    { id: 'ambit-1', name: 'Calidad' },
-    { id: 'ambit-2', name: 'Medioambiente' },
-    { id: 'ambit-3', name: 'Responsabilidad social' },
-    { id: 'ambit-4', name: 'Seguridad de la Información' },
-    { id: 'ambit-5', name: 'ENS' },
-    { id: 'ambit-6', name: 'Seguridad y Salud Laboral' },
-    { id: 'ambit-7', name: 'Riesgos de Seguridad del Paciente' },
+    // La llista s'ha buidat a petició de l'usuari.
 ];
 
 export const seedCategories: ActionCategory[] = [
-    { id: 'origin-1', name: 'ISO 9001 - Auditoría Interna', actionTypeIds: ['ambit-1'] },
-    { id: 'origin-2', name: 'ISO 9001 - Auditoría Externa', actionTypeIds: ['ambit-1'] },
-    { id: 'origin-3', name: 'Planes de acción de gestión de riesgos', actionTypeIds: ['ambit-1'] },
-    { id: 'origin-4', name: 'Otros', actionTypeIds: ['ambit-1'] },
+    // La llista s'ha buidat a petició de l'usuari.
 ];
 
 export const seedSubcategories: ActionSubcategory[] = [
-    // Aquestes s'han de definir ara des de la interfície d'usuari,
-    // ja que depenen dels nous orígens.
+    // La llista s'ha buidat a petició de l'usuari.
 ];
 
 
