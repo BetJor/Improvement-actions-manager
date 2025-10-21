@@ -1,6 +1,6 @@
 
 
-import { collection, getDocs, doc, addDoc, query, orderBy, updateDoc, deleteDoc, writeBatch, where, getDoc } from 'firebase/firestore';
+import { collection, getDocs, doc, addDoc, query, orderBy, updateDoc, deleteDoc, writeBatch, where, getDoc, setDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { ImprovementActionType, ActionCategory, ActionSubcategory, AffectedArea, MasterDataItem, ResponsibilityRole, Center } from '@/lib/types';
 import { seedActionTypes, seedCategories, seedSubcategories, seedAffectedAreas } from '@/lib/master-seed-data';
@@ -137,10 +137,13 @@ export const getCenters = async (): Promise<Center[]> => {
 
 
 // --- CRUD for Master Data ---
-export async function addMasterDataItem(collectionName: string, item: Omit<MasterDataItem, 'id'>): Promise<string> {
-    const collectionRef = collection(db, collectionName);
-    const docRef = await addDoc(collectionRef, item);
-    return docRef.id;
+export async function addMasterDataItem(collectionName: string, item: MasterDataItem): Promise<void> {
+    if (!item.id) {
+        throw new Error("Cannot add master data item without a specified ID.");
+    }
+    const docRef = doc(db, collectionName, item.id);
+    const { id, ...dataToSave } = item;
+    await setDoc(docRef, dataToSave);
 }
 
 export async function updateMasterDataItem(collectionName: string, itemId: string, item: Omit<MasterDataItem, 'id'>): Promise<void> {

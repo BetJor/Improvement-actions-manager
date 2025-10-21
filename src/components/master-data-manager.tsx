@@ -57,11 +57,11 @@ interface MasterDataFormDialogProps {
 }
 
 export function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, title, onSave, extraData }: MasterDataFormDialogProps) {
-  const [formData, setFormData] = useState<MasterDataItem>({ name: "" });
+  const [formData, setFormData] = useState<MasterDataItem>({ id: "", name: "" });
   const { toast } = useToast();
 
   useEffect(() => {
-    let defaultData: MasterDataItem = { name: "" };
+    let defaultData: MasterDataItem = { id: "", name: "" };
     if (collectionName === 'responsibilityRoles') {
       defaultData = { ...defaultData, type: "Fixed" };
     }
@@ -69,12 +69,10 @@ export function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, 
       defaultData = { ...defaultData, possibleCreationRoles: [], possibleAnalysisRoles: [], possibleClosureRoles: [], configAdminRoleIds: [] };
     }
     if (collectionName === 'origins') {
-      // Set parent if provided
       const parentAmbitId = extraData?.parentItemId;
       defaultData = { ...defaultData, actionTypeIds: parentAmbitId ? [parentAmbitId] : [] };
     }
     if (collectionName === 'classifications') {
-       // Set parent if provided
        const parentOrigenId = extraData?.parentItemId;
        defaultData = { ...defaultData, categoryId: parentOrigenId || '' };
     }
@@ -89,6 +87,14 @@ export function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, 
         description: "El campo 'Nombre' es obligatorio.",
       });
       return;
+    }
+    if (!item && !formData.id) {
+        toast({
+            variant: "destructive",
+            title: "Error de validación",
+            description: "El campo 'ID Codificado' es obligatorio.",
+        });
+        return;
     }
     await onSave(collectionName, formData);
     setIsOpen(false);
@@ -286,6 +292,17 @@ export function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, 
           <DialogDescription>Rellena los detalles a continuación.</DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="id" className="text-right">ID Codificado</Label>
+            <Input
+              id="id"
+              value={formData.id || ''}
+              onChange={(e) => setFormData({ ...formData, id: e.target.value.toLowerCase().replace(/\s+/g, '-') })}
+              className="col-span-3"
+              disabled={!!item}
+              placeholder="ej. calidad-externa"
+            />
+          </div>
           {collectionName !== 'permissionMatrix' && (
              <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="name" className="text-right">{nameFieldLabel}</Label>
