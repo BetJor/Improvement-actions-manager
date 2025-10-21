@@ -95,19 +95,53 @@ const calidadClassifications = [
     "10.2 No conformidad y acción correctiva"
 ];
 
+const medioambienteClassifications = [
+    "Política Ambiental",
+    "2. Aspectos Ambientales",
+    "3. Requisitos legales y otros requisitos - Evaluación del cumplimiento de la legislación",
+    "4. Objetivos,metas y programas",
+    "5. Recursos, funciones, responsabilidad y autoridad - Competencia, formación",
+    "6. Comunicación",
+    "7. Documentación - Control de la documentación",
+    "8. Control operacional",
+    "9. Preparación y respuesta antes emergencias",
+    "10. Seguimiento y medición",
+    "11. No conformidad, acción correctiva",
+    "12. Control de los registros",
+    "13. Auditoría interna",
+    "14. Revisión por la Dirección",
+];
+
+
 export const seedSubcategories: SeedSubcategory[] = [
+    // Calidad -> ISO 9001 - Auditoría Interna
     ...calidadClassifications.map((name, index) => ({
         name: name,
         order: index,
         ambitName: 'Calidad',
         originName: 'ISO 9001 - Auditoría Interna'
     })),
+    // Calidad -> ISO 9001 - Auditoría Externa
     ...calidadClassifications.map((name, index) => ({
         name: name,
         order: index,
         ambitName: 'Calidad',
         originName: 'ISO 9001 - Auditoría Externa'
-    }))
+    })),
+    // Medioambiente -> ISO 14001 - Auditoría Interna
+    ...medioambienteClassifications.map((name, index) => ({
+        name: name,
+        order: index,
+        ambitName: 'Medioambiente',
+        originName: 'ISO 14001 - Auditoría Interna'
+    })),
+    // Medioambiente -> ISO 14001 - Auditoría Externa
+    ...medioambienteClassifications.map((name, index) => ({
+        name: name,
+        order: index,
+        ambitName: 'Medioambiente',
+        originName: 'ISO 14001 - Auditoría Externa'
+    })),
 ];
 
 
