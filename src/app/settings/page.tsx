@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { useEffect, useState, useCallback, useMemo } from "react";
@@ -16,17 +15,42 @@ import {
     getUserById,
 } from "@/lib/data";
 import { useToast } from "@/hooks/use-toast";
-import type { MasterDataItem, ActionCategory, ResponsibilityRole, ImprovementActionType } from "@/lib/types";
+import type { MasterDataItem, ActionCategory, ResponsibilityRole, ImprovementActionType, ActionSubcategory } from "@/lib/types";
 import { Loader2 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { HierarchicalSettings } from "@/components/hierarchical-settings";
 
 export default function SettingsPage() {
     const { toast } = useToast();
     const { user, isAdmin } = useAuth();
     const [masterData, setMasterData] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(true);
-    const [activeTab, setActiveTab] = useState<string>("");
+    const [activeTab, setActiveTab] = useState<string>("hierarchy");
     const [userRoles, setUserRoles] = useState<string[]>([]);
+    
+    const canManage = (item: ImprovementActionType | ActionCategory | ActionSubcategory | null, type: 'ambit' | 'origen' | 'classificacio'): boolean => {
+        if (!item || isAdmin) return true;
+
+        if (type === 'ambit') {
+            const ambit = item as ImprovementActionType;
+            return !!ambit.configAdminRoleIds?.some(roleId => userRoles.includes(roleId));
+        }
+        if (type === 'origen') {
+            const origen = item as ActionCategory;
+            const relatedAmbits = masterData?.actionTypes.data.filter((at: ImprovementActionType) => at.id && origen.actionTypeIds?.includes(at.id));
+            if (!relatedAmbits || relatedAmbits.length === 0) return false; // Orígenes sin ámbito no son editables por no-admins
+            return relatedAmbits.every((ambit: ImprovementActionType) => canManage(ambit, 'ambit'));
+        }
+        if (type === 'classificacio') {
+            const classificacio = item as ActionSubcategory;
+            const parentOrigen = masterData?.categories.data.find((c: ActionCategory) => c.id === classificacio.categoryId);
+            if (!parentOrigen) return false;
+            return canManage(parentOrigen, 'origen');
+        }
+        return false;
+    };
+
 
     const loadData = useCallback(async (currentTab?: string) => {
         setIsLoading(true);
@@ -39,59 +63,17 @@ export default function SettingsPage() {
                 getResponsibilityRoles(),
             ]);
 
-            const subcategoriesWithCategoryName = subcategories.map(s => ({
-              ...s, 
-              categoryName: categories.find(c => c.id === s.categoryId)?.name || ''
-            }));
-            
-            subcategoriesWithCategoryName.sort((a, b) => {
-              if (a.categoryName < b.categoryName) return -1;
-              if (a.categoryName > b.categoryName) return 1;
-              if (a.name < b.name) return -1;
-              if (a.name > b.name) return 1;
-              return 0;
-            });
-
-            const categoriesWithActionTypeNames = categories.map((c: ActionCategory) => ({
-                ...c,
-                actionTypeNames: (c.actionTypeIds || [])
-                    .map(id => actionTypes.find(at => at.id === id)?.name || id)
-                    .join(', ')
-            }));
-
-
             const data = {
-                actionTypes: { 
-                    title: "Ámbitos", 
-                    data: actionTypes, 
-                    columns: [{ key: 'name', label: "Nombre" }] 
-                },
-                categories: { 
-                    title: "Orígens", 
-                    data: categoriesWithActionTypeNames, 
-                    columns: [{ key: 'name', label: "Origen" }, { key: 'actionTypeNames', label: 'Ámbitos Relacionados' }] 
-                },
-                subcategories: { 
-                    title: "Clasificaciones", 
-                    data: subcategoriesWithCategoryName, 
-                    columns: [{ key: 'name', label: "Clasificación" }, { key: 'categoryName', label: "Origen" }] 
-                },
-                affectedAreas: { 
-                    title: "Áreas Afectadas", 
-                    data: affectedAreas, 
-                    columns: [{ key: 'name', label: "Nombre" }] 
-                },
-                responsibilityRoles: {
-                    title: "Roles de Responsabilidad",
-                    data: responsibilityRoles,
-                    columns: [{ key: 'name', label: 'Nombre' }, { key: 'type', label: 'Tipo' }, { key: 'email', label: 'Email' }, { key: 'emailPattern', label: 'Patrón Email' }]
-                }
+                actionTypes: { title: "Ámbitos", data: actionTypes, columns: [{ key: 'name', label: "Nombre" }] },
+                categories: { title: "Orígenes", data: categories, columns: [{ key: 'name', label: "Origen" }, { key: 'actionTypeNames', label: 'Ámbitos Relacionados' }] },
+                subcategories: { title: "Clasificaciones", data: subcategories, columns: [{ key: 'name', label: "Clasificación" }, { key: 'categoryName', label: "Origen" }] },
+                affectedAreas: { title: "Áreas Afectadas", data: affectedAreas, columns: [{ key: 'name', label: "Nombre" }] },
+                responsibilityRoles: { title: "Roles de Responsabilidad", data: responsibilityRoles, columns: [{ key: 'name', label: 'Nombre' }, { key: 'type', label: 'Tipo' }, { key: 'email', label: 'Email' }, { key: 'emailPattern', label: 'Patrón Email' }] }
             };
+
             setMasterData(data);
             
-            if (!activeTab || !data[activeTab]) {
-                setActiveTab(Object.keys(data)[0]);
-            } else if (currentTab) {
+            if (currentTab) {
                 setActiveTab(currentTab);
             }
 
@@ -105,14 +87,14 @@ export default function SettingsPage() {
         } finally {
             setIsLoading(false);
         }
-    }, [activeTab, toast]);
+    }, [toast]);
 
      useEffect(() => {
         if (user) {
             const fetchUserRoles = async () => {
                 const fullUser = await getUserById(user.id);
-                // For simplicity, we assume roles are just the user's email for now.
-                // A real implementation would check against ResponsibilityRoles of type 'User' or 'Group'.
+                // In a real scenario, this would resolve user's groups into role IDs
+                // For now, we assume a user's "role" is their email for pattern matching, etc.
                 if(fullUser?.email) {
                     setUserRoles([fullUser.email]);
                 }
@@ -146,7 +128,7 @@ export default function SettingsPage() {
                 await addMasterDataItem(collectionName, dataToSave);
                 toast({ title: "Elemento creado", description: "El elemento se ha creado correctamente." });
             }
-            await loadData(collectionName);
+            await loadData(activeTab);
         } catch (error) {
             console.error(`Error saving item in ${collectionName}:`, error);
             toast({ variant: "destructive", title: "Error al guardar", description: "No se pudo guardar el elemento." });
@@ -157,34 +139,60 @@ export default function SettingsPage() {
         try {
             await deleteMasterDataItem(collectionName, itemId);
             toast({ title: "Elemento eliminado", description: "El elemento se ha eliminado correctamente." });
-            await loadData(collectionName);
+            await loadData(activeTab);
         } catch (error) {
             console.error(`Error deleting item from ${collectionName}:`, error);
             toast({ variant: "destructive", title: "Error al eliminar", description: "No se pudo eliminar el elemento." });
         }
     };
 
+    const nonHierarchicalTabs = useMemo(() => {
+        if (!masterData) return [];
+        return Object.keys(masterData).filter(key => !['actionTypes', 'categories', 'subcategories'].includes(key));
+    }, [masterData]);
+
     return (
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-4 h-full">
             <h1 className="text-3xl font-bold tracking-tight">Configuración</h1>
             <p className="text-muted-foreground">
-                Aquí podrás gestionar las tablas maestras de la aplicación, como orígenes, clasificaciones, etc.
+                Gestiona las tablas maestras de la aplicación, como ámbitos, orígenes, clasificaciones, etc.
             </p>
             {isLoading && !masterData ? (
                 <div className="flex items-center justify-center h-64">
                     <Loader2 className="h-8 w-8 animate-spin" />
                 </div>
             ) : masterData ? (
-                <MasterDataManager 
-                    data={masterData}
-                    onSave={handleSave}
-                    onDelete={handleDelete}
-                    activeTab={activeTab}
-                    setActiveTab={setActiveTab}
-                    isLoading={isLoading}
-                    userIsAdmin={isAdmin}
-                    userRoles={userRoles}
-                />
+                <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-col h-full">
+                    <TabsList>
+                        <TabsTrigger value="hierarchy">Ámbitos, Orígenes y Clasificaciones</TabsTrigger>
+                        {nonHierarchicalTabs.map(key => (
+                           <TabsTrigger key={key} value={key}>{masterData[key].title}</TabsTrigger>
+                        ))}
+                    </TabsList>
+                    <TabsContent value="hierarchy" className="flex-grow mt-4">
+                       <HierarchicalSettings
+                          masterData={masterData}
+                          onSave={handleSave}
+                          onDelete={handleDelete}
+                          canManage={canManage}
+                       />
+                    </TabsContent>
+                    {nonHierarchicalTabs.map(key => (
+                        <TabsContent key={key} value={key} className="mt-4">
+                            <MasterDataManager 
+                                data={{ [key]: masterData[key] }}
+                                onSave={handleSave}
+                                onDelete={handleDelete}
+                                activeTab={key}
+                                setActiveTab={() => {}}
+                                isLoading={isLoading}
+                                userIsAdmin={isAdmin}
+                                userRoles={userRoles}
+                            />
+                        </TabsContent>
+                    ))}
+                </Tabs>
+
             ) : (
                 <p>No se han podido cargar los datos.</p>
             )}

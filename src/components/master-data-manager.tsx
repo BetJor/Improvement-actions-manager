@@ -3,7 +3,6 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Table,
   TableBody,
@@ -13,7 +12,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Loader2, Pencil, PlusCircle, Trash2, Check, ChevronsUpDown, Info, ExternalLink } from "lucide-react";
+import { Loader2, Pencil, PlusCircle, Trash2, ChevronsUpDown, Info, ExternalLink } from "lucide-react";
 import type { MasterDataItem, ResponsibilityRole, ImprovementActionType, PermissionRule, ActionCategory, ActionSubcategory } from "@/lib/types";
 import {
   Dialog,
@@ -40,11 +39,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import Link from "next/link";
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "./ui/dropdown-menu";
-
-const allStatuses: ImprovementActionStatus[] = ['Borrador', 'Pendiente Análisis', 'Pendiente Comprobación', 'Pendiente de Cierre', 'Finalizada'];
 
 interface MasterDataFormDialogProps {
   isOpen: boolean;
@@ -53,14 +48,15 @@ interface MasterDataFormDialogProps {
   collectionName: string;
   title: string;
   onSave: (collection: string, item: MasterDataItem) => Promise<void>;
-  extraData: {
+  extraData?: {
     categories?: ActionCategory[];
     actionTypes?: ImprovementActionType[];
     responsibilityRoles?: ResponsibilityRole[];
+    parentItemId?: string; // For adding children
   };
 }
 
-function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, title, onSave, extraData }: MasterDataFormDialogProps) {
+export function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, title, onSave, extraData }: MasterDataFormDialogProps) {
   const [formData, setFormData] = useState<MasterDataItem>({ name: "" });
   const { toast } = useToast();
 
@@ -73,16 +69,20 @@ function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, title, 
       defaultData = { ...defaultData, possibleCreationRoles: [], possibleAnalysisRoles: [], possibleClosureRoles: [], configAdminRoleIds: [] };
     }
     if (collectionName === 'categories') {
-      defaultData = { ...defaultData, actionTypeIds: [] };
+      // Set parent if provided
+      const parentAmbitId = extraData?.parentItemId;
+      defaultData = { ...defaultData, actionTypeIds: parentAmbitId ? [parentAmbitId] : [] };
     }
-    if (collectionName === 'permissionMatrix') {
-      defaultData = { actionTypeId: '', status: 'Borrador', readerRoleIds: [], authorRoleIds: [] };
+    if (collectionName === 'subcategories') {
+       // Set parent if provided
+       const parentOrigenId = extraData?.parentItemId;
+       defaultData = { ...defaultData, categoryId: parentOrigenId || '' };
     }
     setFormData(item || defaultData);
-  }, [item, collectionName]);
+  }, [item, collectionName, extraData]);
 
   const handleSave = async () => {
-    if (collectionName !== 'permissionMatrix' && !formData.name) {
+    if (!formData.name) {
       toast({
         variant: "destructive",
         title: "Error de validación",
@@ -97,6 +97,7 @@ function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, title, 
   const renderSpecificFields = () => {
     const actionTypeData = formData as ImprovementActionType;
     const categoryData = formData as ActionCategory;
+    const subcategoryData = formData as ActionSubcategory;
 
     if (collectionName === 'categories' && extraData?.actionTypes) {
       const handleActionTypeSelection = (actionTypeId: string) => {
@@ -147,8 +148,8 @@ function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, title, 
         <div className="grid grid-cols-4 items-center gap-4">
           <Label htmlFor={'categoryId'} className="text-right">Origen</Label>
           <Select
-            value={formData['categoryId']}
-            onValueChange={(value) => setFormData({ ...formData, ['categoryId']: value })}
+            value={subcategoryData.categoryId}
+            onValueChange={(value) => setFormData({ ...formData, categoryId: value })}
           >
             <SelectTrigger className="col-span-3">
               <SelectValue placeholder="Selecciona origen" />
@@ -267,70 +268,7 @@ function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, title, 
         </>
       );
     }
-
-    if (collectionName === 'permissionMatrix') {
-      const ruleData = formData as PermissionRule;
-
-      const handleMultiSelect = (roleId: string, field: 'readerRoleIds' | 'authorRoleIds') => {
-        const currentIds = (ruleData[field] as string[] || []);
-        const newIds = currentIds.includes(roleId)
-          ? currentIds.filter(id => id !== roleId)
-          : [...currentIds, roleId];
-        setFormData({ ...formData, [field]: newIds });
-      };
-
-      return (
-        <>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="actionTypeId" className="text-right">Ámbito</Label>
-            <Select value={ruleData.actionTypeId} onValueChange={(value) => setFormData({ ...formData, actionTypeId: value })}>
-              <SelectTrigger className="col-span-3"><SelectValue placeholder="Selecciona un ámbito" /></SelectTrigger>
-              <SelectContent>{extraData?.actionTypes?.map(at => <SelectItem key={at.id} value={at.id!}>{at.name}</SelectItem>)}</SelectContent>
-            </Select>
-          </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="status" className="text-right">Estado</Label>
-            <Select value={ruleData.status} onValueChange={(value) => setFormData({ ...formData, status: value as ImprovementActionStatus })}>
-              <SelectTrigger className="col-span-3"><SelectValue placeholder="Selecciona un estado" /></SelectTrigger>
-              <SelectContent>{allStatuses.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
-            </Select>
-          </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="readerRoleIds" className="text-right">Roles Lectores</Label>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="col-span-3 justify-between">
-                  {(ruleData.readerRoleIds?.length || 0) > 0 ? `${ruleData.readerRoleIds.length} seleccionados` : "Selecciona roles lectores"}
-                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-[300px]">
-                {extraData?.responsibilityRoles?.map((role) => (
-                  <DropdownMenuCheckboxItem key={role.id} checked={ruleData.readerRoleIds?.includes(role.id!)} onCheckedChange={() => handleMultiSelect(role.id!, 'readerRoleIds')}>{role.name}</DropdownMenuCheckboxItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="authorRoleIds" className="text-right">Roles Autores</Label>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="col-span-3 justify-between">
-                  {(ruleData.authorRoleIds?.length || 0) > 0 ? `${ruleData.authorRoleIds.length} seleccionados` : "Selecciona roles autores"}
-                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-[300px]">
-                {extraData?.responsibilityRoles?.map((role) => (
-                  <DropdownMenuCheckboxItem key={role.id} checked={ruleData.authorRoleIds?.includes(role.id!)} onCheckedChange={() => handleMultiSelect(role.id!, 'authorRoleIds')}>{role.name}</DropdownMenuCheckboxItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </>
-      );
-    }
-
+    
     return null;
   };
 
@@ -344,7 +282,7 @@ function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, title, 
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{item ? "Editar" : "Añadir Nuevo"} {title}</DialogTitle>
+          <DialogTitle>{item ? "Editar" : "Añadir"} {title}</DialogTitle>
           <DialogDescription>Rellena los detalles a continuación.</DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
@@ -493,10 +431,6 @@ export function MasterDataManager({ data, onSave, onDelete, activeTab, setActive
     if (tabKey === 'actionTypes' && data.responsibilityRoles) {
       extraData.responsibilityRoles = data.responsibilityRoles.data;
     }
-    if (tabKey === 'permissionMatrix' && data.actionTypes && data.responsibilityRoles) {
-      extraData.actionTypes = data.actionTypes.data;
-      extraData.responsibilityRoles = data.responsibilityRoles.data;
-    }
     return extraData;
   };
   
@@ -506,7 +440,7 @@ export function MasterDataManager({ data, onSave, onDelete, activeTab, setActive
 
     if (activeTab === 'categories') {
       const category = item as ActionCategory;
-      if (!category.actionTypeIds || category.actionTypeIds.length === 0) return false; // Or true if unassigned means anyone can edit
+      if (!category.actionTypeIds || category.actionTypeIds.length === 0) return false; 
       
       const relatedActionTypes = data.actionTypes.data.filter(at => category.actionTypeIds!.includes(at.id!));
       return relatedActionTypes.some(at => 
@@ -524,61 +458,24 @@ export function MasterDataManager({ data, onSave, onDelete, activeTab, setActive
         );
     }
     
-    // Admin can edit everything, specific roles can edit their assigned scopes
     return false;
   }, [userIsAdmin, userRoles, activeTab, data]);
-
-  const canAddNew = useMemo(() => {
-    if (userIsAdmin) return true;
-    // For non-admins, they can only add items if they have *some* scope they can manage.
-    if (activeTab === 'categories' || activeTab === 'subcategories') {
-       const manageableScopes = data.actionTypes?.data.filter(at => 
-         (at as ImprovementActionType).configAdminRoleIds?.some(roleId => userRoles.includes(roleId))
-       );
-       return manageableScopes && manageableScopes.length > 0;
-    }
-    return false;
-  }, [userIsAdmin, userRoles, activeTab, data]);
-
-
+  
   return (
     <>
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList>
-          {Object.keys(data).map(key => (
-            <TabsTrigger key={key} value={key}>{data[key].title}</TabsTrigger>
-          ))}
-        </TabsList>
-        {Object.keys(data).map(key => (
-          <TabsContent key={key} value={key}>
-            <div className="flex justify-end mb-4">
-              <Button onClick={handleAddNew} disabled={!userIsAdmin}>
-                <PlusCircle className="mr-2 h-4 w-4" /> Añadir Nuevo
-              </Button>
-            </div>
-            {key === 'permissionMatrix' && (
-              <Alert className="mb-4 bg-blue-50 border-blue-200 text-blue-800">
-                <Info className="h-4 w-4 !text-blue-800" />
-                <AlertTitle>Representación Visual</AlertTitle>
-                <AlertDescription>
-                  <p>Esta matriz de permisos es una guía visual de cómo se comportará el sistema, pero no aplica las reglas directamente. La lógica de autorización real se define en las <strong>Reglas de Seguridad de Firestore.</strong></p>
-                  <Link href="/firestore-rules" className="mt-2 inline-flex items-center gap-1 font-semibold text-blue-900 hover:underline">
-                    Configurar Reglas de Firestore <ExternalLink className="h-4 w-4" />
-                  </Link>
-                </AlertDescription>
-              </Alert>
-            )}
-            <MasterDataTable
-              data={data[key].data}
-              columns={data[key].columns}
-              onEdit={handleEdit}
-              onDelete={handleDelete}
-              isLoading={isLoading}
-              canEdit={canEditItem}
-            />
-          </TabsContent>
-        ))}
-      </Tabs>
+      <div className="flex justify-end mb-4">
+        <Button onClick={handleAddNew} disabled={!userIsAdmin}>
+          <PlusCircle className="mr-2 h-4 w-4" /> Añadir Nuevo
+        </Button>
+      </div>
+      <MasterDataTable
+        data={data[activeTab]?.data || []}
+        columns={data[activeTab]?.columns || []}
+        onEdit={handleEdit}
+        onDelete={handleDelete}
+        isLoading={isLoading}
+        canEdit={canEditItem}
+      />
       {isFormOpen && (
         <MasterDataFormDialog
           isOpen={isFormOpen}
@@ -593,4 +490,3 @@ export function MasterDataManager({ data, onSave, onDelete, activeTab, setActive
     </>
   );
 }
-
