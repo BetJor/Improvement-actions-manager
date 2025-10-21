@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useEffect, useState, useCallback, useMemo } from "react";
@@ -20,6 +21,7 @@ import { Loader2 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { HierarchicalSettings } from "@/components/hierarchical-settings";
+import { arrayMove } from "@dnd-kit/sortable";
 
 export default function SettingsPage() {
     const { toast } = useToast();
@@ -146,6 +148,45 @@ export default function SettingsPage() {
         }
     };
 
+    const handleReorder = async (collectionName: string, activeId: string, overId: string) => {
+        if (!masterData || !masterData[collectionName]) return;
+
+        const itemsToReorder = masterData[collectionName].data;
+        const oldIndex = itemsToReorder.findIndex((i: MasterDataItem) => i.id === activeId);
+        const newIndex = itemsToReorder.findIndex((i: MasterDataItem) => i.id === overId);
+        
+        if (oldIndex === -1 || newIndex === -1) return;
+
+        const reorderedItems = arrayMove(itemsToReorder, oldIndex, newIndex);
+
+        // Optimistic UI Update
+        setMasterData((prevData: any) => ({
+            ...prevData,
+            [collectionName]: {
+                ...prevData[collectionName],
+                data: reorderedItems.map((item, index) => ({...item, order: index})),
+            }
+        }));
+
+        // Persist changes in the background
+        try {
+            const updates = reorderedItems.map((item, index) => {
+                const newItem = { ...item, order: index };
+                return updateMasterDataItem(collectionName, newItem.id!, { order: newItem.order });
+            });
+            await Promise.all(updates);
+        } catch (error) {
+            console.error("Failed to save reordered items:", error);
+            toast({
+                variant: "destructive",
+                title: "Error al reordenar",
+                description: "No se pudo guardar el nuevo orden. Por favor, recarga la página.",
+            });
+            // Revert optimistic update on failure by reloading data
+            await loadData(activeTab);
+        }
+    };
+
     const nonHierarchicalTabs = useMemo(() => {
         if (!masterData) return [];
         return Object.keys(masterData).filter(key => !['ambits', 'origins', 'classifications'].includes(key));
@@ -175,6 +216,7 @@ export default function SettingsPage() {
                           onSave={handleSave}
                           onDelete={handleDelete}
                           canManage={canManage}
+                          onReorder={handleReorder}
                        />
                     </TabsContent>
                     {nonHierarchicalTabs.map(key => (

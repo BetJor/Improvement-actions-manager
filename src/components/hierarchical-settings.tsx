@@ -1,4 +1,5 @@
 
+
 "use client"
 
 import { useState, useMemo } from 'react';
@@ -80,6 +81,15 @@ const SortableItem = ({ item, selectedId, onSelect, onEdit, onDelete, canManage 
 };
 
 
+interface HierarchicalSettingsProps {
+    masterData: any;
+    onSave: (collectionName: string, item: MasterDataItem) => Promise<void>;
+    onDelete: (collectionName: string, itemId: string) => Promise<void>;
+    canManage: (item: any, type: string) => boolean;
+    onReorder: (collectionName: string, activeId: string, overId: string) => void;
+}
+
+
 interface ColumnProps {
     title: string;
     items: MasterDataItem[];
@@ -133,7 +143,7 @@ const Column = ({ title, items, selectedId, collectionName, onSelect, onAdd, onE
     );
 };
 
-export function HierarchicalSettings({ masterData, onSave, onDelete, canManage }: HierarchicalSettingsProps) {
+export function HierarchicalSettings({ masterData, onSave, onDelete, canManage, onReorder }: HierarchicalSettingsProps) {
     const [selectedAmbit, setSelectedAmbit] = useState<string | null>(null);
     const [selectedOrigen, setSelectedOrigen] = useState<string | null>(null);
 
@@ -205,21 +215,6 @@ export function HierarchicalSettings({ masterData, onSave, onDelete, canManage }
         }
     };
 
-    const handleReorder = async (collectionName: string, activeId: string, overId: string) => {
-        const itemsToReorder = masterData[collectionName].data;
-        const oldIndex = itemsToReorder.findIndex((i: MasterDataItem) => i.id === activeId);
-        const newIndex = itemsToReorder.findIndex((i: MasterDataItem) => i.id === overId);
-        const reorderedItems = arrayMove(itemsToReorder, oldIndex, newIndex);
-
-        // Update the 'order' property and save
-        const updates = reorderedItems.map((item, index) => {
-            const newItem = { ...item, order: index };
-            return onSave(collectionName, newItem);
-        });
-
-        await Promise.all(updates);
-    };
-
     return (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 h-full">
             <Column 
@@ -231,7 +226,7 @@ export function HierarchicalSettings({ masterData, onSave, onDelete, canManage }
                 onAdd={() => handleAdd('ambits', 'Ámbito')}
                 onEdit={(item) => handleEdit('ambits', item, 'Ámbito')}
                 onDelete={(item) => handleDelete('ambits', item)}
-                onReorder={handleReorder}
+                onReorder={onReorder}
                 canManage={canManage(null, 'ambit')}
             />
             <Column 
@@ -243,7 +238,7 @@ export function HierarchicalSettings({ masterData, onSave, onDelete, canManage }
                 onAdd={() => selectedAmbit && handleAdd('origins', 'Origen', selectedAmbit)}
                 onEdit={(item) => handleEdit('origins', item, 'Origen')}
                 onDelete={(item) => handleDelete('origins', item)}
-                onReorder={handleReorder}
+                onReorder={onReorder}
                 canManage={!!selectedAmbit && canManage(ambits.find(a => a.id === selectedAmbit) || null, 'ambit')}
             />
             <Column 
@@ -255,7 +250,7 @@ export function HierarchicalSettings({ masterData, onSave, onDelete, canManage }
                 onAdd={() => selectedOrigen && handleAdd('classifications', 'Clasificación', selectedOrigen)}
                 onEdit={(item) => handleEdit('classifications', item, 'Clasificación')}
                 onDelete={(item) => handleDelete('classifications', item)}
-                onReorder={handleReorder}
+                onReorder={onReorder}
                 canManage={!!selectedOrigen && canManage(filteredOrigenes.find(o => o.id === selectedOrigen) || null, 'origin')}
             />
 
