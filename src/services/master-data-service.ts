@@ -3,7 +3,7 @@
 import { collection, getDocs, doc, addDoc, query, orderBy, updateDoc, deleteDoc, writeBatch, where, getDoc, setDoc, limit } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { ImprovementActionType, ActionCategory, ActionSubcategory, AffectedArea, MasterDataItem, ResponsibilityRole, Center } from '@/lib/types';
-import { seedAffectedAreas, seedActionTypes } from '@/lib/master-seed-data';
+import { seedAffectedAreas, seedActionTypes, seedCategories } from '@/lib/master-seed-data';
 
 // Variable global per a prevenir la execució múltiple del seeder
 let isSeedingMasterData = false;
@@ -39,6 +39,38 @@ export const getCategories = async (): Promise<ActionCategory[]> => {
   const categoriesCol = collection(db, 'origins');
   let snapshot = await getDocs(query(categoriesCol, orderBy("order")));
 
+  if (snapshot.empty && !isSeedingMasterData) {
+    isSeedingMasterData = true;
+    console.log("Categories (origins) collection is empty. Populating with seed data...");
+    try {
+        const allAmbits = await getActionTypes();
+        const batch = writeBatch(db);
+        
+        seedCategories.forEach(categorySeed => {
+            const ambitParent = allAmbits.find(a => a.name === categorySeed.ambitName);
+            if (ambitParent && ambitParent.id) {
+                const docRef = doc(collection(db, 'origins')); // Let Firestore generate ID
+                const newCategory: Omit<ActionCategory, 'id' | 'ambitName'> = {
+                    name: categorySeed.name,
+                    order: categorySeed.order,
+                    actionTypeIds: [ambitParent.id],
+                };
+                batch.set(docRef, newCategory);
+            } else {
+                console.warn(`Could not find parent ambit named '${categorySeed.ambitName}' for origin '${categorySeed.name}'. Skipping.`);
+            }
+        });
+        
+        await batch.commit();
+        snapshot = await getDocs(query(categoriesCol, orderBy("order")));
+        console.log("Categories (origins) collection seeded successfully.");
+    } catch(error) {
+        console.error("Error seeding categories:", error);
+    } finally {
+        isSeedingMasterData = false;
+    }
+  }
+
   return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ActionCategory));
 };
 
@@ -59,8 +91,8 @@ export const getAffectedAreas = async (): Promise<AffectedArea[]> => {
     try {
         const batch = writeBatch(db);
         seedAffectedAreas.forEach(item => {
-            const docRef = doc(collection(db, 'affectedAreas')); // Let Firestore generate ID
-            batch.set(docRef, item);
+            const docRef = doc(db, 'affectedAreas', item.id);
+            batch.set(docRef, {name: item.name});
         });
         await batch.commit();
         snapshot = await getDocs(query(affectedAreasCol, orderBy("name")));
@@ -119,7 +151,8 @@ export async function addMasterDataItem(collectionName: string, item: Omit<Maste
     }
     
     // Add the new item with the calculated order
-    await addDoc(collectionRef, { ...item, order: newOrder });
+    const docRef = doc(collectionRef);
+    await setDoc(docRef, { ...item, id: docRef.id, order: newOrder });
 }
 
 
@@ -132,4 +165,3 @@ export async function deleteMasterDataItem(collectionName: string, itemId: strin
     const docRef = doc(db, collectionName, itemId);
     await deleteDoc(docRef);
 }
-
