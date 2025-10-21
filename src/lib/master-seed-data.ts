@@ -112,43 +112,7 @@ const medioambienteClassifications = [
     "14. Revisión por la Dirección",
 ];
 
-const responsabilidadSocialInternaClassifications = [
-    "4.1 Comprensión de la organización",
-    "4.2 Comprensión de las necesidades y expectativas de las partes interesadas",
-    "4.3 Determinación del alcance del sistema de gestión de respoonsabilidad social",
-    "4.4 Sistema de gestión de la responsabilidad social",
-    "4.5 Obligaciones de responsabilidad social",
-    "5.1 Liderazgo y compromiso",
-    "5.2 Política de responsabilidad social",
-    "5.3 Roles, responsabilidades y autoridades en la organización",
-    "5.4 Código de conducta",
-    "6.1 Acciones para abordar riesgos y oportunidades",
-    "6.2 Identificación y evaluación de asuntos",
-    "6.3 Objetivos y planificación para lograrlos",
-    "6.3 Planificación de los cambios",
-    "7.1 Recursos",
-    "7.2 Competencia",
-    "7.3 Toma de conciencia",
-    "7.4 Comunicaciones",
-    "7.5 Información documentada",
-    "8.1 Planificación y control operativo",
-    "8.2 Propietarios y accionistas",
-    "8.3 Empleados",
-    "8.4 Clientes, usuarios y consumidores",
-    "8.5 Proveedores de productos y servicios, colaboradores y aliados",
-    "8.6 Gobiernos, Administraciones Publicas y organismos reguladores",
-    "8.7 Comunidad, sociedad y organizaciones sociales",
-    "8.8 Medio ambiente",
-    "8.9 Competidores",
-    "9.1 Seguimiento, medición, análisis y evaluación",
-    "9.2 Expectativas de los grupos de interés",
-    "9.3 Auditoria interna",
-    "9.4 Revisión por la dirección",
-    "10.1 No conformidad y acción correctiva",
-    "10.2 Mejora continua"
-];
-
-const responsabilidadSocialExternaClassifications = [
+const responsabilidadSocialClassifications = [
     "4.1 Comprensión de la organización",
     "4.2 Comprensión de las necesidades y expectativas de las partes interesadas",
     "4.3 Determinación del alcance del sistema de gestión de respoonsabilidad social",
@@ -195,6 +159,79 @@ const auditoriaInternaRiesgosClassifications = [
     "Auditoría interna de riesgos penales"
 ];
 
+const seguridadInformacionClassifications = [
+    "4. Contexto de la Organización",
+    "5. Liderazgo",
+    "6. Planificación",
+    "7. Soporte",
+    "8. Operación",
+    "9. Evaluación del Desempeño",
+    "10. Mejora",
+    "Anexo. Controles organizativos",
+    "Anexo. Controles de personas",
+    "Anexo. Controles físicos",
+    "Anexo. Controles tecnológicos"
+];
+
+const ensClassifications = [
+    "Articulado",
+    "[org] Política de seguridad",
+    "[org] Normativa de seguridad",
+    "[org] Procedimientos de seguridad",
+    "[org] Proceso de autorización",
+    "[op.pl] Planificación",
+    "[op.acc] Control de acceso",
+    "[op.exp] Explotación",
+    "[op.ext] Recursos externos",
+    "[op.nub] Servicios en la nube",
+    "[op.cont] Continuidad del servicio",
+    "[op.mon] Monitorización del sistema",
+    "[mp.if] Protección de las instalaciones e Infraestructuras",
+    "[mp.per] Gestión del personal",
+    "[mp.eq] Protección de los equipos",
+    "[mp.com] Protección de las comunicaciones",
+    "[mp.sl] Protección de los soportes de Información",
+    "[mp.sw] Protección de las aplicaciones Informáticas",
+    "[mp.info] Protección de la Información",
+    "[mp.s] Protección de los servicios"
+];
+
+const seguridadSaludInternaExternaClassifications = [
+    "Fundamentos del SGSSBL: contexto, partes interesadas, liderazgo y responsabilidad",
+    "Consulta y participación",
+    "Planificación de Riesgos y Objetivos",
+    "Soporte operacional y Competencia",
+    "Gestión de la información documentada",
+    "Control Operacional",
+    "Evaluación del desempeño",
+    "Mejora Continua y Acciones Correctivas"
+];
+
+const seguridadSaludRiesgosClassifications = [
+    "Caídas de Personas al mismo nivel.",
+    "Caídas de Personas a distinto nivel.",
+    "Golpes contra objetos inmóviles.",
+    "Golpes por objetos móviles.",
+    "Colisiones con objetos.",
+    "Proyección de Objetos, Partículas o Fragmentos.",
+    "Atrapamientos por o entre objetos.",
+    "Cortes y Punzadas.",
+    "Contactos Eléctricos.",
+    "Contactos Térmicos",
+    "Contactos Químicos",
+    "Inhalación de gases, vapores, humos, polvos tóxicos.",
+    "Sobreesfuerzos Físicos: Por manipulación manual de cargas.",
+    "Sobreesfuerzos Físicos: Por posturas forzadas.",
+    "Sobreesfuerzos Físicos:Por movimientos repetitivos.",
+    "Exposición a Agentes Físicos:Ruido.",
+    "Exposición a Agentes Físicos:Vibraciones.",
+    "Exposición a Agentes Físicos:Radiaciones.",
+    "Accidentes de Tráfico: In Itinere/en misión",
+    "Agresiones o Violencia en el Trabajo:",
+    "Asfixia / Ahogamiento",
+    "Riesgo Biológico (EP)"
+];
+
 export const seedSubcategories: SeedSubcategory[] = [
     // Calidad -> ISO 9001 - Auditoría Interna
     ...calidadClassifications.map((name, index) => ({
@@ -225,14 +262,14 @@ export const seedSubcategories: SeedSubcategory[] = [
         originName: 'ISO 14001 - Auditoría Externa'
     })),
     // Responsabilidad Social -> SR10 - Auditoría Interna
-    ...responsabilidadSocialInternaClassifications.map((name, index) => ({
+    ...responsabilidadSocialClassifications.map((name, index) => ({
         name: name,
         order: index,
         ambitName: 'Responsabilidad social',
         originName: 'SR10 - Auditoría Interna'
     })),
     // Responsabilidad Social -> SR10 - Auditoría Externa
-    ...responsabilidadSocialExternaClassifications.map((name, index) => ({
+    ...responsabilidadSocialClassifications.map((name, index) => ({
         name: name,
         order: index,
         ambitName: 'Responsabilidad social',
@@ -251,6 +288,55 @@ export const seedSubcategories: SeedSubcategory[] = [
         order: index,
         ambitName: 'Responsabilidad social',
         originName: 'Auditoría interna'
+    })),
+    // Seguridad de la Información -> ISO 27001 - Auditoría Interna
+    ...seguridadInformacionClassifications.map((name, index) => ({
+        name: name,
+        order: index,
+        ambitName: 'Seguridad de la Información',
+        originName: 'ISO 27001 - Auditoría Interna'
+    })),
+    // Seguridad de la Información -> ISO 27001 - Auditoría Externa
+    ...seguridadInformacionClassifications.map((name, index) => ({
+        name: name,
+        order: index,
+        ambitName: 'Seguridad de la Información',
+        originName: 'ISO 27001 - Auditoría Externa'
+    })),
+    // ENS -> ENS - Auditoría Interna
+    ...ensClassifications.map((name, index) => ({
+        name: name,
+        order: index,
+        ambitName: 'ENS',
+        originName: 'ENS - Auditoría Interna'
+    })),
+    // ENS -> ENS - Auditoría Externa
+    ...ensClassifications.map((name, index) => ({
+        name: name,
+        order: index,
+        ambitName: 'ENS',
+        originName: 'ENS - Auditoría Externa'
+    })),
+    // Seguridad y Salud Laboral -> ISO 45001 - Auditoría Interna
+    ...seguridadSaludInternaExternaClassifications.map((name, index) => ({
+        name: name,
+        order: index,
+        ambitName: 'Seguridad y Salud Laboral',
+        originName: 'ISO 45001 - Auditoría Interna'
+    })),
+    // Seguridad y Salud Laboral -> ISO 45001 - Auditoría Externa
+    ...seguridadSaludInternaExternaClassifications.map((name, index) => ({
+        name: name,
+        order: index,
+        ambitName: 'Seguridad y Salud Laboral',
+        originName: 'ISO 45001 - Auditoría Externa'
+    })),
+    // Seguridad y Salud Laboral -> Planes de acción de gestión de riesgos
+    ...seguridadSaludRiesgosClassifications.map((name, index) => ({
+        name: name,
+        order: index,
+        ambitName: 'Seguridad y Salud Laboral',
+        originName: 'Planes de acción de gestión de riesgos'
     })),
 ];
 
