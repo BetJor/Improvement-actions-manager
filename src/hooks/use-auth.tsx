@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
@@ -17,12 +18,13 @@ import {
 import { auth, firebaseApp } from '@/lib/firebase';
 import { usePathname, useRouter } from 'next/navigation';
 import type { User } from '@/lib/types';
-import { getUserById, updateUser } from '@/lib/data';
+import { getUserById, updateUser, getResponsibilityRoles } from '@/lib/data';
 
 interface AuthContextType {
   user: User | null;
   loading: boolean;
   isAdmin: boolean;
+  userRoles: string[]; // IDs of ResponsibilityRole
   isImpersonating: boolean;
   impersonateUser: (userToImpersonate: User) => void;
   stopImpersonating: () => void;
@@ -43,8 +45,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [isImpersonating, setIsImpersonating] = useState(false);
+  const [userRoles, setUserRoles] = useState<string[]>([]);
   const router = useRouter();
   const pathname = usePathname();
+
+  const resolveUserRoles = useCallback(async (userToResolve: User) => {
+    if (!userToResolve?.email) return [];
+    
+    try {
+      const allRoles = await getResponsibilityRoles();
+      const matchedRoles = allRoles
+        .filter(role => role.type === 'Fixed' && role.email === userToResolve.email)
+        .map(role => role.id!);
+      
+      setUserRoles(matchedRoles);
+    } catch (error) {
+      console.error("Failed to resolve user roles:", error);
+      setUserRoles([]);
+    }
+  }, []);
 
   const loadFullUser = useCallback(async (fbUser: FirebaseUser | null) => {
     if (fbUser) {
@@ -54,6 +73,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             if (originalUser?.id === fbUser.uid) {
                 setUser(impersonatedUser);
                 setFirebaseUser(fbUser);
+                await resolveUserRoles(impersonatedUser);
                 setIsImpersonating(true);
                 setLoading(false);
                 return;
@@ -64,16 +84,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         
         const fullUserDetails = await getUserById(fbUser.uid);
         setUser(fullUserDetails);
+        if (fullUserDetails) {
+            await resolveUserRoles(fullUserDetails);
+        }
         setFirebaseUser(fbUser);
         setIsImpersonating(false);
     } else {
         setUser(null);
         setFirebaseUser(null);
         setIsImpersonating(false);
+        setUserRoles([]);
         sessionStorage.removeItem(IMPERSONATION_KEY);
     }
     setLoading(false);
-  }, []);
+  }, [resolveUserRoles]);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
@@ -144,6 +168,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         originalUser: originalUser
       }));
       setUser(userToImpersonate);
+      await resolveUserRoles(userToImpersonate);
       setIsImpersonating(true);
       window.location.reload(); 
     } else {
@@ -172,6 +197,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         user, 
         loading, 
         isAdmin: user?.role === 'Admin',
+        userRoles,
         isImpersonating,
         impersonateUser,
         stopImpersonating,

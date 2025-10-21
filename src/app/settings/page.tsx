@@ -3,7 +3,7 @@
 "use client";
 
 import { useEffect, useState, useCallback, useMemo } from "react";
-import { MasterDataManager, MasterDataFormDialog } from "@/components/master-data-manager";
+import { HierarchicalSettings } from "@/components/hierarchical-settings";
 import {
     getCategories,
     getSubcategories,
@@ -20,26 +20,26 @@ import type { MasterDataItem, ActionCategory, ResponsibilityRole, ImprovementAct
 import { Loader2 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { HierarchicalSettings } from "@/components/hierarchical-settings";
 import { arrayMove } from "@dnd-kit/sortable";
+import { MasterDataManager } from "@/components/master-data-manager";
 
 export default function SettingsPage() {
     const { toast } = useToast();
-    const { user, isAdmin } = useAuth();
+    const { user, isAdmin, userRoles } = useAuth();
     const [masterData, setMasterData] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [activeTab, setActiveTab] = useState<string>("hierarchy");
-    const [userRoles, setUserRoles] = useState<string[]>([]);
     
-    const canManage = useCallback((item: ImprovementActionType | ActionCategory | ActionSubcategory | null, type: 'ambit' | 'origin' | 'classification'): boolean => {
+    const canManage = useCallback((item: ImprovementActionType | ActionCategory | null, type: 'ambit' | 'origin' | 'classification'): boolean => {
         if (isAdmin) return true;
-        if (!item) return false;
+        if (!item || !userRoles) return false;
 
         const findAmbit = (id: string): ImprovementActionType | undefined => masterData?.ambits.data.find((a: ImprovementActionType) => a.id === id);
 
         if (type === 'ambit') {
             const ambit = item as ImprovementActionType;
             if (!ambit.configAdminRoleIds || ambit.configAdminRoleIds.length === 0) return false;
+            // Un usuari pot gestionar si algun dels seus rols té permís
             return ambit.configAdminRoleIds.some(roleId => userRoles.includes(roleId));
         }
         if (type === 'origin') {
@@ -47,6 +47,7 @@ export default function SettingsPage() {
             if (!origen.actionTypeIds) return false;
             const relatedAmbits = origen.actionTypeIds.map(findAmbit).filter(Boolean);
             if (relatedAmbits.length === 0) return false;
+            // Només pot gestionar si pot gestionar TOTS els àmbits pares
             return relatedAmbits.every(ambit => canManage(ambit, 'ambit'));
         }
         if (type === 'classification') {
@@ -69,9 +70,11 @@ export default function SettingsPage() {
                 getActionTypes(),
                 getResponsibilityRoles(),
             ]);
+            
+            const ambitsData = { title: "Ámbitos", data: actionTypes, columns: [{ key: 'name', label: "Nombre" }] };
 
             const data = {
-                ambits: { title: "Ámbitos", data: actionTypes, columns: [{ key: 'name', label: "Nombre" }] },
+                ambits: ambitsData,
                 origins: { title: "Orígenes", data: categories, columns: [{ key: 'name', label: "Origen" }, { key: 'actionTypeNames', label: 'Ámbitos Relacionados' }] },
                 classifications: { title: "Clasificaciones", data: subcategories, columns: [{ key: 'name', label: "Clasificación" }, { key: 'categoryName', label: "Origen" }] },
                 affectedAreas: { title: "Áreas Afectadas", data: affectedAreas, columns: [{ key: 'name', label: "Nombre" }] },
@@ -96,23 +99,6 @@ export default function SettingsPage() {
         }
     }, [toast]);
 
-     useEffect(() => {
-        if (user) {
-            // This is a simplified role resolution. In a real app, this would be more complex,
-            // potentially resolving group memberships into role IDs.
-            // For now, we'll assume a user's roles can be derived from their email or a direct property.
-            const fetchUserRoles = async () => {
-                const fullUser = await getUserById(user.id);
-                if(fullUser?.email) {
-                    // Example: 'quality@example.com' could be a role.
-                    // This logic would need to map to your ResponsibilityRole setup.
-                    setUserRoles([fullUser.email]); 
-                }
-            };
-            fetchUserRoles();
-        }
-    }, [user]);
-    
     useEffect(() => {
         if(!masterData) {
             loadData();

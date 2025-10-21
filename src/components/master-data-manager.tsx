@@ -40,6 +40,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "./ui/dropdown-menu";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 
 interface MasterDataFormDialogProps {
   isOpen: boolean;
@@ -66,8 +67,8 @@ export function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, 
     if (collectionName === 'responsibilityRoles') {
       defaultData = { ...defaultData, type: "Fixed" };
     }
-    if (collectionName === 'ambits') {
-      defaultData = { ...defaultData, possibleCreationRoles: [], possibleAnalysisRoles: [], possibleClosureRoles: [], configAdminRoleIds: [] };
+    if (collectionName === 'actionTypes') { // Correspon a 'ambits'
+      defaultData = { ...defaultData, configAdminRoleIds: [] };
     }
     if (collectionName === 'origins') {
       const parentAmbitId = extraData?.parentItemId;
@@ -162,68 +163,57 @@ export function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, 
         </div>
       );
     }
-
-    if (collectionName === 'ambits' && extraData?.responsibilityRoles) {
-      const handleRoleSelection = (roleId: string, fieldName: keyof ImprovementActionType) => {
-        const currentRoles = (actionTypeData[fieldName] as string[] || []);
-        const newRoles = currentRoles.includes(roleId)
-          ? currentRoles.filter((id: string) => id !== roleId)
-          : [...currentRoles, roleId];
-        setFormData({ ...formData, [fieldName]: newRoles });
-      };
-
-      const renderDropdown = (fieldName: keyof ImprovementActionType, label: string) => {
-        const selectedRoles = (actionTypeData[fieldName] || []) as string[];
-
-        return (
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor={fieldName} className="text-right">{label}</Label>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="col-span-3 justify-between">
-                  <span className="truncate">
-                    {selectedRoles.length > 0
-                      ? extraData.responsibilityRoles!
-                          .filter(r => selectedRoles.includes(r.id!))
-                          .map(r => r.name)
-                          .join(', ')
-                      : "Selecciona roles"}
-                  </span>
-                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-[300px]">
-                <DropdownMenuLabel>{label}</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                {extraData.responsibilityRoles!.map((role) => (
-                  <DropdownMenuCheckboxItem
-                    key={role.id}
-                    checked={selectedRoles.includes(role.id!)}
-                    onCheckedChange={() => handleRoleSelection(role.id!, fieldName)}
-                  >
-                    {role.name}
-                  </DropdownMenuCheckboxItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        );
-      };
-      
-      if (isPermissionDialog) {
-          return renderDropdown('configAdminRoleIds', 'Admins de Configuración');
-      }
-
-      return (
-        <>
-          {renderDropdown('possibleCreationRoles', 'Roles para Creación')}
-          {renderDropdown('possibleAnalysisRoles', 'Roles para Análisis')}
-          {renderDropdown('possibleClosureRoles', 'Roles para Cierre')}
-          <hr className="my-4" />
-          {renderDropdown('configAdminRoleIds', 'Admins de Configuración')}
-        </>
-      );
+    
+    // Camp per a Admins de Configuració a la pantalla de Workflow
+    if (collectionName === 'actionTypes' && extraData?.responsibilityRoles) {
+        const handleRoleSelection = (roleId: string, fieldName: keyof ImprovementActionType) => {
+            const currentRoles = (actionTypeData[fieldName] as string[] || []);
+            const newRoles = currentRoles.includes(roleId)
+              ? currentRoles.filter((id: string) => id !== roleId)
+              : [...currentRoles, roleId];
+            setFormData({ ...formData, [fieldName]: newRoles });
+        };
+        
+        const renderDropdown = (fieldName: keyof ImprovementActionType, label: string) => {
+            const selectedRoles = (actionTypeData[fieldName] || []) as string[];
+            return (
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor={fieldName} className="text-right">{label}</Label>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" className="col-span-3 justify-between">
+                      <span className="truncate">
+                        {selectedRoles.length > 0
+                          ? extraData.responsibilityRoles!
+                              .filter(r => selectedRoles.includes(r.id!))
+                              .map(r => r.name)
+                              .join(', ')
+                          : "Selecciona roles"}
+                      </span>
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-[300px]">
+                    <DropdownMenuLabel>{label}</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    {extraData.responsibilityRoles!.map((role) => (
+                      <DropdownMenuCheckboxItem
+                        key={role.id}
+                        checked={selectedRoles.includes(role.id!)}
+                        onCheckedChange={() => handleRoleSelection(role.id!, fieldName)}
+                      >
+                        {role.name}
+                      </DropdownMenuCheckboxItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            );
+        };
+        
+        return renderDropdown('configAdminRoleIds', 'Admins de Configuración');
     }
+
 
     if (collectionName === 'responsibilityRoles') {
       const roleData = formData as ResponsibilityRole;
@@ -277,7 +267,7 @@ export function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, 
 
   const nameFieldLabel = collectionName === 'origins' ? 'Origen' :
                          collectionName === 'classifications' ? 'Clasificación' :
-                         collectionName === 'ambits' ? 'Ámbito' :
+                         collectionName === 'actionTypes' ? 'Ámbito' : // 'ambits' internament
                          'Nombre';
 
 
@@ -435,74 +425,54 @@ export function MasterDataManager({ data, onSave, onDelete, activeTab, setActive
     if (tabKey === 'origins' && data.ambits) {
       extraData.actionTypes = data.ambits.data;
     }
-    if (tabKey === 'ambits' && data.responsibilityRoles) {
+    // Per a la gestió de permisos a la pantalla de workflow
+    if (tabKey === 'actionTypes' && data.responsibilityRoles) {
       extraData.responsibilityRoles = data.responsibilityRoles.data;
     }
     return extraData;
   };
   
   const canEditItem = useMemo(() => (item: MasterDataItem): boolean => {
-    if (userIsAdmin) return true;
-    if (!data.ambits) return false;
-
-    // A user can edit a non-hierarchical item if they are an admin.
-    if (!['ambits', 'origins', 'classifications'].includes(activeTab)) {
-        return userIsAdmin;
-    }
-
-    if (activeTab === 'ambits') {
-      const ambit = item as ImprovementActionType;
-      return ambit.configAdminRoleIds?.some(roleId => userRoles.includes(roleId)) ?? false;
-    }
-    if (activeTab === 'origins') {
-      const category = item as ActionCategory;
-      if (!category.actionTypeIds || category.actionTypeIds.length === 0) return false; 
-      
-      const relatedActionTypes = data.ambits.data.filter(at => category.actionTypeIds!.includes(at.id!));
-      return relatedActionTypes.some(at => 
-        (at as ImprovementActionType).configAdminRoleIds?.some(roleId => userRoles.includes(roleId))
-      );
-    }
-    if (activeTab === 'classifications') {
-        const subcategory = item as ActionSubcategory;
-        const parentCategory = data.origins.data.find(c => c.id === subcategory.categoryId) as ActionCategory;
-        if (!parentCategory || !parentCategory.actionTypeIds) return false;
-
-        const relatedActionTypes = data.ambits.data.filter(at => parentCategory.actionTypeIds!.includes(at.id!));
-        return relatedActionTypes.some(at =>
-            (at as ImprovementActionType).configAdminRoleIds?.some(roleId => userRoles.includes(roleId))
-        );
-    }
-    
-    return false;
-  }, [userIsAdmin, userRoles, activeTab, data]);
+    return userIsAdmin; // De moment, només l'admin global pot editar.
+  }, [userIsAdmin]);
   
   return (
-    <>
-      <div className="flex justify-end mb-4">
-        <Button onClick={handleAddNew} disabled={!userIsAdmin}>
-          <PlusCircle className="mr-2 h-4 w-4" /> Añadir Nuevo
-        </Button>
-      </div>
-      <MasterDataTable
-        data={data[activeTab]?.data || []}
-        columns={data[activeTab]?.columns || []}
-        onEdit={handleEdit}
-        onDelete={handleDelete}
-        isLoading={isLoading}
-        canEdit={canEditItem}
-      />
-      {isFormOpen && (
-        <MasterDataFormDialog
-          isOpen={isFormOpen}
-          setIsOpen={setIsFormOpen}
-          item={currentItem}
-          collectionName={activeTab}
-          title={data[activeTab].title.endsWith('s') ? data[activeTab].title.slice(0, -1) : data[activeTab].title}
-          onSave={handleSave}
-          extraData={getExtraDataForTab(activeTab)}
-        />
-      )}
-    </>
+    <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
+        <TabsList>
+            {Object.keys(data).map(key => (
+                <TabsTrigger key={key} value={key}>{data[key].title}</TabsTrigger>
+            ))}
+        </TabsList>
+
+        {Object.keys(data).map(key => (
+            <TabsContent key={key} value={key} className="mt-4 flex-grow">
+                 <div className="flex justify-end mb-4">
+                    <Button onClick={handleAddNew} disabled={!userIsAdmin}>
+                      <PlusCircle className="mr-2 h-4 w-4" /> Añadir Nuevo
+                    </Button>
+                  </div>
+                  <MasterDataTable
+                    data={data[key]?.data || []}
+                    columns={data[key]?.columns || []}
+                    onEdit={handleEdit}
+                    onDelete={handleDelete}
+                    isLoading={isLoading}
+                    canEdit={canEditItem}
+                  />
+            </TabsContent>
+        ))}
+
+        {isFormOpen && (
+            <MasterDataFormDialog
+            isOpen={isFormOpen}
+            setIsOpen={setIsFormOpen}
+            item={currentItem}
+            collectionName={activeTab}
+            title={data[activeTab].title.endsWith('es') ? data[activeTab].title.slice(0, -2) : (data[activeTab].title.endsWith('s') ? data[activeTab].title.slice(0, -1) : data[activeTab].title)}
+            onSave={handleSave}
+            extraData={getExtraDataForTab(activeTab)}
+            />
+        )}
+    </Tabs>
   );
 }
