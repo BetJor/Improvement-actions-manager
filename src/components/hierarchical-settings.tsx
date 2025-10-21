@@ -23,14 +23,14 @@ import {
 
 interface HierarchicalSettingsProps {
     masterData: {
-        actionTypes: { data: ImprovementActionType[] };
-        categories: { data: ActionCategory[] };
-        subcategories: { data: ActionSubcategory[] };
+        ambits: { data: ImprovementActionType[] };
+        origins: { data: ActionCategory[] };
+        classifications: { data: ActionSubcategory[] };
         [key: string]: any;
     };
     onSave: (collectionName: string, item: MasterDataItem) => Promise<void>;
     onDelete: (collectionName: string, itemId: string) => Promise<void>;
-    canManage: (item: MasterDataItem | null, type: 'ambit' | 'origen' | 'classificacio') => boolean;
+    canManage: (item: MasterDataItem | null, type: 'ambit' | 'origin' | 'classification') => boolean;
 }
 
 const Column = ({ title, items, selectedId, onSelect, onAdd, onEdit, onDelete, canManage }: { 
@@ -104,13 +104,13 @@ export function HierarchicalSettings({ masterData, onSave, onDelete, canManage }
 
     const filteredOrigenes = useMemo(() => {
         if (!selectedAmbit) return [];
-        return masterData.categories.data.filter(origen => origen.actionTypeIds?.includes(selectedAmbit));
-    }, [selectedAmbit, masterData.categories.data]);
+        return masterData.origins.data.filter(origen => origen.actionTypeIds?.includes(selectedAmbit));
+    }, [selectedAmbit, masterData.origins.data]);
 
     const filteredClassificacions = useMemo(() => {
         if (!selectedOrigen) return [];
-        return masterData.subcategories.data.filter(classificacio => classificacio.categoryId === selectedOrigen);
-    }, [selectedOrigen, masterData.subcategories.data]);
+        return masterData.classifications.data.filter(classificacio => classificacio.categoryId === selectedOrigen);
+    }, [selectedOrigen, masterData.classifications.data]);
 
     // When the selected ambit changes, reset the origen and classificacio selection
     const handleSelectAmbit = (id: string | null) => {
@@ -137,10 +137,10 @@ export function HierarchicalSettings({ masterData, onSave, onDelete, canManage }
         if (item.id) {
             await onDelete(collectionName, item.id);
             // Reset selections if the deleted item was selected
-            if (collectionName === 'actionTypes' && item.id === selectedAmbit) {
+            if (collectionName === 'ambits' && item.id === selectedAmbit) {
                 handleSelectAmbit(null);
             }
-            if (collectionName === 'categories' && item.id === selectedOrigen) {
+            if (collectionName === 'origins' && item.id === selectedOrigen) {
                 handleSelectOrigen(null);
             }
         }
@@ -149,13 +149,13 @@ export function HierarchicalSettings({ masterData, onSave, onDelete, canManage }
     const getFormExtraData = () => {
         if (!formConfig) return {};
         switch (formConfig.collectionName) {
-            case 'categories': return { actionTypes: masterData.actionTypes.data, parentItemId: formConfig.parentItemId };
-            case 'subcategories': return { categories: masterData.categories.data, parentItemId: formConfig.parentItemId };
+            case 'origins': return { actionTypes: masterData.ambits.data, parentItemId: formConfig.parentItemId };
+            case 'classifications': return { categories: masterData.origins.data, parentItemId: formConfig.parentItemId };
             default: return {};
         }
     };
 
-    const ambits = masterData.actionTypes.data;
+    const ambits = masterData.ambits.data;
 
     return (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 h-full">
@@ -164,9 +164,9 @@ export function HierarchicalSettings({ masterData, onSave, onDelete, canManage }
                 items={ambits}
                 selectedId={selectedAmbit}
                 onSelect={handleSelectAmbit}
-                onAdd={() => handleAdd('actionTypes', 'Ámbito')}
-                onEdit={(item) => handleEdit('actionTypes', item, 'Ámbito')}
-                onDelete={(item) => handleDelete('actionTypes', item)}
+                onAdd={() => handleAdd('ambits', 'Ámbito')}
+                onEdit={(item) => handleEdit('ambits', item, 'Ámbito')}
+                onDelete={(item) => handleDelete('ambits', item)}
                 canManage={canManage(null, 'ambit')}
             />
             <Column 
@@ -174,9 +174,9 @@ export function HierarchicalSettings({ masterData, onSave, onDelete, canManage }
                 items={filteredOrigenes}
                 selectedId={selectedOrigen}
                 onSelect={handleSelectOrigen}
-                onAdd={() => selectedAmbit && handleAdd('categories', 'Origen', selectedAmbit)}
-                onEdit={(item) => handleEdit('categories', item, 'Origen')}
-                onDelete={(item) => handleDelete('categories', item)}
+                onAdd={() => selectedAmbit && handleAdd('origins', 'Origen', selectedAmbit)}
+                onEdit={(item) => handleEdit('origins', item, 'Origen')}
+                onDelete={(item) => handleDelete('origins', item)}
                 canManage={!!selectedAmbit && canManage(ambits.find(a => a.id === selectedAmbit) || null, 'ambit')}
             />
             <Column 
@@ -184,10 +184,10 @@ export function HierarchicalSettings({ masterData, onSave, onDelete, canManage }
                 items={filteredClassificacions}
                 selectedId={null} // No selection state needed for the last column
                 onSelect={() => {}}
-                onAdd={() => selectedOrigen && handleAdd('subcategories', 'Clasificación', selectedOrigen)}
-                onEdit={(item) => handleEdit('subcategories', item, 'Clasificación')}
-                onDelete={(item) => handleDelete('subcategories', item)}
-                canManage={!!selectedOrigen && canManage(filteredOrigenes.find(o => o.id === selectedOrigen) || null, 'origen')}
+                onAdd={() => selectedOrigen && handleAdd('classifications', 'Clasificación', selectedOrigen)}
+                onEdit={(item) => handleEdit('classifications', item, 'Clasificación')}
+                onDelete={(item) => handleDelete('classifications', item)}
+                canManage={!!selectedOrigen && canManage(filteredOrigenes.find(o => o.id === selectedOrigen) || null, 'origin')}
             />
 
             {formConfig && isFormOpen && (
@@ -204,4 +204,3 @@ export function HierarchicalSettings({ masterData, onSave, onDelete, canManage }
         </div>
     );
 }
-

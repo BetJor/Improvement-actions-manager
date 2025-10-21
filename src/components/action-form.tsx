@@ -138,16 +138,16 @@ export function ActionForm({
   const selectedCenterId = form.watch("centerId");
 
   const filteredCategories = useMemo(() => {
-    if (!selectedActionTypeId || !masterData?.categories) return [];
-    return masterData.categories.filter((c: ActionCategory) => 
+    if (!selectedActionTypeId || !masterData?.origins) return [];
+    return masterData.origins.filter((c: ActionCategory) => 
         !c.actionTypeIds || c.actionTypeIds.length === 0 || c.actionTypeIds.includes(selectedActionTypeId)
     );
   }, [selectedActionTypeId, masterData]);
 
 
   const filteredSubcategories = useMemo(() => {
-    if (!selectedCategoryId || !masterData?.subcategories) return [];
-    return masterData.subcategories.filter((sc: any) => sc.categoryId === selectedCategoryId);
+    if (!selectedCategoryId || !masterData?.classifications) return [];
+    return masterData.classifications.filter((sc: any) => sc.categoryId === selectedCategoryId);
   }, [selectedCategoryId, masterData]);
   
   useEffect(() => {
@@ -166,7 +166,7 @@ export function ActionForm({
   const responsibleOptions = useMemo(() => {
     if (!selectedActionTypeId || !masterData || !user) return [];
     
-    const actionType: ImprovementActionType | undefined = masterData.actionTypes.find((t: any) => t.id === selectedActionTypeId);
+    const actionType: ImprovementActionType | undefined = masterData.ambits.find((t: any) => t.id === selectedActionTypeId);
     if (!actionType?.possibleAnalysisRoles) return [];
 
     const options: { value: string, label: string }[] = [];
@@ -365,7 +365,7 @@ export function ActionForm({
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {masterData?.actionTypes.map((type: any) => (
+                    {masterData?.ambits.map((type: any) => (
                       <SelectItem key={type.id} value={type.id}>{type.name}</SelectItem>
                     ))}
                   </SelectContent>
@@ -691,4 +691,3 @@ export function ActionForm({
     </>
   )
 }
-

@@ -65,15 +65,15 @@ export function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, 
     if (collectionName === 'responsibilityRoles') {
       defaultData = { ...defaultData, type: "Fixed" };
     }
-    if (collectionName === 'actionTypes') {
+    if (collectionName === 'ambits') {
       defaultData = { ...defaultData, possibleCreationRoles: [], possibleAnalysisRoles: [], possibleClosureRoles: [], configAdminRoleIds: [] };
     }
-    if (collectionName === 'categories') {
+    if (collectionName === 'origins') {
       // Set parent if provided
       const parentAmbitId = extraData?.parentItemId;
       defaultData = { ...defaultData, actionTypeIds: parentAmbitId ? [parentAmbitId] : [] };
     }
-    if (collectionName === 'subcategories') {
+    if (collectionName === 'classifications') {
        // Set parent if provided
        const parentOrigenId = extraData?.parentItemId;
        defaultData = { ...defaultData, categoryId: parentOrigenId || '' };
@@ -99,7 +99,7 @@ export function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, 
     const categoryData = formData as ActionCategory;
     const subcategoryData = formData as ActionSubcategory;
 
-    if (collectionName === 'categories' && extraData?.actionTypes) {
+    if (collectionName === 'origins' && extraData?.actionTypes) {
       const handleActionTypeSelection = (actionTypeId: string) => {
         const currentIds = categoryData.actionTypeIds || [];
         const newIds = currentIds.includes(actionTypeId)
@@ -143,7 +143,7 @@ export function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, 
       );
     }
 
-    if (collectionName === 'subcategories' && extraData?.categories) {
+    if (collectionName === 'classifications' && extraData?.categories) {
       return (
         <div className="grid grid-cols-4 items-center gap-4">
           <Label htmlFor={'categoryId'} className="text-right">Origen</Label>
@@ -164,7 +164,7 @@ export function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, 
       );
     }
 
-    if (collectionName === 'actionTypes' && extraData?.responsibilityRoles) {
+    if (collectionName === 'ambits' && extraData?.responsibilityRoles) {
       const handleRoleSelection = (roleId: string, fieldName: keyof ImprovementActionType) => {
         const currentRoles = (actionTypeData[fieldName] as string[] || []);
         const newRoles = currentRoles.includes(roleId)
@@ -272,9 +272,9 @@ export function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, 
     return null;
   };
 
-  const nameFieldLabel = collectionName === 'categories' ? 'Origen' :
-                         collectionName === 'subcategories' ? 'Clasificación' :
-                         collectionName === 'actionTypes' ? 'Ámbito' :
+  const nameFieldLabel = collectionName === 'origins' ? 'Origen' :
+                         collectionName === 'classifications' ? 'Clasificación' :
+                         collectionName === 'ambits' ? 'Ámbito' :
                          'Nombre';
 
 
@@ -422,13 +422,13 @@ export function MasterDataManager({ data, onSave, onDelete, activeTab, setActive
 
   const getExtraDataForTab = (tabKey: string) => {
     let extraData: any = {};
-    if (tabKey === 'subcategories' && data.categories) {
-      extraData.categories = data.categories.data;
+    if (tabKey === 'classifications' && data.origins) {
+      extraData.categories = data.origins.data;
     }
-    if (tabKey === 'categories' && data.actionTypes) {
-      extraData.actionTypes = data.actionTypes.data;
+    if (tabKey === 'origins' && data.ambits) {
+      extraData.actionTypes = data.ambits.data;
     }
-    if (tabKey === 'actionTypes' && data.responsibilityRoles) {
+    if (tabKey === 'ambits' && data.responsibilityRoles) {
       extraData.responsibilityRoles = data.responsibilityRoles.data;
     }
     return extraData;
@@ -436,23 +436,23 @@ export function MasterDataManager({ data, onSave, onDelete, activeTab, setActive
   
   const canEditItem = useMemo(() => (item: MasterDataItem): boolean => {
     if (userIsAdmin) return true;
-    if (!data.actionTypes) return false;
+    if (!data.ambits) return false;
 
-    if (activeTab === 'categories') {
+    if (activeTab === 'origins') {
       const category = item as ActionCategory;
       if (!category.actionTypeIds || category.actionTypeIds.length === 0) return false; 
       
-      const relatedActionTypes = data.actionTypes.data.filter(at => category.actionTypeIds!.includes(at.id!));
+      const relatedActionTypes = data.ambits.data.filter(at => category.actionTypeIds!.includes(at.id!));
       return relatedActionTypes.some(at => 
         (at as ImprovementActionType).configAdminRoleIds?.some(roleId => userRoles.includes(roleId))
       );
     }
-    if (activeTab === 'subcategories') {
+    if (activeTab === 'classifications') {
         const subcategory = item as ActionSubcategory;
-        const parentCategory = data.categories.data.find(c => c.id === subcategory.categoryId) as ActionCategory;
+        const parentCategory = data.origins.data.find(c => c.id === subcategory.categoryId) as ActionCategory;
         if (!parentCategory || !parentCategory.actionTypeIds) return false;
 
-        const relatedActionTypes = data.actionTypes.data.filter(at => parentCategory.actionTypeIds!.includes(at.id!));
+        const relatedActionTypes = data.ambits.data.filter(at => parentCategory.actionTypeIds!.includes(at.id!));
         return relatedActionTypes.some(at =>
             (at as ImprovementActionType).configAdminRoleIds?.some(roleId => userRoles.includes(roleId))
         );

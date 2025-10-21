@@ -10,23 +10,23 @@ let isSeedingMasterData = false;
 
 
 export const getActionTypes = async (): Promise<ImprovementActionType[]> => {
-  const typesCol = collection(db, 'actionTypes');
+  const typesCol = collection(db, 'ambits');
   let snapshot = await getDocs(query(typesCol, orderBy("name")));
 
   if (snapshot.empty && !isSeedingMasterData) {
       isSeedingMasterData = true; 
-      console.log("ActionTypes collection is empty. Populating with seed data...");
+      console.log("Ambits collection is empty. Populating with seed data...");
       try {
           const batch = writeBatch(db);
           seedActionTypes.forEach(item => {
-              const docRef = doc(db, 'actionTypes', item.id);
+              const docRef = doc(db, 'ambits', item.id);
               batch.set(docRef, item);
           });
           await batch.commit();
           snapshot = await getDocs(query(typesCol, orderBy("name"))); // Re-fetch
-          console.log("ActionTypes collection seeded successfully.");
+          console.log("Ambits collection seeded successfully.");
       } catch(error) {
-          console.error("Error seeding actionTypes:", error);
+          console.error("Error seeding ambits:", error);
       } finally {
           isSeedingMasterData = false;
       }
@@ -36,23 +36,23 @@ export const getActionTypes = async (): Promise<ImprovementActionType[]> => {
 };
 
 export const getCategories = async (): Promise<ActionCategory[]> => {
-  const categoriesCol = collection(db, 'categories');
+  const categoriesCol = collection(db, 'origins');
   let snapshot = await getDocs(query(categoriesCol, orderBy("name")));
 
   if (snapshot.empty && !isSeedingMasterData) {
     isSeedingMasterData = true;
-    console.log("Categories collection is empty. Populating with seed data...");
+    console.log("Origins collection is empty. Populating with seed data...");
     try {
         const batch = writeBatch(db);
         seedCategories.forEach(item => {
-            const docRef = doc(db, 'categories', item.id);
+            const docRef = doc(db, 'origins', item.id);
             batch.set(docRef, item);
         });
         await batch.commit();
         snapshot = await getDocs(query(categoriesCol, orderBy("name")));
-        console.log("Categories collection seeded successfully.");
+        console.log("Origins collection seeded successfully.");
     } catch(error) {
-        console.error("Error seeding categories:", error);
+        console.error("Error seeding origins:", error);
     } finally {
         isSeedingMasterData = false;
     }
@@ -62,23 +62,23 @@ export const getCategories = async (): Promise<ActionCategory[]> => {
 };
 
 export const getSubcategories = async (): Promise<ActionSubcategory[]> => {
-  const subcategoriesCol = collection(db, 'subcategories');
+  const subcategoriesCol = collection(db, 'classifications');
   let snapshot = await getDocs(query(subcategoriesCol, orderBy("name")));
   
   if (snapshot.empty && !isSeedingMasterData) {
     isSeedingMasterData = true;
-    console.log("Subcategories collection is empty. Populating with seed data...");
+    console.log("Classifications collection is empty. Populating with seed data...");
     try {
         const batch = writeBatch(db);
         seedSubcategories.forEach(item => {
-            const docRef = doc(db, 'subcategories', item.id);
+            const docRef = doc(db, 'classifications', item.id);
             batch.set(docRef, item);
         });
         await batch.commit();
         snapshot = await getDocs(query(subcategoriesCol, orderBy("name")));
-        console.log("Subcategories collection seeded successfully.");
+        console.log("Classifications collection seeded successfully.");
     } catch(error) {
-        console.error("Error seeding subcategories:", error);
+        console.error("Error seeding classifications:", error);
     } finally {
         isSeedingMasterData = false;
     }

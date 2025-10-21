@@ -29,24 +29,24 @@ export default function SettingsPage() {
     const [activeTab, setActiveTab] = useState<string>("hierarchy");
     const [userRoles, setUserRoles] = useState<string[]>([]);
     
-    const canManage = (item: ImprovementActionType | ActionCategory | ActionSubcategory | null, type: 'ambit' | 'origen' | 'classificacio'): boolean => {
+    const canManage = (item: ImprovementActionType | ActionCategory | ActionSubcategory | null, type: 'ambit' | 'origin' | 'classification'): boolean => {
         if (!item || isAdmin) return true;
 
         if (type === 'ambit') {
             const ambit = item as ImprovementActionType;
             return !!ambit.configAdminRoleIds?.some(roleId => userRoles.includes(roleId));
         }
-        if (type === 'origen') {
+        if (type === 'origin') {
             const origen = item as ActionCategory;
-            const relatedAmbits = masterData?.actionTypes.data.filter((at: ImprovementActionType) => at.id && origen.actionTypeIds?.includes(at.id));
-            if (!relatedAmbits || relatedAmbits.length === 0) return false; // Orígenes sin ámbito no son editables por no-admins
+            const relatedAmbits = masterData?.ambits.data.filter((at: ImprovementActionType) => at.id && origen.actionTypeIds?.includes(at.id));
+            if (!relatedAmbits || relatedAmbits.length === 0) return false; // Orígens sense àmbit no són editables per no-admins
             return relatedAmbits.every((ambit: ImprovementActionType) => canManage(ambit, 'ambit'));
         }
-        if (type === 'classificacio') {
+        if (type === 'classification') {
             const classificacio = item as ActionSubcategory;
-            const parentOrigen = masterData?.categories.data.find((c: ActionCategory) => c.id === classificacio.categoryId);
+            const parentOrigen = masterData?.origins.data.find((c: ActionCategory) => c.id === classificacio.categoryId);
             if (!parentOrigen) return false;
-            return canManage(parentOrigen, 'origen');
+            return canManage(parentOrigen, 'origin');
         }
         return false;
     };
@@ -64,9 +64,9 @@ export default function SettingsPage() {
             ]);
 
             const data = {
-                actionTypes: { title: "Ámbitos", data: actionTypes, columns: [{ key: 'name', label: "Nombre" }] },
-                categories: { title: "Orígenes", data: categories, columns: [{ key: 'name', label: "Origen" }, { key: 'actionTypeNames', label: 'Ámbitos Relacionados' }] },
-                subcategories: { title: "Clasificaciones", data: subcategories, columns: [{ key: 'name', label: "Clasificación" }, { key: 'categoryName', label: "Origen" }] },
+                ambits: { title: "Ámbitos", data: actionTypes, columns: [{ key: 'name', label: "Nombre" }] },
+                origins: { title: "Orígenes", data: categories, columns: [{ key: 'name', label: "Origen" }, { key: 'actionTypeNames', label: 'Ámbitos Relacionados' }] },
+                classifications: { title: "Clasificaciones", data: subcategories, columns: [{ key: 'name', label: "Clasificación" }, { key: 'categoryName', label: "Origen" }] },
                 affectedAreas: { title: "Áreas Afectadas", data: affectedAreas, columns: [{ key: 'name', label: "Nombre" }] },
                 responsibilityRoles: { title: "Roles de Responsabilidad", data: responsibilityRoles, columns: [{ key: 'name', label: 'Nombre' }, { key: 'type', label: 'Tipo' }, { key: 'email', label: 'Email' }, { key: 'emailPattern', label: 'Patrón Email' }] }
             };
@@ -148,7 +148,7 @@ export default function SettingsPage() {
 
     const nonHierarchicalTabs = useMemo(() => {
         if (!masterData) return [];
-        return Object.keys(masterData).filter(key => !['actionTypes', 'categories', 'subcategories'].includes(key));
+        return Object.keys(masterData).filter(key => !['ambits', 'origins', 'classifications'].includes(key));
     }, [masterData]);
 
     return (
@@ -199,4 +199,3 @@ export default function SettingsPage() {
         </div>
     );
 }
-
