@@ -54,9 +54,10 @@ interface MasterDataFormDialogProps {
     responsibilityRoles?: ResponsibilityRole[];
     parentItemId?: string; // For adding children
   };
+  isPermissionDialog?: boolean;
 }
 
-export function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, title, onSave, extraData }: MasterDataFormDialogProps) {
+export function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, title, onSave, extraData, isPermissionDialog = false }: MasterDataFormDialogProps) {
   const [formData, setFormData] = useState<MasterDataItem>({ id: "", name: "" });
   const { toast } = useToast();
 
@@ -80,7 +81,7 @@ export function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, 
   }, [item, collectionName, extraData]);
 
   const handleSave = async () => {
-    if (!formData.name) {
+    if (!isPermissionDialog && !formData.name) {
       toast({
         variant: "destructive",
         title: "Error de validación",
@@ -208,6 +209,10 @@ export function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, 
           </div>
         );
       };
+      
+      if (isPermissionDialog) {
+          return renderDropdown('configAdminRoleIds', 'Admins de Configuración');
+      }
 
       return (
         <>
@@ -280,11 +285,15 @@ export function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, 
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{item ? "Editar" : "Añadir"} {title}</DialogTitle>
-          <DialogDescription>Rellena los detalles a continuación.</DialogDescription>
+          <DialogTitle>{item ? (isPermissionDialog ? title : "Editar " + title) : "Añadir " + title}</DialogTitle>
+          <DialogDescription>
+             {isPermissionDialog
+                ? "Selecciona los roles que podrán gestionar la configuración de este ámbito."
+                : "Rellena los detalles a continuación."}
+          </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
-          {collectionName !== 'permissionMatrix' && (
+          {!isPermissionDialog && (
              <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="name" className="text-right">{nameFieldLabel}</Label>
               <Input
@@ -436,6 +445,15 @@ export function MasterDataManager({ data, onSave, onDelete, activeTab, setActive
     if (userIsAdmin) return true;
     if (!data.ambits) return false;
 
+    // A user can edit a non-hierarchical item if they are an admin.
+    if (!['ambits', 'origins', 'classifications'].includes(activeTab)) {
+        return userIsAdmin;
+    }
+
+    if (activeTab === 'ambits') {
+      const ambit = item as ImprovementActionType;
+      return ambit.configAdminRoleIds?.some(roleId => userRoles.includes(roleId)) ?? false;
+    }
     if (activeTab === 'origins') {
       const category = item as ActionCategory;
       if (!category.actionTypeIds || category.actionTypeIds.length === 0) return false; 

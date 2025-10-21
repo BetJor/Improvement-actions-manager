@@ -3,7 +3,7 @@
 "use client";
 
 import { useEffect, useState, useCallback, useMemo } from "react";
-import { MasterDataManager } from "@/components/master-data-manager";
+import { MasterDataManager, MasterDataFormDialog } from "@/components/master-data-manager";
 import {
     getCategories,
     getSubcategories,
@@ -31,18 +31,23 @@ export default function SettingsPage() {
     const [activeTab, setActiveTab] = useState<string>("hierarchy");
     const [userRoles, setUserRoles] = useState<string[]>([]);
     
-    const canManage = (item: ImprovementActionType | ActionCategory | ActionSubcategory | null, type: 'ambit' | 'origin' | 'classification'): boolean => {
-        if (!item || isAdmin) return true;
+    const canManage = useCallback((item: ImprovementActionType | ActionCategory | ActionSubcategory | null, type: 'ambit' | 'origin' | 'classification'): boolean => {
+        if (isAdmin) return true;
+        if (!item) return false;
+
+        const findAmbit = (id: string): ImprovementActionType | undefined => masterData?.ambits.data.find((a: ImprovementActionType) => a.id === id);
 
         if (type === 'ambit') {
             const ambit = item as ImprovementActionType;
-            return !!ambit.configAdminRoleIds?.some(roleId => userRoles.includes(roleId));
+            if (!ambit.configAdminRoleIds || ambit.configAdminRoleIds.length === 0) return false;
+            return ambit.configAdminRoleIds.some(roleId => userRoles.includes(roleId));
         }
         if (type === 'origin') {
             const origen = item as ActionCategory;
-            const relatedAmbits = masterData?.ambits.data.filter((at: ImprovementActionType) => at.id && origen.actionTypeIds?.includes(at.id));
-            if (!relatedAmbits || relatedAmbits.length === 0) return false; // Orígens sense àmbit no són editables per no-admins
-            return relatedAmbits.every((ambit: ImprovementActionType) => canManage(ambit, 'ambit'));
+            if (!origen.actionTypeIds) return false;
+            const relatedAmbits = origen.actionTypeIds.map(findAmbit).filter(Boolean);
+            if (relatedAmbits.length === 0) return false;
+            return relatedAmbits.every(ambit => canManage(ambit, 'ambit'));
         }
         if (type === 'classification') {
             const classificacio = item as ActionSubcategory;
@@ -51,7 +56,7 @@ export default function SettingsPage() {
             return canManage(parentOrigen, 'origin');
         }
         return false;
-    };
+    }, [isAdmin, userRoles, masterData]);
 
 
     const loadData = useCallback(async (currentTab?: string) => {
@@ -93,12 +98,15 @@ export default function SettingsPage() {
 
      useEffect(() => {
         if (user) {
+            // This is a simplified role resolution. In a real app, this would be more complex,
+            // potentially resolving group memberships into role IDs.
+            // For now, we'll assume a user's roles can be derived from their email or a direct property.
             const fetchUserRoles = async () => {
                 const fullUser = await getUserById(user.id);
-                // In a real scenario, this would resolve user's groups into role IDs
-                // For now, we assume a user's "role" is their email for pattern matching, etc.
                 if(fullUser?.email) {
-                    setUserRoles([fullUser.email]);
+                    // Example: 'quality@example.com' could be a role.
+                    // This logic would need to map to your ResponsibilityRole setup.
+                    setUserRoles([fullUser.email]); 
                 }
             };
             fetchUserRoles();
@@ -191,6 +199,12 @@ export default function SettingsPage() {
         if (!masterData) return [];
         return Object.keys(masterData).filter(key => !['ambits', 'origins', 'classifications'].includes(key));
     }, [masterData]);
+    
+    const filteredAmbits = useMemo(() => {
+        if (isAdmin || !masterData?.ambits) return masterData?.ambits.data || [];
+        return masterData.ambits.data.filter((ambit: ImprovementActionType) => canManage(ambit, 'ambit'));
+    }, [isAdmin, masterData, canManage]);
+
 
     return (
         <div className="flex flex-col gap-4 h-full">
@@ -212,11 +226,12 @@ export default function SettingsPage() {
                     </TabsList>
                     <TabsContent value="hierarchy" className="flex-grow mt-4">
                        <HierarchicalSettings
-                          masterData={masterData}
+                          masterData={{...masterData, ambits: {...masterData.ambits, data: filteredAmbits}}}
                           onSave={handleSave}
                           onDelete={handleDelete}
                           canManage={canManage}
                           onReorder={handleReorder}
+                          isAdmin={isAdmin}
                        />
                     </TabsContent>
                     {nonHierarchicalTabs.map(key => (

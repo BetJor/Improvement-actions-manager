@@ -2,7 +2,7 @@
 
 "use client"
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import type { MasterDataItem, ImprovementActionType, ActionCategory, ActionSubcategory } from '@/lib/types';
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -36,7 +36,7 @@ interface SortableItemProps {
 }
 
 const SortableItem = ({ item, selectedId, onSelect, onEdit, onDelete, canManage }: SortableItemProps) => {
-    const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: item.id! });
+    const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: item.id!, disabled: !canManage });
 
     const style = {
         transform: CSS.Transform.toString(transform),
@@ -97,6 +97,7 @@ interface HierarchicalSettingsProps {
     onDelete: (collectionName: string, itemId: string) => Promise<void>;
     canManage: (item: any, type: string) => boolean;
     onReorder: (collectionName: string, activeId: string, overId: string) => void;
+    isAdmin: boolean;
 }
 
 
@@ -111,9 +112,10 @@ interface ColumnProps {
     onDelete: (item: MasterDataItem) => void;
     onReorder: (collectionName: string, activeId: string, overId: string) => void;
     canManage: boolean;
+    canAdd: boolean;
 }
 
-const Column = ({ title, items, selectedId, collectionName, onSelect, onAdd, onEdit, onDelete, onReorder, canManage }: ColumnProps) => {
+const Column = ({ title, items, selectedId, collectionName, onSelect, onAdd, onEdit, onDelete, onReorder, canManage, canAdd }: ColumnProps) => {
     const sensors = useSensors(useSensor(PointerSensor));
 
     const handleDragEnd = (event: DragEndEvent) => {
@@ -127,7 +129,7 @@ const Column = ({ title, items, selectedId, collectionName, onSelect, onAdd, onE
         <Card className="flex flex-col h-full">
             <CardHeader className="flex-row items-center justify-between py-3 px-4 border-b">
                 <h3 className="font-semibold text-base">{title}</h3>
-                <Button size="icon" variant="ghost" onClick={onAdd} disabled={!canManage} className="h-7 w-7">
+                <Button size="icon" variant="ghost" onClick={onAdd} disabled={!canAdd} className="h-7 w-7">
                     <PlusCircle className="h-5 w-5" />
                 </Button>
             </CardHeader>
@@ -153,7 +155,7 @@ const Column = ({ title, items, selectedId, collectionName, onSelect, onAdd, onE
     );
 };
 
-export function HierarchicalSettings({ masterData, onSave, onDelete, canManage, onReorder }: HierarchicalSettingsProps) {
+export function HierarchicalSettings({ masterData, onSave, onDelete, canManage, onReorder, isAdmin }: HierarchicalSettingsProps) {
     const [selectedAmbit, setSelectedAmbit] = useState<string | null>(null);
     const [selectedOrigen, setSelectedOrigen] = useState<string | null>(null);
 
@@ -237,7 +239,8 @@ export function HierarchicalSettings({ masterData, onSave, onDelete, canManage, 
                 onEdit={(item) => handleEdit('ambits', item, 'Ámbito')}
                 onDelete={(item) => handleDelete('ambits', item)}
                 onReorder={onReorder}
-                canManage={canManage(null, 'ambit')}
+                canManage={isAdmin}
+                canAdd={isAdmin}
             />
             <Column 
                 title="Orígenes" 
@@ -249,7 +252,8 @@ export function HierarchicalSettings({ masterData, onSave, onDelete, canManage, 
                 onEdit={(item) => handleEdit('origins', item, 'Origen')}
                 onDelete={(item) => handleDelete('origins', item)}
                 onReorder={onReorder}
-                canManage={!!selectedAmbit && canManage(ambits.find(a => a.id === selectedAmbit) || null, 'ambit')}
+                canManage={canManage(ambits.find(a => a.id === selectedAmbit) || null, 'ambit')}
+                canAdd={!!selectedAmbit && canManage(ambits.find(a => a.id === selectedAmbit) || null, 'ambit')}
             />
             <Column 
                 title="Clasificaciones" 
@@ -261,7 +265,8 @@ export function HierarchicalSettings({ masterData, onSave, onDelete, canManage, 
                 onEdit={(item) => handleEdit('classifications', item, 'Clasificación')}
                 onDelete={(item) => handleDelete('classifications', item)}
                 onReorder={onReorder}
-                canManage={!!selectedOrigen && canManage(filteredOrigenes.find(o => o.id === selectedOrigen) || null, 'origin')}
+                canManage={canManage(filteredOrigenes.find(o => o.id === selectedOrigen) || null, 'origin')}
+                canAdd={!!selectedOrigen && canManage(filteredOrigenes.find(o => o.id === selectedOrigen) || null, 'origin')}
             />
 
             {formConfig && isFormOpen && (

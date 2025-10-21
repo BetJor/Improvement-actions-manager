@@ -3,162 +3,139 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { MasterDataManager } from "@/components/master-data-manager";
-import {
-    getActionTypes,
-    addMasterDataItem,
-    updateMasterDataItem,
-    deleteMasterDataItem,
-    getResponsibilityRoles,
-    getPermissionRules,
-} from "@/lib/data";
+import { getActionTypes, getResponsibilityRoles, updateMasterDataItem } from "@/lib/data";
 import { useToast } from "@/hooks/use-toast";
-import type { MasterDataItem, PermissionRule, ResponsibilityRole } from "@/lib/types";
-import { Loader2 } from "lucide-react";
+import type { ImprovementActionType, ResponsibilityRole } from "@/lib/types";
+import { Loader2, Pencil } from "lucide-react";
+import { useAuth } from "@/hooks/use-auth";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { MasterDataFormDialog } from "@/components/master-data-manager";
 
 export default function WorkflowPage() {
     const { toast } = useToast();
-    const [masterData, setMasterData] = useState<any>(null);
+    const { isAdmin } = useAuth();
+    const [ambits, setAmbits] = useState<ImprovementActionType[]>([]);
+    const [roles, setRoles] = useState<ResponsibilityRole[]>([]);
     const [isLoading, setIsLoading] = useState(true);
-    const [activeTab, setActiveTab] = useState<string>("");
+    const [isFormOpen, setIsFormOpen] = useState(false);
+    const [editingAmbit, setEditingAmbit] = useState<ImprovementActionType | null>(null);
 
-    const loadData = useCallback(async (currentTab?: string) => {
+    const loadData = useCallback(async () => {
         setIsLoading(true);
         try {
-            const [actionTypes, responsibilityRoles, permissionRules] = await Promise.all([
+            const [fetchedAmbits, fetchedRoles] = await Promise.all([
                 getActionTypes(),
                 getResponsibilityRoles(),
-                getPermissionRules(),
             ]);
-
-            const actionTypesWithRoleNames = actionTypes.map(at => ({
-                ...at,
-                creationRoleNames: (at.possibleCreationRoles || [])
-                    .map(roleId => responsibilityRoles.find(r => r.id === roleId)?.name || roleId)
-                    .join(', '),
-                analysisRoleNames: (at.possibleAnalysisRoles || [])
-                    .map(roleId => responsibilityRoles.find(r => r.id === roleId)?.name || roleId)
-                    .join(', '),
-                closureRoleNames: (at.possibleClosureRoles || [])
-                    .map(roleId => responsibilityRoles.find(r => r.id === roleId)?.name || roleId)
-                    .join(', '),
-            }));
-
-            const permissionRulesWithNames = permissionRules.map(rule => ({
-                ...rule,
-                actionTypeName: actionTypes.find(at => at.id === rule.actionTypeId)?.name || rule.actionTypeId,
-                readerRoleNames: (rule.readerRoleIds || []).map(id => responsibilityRoles.find(r => r.id === id)?.name).join(', '),
-                authorRoleNames: (rule.authorRoleIds || []).map(id => responsibilityRoles.find(r => r.id === id)?.name).join(', '),
-            }));
-
-
-            const data = {
-                actionTypes: { 
-                    title: "Tipos de Acción", 
-                    data: actionTypesWithRoleNames, 
-                    columns: [
-                        { key: 'name', label: "Nombre" },
-                        { key: 'creationRoleNames', label: "Creación" },
-                        { key: 'analysisRoleNames', label: "Análisis" },
-                        { key: 'closureRoleNames', label: "Cierre" },
-                    ] 
-                },
-                responsibilityRoles: { 
-                    title: "Roles de Responsabilidad", 
-                    data: responsibilityRoles, 
-                    columns: [
-                        { key: 'name', label: 'Nombre' },
-                        { key: 'type', label: 'Tipo' },
-                        { key: 'email', label: 'Email' },
-                        { key: 'emailPattern', label: 'Patrón Email' },
-                    ] 
-                },
-            };
-            setMasterData(data);
-            
-            if (!activeTab || !data[activeTab]) {
-                setActiveTab(Object.keys(data)[0]);
-            } else if (currentTab) {
-                setActiveTab(currentTab);
-            }
-
+            setAmbits(fetchedAmbits);
+            setRoles(fetchedRoles);
         } catch (error) {
-            console.error("Failed to load master data:", error);
+            console.error("Failed to load workflow data:", error);
             toast({
                 variant: "destructive",
                 title: "Error de carga",
-                description: "No se han podido cargar los datos maestros.",
+                description: "No se han podido cargar los datos para la gestión del workflow.",
             });
         } finally {
             setIsLoading(false);
         }
-    }, [activeTab, toast]);
+    }, [toast]);
     
     useEffect(() => {
-        if(!masterData) {
-            loadData();
-        }
-    }, [loadData, masterData]);
+        loadData();
+    }, [loadData]);
 
-
-    const handleSave = async (collectionName: string, item: MasterDataItem | PermissionRule) => {
-        try {
-            const { id, ...dataToSave } = item as any;
-            
-            const propertiesToRemove = ['actionTypeName', 'readerRoleNames', 'authorRoleNames', 'categoryName', 'creationRoleNames', 'analysisRoleNames', 'closureRoleNames'];
-            propertiesToRemove.forEach(prop => {
-                if (prop in dataToSave) {
-                    delete dataToSave[prop];
-                }
-            });
-
-            if (id) {
-                await updateMasterDataItem(collectionName, id, dataToSave);
-                toast({ title: "Elemento actualizado", description: "El elemento se ha actualizado correctamente." });
-            } else {
-                await addMasterDataItem(collectionName, dataToSave);
-                toast({ title: "Elemento creado", description: "El elemento se ha creado correctamente." });
-            }
-            await loadData(collectionName);
-        } catch (error) {
-            console.error(`Error saving item in ${collectionName}:`, error);
-            toast({ variant: "destructive", title: "Error al guardar", description: "No se pudo guardar el elemento." });
-        }
+    const handleEdit = (ambit: ImprovementActionType) => {
+        setEditingAmbit(ambit);
+        setIsFormOpen(true);
     };
 
-    const handleDelete = async (collectionName: string, itemId: string) => {
+    const handleSave = async (collectionName: string, item: any) => {
         try {
-            await deleteMasterDataItem(collectionName, itemId);
-            toast({ title: "Elemento eliminado", description: "El elemento se ha eliminado correctamente." });
-            await loadData(collectionName);
+            const { id, ...dataToSave } = item;
+            if (!id) throw new Error("Item ID is missing");
+            await updateMasterDataItem(collectionName, id, dataToSave);
+            toast({ title: "Permisos actualizados", description: "Los permisos para el ámbito se han guardado correctamente." });
+            setIsFormOpen(false);
+            await loadData(); // Recargar datos para mostrar cambios
         } catch (error) {
-            console.error(`Error deleting item from ${collectionName}:`, error);
-            toast({ variant: "destructive", title: "Error al eliminar", description: "No se pudo eliminar el elemento." });
+            console.error("Error saving permissions:", error);
+            toast({ variant: "destructive", title: "Error al guardar", description: "No se pudieron guardar los permisos." });
         }
     };
-
-
+    
     return (
         <div className="flex flex-col gap-4">
             <h1 className="text-3xl font-bold tracking-tight">Gestión del Workflow</h1>
             <p className="text-muted-foreground">
-                Define los roles y los permisos que gobiernan el ciclo de vida de las acciones de mejora.
+                Asigna roles con permiso para administrar la configuración (orígenes, clasificaciones) de cada ámbito.
             </p>
-            {isLoading && !masterData ? (
-                <div className="flex items-center justify-center h-64">
-                    <Loader2 className="h-8 w-8 animate-spin" />
-                </div>
-            ) : masterData ? (
-                <MasterDataManager 
-                    data={masterData}
+            <Card>
+                <CardHeader>
+                    <CardTitle>Permisos de Configuración por Ámbito</CardTitle>
+                    <CardDescription>
+                       Desde aquí puedes definir qué roles pueden editar los orígenes y clasificaciones asociados a cada ámbito en la pantalla de Configuración.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    {isLoading ? (
+                        <div className="flex items-center justify-center h-64">
+                            <Loader2 className="h-8 w-8 animate-spin" />
+                        </div>
+                    ) : (
+                        <div className="rounded-md border">
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Ámbito</TableHead>
+                                        <TableHead>Admins de Configuración</TableHead>
+                                        <TableHead className="text-right">Acciones</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {ambits.map(ambit => (
+                                        <TableRow key={ambit.id}>
+                                            <TableCell className="font-medium">{ambit.name}</TableCell>
+                                            <TableCell className="text-muted-foreground">
+                                                {(ambit.configAdminRoleIds || [])
+                                                    .map(roleId => roles.find(r => r.id === roleId)?.name)
+                                                    .filter(Boolean)
+                                                    .join(', ')}
+                                            </TableCell>
+                                            <TableCell className="text-right">
+                                                <Button variant="ghost" size="icon" onClick={() => handleEdit(ambit)} disabled={!isAdmin}>
+                                                    <Pencil className="h-4 w-4" />
+                                                </Button>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        </div>
+                    )}
+                </CardContent>
+            </Card>
+
+            {isFormOpen && editingAmbit && (
+                <MasterDataFormDialog
+                    isOpen={isFormOpen}
+                    setIsOpen={setIsFormOpen}
+                    item={editingAmbit}
+                    collectionName="ambits"
+                    title={`Permisos de '${editingAmbit.name}'`}
                     onSave={handleSave}
-                    onDelete={handleDelete}
-                    activeTab={activeTab}
-                    setActiveTab={setActiveTab}
-                    isLoading={isLoading}
+                    extraData={{ responsibilityRoles: roles }}
+                    isPermissionDialog={true} // Prop to indicate special mode
                 />
-            ) : (
-                <p>No se han podido cargar los datos.</p>
             )}
         </div>
     );
