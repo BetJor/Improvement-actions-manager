@@ -11,7 +11,8 @@ let isSeedingMasterData = false;
 
 export const getActionTypes = async (): Promise<ImprovementActionType[]> => {
   const typesCol = collection(db, 'ambits');
-  let snapshot = await getDocs(query(typesCol, orderBy("order")));
+  // Order by 'order' first, then by 'name' as a fallback.
+  let snapshot = await getDocs(query(typesCol, orderBy("order", "asc"), orderBy("name", "asc")));
 
   return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ImprovementActionType));
 };
@@ -86,20 +87,21 @@ export async function addMasterDataItem(collectionName: string, item: Omit<Maste
         throw new Error("Item name cannot be empty.");
     }
     
-    // Generate a URL-friendly ID from the name
-    const generatedId = item.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-
-    const docRef = doc(db, collectionName, generatedId);
-    const docSnap = await getDoc(docRef);
-
-    if (docSnap.exists()) {
-        // To prevent accidental overwrites, you might want to throw an error
-        // or append a unique suffix. For now, we'll throw an error.
-        throw new Error(`An item with the ID '${generatedId}' already exists.`);
-    }
-
     const collectionRef = collection(db, collectionName);
-    await addDoc(collectionRef, item);
+    
+    // Get the current max order value
+    const q = query(collectionRef, orderBy("order", "desc"), limit(1));
+    const snapshot = await getDocs(q);
+    let newOrder = 0;
+    if (!snapshot.empty) {
+        const lastItem = snapshot.docs[0].data();
+        if (typeof lastItem.order === 'number') {
+            newOrder = lastItem.order + 1;
+        }
+    }
+    
+    // Add the new item with the calculated order
+    await addDoc(collectionRef, { ...item, order: newOrder });
 }
 
 
