@@ -53,21 +53,21 @@ const SortableItem = ({ item, selectedId, onSelect, onEdit, onDelete, canManage 
                 selectedId === item.id ? "bg-primary/10 text-primary font-semibold" : "hover:bg-muted/50"
             )}
         >
-            <div className="flex items-center gap-2 flex-1 truncate">
-                <button {...attributes} {...listeners} className={cn("cursor-grab p-1", !canManage && "cursor-not-allowed opacity-50")} disabled={!canManage}>
-                    <GripVertical className="h-4 w-4 text-muted-foreground" />
-                </button>
-                <TooltipProvider delayDuration={300}>
-                    <Tooltip>
-                        <TooltipTrigger asChild>
+            <TooltipProvider delayDuration={300}>
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <div className="flex items-center gap-2 flex-1 truncate">
+                            <button {...attributes} {...listeners} className={cn("cursor-grab p-1", !canManage && "cursor-not-allowed opacity-50")} disabled={!canManage}>
+                                <GripVertical className="h-4 w-4 text-muted-foreground" />
+                            </button>
                             <span className="truncate pr-2">{item.name}</span>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                            <p>{item.name}</p>
-                        </TooltipContent>
-                    </Tooltip>
-                </TooltipProvider>
-            </div>
+                        </div>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                        <p>{item.name}</p>
+                    </TooltipContent>
+                </Tooltip>
+            </TooltipProvider>
              <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
                 <Button size="icon" variant="ghost" onClick={(e) => { e.stopPropagation(); onEdit(item); }} disabled={!canManage} className="h-7 w-7"><Pencil className="h-4 w-4"/></Button>
                 <AlertDialog>
