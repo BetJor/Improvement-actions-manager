@@ -2,7 +2,7 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Table,
@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Loader2, Pencil, PlusCircle, Trash2, Check, ChevronsUpDown, Info, ExternalLink } from "lucide-react";
-import type { MasterDataItem, ResponsibilityRole, ImprovementActionType, PermissionRule, ImprovementActionStatus, ActionCategory } from "@/lib/types";
+import type { MasterDataItem, ResponsibilityRole, ImprovementActionType, PermissionRule, ActionCategory, ActionSubcategory } from "@/lib/types";
 import {
   Dialog,
   DialogContent,
@@ -54,7 +54,7 @@ interface MasterDataFormDialogProps {
   title: string;
   onSave: (collection: string, item: MasterDataItem) => Promise<void>;
   extraData: {
-    categories?: MasterDataItem[];
+    categories?: ActionCategory[];
     actionTypes?: ImprovementActionType[];
     responsibilityRoles?: ResponsibilityRole[];
   };
@@ -70,7 +70,7 @@ function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, title, 
       defaultData = { ...defaultData, type: "Fixed" };
     }
     if (collectionName === 'actionTypes') {
-      defaultData = { ...defaultData, possibleCreationRoles: [], possibleAnalysisRoles: [], possibleClosureRoles: [] };
+      defaultData = { ...defaultData, possibleCreationRoles: [], possibleAnalysisRoles: [], possibleClosureRoles: [], configAdminRoleIds: [] };
     }
     if (collectionName === 'categories') {
       defaultData = { ...defaultData, actionTypeIds: [] };
@@ -95,7 +95,7 @@ function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, title, 
   };
 
   const renderSpecificFields = () => {
-    const actionTypeData = formData as any;
+    const actionTypeData = formData as ImprovementActionType;
     const categoryData = formData as ActionCategory;
 
     if (collectionName === 'categories' && extraData?.actionTypes) {
@@ -109,7 +109,7 @@ function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, title, 
 
       return (
         <div className="grid grid-cols-4 items-center gap-4">
-          <Label htmlFor="actionTypeIds" className="text-right">Ámbitos relacionados</Label>
+          <Label htmlFor="actionTypeIds" className="text-right">Ámbitos Relacionados</Label>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" className="col-span-3 justify-between">
@@ -164,15 +164,15 @@ function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, title, 
     }
 
     if (collectionName === 'actionTypes' && extraData?.responsibilityRoles) {
-      const handleRoleSelection = (roleId: string, fieldName: 'possibleCreationRoles' | 'possibleAnalysisRoles' | 'possibleClosureRoles') => {
-        const currentRoles = actionTypeData[fieldName] || [];
+      const handleRoleSelection = (roleId: string, fieldName: keyof ImprovementActionType) => {
+        const currentRoles = (actionTypeData[fieldName] as string[] || []);
         const newRoles = currentRoles.includes(roleId)
           ? currentRoles.filter((id: string) => id !== roleId)
           : [...currentRoles, roleId];
         setFormData({ ...formData, [fieldName]: newRoles });
       };
 
-      const renderDropdown = (fieldName: 'possibleCreationRoles' | 'possibleAnalysisRoles' | 'possibleClosureRoles', label: string) => {
+      const renderDropdown = (fieldName: keyof ImprovementActionType, label: string) => {
         const selectedRoles = (actionTypeData[fieldName] || []) as string[];
 
         return (
@@ -215,6 +215,8 @@ function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, title, 
           {renderDropdown('possibleCreationRoles', 'Roles para Creación')}
           {renderDropdown('possibleAnalysisRoles', 'Roles para Análisis')}
           {renderDropdown('possibleClosureRoles', 'Roles para Cierre')}
+          <hr className="my-4" />
+          {renderDropdown('configAdminRoleIds', 'Admins de Configuración')}
         </>
       );
     }
@@ -334,6 +336,7 @@ function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, title, 
 
   const nameFieldLabel = collectionName === 'categories' ? 'Origen' :
                          collectionName === 'subcategories' ? 'Clasificación' :
+                         collectionName === 'actionTypes' ? 'Ámbito' :
                          'Nombre';
 
 
@@ -345,15 +348,17 @@ function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, title, 
           <DialogDescription>Rellena los detalles a continuación.</DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="name" className="text-right">{nameFieldLabel}</Label>
-            <Input
-              id="name"
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="col-span-3"
-            />
-          </div>
+          {collectionName !== 'permissionMatrix' && (
+             <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="name" className="text-right">{nameFieldLabel}</Label>
+              <Input
+                id="name"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                className="col-span-3"
+              />
+            </div>
+          )}
           {renderSpecificFields()}
         </div>
         <DialogFooter>
@@ -371,9 +376,10 @@ interface MasterDataTableProps {
   onEdit: (item: MasterDataItem) => void;
   onDelete: (item: MasterDataItem) => void;
   isLoading: boolean;
+  canEdit: (item: MasterDataItem) => boolean;
 }
 
-function MasterDataTable({ data, columns, onEdit, onDelete, isLoading }: MasterDataTableProps) {
+function MasterDataTable({ data, columns, onEdit, onDelete, isLoading, canEdit }: MasterDataTableProps) {
   return (
     <div className="rounded-md border">
       <Table>
@@ -391,7 +397,9 @@ function MasterDataTable({ data, columns, onEdit, onDelete, isLoading }: MasterD
               </TableCell>
             </TableRow>
           ) : data.length > 0 ? (
-            data.map((item) => (
+            data.map((item) => {
+              const userCanEdit = canEdit(item);
+              return (
               <TableRow key={item.id}>
                 {columns.map(col => (
                   <TableCell key={`${item.id}-${col.key}`} className="py-2 align-top">
@@ -399,12 +407,12 @@ function MasterDataTable({ data, columns, onEdit, onDelete, isLoading }: MasterD
                   </TableCell>
                 ))}
                 <TableCell className="text-right py-2 align-top">
-                  <Button variant="ghost" size="icon" onClick={() => onEdit(item)}>
+                  <Button variant="ghost" size="icon" onClick={() => onEdit(item)} disabled={!userCanEdit}>
                     <Pencil className="h-4 w-4" />
                   </Button>
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
-                      <Button variant="ghost" size="icon">
+                      <Button variant="ghost" size="icon" disabled={!userCanEdit}>
                         <Trash2 className="h-4 w-4 text-destructive" />
                       </Button>
                     </AlertDialogTrigger>
@@ -421,7 +429,7 @@ function MasterDataTable({ data, columns, onEdit, onDelete, isLoading }: MasterD
                   </AlertDialog>
                 </TableCell>
               </TableRow>
-            ))
+            )})
           ) : (
             <TableRow>
               <TableCell colSpan={columns.length + 1} className="h-24 text-center">No hay datos para mostrar.</TableCell>
@@ -446,9 +454,11 @@ interface MasterDataManagerProps {
   activeTab: string;
   setActiveTab: (value: string) => void;
   isLoading: boolean;
+  userIsAdmin: boolean;
+  userRoles: string[];
 }
 
-export function MasterDataManager({ data, onSave, onDelete, activeTab, setActiveTab, isLoading }: MasterDataManagerProps) {
+export function MasterDataManager({ data, onSave, onDelete, activeTab, setActiveTab, isLoading, userIsAdmin, userRoles }: MasterDataManagerProps) {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [currentItem, setCurrentItem] = useState<MasterDataItem | null>(null);
 
@@ -489,6 +499,47 @@ export function MasterDataManager({ data, onSave, onDelete, activeTab, setActive
     }
     return extraData;
   };
+  
+  const canEditItem = useMemo(() => (item: MasterDataItem): boolean => {
+    if (userIsAdmin) return true;
+    if (!data.actionTypes) return false;
+
+    if (activeTab === 'categories') {
+      const category = item as ActionCategory;
+      if (!category.actionTypeIds || category.actionTypeIds.length === 0) return false; // Or true if unassigned means anyone can edit
+      
+      const relatedActionTypes = data.actionTypes.data.filter(at => category.actionTypeIds!.includes(at.id!));
+      return relatedActionTypes.some(at => 
+        (at as ImprovementActionType).configAdminRoleIds?.some(roleId => userRoles.includes(roleId))
+      );
+    }
+    if (activeTab === 'subcategories') {
+        const subcategory = item as ActionSubcategory;
+        const parentCategory = data.categories.data.find(c => c.id === subcategory.categoryId) as ActionCategory;
+        if (!parentCategory || !parentCategory.actionTypeIds) return false;
+
+        const relatedActionTypes = data.actionTypes.data.filter(at => parentCategory.actionTypeIds!.includes(at.id!));
+        return relatedActionTypes.some(at =>
+            (at as ImprovementActionType).configAdminRoleIds?.some(roleId => userRoles.includes(roleId))
+        );
+    }
+    
+    // Admin can edit everything, specific roles can edit their assigned scopes
+    return false;
+  }, [userIsAdmin, userRoles, activeTab, data]);
+
+  const canAddNew = useMemo(() => {
+    if (userIsAdmin) return true;
+    // For non-admins, they can only add items if they have *some* scope they can manage.
+    if (activeTab === 'categories' || activeTab === 'subcategories') {
+       const manageableScopes = data.actionTypes?.data.filter(at => 
+         (at as ImprovementActionType).configAdminRoleIds?.some(roleId => userRoles.includes(roleId))
+       );
+       return manageableScopes && manageableScopes.length > 0;
+    }
+    return false;
+  }, [userIsAdmin, userRoles, activeTab, data]);
+
 
   return (
     <>
@@ -501,7 +552,7 @@ export function MasterDataManager({ data, onSave, onDelete, activeTab, setActive
         {Object.keys(data).map(key => (
           <TabsContent key={key} value={key}>
             <div className="flex justify-end mb-4">
-              <Button onClick={handleAddNew}>
+              <Button onClick={handleAddNew} disabled={!userIsAdmin}>
                 <PlusCircle className="mr-2 h-4 w-4" /> Añadir Nuevo
               </Button>
             </div>
@@ -523,6 +574,7 @@ export function MasterDataManager({ data, onSave, onDelete, activeTab, setActive
               onEdit={handleEdit}
               onDelete={handleDelete}
               isLoading={isLoading}
+              canEdit={canEditItem}
             />
           </TabsContent>
         ))}

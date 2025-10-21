@@ -10,6 +10,7 @@ export interface ImprovementActionType extends MasterDataItem {
   possibleCreationRoles?: string[]; // IDs from ResponsibilityRole collection
   possibleAnalysisRoles?: string[]; // IDs from ResponsibilityRole collection
   possibleClosureRoles?: string[]; // IDs from ResponsibilityRole collection
+  configAdminRoleIds?: string[]; // IDs of ResponsibilityRole who can configure this scope
 }
 
 export interface ResponsibilityRole extends MasterDataItem {

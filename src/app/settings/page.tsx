@@ -2,7 +2,7 @@
 
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { MasterDataManager } from "@/components/master-data-manager";
 import {
     getCategories,
@@ -12,25 +12,31 @@ import {
     updateMasterDataItem,
     deleteMasterDataItem,
     getActionTypes,
+    getResponsibilityRoles,
+    getUserById,
 } from "@/lib/data";
 import { useToast } from "@/hooks/use-toast";
-import type { MasterDataItem, ActionCategory } from "@/lib/types";
+import type { MasterDataItem, ActionCategory, ResponsibilityRole, ImprovementActionType } from "@/lib/types";
 import { Loader2 } from "lucide-react";
+import { useAuth } from "@/hooks/use-auth";
 
 export default function SettingsPage() {
     const { toast } = useToast();
+    const { user, isAdmin } = useAuth();
     const [masterData, setMasterData] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [activeTab, setActiveTab] = useState<string>("");
+    const [userRoles, setUserRoles] = useState<string[]>([]);
 
     const loadData = useCallback(async (currentTab?: string) => {
         setIsLoading(true);
         try {
-            const [categories, subcategories, affectedAreas, actionTypes] = await Promise.all([
+            const [categories, subcategories, affectedAreas, actionTypes, responsibilityRoles] = await Promise.all([
                 getCategories(),
                 getSubcategories(),
                 getAffectedAreas(),
                 getActionTypes(),
+                getResponsibilityRoles(),
             ]);
 
             const subcategoriesWithCategoryName = subcategories.map(s => ({
@@ -55,10 +61,15 @@ export default function SettingsPage() {
 
 
             const data = {
+                actionTypes: { 
+                    title: "Ámbitos", 
+                    data: actionTypes, 
+                    columns: [{ key: 'name', label: "Nombre" }] 
+                },
                 categories: { 
                     title: "Orígens", 
                     data: categoriesWithActionTypeNames, 
-                    columns: [{ key: 'name', label: "Origen" }, { key: 'actionTypeNames', label: 'Àmbits Relacionats' }] 
+                    columns: [{ key: 'name', label: "Origen" }, { key: 'actionTypeNames', label: 'Ámbitos Relacionados' }] 
                 },
                 subcategories: { 
                     title: "Clasificaciones", 
@@ -70,11 +81,11 @@ export default function SettingsPage() {
                     data: affectedAreas, 
                     columns: [{ key: 'name', label: "Nombre" }] 
                 },
-                 actionTypes: { 
-                    title: "Ámbitos", 
-                    data: actionTypes, 
-                    columns: [{ key: 'name', label: "Nombre" }] 
-                },
+                responsibilityRoles: {
+                    title: "Roles de Responsabilidad",
+                    data: responsibilityRoles,
+                    columns: [{ key: 'name', label: 'Nombre' }, { key: 'type', label: 'Tipo' }, { key: 'email', label: 'Email' }, { key: 'emailPattern', label: 'Patrón Email' }]
+                }
             };
             setMasterData(data);
             
@@ -95,6 +106,20 @@ export default function SettingsPage() {
             setIsLoading(false);
         }
     }, [activeTab, toast]);
+
+     useEffect(() => {
+        if (user) {
+            const fetchUserRoles = async () => {
+                const fullUser = await getUserById(user.id);
+                // For simplicity, we assume roles are just the user's email for now.
+                // A real implementation would check against ResponsibilityRoles of type 'User' or 'Group'.
+                if(fullUser?.email) {
+                    setUserRoles([fullUser.email]);
+                }
+            };
+            fetchUserRoles();
+        }
+    }, [user]);
     
     useEffect(() => {
         if(!masterData) {
@@ -157,6 +182,8 @@ export default function SettingsPage() {
                     activeTab={activeTab}
                     setActiveTab={setActiveTab}
                     isLoading={isLoading}
+                    userIsAdmin={isAdmin}
+                    userRoles={userRoles}
                 />
             ) : (
                 <p>No se han podido cargar los datos.</p>
