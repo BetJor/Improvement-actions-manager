@@ -23,6 +23,7 @@ import {
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
 import { arrayMove, SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 
 
 interface SortableItemProps {
@@ -56,7 +57,16 @@ const SortableItem = ({ item, selectedId, onSelect, onEdit, onDelete, canManage 
                 <button {...attributes} {...listeners} className={cn("cursor-grab p-1", !canManage && "cursor-not-allowed opacity-50")} disabled={!canManage}>
                     <GripVertical className="h-4 w-4 text-muted-foreground" />
                 </button>
-                <span className="truncate pr-2">{item.name}</span>
+                <TooltipProvider delayDuration={300}>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <span className="truncate pr-2">{item.name}</span>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                            <p>{item.name}</p>
+                        </TooltipContent>
+                    </Tooltip>
+                </TooltipProvider>
             </div>
              <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
                 <Button size="icon" variant="ghost" onClick={(e) => { e.stopPropagation(); onEdit(item); }} disabled={!canManage} className="h-7 w-7"><Pencil className="h-4 w-4"/></Button>
@@ -161,14 +171,14 @@ export function HierarchicalSettings({ masterData, onSave, onDelete, canManage, 
     const filteredOrigenes = useMemo(() => {
         if (!selectedAmbit) return [];
         return [...masterData.origins.data]
-            .filter(origen => origen.actionTypeIds?.includes(selectedAmbit))
+            .filter((origen: ActionCategory) => origen.actionTypeIds?.includes(selectedAmbit))
             .sort((a, b) => (a.order ?? 0) - (b.order ?? 0) || a.name.localeCompare(b.name));
     }, [selectedAmbit, masterData.origins.data]);
 
     const filteredClassificacions = useMemo(() => {
         if (!selectedOrigen) return [];
         return [...masterData.classifications.data]
-            .filter(classificacio => classificacio.categoryId === selectedOrigen)
+            .filter((classificacio: ActionSubcategory) => classificacio.categoryId === selectedOrigen)
             .sort((a, b) => (a.order ?? 0) - (b.order ?? 0) || a.name.localeCompare(b.name));
     }, [selectedOrigen, masterData.classifications.data]);
 
