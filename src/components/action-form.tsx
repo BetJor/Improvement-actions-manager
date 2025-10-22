@@ -528,7 +528,7 @@ export function ActionForm({
                         </Button>
                       </FormControl>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent className="w-[300px]" align="start">
+                    <DropdownMenuContent className="w-[--radix-dropdown-menu-trigger-width]" align="start">
                         <DropdownMenuLabel>Áreas Afectadas</DropdownMenuLabel>
                         <DropdownMenuSeparator />
                         {masterData?.affectedAreas.map((area: AffectedArea) => (
