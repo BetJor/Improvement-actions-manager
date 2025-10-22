@@ -45,7 +45,7 @@ const pageConfig: { [key: string]: { icon: React.ElementType, titleKey: string }
 
 
 export function Header() {
-  const { user, logout, isImpersonating, stopImpersonating, companyLogoUrl } = useAuth();
+  const { user, logout, isImpersonating, stopImpersonating } = useAuth();
   const { tabs, activeTab, openTab } = useTabs();
   const pathname = usePathname();
   
@@ -74,12 +74,7 @@ export function Header() {
         <div className="flex items-center gap-4">
             <SidebarTrigger className="text-primary-foreground hover:text-primary-foreground/90" />
             <div className="flex items-center gap-2">
-                {companyLogoUrl ? (
-                  <Image src={companyLogoUrl} alt="Company Logo" width={32} height={32} className="h-8 w-auto rounded" />
-                ) : (
-                  <GanttChartSquare className="h-7 w-7" />
-                )}
-                <span className="text-lg font-semibold">Acciones de Mejora</span>
+                <Image src="/logo-asepeyo.png" alt="Company Logo" width={100} height={32} className="h-8 w-auto rounded" />
             </div>
         </div>
 

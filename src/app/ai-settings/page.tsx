@@ -5,16 +5,14 @@ import { useEffect, useState, useRef } from "react"
 import { useForm } from "react-hook-form"
 import * as z from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { getPrompt, updatePrompt, getWorkflowSettings, updateWorkflowSettings, getCompanyLogoUrl, uploadCompanyLogo } from "@/lib/data"
+import { getPrompt, updatePrompt, getWorkflowSettings, updateWorkflowSettings } from "@/lib/data"
 import { useToast } from "@/hooks/use-toast"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Loader2, UploadCloud } from "lucide-react"
-import Image from "next/image"
-import { useAuth } from "@/hooks/use-auth"
+import { Loader2 } from "lucide-react"
 
 
 const settingsSchema = z.object({
@@ -34,9 +32,6 @@ export default function AiSettingsPage() {
   const { toast } = useToast()
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
-  const [isUploadingLogo, setIsUploadingLogo] = useState(false);
-  const { companyLogoUrl, setCompanyLogoUrl: setGlobalLogoUrl } = useAuth();
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const form = useForm<SettingsFormValues>({
     resolver: zodResolver(settingsSchema),
@@ -109,34 +104,6 @@ export default function AiSettingsPage() {
     }
   }
 
-  const handleLogoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    setIsUploadingLogo(true);
-    try {
-        const newLogoUrl = await uploadCompanyLogo(file);
-        setGlobalLogoUrl(newLogoUrl);
-        toast({
-            title: "Logo subido",
-            description: "El nuevo logo de la empresa se ha guardado correctamente.",
-        });
-    } catch (error) {
-        console.error("Failed to upload logo:", error);
-        toast({
-            variant: "destructive",
-            title: "Error de subida",
-            description: "No se ha podido subir el logo.",
-        });
-    } finally {
-        setIsUploadingLogo(false);
-        if (fileInputRef.current) {
-            fileInputRef.current.value = "";
-        }
-    }
-  };
-
-
   return (
     <Card>
       <CardHeader>
@@ -152,44 +119,6 @@ export default function AiSettingsPage() {
         ) : (
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-
-               <Card>
-                  <CardHeader>
-                      <CardTitle>Logotip de l'Empresa</CardTitle>
-                      <CardDescription>Puja el logo que apareixerà a la capçalera i als documents.</CardDescription>
-                  </CardHeader>
-                  <CardContent className="flex flex-col sm:flex-row items-center gap-6">
-                      <div className="relative w-32 h-32 bg-muted/50 rounded-lg flex items-center justify-center">
-                          {isUploadingLogo ? (
-                             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-                          ) : companyLogoUrl ? (
-                             <Image src={companyLogoUrl} alt="Company Logo" layout="fill" objectFit="contain" className="p-2"/>
-                          ) : (
-                             <span className="text-xs text-muted-foreground text-center">Sense logo</span>
-                          )}
-                      </div>
-                      <div className="flex-1">
-                          <label htmlFor="logo-upload-button" className="w-full">
-                              <Button asChild className="w-full cursor-pointer">
-                                  <span>
-                                      <UploadCloud className="mr-2 h-4 w-4" />
-                                      {isUploadingLogo ? "Pujant..." : "Canviar Logo"}
-                                  </span>
-                              </Button>
-                              <input 
-                                  id="logo-upload-button"
-                                  type="file"
-                                  accept="image/png, image/jpeg, image/svg+xml"
-                                  className="hidden"
-                                  onChange={handleLogoUpload}
-                                  ref={fileInputRef}
-                                  disabled={isUploadingLogo}
-                              />
-                          </label>
-                           <p className="text-xs text-muted-foreground mt-2">Format recomanat: PNG, JPG o SVG. Mida màxima: 1MB.</p>
-                      </div>
-                  </CardContent>
-              </Card>
               
               <Card>
                   <CardHeader>

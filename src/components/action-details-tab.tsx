@@ -1,5 +1,4 @@
 
-
 "use client"
 
 import { useState, useEffect } from "react"
@@ -52,7 +51,7 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
     const { toast } = useToast()
     const router = useRouter();
     const { closeCurrentTab } = useTabs();
-    const { user, companyLogoUrl } = useAuth()
+    const { user } = useAuth()
     const { actions, setActions } = useActionState();
 
     const [action, setAction] = useState<ImprovementAction | null>(initialAction);
@@ -263,15 +262,18 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
         if (!action) return;
         
         let logoBase64 = null;
-        if (companyLogoUrl) {
-            try {
-                // Use axios to fetch the image as a blob, which is friendlier for ArrayBuffer conversion
-                const response = await axios.get(companyLogoUrl, { responseType: 'arraybuffer' });
-                const imageBuffer = Buffer.from(response.data, 'binary');
-                logoBase64 = imageBuffer.toString('base64');
-            } catch (error) {
-                console.error("Could not fetch or convert company logo:", error);
-            }
+        try {
+            const response = await fetch('/logo-asepeyo.png');
+            const blob = await response.blob();
+            const reader = new FileReader();
+            await new Promise((resolve, reject) => {
+                reader.onload = resolve;
+                reader.onerror = reject;
+                reader.readAsDataURL(blob);
+            });
+            logoBase64 = (reader.result as string).split(',')[1];
+        } catch (error) {
+            console.error("Could not fetch or convert company logo:", error);
         }
     
         const doc = new jsPDF() as jsPDFWithAutoTable;
@@ -287,10 +289,9 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
         
         // --- HEADER & LOGO ---
         if (logoBase64) {
-            const logoProperties = doc.getImageProperties(logoBase64);
-            const logoWidth = 30; // Desired width in PDF units
-            const logoHeight = (logoProperties.height * logoWidth) / logoProperties.width;
-            doc.addImage(logoBase64, 'PNG', pageWidth - margin - logoWidth, margin, logoWidth, logoHeight);
+            const logoWidth = 40; 
+            const logoHeight = 10;
+            doc.addImage(`data:image/png;base64,${logoBase64}`, 'PNG', pageWidth - margin - logoWidth, margin, logoWidth, logoHeight);
         }
         
         doc.setFontSize(22);
