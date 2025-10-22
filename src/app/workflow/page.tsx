@@ -31,30 +31,41 @@ export default function WorkflowPage() {
                 getResponsibilityRoles(),
             ]);
 
+            const getRoleNames = (roleIds: string[] | undefined) => {
+                if (!roleIds) return '';
+                return roleIds
+                    .map(roleId => responsibilityRoles.find(r => r.id === roleId)?.name || roleId)
+                    .join(', ');
+            };
+
             const actionTypesWithRoleNames = actionTypes.map(at => ({
                 ...at,
-                configAdminRoleNames: (at.configAdminRoleIds || [])
-                    .map(roleId => responsibilityRoles.find(r => r.id === roleId)?.name || roleId)
-                    .join(', '),
+                configAdminRoleNames: getRoleNames(at.configAdminRoleIds),
+                creationRoleNames: getRoleNames(at.possibleCreationRoles),
+                analysisRoleNames: getRoleNames(at.possibleAnalysisRoles),
+                closureRoleNames: getRoleNames(at.possibleClosureRoles),
             }));
 
             const data = {
                 ambits: { 
-                    title: "Àmbits", 
+                    title: "Ámbitos", 
                     data: actionTypesWithRoleNames, 
                     columns: [
-                        { key: 'name', label: "Nom" },
-                        { key: 'configAdminRoleNames', label: "Admins de Configuració" }
+                        { key: 'name', label: "Nombre" },
+                        { key: 'configAdminRoleNames', label: "Admins de Configuración" },
+                        { key: 'creationRoleNames', label: "Creación" },
+                        { key: 'analysisRoleNames', label: "Análisis" },
+                        { key: 'closureRoleNames', label: "Cierre" },
                     ] 
                 },
                 responsibilityRoles: { 
-                    title: "Rols de Responsabilitat", 
+                    title: "Roles de Responsabilidad", 
                     data: responsibilityRoles, 
                     columns: [
-                        { key: 'name', label: 'Nom' },
-                        { key: 'type', label: 'Tipus' },
+                        { key: 'name', label: 'Nombre' },
+                        { key: 'type', label: 'Tipo' },
                         { key: 'email', label: 'Email' },
-                        { key: 'emailPattern', label: 'Patró Email' },
+                        { key: 'emailPattern', label: 'Patrón Email' },
                     ] 
                 },
             };
@@ -68,8 +79,8 @@ export default function WorkflowPage() {
             console.error("Failed to load master data:", error);
             toast({
                 variant: "destructive",
-                title: "Error de càrrega",
-                description: "No s'han pogut carregar les dades mestres.",
+                title: "Error de carga",
+                description: "No se han podido cargar los datos maestros.",
             });
         } finally {
             setIsLoading(false);
@@ -88,7 +99,7 @@ export default function WorkflowPage() {
             const { id, ...dataToSave } = item as any;
             
             // Neteja de camps auxiliars abans de desar
-            const propertiesToRemove = ['configAdminRoleNames'];
+            const propertiesToRemove = ['configAdminRoleNames', 'creationRoleNames', 'analysisRoleNames', 'closureRoleNames'];
             propertiesToRemove.forEach(prop => {
                 if (prop in dataToSave) {
                     delete dataToSave[prop];
@@ -97,33 +108,33 @@ export default function WorkflowPage() {
 
             if (id) {
                 await updateMasterDataItem(collectionName, id, dataToSave);
-                toast({ title: "Element actualitzat", description: "L'element s'ha actualitzat correctament." });
+                toast({ title: "Elemento actualizado", description: "El elemento se ha actualizado correctamente." });
             } else {
                 await addMasterDataItem(collectionName, dataToSave);
-                toast({ title: "Element creat", description: "L'element s'ha creat correctament." });
+                toast({ title: "Elemento creado", description: "El elemento se ha creado correctamente." });
             }
             await loadData(collectionName);
         } catch (error) {
             console.error(`Error saving item in ${collectionName}:`, error);
-            toast({ variant: "destructive", title: "Error en desar", description: "No s'ha pogut desar l'element." });
+            toast({ variant: "destructive", title: "Error en desar", description: "No se ha pogut desar l'element." });
         }
     };
 
     const handleDelete = async (collectionName: string, itemId: string) => {
         try {
             await deleteMasterDataItem(collectionName, itemId);
-            toast({ title: "Element eliminat", description: "L'element s'ha eliminat correctament." });
+            toast({ title: "Elemento eliminado", description: "El elemento se ha eliminado correctamente." });
             await loadData(collectionName);
         } catch (error) {
             console.error(`Error deleting item from ${collectionName}:`, error);
-            toast({ variant: "destructive", title: "Error en eliminar", description: "No s'ha pogut eliminar l'element." });
+            toast({ variant: "destructive", title: "Error en eliminar", description: "No se ha pogut eliminar l'element." });
         }
     };
 
 
     return (
         <div className="flex flex-col gap-4">
-            <h1 className="text-3xl font-bold tracking-tight">Gestió del Workflow</h1>
+            <h1 className="text-3xl font-bold tracking-tight">Gestión del Workflow</h1>
             <p className="text-muted-foreground">
                 Defineix els rols de responsabilitat i assigna quins d'aquests rols poden configurar cada àmbit.
             </p>
@@ -143,9 +154,8 @@ export default function WorkflowPage() {
                     userRoles={userRoles}
                 />
             ) : (
-                <p>No s'han pogut carregar les dades.</p>
+                <p>No se han podido cargar los datos.</p>
             )}
         </div>
     );
 }
-

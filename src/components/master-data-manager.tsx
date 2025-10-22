@@ -68,7 +68,7 @@ export function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, 
       defaultData = { ...defaultData, type: "Fixed" };
     }
     if (collectionName === 'ambits') { // Correspon a 'ambits'
-      defaultData = { ...defaultData, configAdminRoleIds: [] };
+      defaultData = { ...defaultData, configAdminRoleIds: [], possibleCreationRoles: [], possibleAnalysisRoles: [], possibleClosureRoles: [] };
     }
     if (collectionName === 'origins') {
       const parentAmbitId = extraData?.parentItemId;
@@ -211,7 +211,14 @@ export function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, 
             );
         };
         
-        return renderDropdown('configAdminRoleIds', 'Admins de Configuración');
+        return (
+            <div className="space-y-4">
+                {renderDropdown('configAdminRoleIds', 'Admins de Configuración')}
+                {renderDropdown('possibleCreationRoles', 'Roles de Creación')}
+                {renderDropdown('possibleAnalysisRoles', 'Roles de Análisis')}
+                {renderDropdown('possibleClosureRoles', 'Roles de Cierre')}
+            </div>
+        );
     }
 
 
@@ -475,4 +482,3 @@ export function MasterDataManager({ data, onSave, onDelete, activeTab, setActive
     </Tabs>
   );
 }
-
