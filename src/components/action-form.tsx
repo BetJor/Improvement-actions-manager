@@ -89,7 +89,7 @@ export function ActionForm({
     onCancel
 }: ActionFormProps) {
   const { toast } = useToast()
-  const { user } = useAuth()
+  const { user, isAdmin, userRoles } = useAuth()
   
   const [isRecording, setIsRecording] = useState(false);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
@@ -136,6 +136,19 @@ export function ActionForm({
   const selectedActionTypeId = form.watch("typeId");
   const selectedCategoryId = form.watch("category");
   const selectedCenterId = form.watch("centerId");
+
+  const filteredAmbits = useMemo(() => {
+    if (!masterData?.ambits?.data) return [];
+    if (isAdmin) return masterData.ambits.data;
+    
+    return masterData.ambits.data.filter((ambit: ImprovementActionType) => {
+        if (!ambit.possibleCreationRoles || ambit.possibleCreationRoles.length === 0) {
+            return false;
+        }
+        return ambit.possibleCreationRoles.some(roleId => userRoles.includes(roleId));
+    });
+  }, [masterData, isAdmin, userRoles]);
+
 
   const filteredCategories = useMemo(() => {
     if (!selectedActionTypeId || !masterData?.origins?.data) return [];
@@ -380,7 +393,7 @@ export function ActionForm({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {masterData?.ambits.data.map((type: any) => (
+                      {filteredAmbits.map((type: any) => (
                         <SelectItem key={type.id} value={type.id}>{type.name}</SelectItem>
                       ))}
                     </SelectContent>
@@ -688,5 +701,3 @@ export function ActionForm({
     </>
   )
 }
-
-    
