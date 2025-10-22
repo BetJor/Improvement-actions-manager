@@ -41,6 +41,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "./ui/dropdown-menu";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
+import { Separator } from "./ui/separator";
 
 interface MasterDataFormDialogProps {
   isOpen: boolean;
@@ -69,7 +70,7 @@ export function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, 
       defaultData = { ...defaultData, type: "Fixed" };
     }
     if (collectionName === 'ambits') { // Correspon a 'ambits'
-      defaultData = { ...defaultData, configAdminRoleIds: [], possibleCreationRoles: [], possibleAnalysisRoles: [], possibleClosureRoles: [] };
+      defaultData = { ...defaultData, configAdminRoleIds: [], possibleCreationRoles: [], possibleAnalysisRoles: [], possibleClosureRoles: [], analysisDueDays: 30, implementationDueDays: 75, closureDueDays: 90 };
     }
     if (collectionName === 'origins') {
       const parentAmbitId = extraData?.parentItemId;
@@ -93,6 +94,13 @@ export function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, 
     }
     await onSave(collectionName, formData);
     setIsOpen(false);
+  };
+  
+  const handleNumericChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    // Permet valors buits per a esborrar, però desa com a número si és vàlid
+    const numericValue = value === '' ? undefined : parseInt(value, 10);
+    setFormData({ ...formData, [name]: isNaN(numericValue!) ? undefined : numericValue });
   };
 
   const renderSpecificFields = () => {
@@ -215,9 +223,25 @@ export function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, 
         return (
             <div className="space-y-4">
                 {renderDropdown('configAdminRoleIds', 'Admins de Configuración', !userIsAdmin)}
+                <Separator />
+                <h4 className="font-semibold text-center text-muted-foreground">Permisos de Workflow</h4>
                 {renderDropdown('possibleCreationRoles', 'Roles de Creación')}
                 {renderDropdown('possibleAnalysisRoles', 'Roles de Análisis')}
                 {renderDropdown('possibleClosureRoles', 'Roles de Cierre')}
+                <Separator />
+                <h4 className="font-semibold text-center text-muted-foreground">Vencimientos (días)</h4>
+                <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="analysisDueDays" className="text-right">Análisis</Label>
+                    <Input id="analysisDueDays" name="analysisDueDays" type="number" value={actionTypeData.analysisDueDays ?? ''} onChange={handleNumericChange} className="col-span-3" />
+                </div>
+                 <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="implementationDueDays" className="text-right">Implantación</Label>
+                    <Input id="implementationDueDays" name="implementationDueDays" type="number" value={actionTypeData.implementationDueDays ?? ''} onChange={handleNumericChange} className="col-span-3" />
+                </div>
+                 <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="closureDueDays" className="text-right">Cierre</Label>
+                    <Input id="closureDueDays" name="closureDueDays" type="number" value={actionTypeData.closureDueDays ?? ''} onChange={handleNumericChange} className="col-span-3" />
+                </div>
             </div>
         );
     }
@@ -281,7 +305,7 @@ export function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, 
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogContent>
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>{item ? (isPermissionDialog ? title : "Editar " + title) : "Añadir " + title}</DialogTitle>
           <DialogDescription>
@@ -449,6 +473,12 @@ export function MasterDataManager({ data, onSave, onDelete, activeTab, setActive
       return false; // Default to no edit rights for non-admins on other tabs for now
   }, [userIsAdmin, userRoles, activeTab]);
   
+  const canAddInTab = useMemo(() => {
+    if (userIsAdmin) return true;
+    if (activeTab === 'responsibilityRoles') return false;
+    return true; // For now, allow adding in other tabs, can be restricted later.
+  }, [userIsAdmin, activeTab]);
+
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
         <TabsList>
@@ -460,7 +490,7 @@ export function MasterDataManager({ data, onSave, onDelete, activeTab, setActive
         {Object.keys(data).map(key => (
             <TabsContent key={key} value={key} className="mt-4 flex-grow">
                  <div className="flex justify-end mb-4">
-                    <Button onClick={handleAddNew} disabled={!userIsAdmin}>
+                    <Button onClick={handleAddNew} disabled={!canAddInTab}>
                       <PlusCircle className="mr-2 h-4 w-4" /> Añadir Nuevo
                     </Button>
                   </div>

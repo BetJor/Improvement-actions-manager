@@ -62,6 +62,9 @@ export default function WorkflowPage() {
                         { key: 'creationRoleNames', label: "Creación" },
                         { key: 'analysisRoleNames', label: "Análisis" },
                         { key: 'closureRoleNames', label: "Cierre" },
+                        { key: 'analysisDueDays', label: "Dies Anàlisi" },
+                        { key: 'implementationDueDays', label: "Dies Implant." },
+                        { key: 'closureDueDays', label: "Dies Tanc." },
                     ] 
                 },
                 responsibilityRoles: { 

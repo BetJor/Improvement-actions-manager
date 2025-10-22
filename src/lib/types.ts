@@ -12,6 +12,9 @@ export interface ImprovementActionType extends MasterDataItem {
   possibleAnalysisRoles?: string[]; // IDs from ResponsibilityRole collection
   possibleClosureRoles?: string[]; // IDs from ResponsibilityRole collection
   configAdminRoleIds?: string[]; // IDs of ResponsibilityRole who can configure this scope
+  analysisDueDays?: number;
+  implementationDueDays?: number;
+  closureDueDays?: number;
 }
 
 export interface ResponsibilityRole extends MasterDataItem {

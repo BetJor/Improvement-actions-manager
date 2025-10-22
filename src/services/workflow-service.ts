@@ -19,12 +19,14 @@ export async function planTraditionalActionWorkflow(action: Omit<ImprovementActi
     const steps: WorkflowStep[] = [];
     const creationDate = parseISO(action.creationDate);
 
-    // These are simplified rules. You can make them as complex as you need
-    // by reading more configuration from Firestore.
-    // For now, we'll use a standard set of due dates.
-    const analysisDueDate = addDays(creationDate, 30);
-    const implementationDueDate = addDays(creationDate, 75);
-    const closureDueDate = addDays(creationDate, 90);
+    // Get due days from config, with fallbacks
+    const analysisDays = actionTypeConfig?.analysisDueDays ?? 30;
+    const implementationDays = actionTypeConfig?.implementationDueDays ?? 75;
+    const closureDays = actionTypeConfig?.closureDueDays ?? 90;
+
+    const analysisDueDate = addDays(creationDate, analysisDays);
+    const implementationDueDate = addDays(creationDate, implementationDays);
+    const closureDueDate = addDays(creationDate, closureDays);
 
     steps.push({
         stepName: 'Anàlisi de Causes',
