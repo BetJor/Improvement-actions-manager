@@ -17,6 +17,8 @@ import {
   DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuCheckboxItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu"
 import { Button } from "@/components/ui/button"
 import { ActionStatusBadge } from "./action-status-badge"
@@ -49,6 +51,28 @@ const safeFormatDate = (dateString?: string) => {
     }
 }
 
+// All possible columns for export
+const allPossibleColumns = [
+  { key: 'actionId', label: 'ID' },
+  { key: 'title', label: 'Título' },
+  { key: 'status', label: 'Estado' },
+  { key: 'type', label: 'Ámbito' },
+  { key: 'category', label: 'Origen' },
+  { key: 'subcategory', label: 'Clasificación' },
+  { key: 'center', label: 'Centro' },
+  { key: 'responsible', label: 'Responsable' },
+  { key: 'creator', label: 'Creador' },
+  { key: 'creationDate', label: 'Fecha Creación' },
+  { key: 'analysisDueDate', label: 'Vto. Análisis' },
+  { key: 'implementationDueDate', label: 'Vto. Implantación' },
+  { key: 'closureDueDate', label: 'Vto. Cierre' },
+  { key: 'description', label: 'Descripción' },
+];
+
+// Default columns for a quick export
+const defaultColumns = ['actionId', 'title', 'status', 'type', 'center', 'responsible', 'implementationDueDate'];
+
+
 export function ActionsTable({ actions }: ActionsTableProps) {
   const { openTab } = useTabs();
   
@@ -60,6 +84,8 @@ export function ActionsTable({ actions }: ActionsTableProps) {
   const [centerFilter, setCenterFilter] = useState<Set<string>>(new Set())
   const [sortConfig, setSortConfig] = useState<{ key: SortKey; direction: 'asc' | 'desc' } | null>(null)
   
+  const [selectedColumns, setSelectedColumns] = useState<Set<string>>(new Set(defaultColumns));
+
 
   const allStatuses = useMemo(() => Array.from(new Set(actions.map(a => a.status))), [actions])
   const allTypes = useMemo(() => Array.from(new Set(actions.map(a => a.type))), [actions])
@@ -173,27 +199,57 @@ export function ActionsTable({ actions }: ActionsTableProps) {
   }
 
   const handleExportToExcel = () => {
-    const dataToExport = filteredAndSortedActions.map(action => ({
-      'ID': action.actionId,
-      'Título': action.title,
-      'Estado': action.status,
-      'Ámbito': action.type,
-      'Centro': action.center,
-      'Responsable': action.responsibleUser?.name || action.responsibleGroupId,
-      'Vto. Análisis': safeFormatDate(action.analysisDueDate),
-      'Vto. Implantación': safeFormatDate(action.implementationDueDate),
-      'Vto. Cierre': safeFormatDate(action.closureDueDate),
-      'Fecha Creación': safeFormatDate(action.creationDate),
-    }));
+    const dataToExport = filteredAndSortedActions.map(action => {
+      const row: {[key: string]: any} = {};
+      selectedColumns.forEach(colKey => {
+        const colConfig = allPossibleColumns.find(c => c.key === colKey);
+        if (colConfig) {
+          let value;
+          switch(colKey) {
+            case 'responsible':
+              value = action.responsibleUser?.name || action.responsibleGroupId;
+              break;
+            case 'creator':
+              value = action.creator.name;
+              break;
+            case 'creationDate':
+            case 'analysisDueDate':
+            case 'implementationDueDate':
+            case 'closureDueDate':
+              value = safeFormatDate(action[colKey as keyof ImprovementAction] as string | undefined);
+              break;
+            default:
+              value = action[colKey as keyof ImprovementAction];
+          }
+          row[colConfig.label] = value;
+        }
+      });
+      return row;
+    });
 
     const ws = XLSX.utils.json_to_sheet(dataToExport);
-    ws['!cols'] = [
-      { wch: 12 }, { wch: 50 }, { wch: 25 }, { wch: 20 }, { wch: 30 },
-      { wch: 25 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 15 }
-    ];
+    
+    // Auto-size columns
+    const cols = Object.keys(dataToExport[0] || {}).map(key => ({
+      wch: Math.max(...dataToExport.map(row => row[key]?.toString().length || 0), key.length) + 2
+    }));
+    ws['!cols'] = cols;
+
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Acciones de Mejora");
     XLSX.writeFile(wb, "Acciones_de_Mejora.xlsx");
+  };
+
+  const toggleColumn = (colKey: string) => {
+    setSelectedColumns(prev => {
+        const newSet = new Set(prev);
+        if (newSet.has(colKey)) {
+            newSet.delete(colKey);
+        } else {
+            newSet.add(colKey);
+        }
+        return newSet;
+    });
   };
 
 
@@ -281,10 +337,50 @@ export function ActionsTable({ actions }: ActionsTableProps) {
             ))}
           </DropdownMenuContent>
         </DropdownMenu>
-        <Button variant="outline" onClick={handleExportToExcel}>
-          <FileSpreadsheet className="mr-2 h-4 w-4" />
-          Exportar a Excel
-        </Button>
+        
+        <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+                <Button variant="outline">
+                    <FileSpreadsheet className="mr-2 h-4 w-4" />
+                    Exportar
+                    <ChevronDown className="ml-2 h-4 w-4" />
+                </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-64">
+                <DropdownMenuLabel>Personalizar Columnas a Exportar</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <div className="max-h-60 overflow-y-auto px-1">
+                    {allPossibleColumns.map(col => (
+                        <DropdownMenuCheckboxItem
+                            key={col.key}
+                            checked={selectedColumns.has(col.key)}
+                            onCheckedChange={() => toggleColumn(col.key)}
+                        >
+                            {col.label}
+                        </DropdownMenuCheckboxItem>
+                    ))}
+                </div>
+                <DropdownMenuSeparator />
+                 <div className="p-2 space-y-2">
+                    <p className="text-xs text-muted-foreground text-center">
+                        {selectedColumns.size} de {allPossibleColumns.length} columnas seleccionadas
+                    </p>
+                    <div className="flex items-center justify-between gap-2">
+                        <Button variant="ghost" size="sm" className="text-xs" onClick={() => setSelectedColumns(new Set(allPossibleColumns.map(c => c.key)))}>Todo</Button>
+                        <Button variant="ghost" size="sm" className="text-xs" onClick={() => setSelectedColumns(new Set())}>Nada</Button>
+                        <Button variant="ghost" size="sm" className="text-xs" onClick={() => setSelectedColumns(new Set(defaultColumns))}>Defecto</Button>
+                    </div>
+                </div>
+                <DropdownMenuSeparator />
+                <div className="p-1">
+                    <Button onClick={handleExportToExcel} className="w-full bg-green-600 hover:bg-green-700">
+                        <FileSpreadsheet className="mr-2 h-4 w-4" />
+                        Exportar a Excel
+                    </Button>
+                </div>
+            </DropdownMenuContent>
+        </DropdownMenu>
+
       </div>
 
        {activeFiltersCount > 0 && (
