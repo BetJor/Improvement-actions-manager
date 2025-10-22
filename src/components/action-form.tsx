@@ -136,6 +136,7 @@ export function ActionForm({
   const selectedActionTypeId = form.watch("typeId");
   const selectedCategoryId = form.watch("category");
   const selectedCenterId = form.watch("centerId");
+  const selectedAffectedAreasIds = form.watch("affectedAreasIds");
 
   const filteredAmbits = useMemo(() => {
     if (!masterData?.ambits?.data) return [];
@@ -185,24 +186,27 @@ export function ActionForm({
     const options: { value: string, label: string }[] = [];
     
     actionType.possibleAnalysisRoles.forEach(roleId => {
-      const role: ResponsibilityRole | undefined = masterData.responsibilityRoles?.data.find((r: any) => r.id === roleId);
-      if (role) {
-        if (role.type === 'Fixed' && role.email) {
-          options.push({ value: role.email, label: `${role.name} (${role.email})` });
-        } else if (role.type === 'Pattern' && role.emailPattern) {
-            const center: Center | undefined = masterData.centers?.data.find((c: any) => c.id === selectedCenterId);
-            const context = {
-                action: { 
-                    creator: user,
-                    center: center
-                }
-            };
-            const resolvedEmail = evaluatePattern(role.emailPattern, context);
-            if (resolvedEmail && !resolvedEmail.includes('{')) {
-               options.push({ value: resolvedEmail, label: `${role.name} (${resolvedEmail})` });
+        const role: ResponsibilityRole | undefined = masterData.responsibilityRoles?.data.find((r: any) => r.id === roleId);
+        if (role) {
+            if (role.type === 'Fixed' && role.email) {
+                options.push({ value: role.email, label: `${role.name} (${role.email})` });
+            } else if (role.type === 'Pattern' && role.emailPattern) {
+                const center: Center | undefined = masterData.centers?.data.find((c: any) => c.id === selectedCenterId);
+                const context = {
+                    action: {
+                        creator: user,
+                        center: center,
+                        affectedAreasIds: selectedAffectedAreasIds,
+                    }
+                };
+                const resolvedEmails = evaluatePattern(role.emailPattern, context);
+                resolvedEmails.forEach(email => {
+                    if (email && !email.includes('{')) {
+                        options.push({ value: email, label: `${role.name} (${email})` });
+                    }
+                });
             }
         }
-      }
     });
 
     if (mode === 'edit' && initialData?.assignedTo && !options.some(opt => opt.value === initialData.assignedTo)) {
@@ -210,11 +214,11 @@ export function ActionForm({
     }
 
     return options;
-  }, [selectedActionTypeId, selectedCenterId, masterData, user, initialData?.assignedTo, mode]);
+}, [selectedActionTypeId, selectedCenterId, selectedAffectedAreasIds, masterData, user, initialData?.assignedTo, mode]);
 
   useEffect(() => {
     form.resetField("assignedTo", { defaultValue: "" });
-  }, [selectedActionTypeId, selectedCenterId, form]);
+  }, [selectedActionTypeId, selectedCenterId, selectedAffectedAreasIds, form]);
 
 
   useEffect(() => {

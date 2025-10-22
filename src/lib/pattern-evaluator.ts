@@ -13,20 +13,41 @@ function getProperty(obj: any, path: string): any {
  * against a data object.
  * @param pattern The string containing placeholders (e.g., "user-{{creator.id}}@example.com").
  * @param data The data object (e.g., the improvement action object).
- * @returns The evaluated string with placeholders replaced by values.
+ * @returns An array of evaluated strings with placeholders replaced by values.
  */
-export function evaluatePattern(pattern: string, data: any): string {
-    if (!pattern) return '';
+export function evaluatePattern(pattern: string, data: any): string[] {
+    if (!pattern) return [];
+
+    let patternsToProcess = [pattern];
+    let finalResults: string[] = [];
+    let hasArrayPlaceholder = false;
+
+    // Find array placeholders like {{action.affectedAreasIds}}
+    const arrayMatch = pattern.match(/\{\{([^}]+)\}\}/);
+    if (arrayMatch) {
+        const path = arrayMatch[1].trim();
+        const value = getProperty(data, path);
+        if (Array.isArray(value)) {
+            hasArrayPlaceholder = true;
+            // Create a pattern for each item in the array
+            patternsToProcess = value.map(item => pattern.replace(arrayMatch[0], String(item)));
+        }
+    }
     
-    // Regex to find all {{...}} placeholders
-    return pattern.replace(/\{\{([^}]+)\}\}/g, (match, path) => {
-        // Trim whitespace from the path inside the braces
-        const cleanPath = path.trim();
-        
-        // Resolve the value from the data object
-        const value = getProperty(data, cleanPath);
-        
-        // If the value is found, return it, otherwise return the original placeholder
-        return value !== undefined ? String(value) : match;
+    patternsToProcess.forEach(p => {
+        // Regex to find all {{...}} placeholders
+        const evaluatedString = p.replace(/\{\{([^}]+)\}\}/g, (match, path) => {
+            // Trim whitespace from the path inside the braces
+            const cleanPath = path.trim();
+            
+            // Resolve the value from the data object
+            const value = getProperty(data, cleanPath);
+            
+            // If the value is found, return it, otherwise return the original placeholder
+            return value !== undefined ? String(value) : match;
+        });
+        finalResults.push(evaluatedString);
     });
+
+    return finalResults;
 }
