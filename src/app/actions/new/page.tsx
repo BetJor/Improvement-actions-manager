@@ -43,7 +43,7 @@ export default function NewActionPage() {
             classifications: { data: subcats },
             affectedAreas: areas,
             responsibilityRoles: { data: roles },
-            centers: centers,
+            centers: { data: centers },
         })
       } catch (error) {
         console.error("Failed to load master data", error);
