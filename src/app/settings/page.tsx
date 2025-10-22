@@ -63,23 +63,24 @@ export default function SettingsPage() {
     const loadData = useCallback(async (currentTab?: string) => {
         setIsLoading(true);
         try {
-            const [categories, subcategories, affectedAreas, actionTypes, responsibilityRoles] = await Promise.all([
+            const [categories, subcategories, affectedAreas, actionTypes] = await Promise.all([
                 getCategories(),
                 getSubcategories(),
                 getAffectedAreas(),
                 getActionTypes(),
-                getResponsibilityRoles(),
             ]);
             
             const ambitsData = { title: "Ámbitos", data: actionTypes, columns: [{ key: 'name', label: "Nombre" }] };
 
-            const data = {
+            const data: any = {
                 ambits: ambitsData,
                 origins: { title: "Orígenes", data: categories, columns: [{ key: 'name', label: "Origen" }, { key: 'actionTypeNames', label: 'Ámbitos Relacionados' }] },
                 classifications: { title: "Clasificaciones", data: subcategories, columns: [{ key: 'name', label: "Clasificación" }, { key: 'categoryName', label: "Origen" }] },
-                affectedAreas: { title: "Áreas Afectadas", data: affectedAreas, columns: [{ key: 'name', label: "Nombre" }] },
-                responsibilityRoles: { title: "Roles de Responsabilidad", data: responsibilityRoles, columns: [{ key: 'name', label: 'Nombre' }, { key: 'type', label: 'Tipo' }, { key: 'email', label: 'Email' }, { key: 'emailPattern', label: 'Patrón Email' }] }
             };
+
+            if (isAdmin) {
+                data.affectedAreas = { title: "Áreas Afectadas", data: affectedAreas, columns: [{ key: 'name', label: "Nombre" }] };
+            }
 
             setMasterData(data);
             
@@ -97,7 +98,7 @@ export default function SettingsPage() {
         } finally {
             setIsLoading(false);
         }
-    }, [toast]);
+    }, [toast, isAdmin]);
 
     useEffect(() => {
         if(!masterData) {
@@ -183,7 +184,7 @@ export default function SettingsPage() {
 
     const nonHierarchicalTabs = useMemo(() => {
         if (!masterData) return [];
-        return Object.keys(masterData).filter(key => !['ambits', 'origins', 'classifications'].includes(key));
+        return Object.keys(masterData).filter(key => !['ambits', 'origins', 'classifications', 'responsibilityRoles'].includes(key));
     }, [masterData]);
     
     const filteredAmbits = useMemo(() => {
