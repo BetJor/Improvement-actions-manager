@@ -2,7 +2,7 @@
 
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { MasterDataManager } from "@/components/master-data-manager";
 import {
     getActionTypes,
@@ -45,11 +45,16 @@ export default function WorkflowPage() {
                 analysisRoleNames: getRoleNames(at.possibleAnalysisRoles),
                 closureRoleNames: getRoleNames(at.possibleClosureRoles),
             }));
+            
+            const filteredActionTypes = isAdmin 
+                ? actionTypesWithRoleNames
+                : actionTypesWithRoleNames.filter(at => at.configAdminRoleIds?.some(roleId => userRoles.includes(roleId)));
+
 
             const data = {
                 ambits: { 
                     title: "Ámbitos", 
-                    data: actionTypesWithRoleNames, 
+                    data: filteredActionTypes, 
                     columns: [
                         { key: 'name', label: "Nombre" },
                         { key: 'configAdminRoleNames', label: "Admins de Configuración" },
@@ -85,7 +90,7 @@ export default function WorkflowPage() {
         } finally {
             setIsLoading(false);
         }
-    }, [toast]);
+    }, [toast, isAdmin, userRoles]);
     
     useEffect(() => {
         if(!masterData) {
@@ -116,7 +121,7 @@ export default function WorkflowPage() {
             await loadData(collectionName);
         } catch (error) {
             console.error(`Error saving item in ${collectionName}:`, error);
-            toast({ variant: "destructive", title: "Error en desar", description: "No se ha pogut desar l'element." });
+            toast({ variant: "destructive", title: "Error al guardar", description: "No se pudo guardar el elemento." });
         }
     };
 
@@ -127,7 +132,7 @@ export default function WorkflowPage() {
             await loadData(collectionName);
         } catch (error) {
             console.error(`Error deleting item from ${collectionName}:`, error);
-            toast({ variant: "destructive", title: "Error en eliminar", description: "No se ha pogut eliminar l'element." });
+            toast({ variant: "destructive", title: "Error al eliminar", description: "No se pudo eliminar el elemento." });
         }
     };
 
@@ -136,7 +141,7 @@ export default function WorkflowPage() {
         <div className="flex flex-col gap-4">
             <h1 className="text-3xl font-bold tracking-tight">Gestión del Workflow</h1>
             <p className="text-muted-foreground">
-                Defineix els rols de responsabilitat i assigna quins d'aquests rols poden configurar cada àmbit.
+                Define los roles de responsabilidad y asigna qué roles pueden configurar cada ámbito.
             </p>
             {isLoading && !masterData ? (
                 <div className="flex items-center justify-center h-64">

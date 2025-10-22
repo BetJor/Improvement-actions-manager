@@ -56,9 +56,10 @@ interface MasterDataFormDialogProps {
     parentItemId?: string; // For adding children
   };
   isPermissionDialog?: boolean;
+  userIsAdmin?: boolean; // Pass admin status
 }
 
-export function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, title, onSave, extraData, isPermissionDialog = false }: MasterDataFormDialogProps) {
+export function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, title, onSave, extraData, isPermissionDialog = false, userIsAdmin = false }: MasterDataFormDialogProps) {
   const [formData, setFormData] = useState<MasterDataItem>({ id: "", name: "" });
   const { toast } = useToast();
 
@@ -174,14 +175,14 @@ export function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, 
             setFormData({ ...formData, [fieldName]: newRoles });
         };
         
-        const renderDropdown = (fieldName: keyof ImprovementActionType, label: string) => {
+        const renderDropdown = (fieldName: keyof ImprovementActionType, label: string, disabled: boolean = false) => {
             const selectedRoles = (actionTypeData[fieldName] || []) as string[];
             return (
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor={fieldName} className="text-right">{label}</Label>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="outline" className="col-span-3 justify-between">
+                    <Button variant="outline" className="col-span-3 justify-between" disabled={disabled}>
                       <span className="truncate">
                         {selectedRoles.length > 0
                           ? extraData.responsibilityRoles!
@@ -213,7 +214,7 @@ export function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, 
         
         return (
             <div className="space-y-4">
-                {renderDropdown('configAdminRoleIds', 'Admins de Configuración')}
+                {renderDropdown('configAdminRoleIds', 'Admins de Configuración', !userIsAdmin)}
                 {renderDropdown('possibleCreationRoles', 'Roles de Creación')}
                 {renderDropdown('possibleAnalysisRoles', 'Roles de Análisis')}
                 {renderDropdown('possibleClosureRoles', 'Roles de Cierre')}
@@ -439,8 +440,14 @@ export function MasterDataManager({ data, onSave, onDelete, activeTab, setActive
   };
   
   const canEditItem = useMemo(() => (item: MasterDataItem): boolean => {
-    return userIsAdmin; // De moment, només l'admin global pot editar.
-  }, [userIsAdmin]);
+      if (userIsAdmin) return true;
+      if (activeTab === 'ambits') {
+        const ambit = item as ImprovementActionType;
+        if (!ambit.configAdminRoleIds || ambit.configAdminRoleIds.length === 0) return false;
+        return ambit.configAdminRoleIds.some(roleId => userRoles.includes(roleId));
+      }
+      return false; // Default to no edit rights for non-admins on other tabs for now
+  }, [userIsAdmin, userRoles, activeTab]);
   
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
@@ -477,6 +484,7 @@ export function MasterDataManager({ data, onSave, onDelete, activeTab, setActive
             title={data[activeTab].title.endsWith('es') ? data[activeTab].title.slice(0, -2) : (data[activeTab].title.endsWith('s') ? data[activeTab].title.slice(0, -1) : data[activeTab].title)}
             onSave={handleSave}
             extraData={getExtraDataForTab(activeTab)}
+            userIsAdmin={userIsAdmin}
             />
         )}
     </Tabs>
