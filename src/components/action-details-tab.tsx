@@ -14,7 +14,7 @@ import { AnalysisSection } from "@/components/analysis-section"
 import { VerificationSection } from "@/components/verification-section"
 import { ClosureSection } from "@/components/closure-section"
 import { ActionDetailsPanel } from "@/components/action-details-panel"
-import { Loader2, FileEdit, Edit, Star, Printer } from "lucide-react"
+import { Loader2, FileEdit, Edit, Star, Printer, FileSpreadsheet } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Separator } from "@/components/ui/separator"
@@ -33,6 +33,8 @@ import { ActionStatusBadge } from "./action-status-badge"
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import type { UserOptions } from 'jspdf-autotable';
+import * as XLSX from 'xlsx';
+
 
 interface jsPDFWithAutoTable extends jsPDF {
   autoTable: (options: UserOptions) => jsPDF;
@@ -78,7 +80,7 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
                 origins: { data: cats },
                 classifications: { data: subcats },
                 affectedAreas: areas,
-                centers: centers,
+                centers: { data: centers },
                 responsibilityRoles: { data: roles },
             });
         };
@@ -449,6 +451,108 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
         doc.save(`Accion_Mejora_${action.actionId}.pdf`);
     };
 
+    const generateExcel = () => {
+        if (!action) return;
+    
+        const wb = XLSX.utils.book_new();
+    
+        // --- DETAILS WORKSHEET ---
+        const detailsData = [
+            ["ID Acción", action.actionId],
+            ["Título", action.title],
+            ["Estado", action.status === 'Finalizada' && action.closure?.isCompliant === false ? 'Finalizada (No Conforme)' : action.status],
+            ["Creador", action.creator.name],
+            ["Fecha Creación", safeParseDate(action.creationDate) ? format(safeParseDate(action.creationDate)!, 'dd/MM/yyyy HH:mm') : 'N/D'],
+            ["Ámbito", action.type],
+            ["Origen", action.category],
+            ["Clasificación", action.subcategory],
+            ["Centro", action.center],
+            ["Áreas Afectadas", action.affectedAreas.join(', ')],
+            ["Responsable Análisis", action.assignedTo],
+            ["Fecha Vto. Análisis", safeParseDate(action.analysisDueDate) ? format(safeParseDate(action.analysisDueDate)!, 'dd/MM/yyyy') : 'N/D'],
+            ["Fecha Vto. Implantación", safeParseDate(action.implementationDueDate) ? format(safeParseDate(action.implementationDueDate)!, 'dd/MM/yyyy') : 'N/D'],
+            ["Fecha Vto. Cierre", safeParseDate(action.closureDueDate) ? format(safeParseDate(action.closureDueDate)!, 'dd/MM/yyyy') : 'N/D'],
+            [], // Spacer
+            ["Hallazgo / Observaciones Iniciales"],
+            [action.description],
+            [],
+        ];
+    
+        if (action.analysis) {
+            detailsData.push(["ANÁLISIS DE CAUSAS Y PLAN DE ACCIÓN"]);
+            detailsData.push(["Análisis realizado por", action.analysis.analysisResponsible.name]);
+            detailsData.push(["Fecha de Análisis", safeParseDate(action.analysis.analysisDate) ? format(safeParseDate(action.analysis.analysisDate)!, 'dd/MM/yyyy') : 'N/D']);
+            detailsData.push(["Análisis de Causa Raíz"]);
+            detailsData.push([action.analysis.causes]);
+            detailsData.push(["Responsable Verificación", users.find(u => u.id === action.analysis?.verificationResponsibleUserId)?.name || 'N/D']);
+            detailsData.push([]);
+        }
+    
+        if (action.verification) {
+            detailsData.push(["VERIFICACIÓN DE IMPLANTACIÓN"]);
+            detailsData.push(["Verificado por", action.verification.verificationResponsible.name]);
+            detailsData.push(["Fecha de Verificación", safeParseDate(action.verification.verificationDate) ? format(safeParseDate(action.verification.verificationDate)!, 'dd/MM/yyyy') : 'N/D']);
+            detailsData.push(["Comentarios Generales"]);
+            detailsData.push([action.verification.notes]);
+            detailsData.push([]);
+        }
+    
+        if (action.closure) {
+            detailsData.push(["CIERRE DE LA ACCIÓN"]);
+            detailsData.push(["Cerrado por", action.closure.closureResponsible.name]);
+            detailsData.push(["Fecha de Cierre", safeParseDate(action.closure.date) ? format(safeParseDate(action.closure.date)!, 'dd/MM/yyyy') : 'N/D']);
+            detailsData.push(["Resultado Final", action.closure.isCompliant ? 'Conforme' : 'No Conforme']);
+            detailsData.push(["Observaciones de Cierre"]);
+            detailsData.push([action.closure.notes]);
+        }
+    
+        const wsDetails = XLSX.utils.aoa_to_sheet(detailsData);
+        wsDetails['!cols'] = [{ wch: 30 }, { wch: 80 }];
+        XLSX.utils.book_append_sheet(wb, wsDetails, 'Detalles');
+    
+        // --- PROPOSED ACTIONS WORKSHEET ---
+        if (action.analysis?.proposedActions?.length) {
+            const proposedActionsData = action.analysis.proposedActions.map(pa => ({
+                'Descripción': pa.description,
+                'Responsable': users.find(u => u.id === pa.responsibleUserId)?.name || 'N/D',
+                'Fecha Límite': safeParseDate(pa.dueDate) ? format(safeParseDate(pa.dueDate)!, 'dd/MM/yyyy') : 'N/D',
+                'Estado': pa.status || 'Pendiente',
+                'Fecha Estado': pa.statusUpdateDate ? format(safeParseDate(pa.statusUpdateDate)!, 'dd/MM/yyyy HH:mm') : 'N/D',
+                'Verificación': action.verification?.proposedActionsVerificationStatus?.[pa.id] || 'Pendiente',
+            }));
+            const wsProposedActions = XLSX.utils.json_to_sheet(proposedActionsData);
+            wsProposedActions['!cols'] = [{ wch: 60 }, { wch: 25 }, { wch: 15 }, { wch: 20 }, { wch: 20 }, { wch: 20 }];
+            XLSX.utils.book_append_sheet(wb, wsProposedActions, 'Acciones Propuestas');
+        }
+    
+        // --- COMMENTS WORKSHEET ---
+        if (action.comments?.length) {
+            const commentsData = action.comments.map(c => ({
+                'Autor': c.author.name,
+                'Fecha': safeParseDate(c.date) ? format(safeParseDate(c.date)!, 'dd/MM/yyyy HH:mm') : 'N/D',
+                'Comentario': c.text,
+            }));
+            const wsComments = XLSX.utils.json_to_sheet(commentsData);
+            wsComments['!cols'] = [{ wch: 25 }, { wch: 20 }, { wch: 80 }];
+            XLSX.utils.book_append_sheet(wb, wsComments, 'Comentarios');
+        }
+    
+        // --- ATTACHMENTS WORKSHEET ---
+        if (action.attachments?.length) {
+            const attachmentsData = action.attachments.map(a => ({
+                'Nombre Archivo': a.fileName,
+                'Subido Por': a.uploadedBy.name,
+                'Fecha Subida': safeParseDate(a.uploadedAt) ? format(safeParseDate(a.uploadedAt)!, 'dd/MM/yyyy HH:mm') : 'N/D',
+                'URL': a.fileUrl,
+            }));
+            const wsAttachments = XLSX.utils.json_to_sheet(attachmentsData);
+            wsAttachments['!cols'] = [{ wch: 40 }, { wch: 25 }, { wch: 20 }, { wch: 100 }];
+            XLSX.utils.book_append_sheet(wb, wsAttachments, 'Adjuntos');
+        }
+    
+        XLSX.writeFile(wb, `Accion_Mejora_${action.actionId}.xlsx`);
+    };
+
     if (!action || !masterData) {
         return (
             <div className="flex h-full w-full items-center justify-center">
@@ -520,10 +624,16 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
                       </Button>
                     <h1 className="text-3xl font-bold tracking-tight">{action.actionId}: {action.title}</h1>
                     <ActionStatusBadge status={action.status} isCompliant={action.closure?.isCompliant} />
-                    <Button variant="outline" size="sm" onClick={generatePdf} className="ml-auto">
-                        <Printer className="mr-2 h-4 w-4" />
-                        Exportar a PDF
-                    </Button>
+                    <div className="ml-auto flex items-center gap-2">
+                        <Button variant="outline" size="sm" onClick={generatePdf}>
+                            <Printer className="mr-2 h-4 w-4" />
+                            Exportar a PDF
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={generateExcel}>
+                            <FileSpreadsheet className="mr-2 h-4 w-4" />
+                            Exportar a Excel
+                        </Button>
+                    </div>
                 </header>
 
                 <Tabs defaultValue="details" className="w-full">

@@ -21,7 +21,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { ActionStatusBadge } from "./action-status-badge"
 import type { ImprovementAction, ImprovementActionStatus, ImprovementActionType, User } from "@/lib/types"
-import { ArrowUpDown, ChevronDown, GanttChartSquare, Star, X } from "lucide-react"
+import { ArrowUpDown, ChevronDown, GanttChartSquare, Star, X, FileSpreadsheet } from "lucide-react"
 import { useTabs } from "@/hooks/use-tabs"
 import { getActionById, getActionTypes, getCategories, getSubcategories, getAffectedAreas, getCenters, getResponsibilityRoles, getUsers } from "@/lib/data"
 import { ActionDetailsTab } from "@/components/action-details-tab"
@@ -31,6 +31,8 @@ import { useFollowAction } from "@/hooks/use-follow-action"
 import { Badge } from "./ui/badge"
 import { format, parseISO } from "date-fns"
 import { ActionStatusIndicator } from "./action-status-indicator"
+import * as XLSX from 'xlsx';
+
 
 interface ActionsTableProps {
   actions: ImprovementAction[];
@@ -170,6 +172,30 @@ export function ActionsTable({ actions }: ActionsTableProps) {
       });
   }
 
+  const handleExportToExcel = () => {
+    const dataToExport = filteredAndSortedActions.map(action => ({
+      'ID': action.actionId,
+      'Título': action.title,
+      'Estado': action.status,
+      'Ámbito': action.type,
+      'Centro': action.center,
+      'Responsable': action.responsibleUser?.name || action.responsibleGroupId,
+      'Vto. Análisis': safeFormatDate(action.analysisDueDate),
+      'Vto. Implantación': safeFormatDate(action.implementationDueDate),
+      'Vto. Cierre': safeFormatDate(action.closureDueDate),
+      'Fecha Creación': safeFormatDate(action.creationDate),
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(dataToExport);
+    ws['!cols'] = [
+      { wch: 12 }, { wch: 50 }, { wch: 25 }, { wch: 20 }, { wch: 30 },
+      { wch: 25 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 15 }
+    ];
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Acciones de Mejora");
+    XLSX.writeFile(wb, "Acciones_de_Mejora.xlsx");
+  };
+
 
   return (
     <div className="w-full">
@@ -255,6 +281,10 @@ export function ActionsTable({ actions }: ActionsTableProps) {
             ))}
           </DropdownMenuContent>
         </DropdownMenu>
+        <Button variant="outline" onClick={handleExportToExcel}>
+          <FileSpreadsheet className="mr-2 h-4 w-4" />
+          Exportar a Excel
+        </Button>
       </div>
 
        {activeFiltersCount > 0 && (
