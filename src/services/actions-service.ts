@@ -178,11 +178,11 @@ export async function createAction(data: CreateActionData, masterData: any): Pro
     const creatorDetails = await getUserById(data.creator.id);
 
     // Find names from IDs
-    const categoryName = masterData.categories.find((c: any) => c.id === data.category)?.name || data.category || '';
-    const subcategoryName = masterData.subcategories.find((s: any) => s.id === data.subcategory)?.name || data.subcategory || '';
+    const categoryName = masterData.origins.data.find((c: any) => c.id === data.category)?.name || data.category || '';
+    const subcategoryName = masterData.classifications.data.find((s: any) => s.id === data.subcategory)?.name || data.subcategory || '';
     const affectedAreasNames = data.affectedAreasIds.map(id => masterData.affectedAreas.find((a: any) => a.id === id)?.name || id);
-    const centerName = masterData.centers.find((c: any) => c.id === data.centerId)?.name || data.centerId || '';
-    const typeName = masterData.actionTypes.find((t: any) => t.id === data.typeId)?.name || data.typeId || '';
+    const centerName = masterData.centers.data.find((c: any) => c.id === data.centerId)?.name || data.centerId || '';
+    const typeName = masterData.ambits.data.find((t: any) => t.id === data.typeId)?.name || data.typeId || '';
 
     const newActionData: Omit<ImprovementAction, 'id'> = {
       actionId: newActionId,
@@ -303,15 +303,15 @@ export async function updateAction(actionId: string, data: any, masterData: any 
               description: data.description,
               assignedTo: data.assignedTo,
               responsibleGroupId: data.assignedTo,
-              category: masterData.categories.find((c: any) => c.id === data.category)?.name || data.category || '',
+              category: masterData.origins.data.find((c: any) => c.id === data.category)?.name || data.category || '',
               categoryId: data.category,
-              subcategory: masterData.subcategories.find((s: any) => s.id === data.subcategory)?.name || data.subcategory || '',
+              subcategory: masterData.classifications.data.find((s: any) => s.id === data.subcategory)?.name || data.subcategory || '',
               subcategoryId: data.subcategory,
               affectedAreas: data.affectedAreasIds.map((id: string) => masterData.affectedAreas.find((a: any) => a.id === id)?.name || id),
               affectedAreasIds: data.affectedAreasIds,
-              center: masterData.centers.find((c: any) => c.id === data.centerId)?.name || data.centerId || '',
+              center: masterData.centers.data.find((c: any) => c.id === data.centerId)?.name || data.centerId || '',
               centerId: data.centerId,
-              type: masterData.actionTypes.find((t: any) => t.id === data.typeId)?.name || data.typeId || '',
+              type: masterData.ambits.data.find((t: any) => t.id === data.typeId)?.name || data.typeId || '',
               typeId: data.typeId,
             };
         }
@@ -330,12 +330,12 @@ export async function updateAction(actionId: string, data: any, masterData: any 
         // Handle closure logic for non-compliant actions
         if (data.closure && !data.closure.isCompliant) {
             const allMasterData = {
-                categories: await getCategories(),
-                subcategories: await getSubcategories(),
+                origins: { data: await getCategories() },
+                classifications: { data: await getSubcategories() },
                 affectedAreas: await getAffectedAreas(),
-                centers: await getCenters(),
-                actionTypes: await getActionTypes(),
-                responsibilityRoles: await getResponsibilityRoles(),
+                centers: { data: await getCenters() },
+                ambits: { data: await getActionTypes() },
+                responsibilityRoles: { data: await getResponsibilityRoles() },
             };
             const bisActionData: CreateActionData = {
                 title: `${originalAction.title} BIS`,
