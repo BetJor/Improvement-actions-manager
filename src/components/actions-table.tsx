@@ -45,50 +45,40 @@ type SortKey = keyof ImprovementAction | 'responsible'
 const safeFormatDate = (dateString?: string) => {
     if (!dateString) return '';
     try {
-        return format(parseISO(dateString), 'dd/MM/yyyy');
+        const date = parseISO(dateString);
+        return format(date, 'dd/MM/yyyy HH:mm');
     } catch {
         return dateString; // Return original string if it's not a valid ISO date
     }
 }
 
-// All possible columns for export
-const allPossibleColumns = [
-  { key: 'actionId', label: 'ID' },
-  { key: 'title', label: 'Título' },
-  { key: 'status', label: 'Estado' },
-  { key: 'type', label: 'Ámbito' },
-  { key: 'category', label: 'Origen' },
-  { key: 'subcategory', label: 'Clasificación' },
-  { key: 'center', label: 'Centro' },
-  { key: 'responsible', label: 'Responsable' },
-  { key: 'creator', label: 'Creador' },
-  { key: 'creationDate', label: 'Fecha Creación' },
-  { key: 'analysisDueDate', label: 'Vto. Análisis' },
-  { key: 'implementationDueDate', label: 'Vto. Implantación' },
-  { key: 'closureDueDate', label: 'Vto. Cierre' },
-  { key: 'description', label: 'Descripción' },
-];
-
-// Default columns for a quick export
-const defaultColumns = ['actionId', 'title', 'status', 'type', 'center', 'responsible', 'implementationDueDate'];
+type ExportableSection = "details" | "plan" | "comments" | "attachments";
 
 
 export function ActionsTable({ actions }: ActionsTableProps) {
   const { openTab } = useTabs();
-  
   const { handleToggleFollow, isFollowing } = useFollowAction();
   
-  const [searchTerm, setSearchTerm] = useState("")
-  const [statusFilter, setStatusFilter] = useState<Set<ImprovementActionStatus>>(new Set())
-  const [typeFilter, setTypeFilter] = useState<Set<string>>(new Set())
-  const [centerFilter, setCenterFilter] = useState<Set<string>>(new Set())
-  const [sortConfig, setSortConfig] = useState<{ key: SortKey; direction: 'asc' | 'desc' } | null>(null)
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<Set<ImprovementActionStatus>>(new Set());
+  const [typeFilter, setTypeFilter] = useState<Set<string>>(new Set());
+  const [centerFilter, setCenterFilter] = useState<Set<string>>(new Set());
+  const [sortConfig, setSortConfig] = useState<{ key: SortKey; direction: 'asc' | 'desc' } | null>(null);
   
-  const [selectedColumns, setSelectedColumns] = useState<Set<string>>(new Set(defaultColumns));
+  const [selectedSections, setSelectedSections] = useState<Set<ExportableSection>>(new Set(["details"]));
+  const [users, setUsers] = useState<User[]>([]);
+
+  useEffect(() => {
+    async function loadUsers() {
+      const fetchedUsers = await getUsers();
+      setUsers(fetchedUsers);
+    }
+    loadUsers();
+  }, []);
 
 
-  const allStatuses = useMemo(() => Array.from(new Set(actions.map(a => a.status))), [actions])
-  const allTypes = useMemo(() => Array.from(new Set(actions.map(a => a.type))), [actions])
+  const allStatuses = useMemo(() => Array.from(new Set(actions.map(a => a.status))), [actions]);
+  const allTypes = useMemo(() => Array.from(new Set(actions.map(a => a.type))), [actions]);
   const allCenters = useMemo(() => Array.from(new Set(actions.map(a => a.center).filter(Boolean))) as string[], [actions]);
 
   const removeFilter = (filterSetState: React.Dispatch<React.SetStateAction<Set<any>>>, value: any) => {
@@ -107,7 +97,6 @@ export function ActionsTable({ actions }: ActionsTableProps) {
   }
 
   const activeFiltersCount = statusFilter.size + typeFilter.size + centerFilter.size + (searchTerm ? 1 : 0);
-
 
   const filteredAndSortedActions = useMemo(() => {
     let filtered = actions.filter(action => {
@@ -199,54 +188,102 @@ export function ActionsTable({ actions }: ActionsTableProps) {
   }
 
   const handleExportToExcel = () => {
-    const dataToExport = filteredAndSortedActions.map(action => {
-      const row: {[key: string]: any} = {};
-      selectedColumns.forEach(colKey => {
-        const colConfig = allPossibleColumns.find(c => c.key === colKey);
-        if (colConfig) {
-          let value;
-          switch(colKey) {
-            case 'responsible':
-              value = action.responsibleUser?.name || action.responsibleGroupId;
-              break;
-            case 'creator':
-              value = action.creator.name;
-              break;
-            case 'creationDate':
-            case 'analysisDueDate':
-            case 'implementationDueDate':
-            case 'closureDueDate':
-              value = safeFormatDate(action[colKey as keyof ImprovementAction] as string | undefined);
-              break;
-            default:
-              value = action[colKey as keyof ImprovementAction];
-          }
-          row[colConfig.label] = value;
-        }
-      });
-      return row;
-    });
-
-    const ws = XLSX.utils.json_to_sheet(dataToExport);
-    
-    // Auto-size columns
-    const cols = Object.keys(dataToExport[0] || {}).map(key => ({
-      wch: Math.max(...dataToExport.map(row => row[key]?.toString().length || 0), key.length) + 2
-    }));
-    ws['!cols'] = cols;
-
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Acciones de Mejora");
-    XLSX.writeFile(wb, "Acciones_de_Mejora.xlsx");
-  };
 
-  const toggleColumn = (colKey: string) => {
-    setSelectedColumns(prev => {
+    if (selectedSections.has("details")) {
+        const detailsData = filteredAndSortedActions.map(action => ({
+            'ID': action.actionId,
+            'Título': action.title,
+            'Estado': action.status,
+            'Creador': action.creator.name,
+            'Fecha Creación': safeFormatDate(action.creationDate),
+            'Responsable Análisis': action.responsibleUser?.name || action.responsibleGroupId,
+            'Ámbito': action.type,
+            'Origen': action.category,
+            'Clasificación': action.subcategory,
+            'Centro': action.center,
+            'Áreas Afectadas': action.affectedAreas.join(', '),
+            'Descripción': action.description,
+            'Análisis Causas': action.analysis?.causes,
+            'Resp. Verificación': users.find(u => u.id === action.analysis?.verificationResponsibleUserId)?.name || '',
+            'Observaciones Verificación': action.verification?.notes,
+            'Observaciones Cierre': action.closure?.notes,
+            'Resultado Cierre': action.closure ? (action.closure.isCompliant ? 'Conforme' : 'No Conforme') : '',
+            'Fecha Cierre': safeFormatDate(action.closure?.date),
+        }));
+        const ws = XLSX.utils.json_to_sheet(detailsData);
+        XLSX.utils.book_append_sheet(wb, ws, "Detalles Acciones");
+    }
+
+    if (selectedSections.has("plan")) {
+        const planData: any[] = [];
+        filteredAndSortedActions.forEach(action => {
+            if (action.analysis?.proposedActions) {
+                action.analysis.proposedActions.forEach(pa => {
+                    planData.push({
+                        'ID Acción': action.actionId,
+                        'Acción Propuesta': pa.description,
+                        'Responsable': users.find(u => u.id === pa.responsibleUserId)?.name || '',
+                        'Fecha Límite': safeFormatDate(pa.dueDate as string),
+                        'Estado': pa.status,
+                        'Fecha Estado': safeFormatDate(pa.statusUpdateDate),
+                        'Verificación': action.verification?.proposedActionsVerificationStatus?.[pa.id] || '',
+                    });
+                });
+            }
+        });
+        const ws = XLSX.utils.json_to_sheet(planData);
+        XLSX.utils.book_append_sheet(wb, ws, "Planes de Acción");
+    }
+
+    if (selectedSections.has("comments")) {
+        const commentsData: any[] = [];
+        filteredAndSortedActions.forEach(action => {
+            if (action.comments) {
+                action.comments.forEach(c => {
+                    commentsData.push({
+                        'ID Acción': action.actionId,
+                        'Fecha': safeFormatDate(c.date),
+                        'Autor': c.author.name,
+                        'Comentario': c.text,
+                    });
+                });
+            }
+        });
+        const ws = XLSX.utils.json_to_sheet(commentsData);
+        XLSX.utils.book_append_sheet(wb, ws, "Comentarios");
+    }
+    
+    if (selectedSections.has("attachments")) {
+        const attachmentsData: any[] = [];
+        filteredAndSortedActions.forEach(action => {
+            if (action.attachments) {
+                action.attachments.forEach(a => {
+                    attachmentsData.push({
+                        'ID Acción': action.actionId,
+                        'Nombre Archivo': a.fileName,
+                        'Subido Por': a.uploadedBy.name,
+                        'Fecha Subida': safeFormatDate(a.uploadedAt),
+                        'URL': a.fileUrl,
+                    });
+                });
+            }
+        });
+        const ws = XLSX.utils.json_to_sheet(attachmentsData);
+        XLSX.utils.book_append_sheet(wb, ws, "Adjuntos");
+    }
+
+    XLSX.writeFile(wb, "Export_Acciones_Mejora.xlsx");
+};
+
+
+  const toggleSection = (section: ExportableSection) => {
+    setSelectedSections(prev => {
         const newSet = new Set(prev);
-        if (newSet.has(colKey)) {
-            newSet.delete(colKey);
+        if (newSet.has(section)) {
+            newSet.delete(section);
         } else {
-            newSet.add(colKey);
+            newSet.add(section);
         }
         return newSet;
     });
@@ -347,33 +384,35 @@ export function ActionsTable({ actions }: ActionsTableProps) {
                 </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-64">
-                <DropdownMenuLabel>Personalizar Columnas a Exportar</DropdownMenuLabel>
+                <DropdownMenuLabel>Selecciona los datos a exportar</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <div className="max-h-60 overflow-y-auto px-1">
-                    {allPossibleColumns.map(col => (
-                        <DropdownMenuCheckboxItem
-                            key={col.key}
-                            checked={selectedColumns.has(col.key)}
-                            onCheckedChange={() => toggleColumn(col.key)}
-                        >
-                            {col.label}
-                        </DropdownMenuCheckboxItem>
-                    ))}
-                </div>
-                <DropdownMenuSeparator />
-                 <div className="p-2 space-y-2">
-                    <p className="text-xs text-muted-foreground text-center">
-                        {selectedColumns.size} de {allPossibleColumns.length} columnas seleccionadas
-                    </p>
-                    <div className="flex items-center justify-between gap-2">
-                        <Button variant="ghost" size="sm" className="text-xs" onClick={() => setSelectedColumns(new Set(allPossibleColumns.map(c => c.key)))}>Todo</Button>
-                        <Button variant="ghost" size="sm" className="text-xs" onClick={() => setSelectedColumns(new Set())}>Nada</Button>
-                        <Button variant="ghost" size="sm" className="text-xs" onClick={() => setSelectedColumns(new Set(defaultColumns))}>Defecto</Button>
-                    </div>
-                </div>
+                  <DropdownMenuCheckboxItem
+                      checked={selectedSections.has("details")}
+                      onCheckedChange={() => toggleSection("details")}
+                  >
+                      Detalles de la Acción
+                  </DropdownMenuCheckboxItem>
+                  <DropdownMenuCheckboxItem
+                      checked={selectedSections.has("plan")}
+                      onCheckedChange={() => toggleSection("plan")}
+                  >
+                      Plan de Acción
+                  </DropdownMenuCheckboxItem>
+                  <DropdownMenuCheckboxItem
+                      checked={selectedSections.has("comments")}
+                      onCheckedChange={() => toggleSection("comments")}
+                  >
+                      Comentarios
+                  </DropdownMenuCheckboxItem>
+                  <DropdownMenuCheckboxItem
+                      checked={selectedSections.has("attachments")}
+                      onCheckedChange={() => toggleSection("attachments")}
+                  >
+                      Adjuntos
+                  </DropdownMenuCheckboxItem>
                 <DropdownMenuSeparator />
                 <div className="p-1">
-                    <Button onClick={handleExportToExcel} className="w-full bg-green-600 hover:bg-green-700">
+                    <Button onClick={handleExportToExcel} className="w-full bg-green-600 hover:bg-green-700" disabled={selectedSections.size === 0}>
                         <FileSpreadsheet className="mr-2 h-4 w-4" />
                         Exportar a Excel
                     </Button>
@@ -476,3 +515,5 @@ export function ActionsTable({ actions }: ActionsTableProps) {
     </div>
   )
 }
+
+    
