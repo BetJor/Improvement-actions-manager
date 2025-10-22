@@ -6,7 +6,7 @@ import { useState, useEffect } from "react"
 import { useForm } from "react-hook-form"
 import * as z from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { getActionById, updateAction, getUsers } from "@/lib/data"
+import { getActionById, updateAction, getUsers, getActionTypes, getCategories, getSubcategories, getAffectedAreas, getCenters, getResponsibilityRoles } from "@/lib/data"
 import type { ImprovementAction, ProposedActionVerificationStatus, User } from "@/lib/types"
 import { ActionForm } from "@/components/action-form"
 import { Button } from "@/components/ui/button"
@@ -45,7 +45,7 @@ interface ActionDetailsTabProps {
 }
 
 
-export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTabProps) {
+export function ActionDetailsTab({ initialAction, masterData: initialMasterData }: ActionDetailsTabProps) {
     const { toast } = useToast()
     const router = useRouter();
     const { closeCurrentTab } = useTabs();
@@ -58,8 +58,35 @@ export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTab
     const [users, setUsers] = useState<User[]>([]);
     const [isStatusDialogOpen, setIsStatusDialogOpen] = useState(false);
     const [selectedProposedAction, setSelectedProposedAction] = useState<any>(null);
+    const [masterData, setMasterData] = useState(initialMasterData);
     
     const { handleToggleFollow, isFollowing } = useFollowAction();
+
+    useEffect(() => {
+        // Function to load all master data required by the tab
+        const loadAllMasterData = async () => {
+            const [types, cats, subcats, areas, centers, roles] = await Promise.all([
+                getActionTypes(),
+                getCategories(),
+                getSubcategories(),
+                getAffectedAreas(),
+                getCenters(),
+                getResponsibilityRoles(),
+            ]);
+            setMasterData({
+                ambits: { data: types },
+                origins: { data: cats },
+                classifications: { data: subcats },
+                affectedAreas: areas,
+                centers: centers,
+                responsibilityRoles: { data: roles },
+            });
+        };
+
+        if (!initialMasterData) {
+            loadAllMasterData();
+        }
+    }, [initialMasterData]);
 
 
     useEffect(() => {
@@ -422,7 +449,7 @@ export function ActionDetailsTab({ initialAction, masterData }: ActionDetailsTab
         doc.save(`Accion_Mejora_${action.actionId}.pdf`);
     };
 
-    if (!action) {
+    if (!action || !masterData) {
         return (
             <div className="flex h-full w-full items-center justify-center">
                 <Loader2 className="h-6 w-6 animate-spin" />

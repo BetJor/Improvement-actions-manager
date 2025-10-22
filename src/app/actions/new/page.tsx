@@ -38,11 +38,11 @@ export default function NewActionPage() {
           getCenters(),
         ]);
         setMasterData({
-            actionTypes: types,
-            categories: cats,
-            subcategories: subcats,
+            ambits: { data: types },
+            origins: { data: cats },
+            classifications: { data: subcats },
             affectedAreas: areas,
-            responsibilityRoles: roles,
+            responsibilityRoles: { data: roles },
             centers: centers,
         })
       } catch (error) {
@@ -89,7 +89,7 @@ export default function NewActionPage() {
 
       toast({
         title: "Acción Creada",
-        description: "La nueva acción de mejora se ha creado correctamente.",
+        description: "La acción de mejora ha sido creada correctamente.",
       });
       
       closeCurrentTab();

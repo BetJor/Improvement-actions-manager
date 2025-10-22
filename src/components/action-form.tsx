@@ -41,7 +41,7 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover"
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "./ui/command"
 import { Label } from "@/components/ui/label"
-import type { ImprovementAction, ImprovementActionType, ResponsibilityRole, AffectedArea, Center, ActionCategory } from "@/lib/types"
+import type { ImprovementAction, ImprovementActionType, ResponsibilityRole, AffectedArea, Center, ActionCategory, ActionSubcategory } from "@/lib/types"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "./ui/card"
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "./ui/dropdown-menu"
 import { useAuth } from "@/hooks/use-auth"
@@ -138,16 +138,16 @@ export function ActionForm({
   const selectedCenterId = form.watch("centerId");
 
   const filteredCategories = useMemo(() => {
-    if (!selectedActionTypeId || !masterData?.origins) return [];
-    return masterData.origins.filter((c: ActionCategory) => 
+    if (!selectedActionTypeId || !masterData?.origins?.data) return [];
+    return masterData.origins.data.filter((c: ActionCategory) => 
         !c.actionTypeIds || c.actionTypeIds.length === 0 || c.actionTypeIds.includes(selectedActionTypeId)
     );
   }, [selectedActionTypeId, masterData]);
 
 
   const filteredSubcategories = useMemo(() => {
-    if (!selectedCategoryId || !masterData?.classifications) return [];
-    return masterData.classifications.filter((sc: any) => sc.categoryId === selectedCategoryId);
+    if (!selectedCategoryId || !masterData?.classifications?.data) return [];
+    return masterData.classifications.data.filter((sc: ActionSubcategory) => sc.categoryId === selectedCategoryId);
   }, [selectedCategoryId, masterData]);
   
   useEffect(() => {
@@ -166,18 +166,18 @@ export function ActionForm({
   const responsibleOptions = useMemo(() => {
     if (!selectedActionTypeId || !masterData || !user) return [];
     
-    const actionType: ImprovementActionType | undefined = masterData.ambits.find((t: any) => t.id === selectedActionTypeId);
+    const actionType: ImprovementActionType | undefined = masterData.ambits?.data.find((t: any) => t.id === selectedActionTypeId);
     if (!actionType?.possibleAnalysisRoles) return [];
 
     const options: { value: string, label: string }[] = [];
     
     actionType.possibleAnalysisRoles.forEach(roleId => {
-      const role: ResponsibilityRole | undefined = masterData.responsibilityRoles.find((r: any) => r.id === roleId);
+      const role: ResponsibilityRole | undefined = masterData.responsibilityRoles?.data.find((r: any) => r.id === roleId);
       if (role) {
         if (role.type === 'Fixed' && role.email) {
           options.push({ value: role.email, label: `${role.name} (${role.email})` });
         } else if (role.type === 'Pattern' && role.emailPattern) {
-            const center: Center | undefined = masterData.centers.find((c: any) => c.id === selectedCenterId);
+            const center: Center | undefined = masterData.centers?.data.find((c: any) => c.id === selectedCenterId);
             const context = {
                 action: { 
                     creator: user,
@@ -365,7 +365,7 @@ export function ActionForm({
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {masterData?.ambits.map((type: any) => (
+                    {masterData?.ambits?.data.map((type: any) => (
                       <SelectItem key={type.id} value={type.id}>{type.name}</SelectItem>
                     ))}
                   </SelectContent>
