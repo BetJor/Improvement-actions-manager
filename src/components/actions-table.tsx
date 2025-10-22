@@ -389,24 +389,28 @@ export function ActionsTable({ actions }: ActionsTableProps) {
                   <DropdownMenuCheckboxItem
                       checked={selectedSections.has("details")}
                       onCheckedChange={() => toggleSection("details")}
+                      onSelect={(e) => e.preventDefault()}
                   >
                       Detalles de la Acción
                   </DropdownMenuCheckboxItem>
                   <DropdownMenuCheckboxItem
                       checked={selectedSections.has("plan")}
                       onCheckedChange={() => toggleSection("plan")}
+                      onSelect={(e) => e.preventDefault()}
                   >
                       Plan de Acción
                   </DropdownMenuCheckboxItem>
                   <DropdownMenuCheckboxItem
                       checked={selectedSections.has("comments")}
                       onCheckedChange={() => toggleSection("comments")}
+                      onSelect={(e) => e.preventDefault()}
                   >
                       Comentarios
                   </DropdownMenuCheckboxItem>
                   <DropdownMenuCheckboxItem
                       checked={selectedSections.has("attachments")}
                       onCheckedChange={() => toggleSection("attachments")}
+                      onSelect={(e) => e.preventDefault()}
                   >
                       Adjuntos
                   </DropdownMenuCheckboxItem>
