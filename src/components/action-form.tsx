@@ -354,32 +354,6 @@ export function ActionForm({
           
           <FormField
             control={form.control}
-            name="typeId"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Ámbito</FormLabel>
-                <Select onValueChange={field.onChange} value={field.value} disabled={disableForm}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecciona un ámbito" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {masterData?.ambits?.data.map((type: any) => (
-                      <SelectItem key={type.id} value={type.id}>{type.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormDescription>
-                  Categoriza la acción de mejora.
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
             name="title"
             render={({ field }) => (
               <FormItem>
@@ -391,9 +365,31 @@ export function ActionForm({
               </FormItem>
             )}
           />
-          
+
           <div className="grid md:grid-cols-2 gap-6">
             <FormField
+              control={form.control}
+              name="typeId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Ámbito</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value} disabled={disableForm}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecciona un ámbito" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {masterData?.ambits.data.map((type: any) => (
+                        <SelectItem key={type.id} value={type.id}>{type.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+             <FormField
               control={form.control}
               name="category"
               render={({ field }) => (
@@ -415,29 +411,30 @@ export function ActionForm({
                 </FormItem>
               )}
             />
-            <FormField
-              control={form.control}
-              name="subcategory"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Clasificación</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value} disabled={disableForm || !selectedCategoryId}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecciona una clasificación" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {filteredSubcategories.map((sub: any) => (
-                         <SelectItem key={sub.id} value={sub.id}>{sub.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
           </div>
+
+          <FormField
+            control={form.control}
+            name="subcategory"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Clasificación</FormLabel>
+                <Select onValueChange={field.onChange} value={field.value} disabled={disableForm || !selectedCategoryId}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecciona una clasificación" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {filteredSubcategories.map((sub: any) => (
+                        <SelectItem key={sub.id} value={sub.id}>{sub.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
           
           <div className="grid md:grid-cols-2 gap-6">
              <FormField
@@ -691,3 +688,5 @@ export function ActionForm({
     </>
   )
 }
+
+    
