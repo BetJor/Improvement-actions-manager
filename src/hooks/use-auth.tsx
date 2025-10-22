@@ -17,14 +17,15 @@ import {
 } from 'firebase/auth';
 import { auth, firebaseApp } from '@/lib/firebase';
 import { usePathname, useRouter } from 'next/navigation';
-import type { User } from '@/lib/types';
-import { getUserById, updateUser, getResponsibilityRoles } from '@/lib/data';
+import type { User, ImprovementActionType } from '@/lib/types';
+import { getUserById, updateUser, getResponsibilityRoles, getActionTypes } from '@/lib/data';
 
 interface AuthContextType {
   user: User | null;
   loading: boolean;
   isAdmin: boolean;
   userRoles: string[]; // IDs of ResponsibilityRole
+  canManageSettings: boolean;
   isImpersonating: boolean;
   impersonateUser: (userToImpersonate: User) => void;
   stopImpersonating: () => void;
@@ -46,22 +47,45 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [isImpersonating, setIsImpersonating] = useState(false);
   const [userRoles, setUserRoles] = useState<string[]>([]);
+  const [canManageSettings, setCanManageSettings] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
 
-  const resolveUserRoles = useCallback(async (userToResolve: User) => {
-    if (!userToResolve?.email) return [];
+  const resolveUserPermissions = useCallback(async (userToResolve: User | null) => {
+    if (!userToResolve) {
+      setUserRoles([]);
+      setCanManageSettings(false);
+      return;
+    }
+    
+    // Global admins can always manage settings
+    const isGlobalAdmin = userToResolve.role === 'Admin';
     
     try {
-      const allRoles = await getResponsibilityRoles();
-      const matchedRoles = allRoles
-        .filter(role => role.type === 'Fixed' && role.email === userToResolve.email)
-        .map(role => role.id!);
+      const [allRoles, allAmbits] = await Promise.all([
+        getResponsibilityRoles(),
+        getActionTypes(),
+      ]);
       
+      const matchedRoles = userToResolve.email 
+        ? allRoles.filter(role => role.type === 'Fixed' && role.email === userToResolve.email).map(role => role.id!)
+        : [];
+        
       setUserRoles(matchedRoles);
+
+      if (isGlobalAdmin) {
+        setCanManageSettings(true);
+      } else {
+        const isConfigAdmin = allAmbits.some(ambit => 
+          ambit.configAdminRoleIds?.some(adminRoleId => matchedRoles.includes(adminRoleId))
+        );
+        setCanManageSettings(isConfigAdmin);
+      }
+
     } catch (error) {
-      console.error("Failed to resolve user roles:", error);
+      console.error("Failed to resolve user permissions:", error);
       setUserRoles([]);
+      setCanManageSettings(isGlobalAdmin);
     }
   }, []);
 
@@ -73,7 +97,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             if (originalUser?.id === fbUser.uid) {
                 setUser(impersonatedUser);
                 setFirebaseUser(fbUser);
-                await resolveUserRoles(impersonatedUser);
+                await resolveUserPermissions(impersonatedUser);
                 setIsImpersonating(true);
                 setLoading(false);
                 return;
@@ -84,20 +108,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         
         const fullUserDetails = await getUserById(fbUser.uid);
         setUser(fullUserDetails);
-        if (fullUserDetails) {
-            await resolveUserRoles(fullUserDetails);
-        }
+        await resolveUserPermissions(fullUserDetails);
         setFirebaseUser(fbUser);
         setIsImpersonating(false);
     } else {
         setUser(null);
         setFirebaseUser(null);
         setIsImpersonating(false);
-        setUserRoles([]);
-        sessionStorage.removeItem(IMPERSONATION_KEY);
+        await resolveUserPermissions(null);
     }
     setLoading(false);
-  }, [resolveUserRoles]);
+  }, [resolveUserPermissions]);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
@@ -168,7 +189,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         originalUser: originalUser
       }));
       setUser(userToImpersonate);
-      await resolveUserRoles(userToImpersonate);
+      await resolveUserPermissions(userToImpersonate);
       setIsImpersonating(true);
       window.location.reload(); 
     } else {
@@ -198,6 +219,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         loading, 
         isAdmin: user?.role === 'Admin',
         userRoles,
+        canManageSettings,
         isImpersonating,
         impersonateUser,
         stopImpersonating,

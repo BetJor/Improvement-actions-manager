@@ -41,7 +41,7 @@ function SidebarNavLink({ href, icon: Icon, label, isTab }: { href: string; icon
 
 
 export function AppSidebar() {
-  const { user, isAdmin } = useAuth(); 
+  const { user, isAdmin, canManageSettings } = useAuth(); 
   const { state } = useSidebar();
   
   if (!user) return null;
@@ -53,10 +53,10 @@ export function AppSidebar() {
   ]
   
   const adminSettingsNavItems = [
-    { href: `/settings`, icon: Settings, label: "Configuración", isTab: true },
-    { href: `/workflow`, icon: GanttChartSquare, label: "Workflow", isTab: true },
-    { href: `/ai-settings`, icon: Sparkles, label: "Configuración IA", isTab: true },    
-    { href: `/user-management`, icon: Users, label: "Gestión de Usuarios", isTab: true },
+    { href: `/settings`, icon: Settings, label: "Configuración", isTab: true, show: canManageSettings },
+    { href: `/workflow`, icon: GanttChartSquare, label: "Workflow", isTab: true, show: isAdmin },
+    { href: `/ai-settings`, icon: Sparkles, label: "Configuración IA", isTab: true, show: isAdmin },    
+    { href: `/user-management`, icon: Users, label: "Gestión de Usuarios", isTab: true, show: isAdmin },
   ]
 
 
@@ -69,12 +69,12 @@ export function AppSidebar() {
                 ))}
             </SidebarMenu>
             
-            {isAdmin && (
+            { (isAdmin || canManageSettings) && (
                 <>
                     <div className="my-4 border-t border-border -mx-2"></div>
                     <SidebarMenu>
                         {adminSettingsNavItems.map((item) => (
-                            <SidebarNavLink key={item.href} {...item} />
+                           item.show ? <SidebarNavLink key={item.href} {...item} /> : null
                         ))}
                     </SidebarMenu>
                 </>
