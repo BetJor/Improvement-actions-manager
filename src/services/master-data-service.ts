@@ -1,7 +1,7 @@
 import { collection, getDocs, doc, addDoc, query, orderBy, updateDoc, deleteDoc, writeBatch, where, getDoc, setDoc, limit, arrayRemove } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { ImprovementActionType, ActionCategory, ActionSubcategory, AffectedArea, MasterDataItem, ResponsibilityRole, Center } from '@/lib/types';
-import { seedAffectedAreas, seedActionTypes, seedCategories, seedSubcategories } from '@/lib/master-seed-data';
+import { seedActionTypes, seedCategories, seedSubcategories } from '@/lib/master-seed-data';
 
 // Variable global per a prevenir la execució múltiple del seeder
 let isSeedingMasterData = false;
@@ -119,29 +119,24 @@ export const getSubcategories = async (): Promise<ActionSubcategory[]> => {
 };
 
 export const getAffectedAreas = async (): Promise<AffectedArea[]> => {
-  const affectedAreasCol = collection(db, 'affectedAreas');
-  let snapshot = await getDocs(query(affectedAreasCol, orderBy("name")));
+    const locationsCol = collection(db, 'locations');
+    const q = query(locationsCol, 
+        where("organización", "==", "Organización General"),
+        where("tipo_centro", "in", ["Direcciones Funcionales", "Dirección de área"]),
+        where("estado", "==", "OPERATIVO")
+    );
 
-  if (snapshot.empty && !isSeedingMasterData) {
-    isSeedingMasterData = true;
-    console.log("AffectedAreas collection is empty. Populating with seed data...");
-    try {
-        const batch = writeBatch(db);
-        seedAffectedAreas.forEach(item => {
-            const docRef = doc(db, 'affectedAreas', item.id);
-            batch.set(docRef, {name: item.name});
-        });
-        await batch.commit();
-        snapshot = await getDocs(query(affectedAreasCol, orderBy("name")));
-        console.log("AffectedAreas collection seeded successfully.");
-    } catch(error) {
-        console.error("Error seeding affectedAreas:", error);
-    } finally {
-        isSeedingMasterData = false;
-    }
-  }
-  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as AffectedArea));
+    const snapshot = await getDocs(q);
+
+    const areas = snapshot.docs.map(doc => ({
+        id: doc.id,
+        name: doc.data().descripcion_centro || doc.id
+    }));
+
+    areas.sort((a, b) => a.name.localeCompare(b.name));
+    return areas;
 };
+
 
 export const getResponsibilityRoles = async (): Promise<ResponsibilityRole[]> => {
     const rolesCol = collection(db, 'responsibilityRoles');

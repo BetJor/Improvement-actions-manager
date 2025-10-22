@@ -7,13 +7,10 @@ import { HierarchicalSettings } from "@/components/hierarchical-settings";
 import {
     getCategories,
     getSubcategories,
-    getAffectedAreas,
     addMasterDataItem,
     updateMasterDataItem,
     deleteMasterDataItem,
     getActionTypes,
-    getResponsibilityRoles,
-    getUserById,
 } from "@/lib/data";
 import { useToast } from "@/hooks/use-toast";
 import type { MasterDataItem, ActionCategory, ResponsibilityRole, ImprovementActionType, ActionSubcategory } from "@/lib/types";
@@ -63,10 +60,9 @@ export default function SettingsPage() {
     const loadData = useCallback(async (currentTab?: string) => {
         setIsLoading(true);
         try {
-            const [categories, subcategories, affectedAreas, actionTypes] = await Promise.all([
+            const [categories, subcategories, actionTypes] = await Promise.all([
                 getCategories(),
                 getSubcategories(),
-                getAffectedAreas(),
                 getActionTypes(),
             ]);
             
@@ -77,10 +73,6 @@ export default function SettingsPage() {
                 origins: { title: "Orígenes", data: categories, columns: [{ key: 'name', label: "Origen" }, { key: 'actionTypeNames', label: 'Ámbitos Relacionados' }] },
                 classifications: { title: "Clasificaciones", data: subcategories, columns: [{ key: 'name', label: "Clasificación" }, { key: 'categoryName', label: "Origen" }] },
             };
-
-            if (isAdmin) {
-                data.affectedAreas = { title: "Áreas Afectadas", data: affectedAreas, columns: [{ key: 'name', label: "Nombre" }] };
-            }
 
             setMasterData(data);
             
@@ -98,7 +90,7 @@ export default function SettingsPage() {
         } finally {
             setIsLoading(false);
         }
-    }, [toast, isAdmin]);
+    }, [toast]);
 
     useEffect(() => {
         if(!masterData) {
@@ -181,11 +173,6 @@ export default function SettingsPage() {
             await loadData(activeTab);
         }
     };
-
-    const nonHierarchicalTabs = useMemo(() => {
-        if (!masterData) return [];
-        return Object.keys(masterData).filter(key => !['ambits', 'origins', 'classifications', 'responsibilityRoles'].includes(key));
-    }, [masterData]);
     
     const filteredAmbits = useMemo(() => {
         if (isAdmin || !masterData?.ambits) return masterData?.ambits.data || [];
@@ -207,9 +194,6 @@ export default function SettingsPage() {
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-col h-full">
                     <TabsList>
                         <TabsTrigger value="hierarchy">Ámbitos, Orígenes y Clasificaciones</TabsTrigger>
-                        {nonHierarchicalTabs.map(key => (
-                           <TabsTrigger key={key} value={key}>{masterData[key].title}</TabsTrigger>
-                        ))}
                     </TabsList>
                     <TabsContent value="hierarchy" className="flex-grow mt-4">
                        <HierarchicalSettings
@@ -221,20 +205,6 @@ export default function SettingsPage() {
                           isAdmin={isAdmin}
                        />
                     </TabsContent>
-                    {nonHierarchicalTabs.map(key => (
-                        <TabsContent key={key} value={key} className="mt-4">
-                            <MasterDataManager 
-                                data={{ [key]: masterData[key] }}
-                                onSave={handleSave}
-                                onDelete={handleDelete}
-                                activeTab={key}
-                                setActiveTab={() => {}}
-                                isLoading={isLoading}
-                                userIsAdmin={isAdmin}
-                                userRoles={userRoles}
-                            />
-                        </TabsContent>
-                    ))}
                 </Tabs>
 
             ) : (

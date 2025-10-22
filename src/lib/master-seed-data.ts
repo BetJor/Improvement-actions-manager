@@ -1,4 +1,4 @@
-import type { ActionCategory, ActionSubcategory, AffectedArea, Center, ImprovementActionType } from './types';
+import type { ActionCategory, ActionSubcategory, Center, ImprovementActionType } from './types';
 
 // Add ambitName to seed interface
 interface SeedCategory extends Omit<ActionCategory, 'id' | 'actionTypeIds'> {
@@ -338,22 +338,4 @@ export const seedSubcategories: SeedSubcategory[] = [
         ambitName: 'Seguridad y Salud Laboral',
         originName: 'Planes de acción de gestión de riesgos'
     })),
-];
-
-
-export const seedAffectedAreas: AffectedArea[] = [
-    { id: 'area-1', name: 'Dirección Financiera' },
-    { id: 'area-2', name: 'Dirección Asesoría Jurídica' },
-    { id: 'area-3', name: 'Dirección Asistencia Sanitaria' },
-    { id: 'area-4', name: 'Dirección Infraestructuras y Equipamientos' },
-    { id: 'area-5', name: 'Dirección Recursos Humanos' },
-    { id: 'area-6', name: 'Dirección Prevención' },
-    { id: 'area-7', name: 'Dirección Cumplimiento y Sostenibilidad' },
-    { id: 'area-8', name: 'Dirección Calidad' },
-    { id: 'area-9', name: 'Dirección Relaciones Externas' },
-    { id: 'area-10', name: 'Dirección Tecnologías de la Información y Comunicación' },
-    { id: 'area-11', name: 'Dirección Contratación' },
-    { id: 'area-12', name: 'Dirección Prestaciones' },
-    { id: 'area-13', name: 'Dirección Control de Gestión y Auditoría' },
-    { id: 'area-14', name: 'Servicio de Prevención Propio' },
 ];
