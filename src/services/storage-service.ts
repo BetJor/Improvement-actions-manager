@@ -3,6 +3,7 @@ import { doc, updateDoc, arrayUnion } from 'firebase/firestore';
 import { db, storage } from '@/lib/firebase';
 import { ref, getDownloadURL, uploadBytesResumable } from "firebase/storage";
 import type { ActionUserInfo, ActionAttachment } from '@/lib/types';
+import { setCompanyLogoUrl } from './ai-service';
 
 export async function uploadFileAndUpdateAction(actionId: string, file: File, user: ActionUserInfo): Promise<void> {
   console.log("--- [Storage Service] Starting upload process ---");
@@ -82,4 +83,25 @@ export async function uploadFileAndUpdateAction(actionId: string, file: File, us
     console.error("[Storage Service] --- FATAL ERROR in uploadFileAndUpdateAction ---", error);
     throw error;
   }
+}
+
+export async function uploadCompanyLogo(file: File): Promise<string> {
+    if (!file) {
+        throw new Error("No file provided for logo upload.");
+    }
+
+    // Use a fixed path to always overwrite the existing logo
+    const filePath = `app-settings/logo`;
+    const storageRef = ref(storage, filePath);
+
+    // Upload the file
+    const uploadResult = await uploadBytesResumable(storageRef, file);
+    
+    // Get the download URL
+    const downloadURL = await getDownloadURL(uploadResult.ref);
+
+    // Save the URL in Firestore settings
+    await setCompanyLogoUrl(downloadURL);
+    
+    return downloadURL;
 }

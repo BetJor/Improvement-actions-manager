@@ -40,6 +40,22 @@ export async function updatePrompt(promptId: PromptId, newPrompt: string): Promi
     await setDoc(docRef, { [promptId]: newPrompt }, { merge: true });
 }
 
+// --- Company Logo ---
+export async function getCompanyLogoUrl(): Promise<string | null> {
+    const docRef = doc(db, 'app_settings', 'company');
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists() && docSnap.data().logoUrl) {
+        return docSnap.data().logoUrl;
+    }
+    return null;
+}
+
+export async function setCompanyLogoUrl(url: string): Promise<void> {
+    const docRef = doc(db, 'app_settings', 'company');
+    await setDoc(docRef, { logoUrl: url }, { merge: true });
+}
+
+
 // --- CRUD for Prompt Gallery ---
 export async function getGalleryPrompts(): Promise<GalleryPrompt[]> {
     const promptsCol = collection(db, 'prompt_gallery');

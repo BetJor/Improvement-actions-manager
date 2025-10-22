@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
@@ -18,7 +17,7 @@ import {
 import { auth, firebaseApp } from '@/lib/firebase';
 import { usePathname, useRouter } from 'next/navigation';
 import type { User, ImprovementActionType } from '@/lib/types';
-import { getUserById, updateUser, getResponsibilityRoles, getActionTypes } from '@/lib/data';
+import { getUserById, updateUser, getResponsibilityRoles, getActionTypes, getCompanyLogoUrl } from '@/lib/data';
 
 interface AuthContextType {
   user: User | null;
@@ -27,6 +26,7 @@ interface AuthContextType {
   userRoles: string[]; // IDs of ResponsibilityRole
   canManageSettings: boolean;
   isImpersonating: boolean;
+  companyLogoUrl: string | null;
   impersonateUser: (userToImpersonate: User) => void;
   stopImpersonating: () => void;
   signInWithGoogle: () => Promise<void>;
@@ -35,6 +35,7 @@ interface AuthContextType {
   sendPasswordReset: (email: string) => Promise<void>;
   logout: () => Promise<void>;
   updateDashboardLayout: (layout: string[]) => Promise<void>;
+  setCompanyLogoUrl: React.Dispatch<React.SetStateAction<string | null>>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -48,6 +49,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isImpersonating, setIsImpersonating] = useState(false);
   const [userRoles, setUserRoles] = useState<string[]>([]);
   const [canManageSettings, setCanManageSettings] = useState(false);
+  const [companyLogoUrl, setCompanyLogoUrl] = useState<string | null>(null);
   const router = useRouter();
   const pathname = usePathname();
 
@@ -91,6 +93,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const loadFullUser = useCallback(async (fbUser: FirebaseUser | null) => {
     if (fbUser) {
+        const logoUrl = await getCompanyLogoUrl();
+        setCompanyLogoUrl(logoUrl);
+
         const impersonationData = sessionStorage.getItem(IMPERSONATION_KEY);
         if (impersonationData) {
             const { impersonatedUser, originalUser } = JSON.parse(impersonationData);
@@ -115,6 +120,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(null);
         setFirebaseUser(null);
         setIsImpersonating(false);
+        setCompanyLogoUrl(null);
         await resolveUserPermissions(null);
     }
     setLoading(false);
@@ -221,6 +227,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         userRoles,
         canManageSettings,
         isImpersonating,
+        companyLogoUrl,
         impersonateUser,
         stopImpersonating,
         signInWithGoogle,
@@ -228,7 +235,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         signInWithEmail,
         sendPasswordReset,
         logout,
-        updateDashboardLayout
+        updateDashboardLayout,
+        setCompanyLogoUrl
     }}>
       {children}
     </AuthContext.Provider>

@@ -34,6 +34,7 @@ import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import type { UserOptions } from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
+import axios from 'axios';
 
 
 interface jsPDFWithAutoTable extends jsPDF {
@@ -51,7 +52,7 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
     const { toast } = useToast()
     const router = useRouter();
     const { closeCurrentTab } = useTabs();
-    const { user } = useAuth()
+    const { user, companyLogoUrl } = useAuth()
     const { actions, setActions } = useActionState();
 
     const [action, setAction] = useState<ImprovementAction | null>(initialAction);
@@ -258,8 +259,20 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
         }
     };
     
-    const generatePdf = () => {
+    const generatePdf = async () => {
         if (!action) return;
+        
+        let logoBase64 = null;
+        if (companyLogoUrl) {
+            try {
+                // Use axios to fetch the image as a blob, which is friendlier for ArrayBuffer conversion
+                const response = await axios.get(companyLogoUrl, { responseType: 'arraybuffer' });
+                const imageBuffer = Buffer.from(response.data, 'binary');
+                logoBase64 = imageBuffer.toString('base64');
+            } catch (error) {
+                console.error("Could not fetch or convert company logo:", error);
+            }
+        }
     
         const doc = new jsPDF() as jsPDFWithAutoTable;
         const pageHeight = doc.internal.pageSize.height || doc.internal.pageSize.getHeight();
@@ -272,7 +285,14 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
         const grayColor = '#6B7280'; // gray-500
         const darkGrayColor = '#374151'; // gray-700
         
-        // --- HEADER ---
+        // --- HEADER & LOGO ---
+        if (logoBase64) {
+            const logoProperties = doc.getImageProperties(logoBase64);
+            const logoWidth = 30; // Desired width in PDF units
+            const logoHeight = (logoProperties.height * logoWidth) / logoProperties.width;
+            doc.addImage(logoBase64, 'PNG', pageWidth - margin - logoWidth, margin, logoWidth, logoHeight);
+        }
+        
         doc.setFontSize(22);
         doc.setFont('helvetica', 'bold');
         doc.setTextColor(darkGrayColor);
