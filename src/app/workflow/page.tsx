@@ -34,7 +34,8 @@ export default function WorkflowPage() {
             const getRoleNames = (roleIds: string[] | undefined) => {
                 if (!roleIds) return '';
                 return roleIds
-                    .map(roleId => responsibilityRoles.find(r => r.id === roleId)?.name || roleId)
+                    .map(roleId => responsibilityRoles.find(r => r.id === roleId)?.name)
+                    .filter(Boolean) // Filter out undefined names for deleted roles
                     .join(', ');
             };
 

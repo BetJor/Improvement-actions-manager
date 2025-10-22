@@ -1,4 +1,4 @@
-import { collection, getDocs, doc, addDoc, query, orderBy, updateDoc, deleteDoc, writeBatch, where, getDoc, setDoc, limit } from 'firebase/firestore';
+import { collection, getDocs, doc, addDoc, query, orderBy, updateDoc, deleteDoc, writeBatch, where, getDoc, setDoc, limit, arrayRemove } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { ImprovementActionType, ActionCategory, ActionSubcategory, AffectedArea, MasterDataItem, ResponsibilityRole, Center } from '@/lib/types';
 import { seedAffectedAreas, seedActionTypes, seedCategories, seedSubcategories } from '@/lib/master-seed-data';
@@ -200,5 +200,32 @@ export async function updateMasterDataItem(collectionName: string, itemId: strin
 
 export async function deleteMasterDataItem(collectionName: string, itemId: string): Promise<void> {
     const docRef = doc(db, collectionName, itemId);
+    
+    // If we're deleting a responsibility role, we need to clean up references in 'ambits'
+    if (collectionName === 'responsibilityRoles') {
+        const ambitsColRef = collection(db, 'ambits');
+        const ambitsSnapshot = await getDocs(ambitsColRef);
+        
+        const batch = writeBatch(db);
+        
+        ambitsSnapshot.forEach(ambitDoc => {
+            const ambitData = ambitDoc.data() as ImprovementActionType;
+            const fieldsToUpdate: any = {};
+            
+            ['configAdminRoleIds', 'possibleCreationRoles', 'possibleAnalysisRoles', 'possibleClosureRoles'].forEach(field => {
+                const roleIds = (ambitData as any)[field];
+                if (Array.isArray(roleIds) && roleIds.includes(itemId)) {
+                    fieldsToUpdate[field] = arrayRemove(itemId);
+                }
+            });
+
+            if (Object.keys(fieldsToUpdate).length > 0) {
+                batch.update(ambitDoc.ref, fieldsToUpdate);
+            }
+        });
+        
+        await batch.commit();
+    }
+    
     await deleteDoc(docRef);
 }
