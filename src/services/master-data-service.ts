@@ -120,18 +120,24 @@ export const getSubcategories = async (): Promise<ActionSubcategory[]> => {
 
 export const getAffectedAreas = async (): Promise<AffectedArea[]> => {
     const locationsCol = collection(db, 'locations');
+    // First, query for the base conditions.
     const q = query(locationsCol, 
         where("organización", "==", "Organización General"),
-        where("tipo_centro", "in", ["Direcciones Funcionales", "Dirección de área"]),
         where("estado", "==", "OPERATIVO")
     );
 
     const snapshot = await getDocs(q);
 
-    const areas = snapshot.docs.map(doc => ({
-        id: doc.id,
-        name: doc.data().descripcion_centro || doc.id
-    }));
+    // Then, filter in-memory for the 'tipo_centro' condition.
+    const areas = snapshot.docs
+      .filter(doc => {
+          const tipoCentro = doc.data().tipo_centro;
+          return tipoCentro === "Direcciones Funcionales" || tipoCentro === "Dirección de área";
+      })
+      .map(doc => ({
+          id: doc.id,
+          name: doc.data().descripcion_centro || doc.id
+      }));
 
     areas.sort((a, b) => a.name.localeCompare(b.name));
     return areas;
