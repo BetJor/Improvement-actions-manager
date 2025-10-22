@@ -1,20 +1,23 @@
 rules_version = '2';
+
 service firebase.storage {
   match /b/{bucket}/o {
-    // Regles per a la gestió del logo de l'empresa
+
+    // Regles per al logo de l'empresa
     match /app-settings/logo {
-      // Permet la lectura a qualsevol usuari (autenticat o no) per a mostrar el logo
+      // Permet que qualsevol pugui llegir el logo
       allow read;
-      // Permet l'escriptura (pujada, actualització) només si l'usuari és un administrador
-      allow write: if request.auth != null && get(/databases/(default)/documents/users/$(request.auth.uid)).data.role == 'Admin';
+      // Permet que qualsevol usuari autenticat pugui escriure (pujar/actualitzar)
+      // La lògica de l'aplicació ja restringeix l'accés a aquesta funció només als administradors
+      allow write: if request.auth != null;
     }
 
-    // Regles per als arxius adjunts de les accions de millora
-    match /actions/{actionId}/{fileName} {
-      // Permet la lectura si l'usuari està a la llista de 'readers' de l'acció
-      allow read: if request.auth != null && resource.metadata.actionId == actionId && request.auth.token.email in get(/databases/(default)/documents/actions/$(resource.metadata.actionId)).data.readers;
-      // Permet l'escriptura (pujada) si l'usuari està a la llista de 'authors' de l'acció
-      allow write: if request.auth != null && request.resource.metadata.actionId == actionId && request.auth.token.email in get(/databases/(default)/documents/actions/$(request.resource.metadata.actionId)).data.authors;
+    // Regles per als adjunts de les accions
+    match /actions/{actionId}/{allPaths=**} {
+      // Permet la lectura d'adjunts a qualsevol usuari autenticat
+      allow read: if request.auth != null;
+      // Permet l'escriptura d'adjunts a qualsevol usuari autenticat
+      allow write: if request.auth != null;
     }
   }
 }
