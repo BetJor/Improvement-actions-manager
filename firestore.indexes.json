@@ -33,7 +33,7 @@
       "queryScope": "COLLECTION",
       "fields": [
         {
-          "fieldPath": "organización",
+          "fieldPath": "organizacion",
           "order": "ASCENDING"
         },
         {

@@ -122,7 +122,7 @@ export const getAffectedAreas = async (): Promise<AffectedArea[]> => {
     const locationsCol = collection(db, 'locations');
     // First, query for the base conditions.
     const q = query(locationsCol, 
-        where("organización", "==", "Organización General"),
+        where("organizacion", "==", "Organización General"),
         where("estado", "==", "OPERATIVO")
     );
 
