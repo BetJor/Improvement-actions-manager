@@ -468,7 +468,7 @@ export function ActionForm({
                             )}
                             >
                             {field.value
-                                ? masterData.centers.find(
+                                ? masterData.centers?.data.find(
                                     (center: Center) => center.id === field.value
                                 )?.name
                                 : "Selecciona un centre"}
@@ -481,7 +481,7 @@ export function ActionForm({
                             <CommandInput placeholder="Cerca un centre..." />
                             <CommandEmpty>No se ha trobat cap centre.</CommandEmpty>
                             <CommandGroup>
-                            {masterData?.centers.map((center: Center) => (
+                            {masterData?.centers?.data.map((center: Center) => (
                                 <CommandItem
                                 value={center.name}
                                 key={center.id}
@@ -541,7 +541,7 @@ export function ActionForm({
                         </Button>
                       </FormControl>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent className="w-[--radix-dropdown-menu-trigger-width]" align="start">
+                    <DropdownMenuContent className="w-[var(--radix-dropdown-menu-trigger-width)]" align="start">
                         <DropdownMenuLabel>Áreas Afectadas</DropdownMenuLabel>
                         <DropdownMenuSeparator />
                         {masterData?.affectedAreas.map((area: AffectedArea) => (
