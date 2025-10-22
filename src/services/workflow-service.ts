@@ -1,9 +1,36 @@
 
-import { collection, getDocs, doc, query, where } from 'firebase/firestore';
+import { collection, getDocs, doc, query, where, getDoc, setDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { format, addDays, parseISO } from 'date-fns';
 import type { ImprovementAction, WorkflowPlan, WorkflowStep, ImprovementActionType } from '@/lib/types';
 import { getActionTypes } from './master-data-service';
+
+
+interface WorkflowSettings {
+    analysisDueDays: number;
+    implementationDueDays: number;
+    closureDueDays: number;
+}
+
+export async function getWorkflowSettings(): Promise<WorkflowSettings> {
+    const docRef = doc(db, 'app_settings', 'workflow');
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+        return docSnap.data() as WorkflowSettings;
+    }
+    // Return default values if the document doesn't exist
+    return {
+        analysisDueDays: 30,
+        implementationDueDays: 75,
+        closureDueDays: 90,
+    };
+}
+
+export async function updateWorkflowSettings(settings: WorkflowSettings): Promise<void> {
+    const docRef = doc(db, 'app_settings', 'workflow');
+    await setDoc(docRef, settings, { merge: true });
+}
+
 
 /**
  * Generates a traditional, rule-based workflow plan for an improvement action.
@@ -12,17 +39,16 @@ import { getActionTypes } from './master-data-service';
  */
 export async function planTraditionalActionWorkflow(action: Omit<ImprovementAction, 'id'>): Promise<WorkflowPlan> {
 
-    // Fetch all action types to find the one that matches our action.
-    const actionTypes = await getActionTypes();
-    const actionTypeConfig = actionTypes.find(at => at.id === action.typeId);
+    // Fetch the global workflow settings
+    const workflowSettings = await getWorkflowSettings();
 
     const steps: WorkflowStep[] = [];
     const creationDate = parseISO(action.creationDate);
 
-    // Get due days from config, with fallbacks
-    const analysisDays = actionTypeConfig?.analysisDueDays ?? 30;
-    const implementationDays = actionTypeConfig?.implementationDueDays ?? 75;
-    const closureDays = actionTypeConfig?.closureDueDays ?? 90;
+    // Get due days from global config
+    const analysisDays = workflowSettings.analysisDueDays;
+    const implementationDays = workflowSettings.implementationDueDays;
+    const closureDays = workflowSettings.closureDueDays;
 
     const analysisDueDate = addDays(creationDate, analysisDays);
     const implementationDueDate = addDays(creationDate, implementationDays);
@@ -62,3 +88,5 @@ export async function planTraditionalActionWorkflow(action: Omit<ImprovementActi
         steps: steps,
     };
 }
+
+    

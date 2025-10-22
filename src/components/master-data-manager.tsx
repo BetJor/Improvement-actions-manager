@@ -70,7 +70,7 @@ export function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, 
       defaultData = { ...defaultData, type: "Fixed" };
     }
     if (collectionName === 'ambits') { // Correspon a 'ambits'
-      defaultData = { ...defaultData, configAdminRoleIds: [], possibleCreationRoles: [], possibleAnalysisRoles: [], possibleClosureRoles: [], analysisDueDays: 30, implementationDueDays: 75, closureDueDays: 90 };
+      defaultData = { ...defaultData, configAdminRoleIds: [], possibleCreationRoles: [], possibleAnalysisRoles: [], possibleClosureRoles: [] };
     }
     if (collectionName === 'origins') {
       const parentAmbitId = extraData?.parentItemId;
@@ -228,20 +228,6 @@ export function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, 
                 {renderDropdown('possibleCreationRoles', 'Roles de Creación')}
                 {renderDropdown('possibleAnalysisRoles', 'Roles de Análisis')}
                 {renderDropdown('possibleClosureRoles', 'Roles de Cierre')}
-                <Separator />
-                <h4 className="font-semibold text-center text-muted-foreground">Vencimientos (días)</h4>
-                <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="analysisDueDays" className="text-right">Análisis</Label>
-                    <Input id="analysisDueDays" name="analysisDueDays" type="number" value={actionTypeData.analysisDueDays ?? ''} onChange={handleNumericChange} className="col-span-3" />
-                </div>
-                 <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="implementationDueDays" className="text-right">Implantación</Label>
-                    <Input id="implementationDueDays" name="implementationDueDays" type="number" value={actionTypeData.implementationDueDays ?? ''} onChange={handleNumericChange} className="col-span-3" />
-                </div>
-                 <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="closureDueDays" className="text-right">Cierre</Label>
-                    <Input id="closureDueDays" name="closureDueDays" type="number" value={actionTypeData.closureDueDays ?? ''} onChange={handleNumericChange} className="col-span-3" />
-                </div>
             </div>
         );
     }
@@ -520,3 +506,5 @@ export function MasterDataManager({ data, onSave, onDelete, activeTab, setActive
     </Tabs>
   );
 }
+
+    
