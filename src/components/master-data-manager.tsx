@@ -42,6 +42,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "./ui/dropdown-menu";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 import { Separator } from "./ui/separator";
+import { cn } from "@/lib/utils";
 
 interface MasterDataFormDialogProps {
   isOpen: boolean;
@@ -351,13 +352,15 @@ export function MasterDataTable({ data, columns, onEdit, onDelete, isLoading, ca
               </TableCell>
             </TableRow>
           ) : data.length > 0 ? (
-            data.map((item) => {
+            data.map((item, rowIndex) => {
               const userCanEdit = canEdit(item);
               const userCanDelete = canDelete && userCanEdit;
               return (
               <TableRow key={item.id}>
-                {columns.map(col => (
-                  <TableCell key={`${item.id}-${col.key}`} className="py-2 align-top">
+                {columns.map((col, colIndex) => (
+                  <TableCell 
+                    key={`${item.id}-${col.key}`} 
+                    className={cn("py-2 align-top", colIndex === 0 && "font-bold")}>
                     {Array.isArray(item[col.key]) ? (item[col.key] as string[]).join(', ') : item[col.key]}
                   </TableCell>
                 ))}

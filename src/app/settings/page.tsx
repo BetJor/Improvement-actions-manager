@@ -94,9 +94,12 @@ export default function SettingsPage() {
                 closureRoleNames: getRoleNames(at.possibleClosureRoles),
             }));
 
+            // Ordenar los ámbitos del workflow como en codificación
+            const sortedActionTypes = [...actionTypesWithRoleNames].sort((a, b) => (a.order ?? 0) - (b.order ?? 0) || a.name.localeCompare(b.name));
+
             const filteredActionTypes = isAdmin 
-                ? actionTypesWithRoleNames
-                : actionTypesWithRoleNames.filter(at => at.configAdminRoleIds?.some(roleId => userRoles.includes(roleId)));
+                ? sortedActionTypes
+                : sortedActionTypes.filter(at => at.configAdminRoleIds?.some(roleId => userRoles.includes(roleId)));
 
             const data: any = {
                 ambits: { data: actionTypes }, // Used by HierarchicalSettings
