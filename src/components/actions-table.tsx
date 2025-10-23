@@ -314,26 +314,42 @@ export function ActionsTable({ actions }: ActionsTableProps) {
                 <Button variant="outline">
                     <FileSpreadsheet className="mr-2 h-4 w-4" />
                     Exportar
-                    <ChevronDown className="ml-2 h-4 w-4" />
                 </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-                <DropdownMenuLabel>Selecciona qué exportar</DropdownMenuLabel>
+            <DropdownMenuContent align="end" className="w-64">
+                <DropdownMenuLabel>Selecciona los datos a exportar</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuCheckboxItem checked={selectedSections.has("details")} onCheckedChange={() => toggleSection("details")}>
-                    Detalles de las Acciones
+                <DropdownMenuCheckboxItem 
+                    checked={selectedSections.has("details")} 
+                    onSelect={(e) => e.preventDefault()}
+                    onCheckedChange={() => toggleSection("details")}
+                >
+                    Detalles de la Acción
                 </DropdownMenuCheckboxItem>
-                <DropdownMenuCheckboxItem checked={selectedSections.has("plan")} onCheckedChange={() => toggleSection("plan")}>
-                    Planes de Acción
+                <DropdownMenuCheckboxItem 
+                    checked={selectedSections.has("plan")} 
+                    onSelect={(e) => e.preventDefault()}
+                    onCheckedChange={() => toggleSection("plan")}
+                >
+                    Plan de Acción
                 </DropdownMenuCheckboxItem>
-                 <DropdownMenuCheckboxItem checked={selectedSections.has("comments")} onCheckedChange={() => toggleSection("comments")}>
+                 <DropdownMenuCheckboxItem 
+                    checked={selectedSections.has("comments")}
+                    onSelect={(e) => e.preventDefault()}
+                    onCheckedChange={() => toggleSection("comments")}
+                >
                     Comentarios
                 </DropdownMenuCheckboxItem>
-                 <DropdownMenuCheckboxItem checked={selectedSections.has("attachments")} onCheckedChange={() => toggleSection("attachments")}>
+                 <DropdownMenuCheckboxItem 
+                    checked={selectedSections.has("attachments")} 
+                    onSelect={(e) => e.preventDefault()}
+                    onCheckedChange={() => toggleSection("attachments")}
+                >
                     Adjuntos
                 </DropdownMenuCheckboxItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleExportToExcel}>
+                <DropdownMenuItem onClick={handleExportToExcel} className="bg-green-600 text-white focus:bg-green-700 focus:text-white">
+                    <FileSpreadsheet className="mr-2 h-4 w-4" />
                     Exportar a Excel
                 </DropdownMenuItem>
             </DropdownMenuContent>
@@ -582,5 +598,3 @@ export function ActionsTable({ actions }: ActionsTableProps) {
     </Card>
   )
 }
-
-    
