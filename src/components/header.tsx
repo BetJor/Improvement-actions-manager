@@ -2,7 +2,6 @@
 "use client"
 import { CircleUser, Menu, Users, Bell, Home, ListChecks, GanttChartSquare, Settings, Route, Sparkles, Library, LogIn, LogOut, FileLock2 } from "lucide-react"
 import Link from "next/link"
-import Image from "next/image"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -74,7 +73,7 @@ export function Header() {
         <div className="flex items-center gap-4">
             <SidebarTrigger className="text-primary-foreground hover:text-primary-foreground/90" />
             <div className="flex items-center gap-2">
-                <Image src="/logo-asepeyo.png" alt="Company Logo" width={100} height={32} className="h-8 w-auto rounded" />
+                <h1 className="text-lg font-semibold text-primary-foreground">Acciones de Mejora</h1>
             </div>
         </div>
 
