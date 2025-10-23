@@ -286,7 +286,7 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
         doc.setFontSize(16);
         doc.setFont('helvetica', 'bold');
         doc.setTextColor(primaryColor);
-        doc.text(`Acció de Millora: ${action.actionId}`, margin, y);
+        doc.text(`Acción de Mejora: ${action.actionId}`, margin, y);
         
         const statusText = action.status === 'Finalizada' && action.closure?.isCompliant === false ? 'Finalizada (No Conforme)' : action.status;
         doc.setFont('helvetica', 'normal');
@@ -369,59 +369,90 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
         };
 
         const addProposedActionBlock = (pa: any, index: number) => {
-            const paTitle = `Acció Proposta ${index + 1}: ${pa.description.split(' ').slice(0, 4).join(' ')}...`;
+            const paTitle = pa.description;
             const paDescription = pa.description;
             const responsibleName = users.find(u => u.id === pa.responsibleUserId)?.name || 'N/D';
             const dueDate = safeParseDate(pa.dueDate) ? format(safeParseDate(pa.dueDate)!, 'dd/MM/yyyy') : 'N/D';
             const statusText = pa.status ? `${pa.status}${pa.statusUpdateDate ? ' (el ' + format(safeParseDate(pa.statusUpdateDate)!, "dd/MM/yyyy") + ')' : ''}` : 'Pendiente';
 
             if (y > pageHeight - 60) { doc.addPage(); y = 20; }
+            
+            const blockStartY = y;
 
             // Title
             doc.setFontSize(10);
             doc.setFont('helvetica', 'bold');
             doc.setTextColor(blackColor);
-            doc.text(paTitle, margin, y);
+            doc.text(paTitle, margin + 5, y);
             y += 8;
 
             // Vertical Bar and Description
             doc.setFillColor(primaryColor);
-            doc.rect(margin, y, 1.2, doc.getTextDimensions(paDescription, { maxWidth: pageWidth - (margin * 2) - 5 }).h, 'F');
-            doc.setFont('helvetica', 'normal');
-            doc.setFontSize(10);
-            doc.setTextColor(grayColor);
-            const descLines = doc.splitTextToSize(paDescription, pageWidth - (margin * 2) - 5);
-            doc.text(descLines, margin + 5, y);
-            y += doc.getTextDimensions(descLines).h + 4;
+            
+            const descLines = doc.splitTextToSize(paDescription, pageWidth - (margin * 2) - 10);
+            const descHeight = doc.getTextDimensions(descLines).h;
+            
+            y += 4;
             
             // Metadata Footer
             doc.setFontSize(8);
             doc.setTextColor(lightGrayColor);
-            doc.text(`Responsable: ${responsibleName} | Data Venciment: ${dueDate} | `, margin + 5, y);
-            const metadataPrefixWidth = doc.getStringUnitWidth(`Responsable: ${responsibleName} | Data Venciment: ${dueDate} | `) * doc.getFontSize() / doc.internal.scaleFactor;
+            
+            const metadataLine = `Responsable: ${responsibleName} | Fecha Vencimiento: ${dueDate} | `;
+            doc.text(metadataLine, margin + 5, y + descHeight);
+            
+            const metadataPrefixWidth = doc.getStringUnitWidth(metadataLine) * doc.getFontSize() / doc.internal.scaleFactor;
             doc.setFont('helvetica', 'bold');
-            doc.text('Estat:', margin + 5 + metadataPrefixWidth, y);
-            const estatLabelWidth = doc.getStringUnitWidth('Estat:') * doc.getFontSize() / doc.internal.scaleFactor;
+            doc.text('Estado:', margin + 5 + metadataPrefixWidth, y + descHeight);
+            const estatLabelWidth = doc.getStringUnitWidth('Estado:') * doc.getFontSize() / doc.internal.scaleFactor;
             doc.setFont('helvetica', 'normal');
-            doc.text(` ${statusText}`, margin + 5 + metadataPrefixWidth + estatLabelWidth, y);
-            y += 12;
+            doc.text(` ${statusText}`, margin + 5 + metadataPrefixWidth + estatLabelWidth, y + descHeight);
+
+            const blockHeight = (y + descHeight + 12) - blockStartY;
+
+            // Background and side bar
+            doc.setFillColor(243, 244, 246); // light gray background
+            doc.rect(margin, blockStartY - 4, pageWidth - (margin * 2), blockHeight, 'F');
+            doc.setFillColor(primaryColor);
+            doc.rect(margin, blockStartY - 4, 2.5, blockHeight, 'F');
+
+            // Re-draw text on top of background
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(blackColor);
+            doc.text(paTitle, margin + 5, blockStartY);
+
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(10);
+            doc.setTextColor(grayColor);
+            doc.text(descLines, margin + 5, blockStartY + 8);
+            
+            doc.setFontSize(8);
+            doc.setTextColor(lightGrayColor);
+            doc.text(metadataLine, margin + 5, blockStartY + 8 + descHeight + 4);
+            doc.setFont('helvetica', 'bold');
+            doc.text('Estado:', margin + 5 + metadataPrefixWidth, blockStartY + 8 + descHeight + 4);
+            doc.setFont('helvetica', 'normal');
+            doc.text(` ${statusText}`, margin + 5 + metadataPrefixWidth + estatLabelWidth, blockStartY + 8 + descHeight + 4);
+
+            y = blockStartY + blockHeight + 6;
         };
         
         // --- SECTION 1: DETALLES DE LA ACCIÓN ---
-        addSectionTitle('Observacions', 1);
-        addAuditInfo(`Creat per ${action.creator.name} el ${safeParseDate(action.creationDate) ? format(safeParseDate(action.creationDate)!, 'dd/MM/yyyy HH:mm') : 'N/D'}`);
-        addTwoColumnRow('Títol:', action.title, 'Origen:', action.category);
-        addTwoColumnRow('Àmbit:', action.type, 'Classificació:', action.subcategory);
-        addTwoColumnRow('Centre:', action.center, 'Àrees Implicades:', action.affectedAreas.join(', '));
+        addSectionTitle('Detalles de la Acción', 1);
+        addAuditInfo(`Creado por ${action.creator.name} el ${safeParseDate(action.creationDate) ? format(safeParseDate(action.creationDate)!, 'dd/MM/yyyy HH:mm') : 'N/D'}`);
+        addTwoColumnRow('Título:', action.title, 'Origen:', action.category);
+        addTwoColumnRow('Ámbito:', action.type, 'Clasificación:', action.subcategory);
+        addTwoColumnRow('Centro:', action.center, 'Áreas Implicadas:', action.affectedAreas.join(', '));
         y += 2;
-        addTextBlock('Observacions:', action.description);
+        addTextBlock('Observaciones:', action.description);
         y += 5;
         
-        // --- SECTION 2: CAUSES I ACCIÓ PROPOSTA ---
+        // --- SECTION 2: CAUSAS Y ACCIÓN PROPOSTA ---
         if (action.analysis) {
-            addSectionTitle('Causes i Acció Proposta', 2);
-            addAuditInfo(`Anàlisi realitzat per ${action.analysis.analysisResponsible.name} el ${safeParseDate(action.analysis.analysisDate) ? format(safeParseDate(action.analysis.analysisDate)!, 'dd/MM/yyyy') : 'N/D'}`);
-            addTextBlock('Anàlisi de Causa Relleu:', action.analysis.causes);
+            addSectionTitle('Causas y Acción Propuesta', 2);
+            addAuditInfo(`Análisis realizado por ${action.analysis.analysisResponsible.name} el ${safeParseDate(action.analysis.analysisDate) ? format(safeParseDate(action.analysis.analysisDate)!, 'dd/MM/yyyy') : 'N/D'}`);
+            addTextBlock('Análisis de Causa Raíz:', action.analysis.causes);
 
             if(action.analysis.proposedActions && action.analysis.proposedActions.length > 0) {
                 action.analysis.proposedActions.forEach((pa, index) => {
@@ -430,7 +461,7 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
             }
             y += 2;
             doc.setFont('helvetica', 'bold').setFontSize(9).setTextColor(blackColor);
-            doc.text('Responsable Verificació:', margin, y);
+            doc.text('Responsable Verificación:', margin, y);
             doc.setFont('helvetica', 'normal').setTextColor(grayColor);
             doc.text(users.find(u => u.id === action.analysis?.verificationResponsibleUserId)?.name || 'N/A', margin + 50, y);
             y += 10;
@@ -438,21 +469,21 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
         
         // --- SECTION 3: VERIFICACIÓ DE IMPLANTACIÓ ---
         if (action.verification) {
-            addSectionTitle('Verificació de Implantació', 3);
-            addAuditInfo(`Verificació realitzada per ${action.verification.verificationResponsible.name} el ${safeParseDate(action.verification.verificationDate) ? format(safeParseDate(action.verification.verificationDate)!, 'dd/MM/yyyy') : 'N/D'}`);
-            addTextBlock('Comentaris Generals de Verificació:', action.verification.notes);
+            addSectionTitle('Verificación de Implantación', 3);
+            addAuditInfo(`Verificación realizada por ${action.verification.verificationResponsible.name} el ${safeParseDate(action.verification.verificationDate) ? format(safeParseDate(action.verification.verificationDate)!, 'dd/MM/yyyy') : 'N/D'}`);
+            addTextBlock('Comentarios Generales de Verificación:', action.verification.notes);
             y += 5;
         }
 
         // --- SECTION 4: CIERRE DE LA ACCIÓN ---
         if (action.closure) {
-            addSectionTitle('Tancament de l\'Acció', 4);
-            addAuditInfo(`Tancat per ${action.closure.closureResponsible.name} el ${safeParseDate(action.closure.date) ? format(safeParseDate(action.closure.date)!, 'dd/MM/yyyy') : 'N/D'}`);
+            addSectionTitle('Cierre de la Acción', 4);
+            addAuditInfo(`Cerrado por ${action.closure.closureResponsible.name} el ${safeParseDate(action.closure.date) ? format(safeParseDate(action.closure.date)!, 'dd/MM/yyyy') : 'N/D'}`);
             
             doc.setFontSize(10);
             doc.setFont('helvetica', 'bold');
             doc.setTextColor(blackColor);
-            doc.text("Resultat Final:", margin, y);
+            doc.text("Resultado Final:", margin, y);
             
             doc.setFontSize(10);
             doc.setFont('helvetica', 'bold');
@@ -460,7 +491,7 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
             doc.text(action.closure.isCompliant ? 'Conforme' : 'No Conforme', margin + 35, y);
             y += 10;
 
-            addTextBlock('Observacions de Tancament:', action.closure.notes);
+            addTextBlock('Observaciones de Cierre:', action.closure.notes);
         }
 
         // --- FOOTER ---
@@ -469,9 +500,9 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
             doc.setPage(i);
             doc.setFontSize(8);
             doc.setTextColor(lightGrayColor);
-            const dateStr = `Data: ${format(new Date(), 'dd/MM/yyyy HH:mm')}`;
-            const actionIdStr = `Acció: ${action.actionId}`;
-            const pageStr = `Pàgina ${i} de ${pageCount}`;
+            const dateStr = `Fecha: ${format(new Date(), 'dd/MM/yyyy HH:mm')}`;
+            const actionIdStr = `Acción: ${action.actionId}`;
+            const pageStr = `Página ${i} de ${pageCount}`;
             doc.text(dateStr, margin, pageHeight - 10);
             doc.text(actionIdStr, (pageWidth / 2), pageHeight - 10, { align: 'center' });
             doc.text(pageStr, pageWidth - margin, pageHeight - 10, { align: 'right' });
@@ -907,3 +938,4 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
     
 
     
+
