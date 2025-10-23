@@ -22,6 +22,7 @@ import { arrayMove } from "@dnd-kit/sortable";
 import { MasterDataTable, MasterDataFormDialog } from "@/components/master-data-manager";
 import { Button } from "@/components/ui/button";
 import { PlusCircle } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
 
 export default function SettingsPage() {
     const { toast } = useToast();
@@ -306,32 +307,40 @@ export default function SettingsPage() {
                     </TabsContent>
 
                     <TabsContent value="workflow" className="flex-grow mt-4">
-                         <MasterDataTable
-                            data={masterData.workflow?.data || []}
-                            columns={masterData.workflow?.columns || []}
-                            onEdit={handleEdit}
-                            onDelete={(item) => handleDelete('ambits', item.id!)}
-                            isLoading={isLoading}
-                            canEdit={canEditItem}
-                            canDelete={false} // Disable delete in workflow view
-                         />
+                        <Card>
+                            <CardContent className="p-0">
+                                <MasterDataTable
+                                    data={masterData.workflow?.data || []}
+                                    columns={masterData.workflow?.columns || []}
+                                    onEdit={handleEdit}
+                                    onDelete={(item) => handleDelete('ambits', item.id!)}
+                                    isLoading={isLoading}
+                                    canEdit={canEditItem}
+                                    canDelete={false} // Disable delete in workflow view
+                                />
+                            </CardContent>
+                        </Card>
                     </TabsContent>
                     
                     {isAdmin && (
                         <TabsContent value="responsibilityRoles" className="flex-grow mt-4">
-                            <div className="flex justify-end mb-4">
-                            <Button onClick={handleAddNew} disabled={!canAddItem}>
-                                    <PlusCircle className="mr-2 h-4 w-4" /> Añadir Nuevo Rol
-                                </Button>
-                            </div>
-                            <MasterDataTable
-                                data={masterData.responsibilityRoles?.data || []}
-                                columns={masterData.responsibilityRoles?.columns || []}
-                                onEdit={handleEdit}
-                                onDelete={(item) => handleDelete('responsibilityRoles', item.id!)}
-                                isLoading={isLoading}
-                                canEdit={canEditItem}
-                            />
+                            <Card>
+                                <CardContent className="p-6">
+                                    <div className="flex justify-end mb-4">
+                                        <Button onClick={handleAddNew} disabled={!canAddItem}>
+                                            <PlusCircle className="mr-2 h-4 w-4" /> Añadir Nuevo Rol
+                                        </Button>
+                                    </div>
+                                    <MasterDataTable
+                                        data={masterData.responsibilityRoles?.data || []}
+                                        columns={masterData.responsibilityRoles?.columns || []}
+                                        onEdit={handleEdit}
+                                        onDelete={(item) => handleDelete('responsibilityRoles', item.id!)}
+                                        isLoading={isLoading}
+                                        canEdit={canEditItem}
+                                    />
+                                </CardContent>
+                            </Card>
                         </TabsContent>
                     )}
 
