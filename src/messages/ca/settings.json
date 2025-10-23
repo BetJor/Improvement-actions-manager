@@ -8,7 +8,9 @@
       "categories": "Orígens",
       "subcategories": "Classificacions",
       "affectedAreas": "Àrees Afectades",
-      "responsibilityRoles": "Rols de Responsabilitat"
+      "responsibilityRoles": "Rols de Responsabilitat",
+      "codificacion": "Codificació",
+      "workflow": "Workflow"
     },
     "col": {
       "name": "Nom",

@@ -18,10 +18,8 @@
       "reports": "Informes",
       "myGroups": "Els Meus Grups",
       "settings": "Configuració",
-      "workflow": "Workflow",
       "aiSettings": "Configuració IA",
-      "userManagement": "Gestió d'Usuaris",
-      "firestoreRules": "Regles de Firestore"
+      "userManagement": "Gestió d'Usuaris"
     },
     "RootLayout": {
       "title": "Gestor d'Accions de Millora",

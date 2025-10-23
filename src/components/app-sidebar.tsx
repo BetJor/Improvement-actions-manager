@@ -54,7 +54,6 @@ export function AppSidebar() {
   
   const adminSettingsNavItems = [
     { href: `/settings`, icon: Settings, label: "Configuración", isTab: true, show: canManageSettings },
-    { href: `/workflow`, icon: GanttChartSquare, label: "Workflow", isTab: true, show: canManageSettings },
     { href: `/ai-settings`, icon: Sparkles, label: "Configuración IA", isTab: true, show: isAdmin },    
     { href: `/user-management`, icon: Users, label: "Gestión de Usuarios", isTab: true, show: isAdmin },
   ]

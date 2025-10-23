@@ -18,10 +18,8 @@
       "reports": "Informes",
       "myGroups": "Mis Grupos",
       "settings": "Configuración",
-      "workflow": "Workflow",
       "aiSettings": "Configuración IA",
-      "userManagement": "Gestión de Usuarios",
-      "firestoreRules": "Reglas de Firestore"
+      "userManagement": "Gestión de Usuarios"
     },
     "RootLayout": {
       "title": "Gestor de Acciones de Mejora",

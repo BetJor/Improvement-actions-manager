@@ -11,6 +11,7 @@ import {
     updateMasterDataItem,
     deleteMasterDataItem,
     getActionTypes,
+    getResponsibilityRoles,
 } from "@/lib/data";
 import { useToast } from "@/hooks/use-toast";
 import type { MasterDataItem, ActionCategory, ResponsibilityRole, ImprovementActionType, ActionSubcategory } from "@/lib/types";
@@ -25,7 +26,7 @@ export default function SettingsPage() {
     const { user, isAdmin, userRoles } = useAuth();
     const [masterData, setMasterData] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(true);
-    const [activeTab, setActiveTab] = useState<string>("hierarchy");
+    const [activeTab, setActiveTab] = useState<string>("codificacion");
     
     const canManage = useCallback((item: ImprovementActionType | ActionCategory | null, type: 'ambit' | 'origin' | 'classification'): boolean => {
         if (isAdmin) return true;
@@ -60,18 +61,61 @@ export default function SettingsPage() {
     const loadData = useCallback(async (currentTab?: string) => {
         setIsLoading(true);
         try {
-            const [categories, subcategories, actionTypes] = await Promise.all([
+            const [categories, subcategories, actionTypes, responsibilityRoles] = await Promise.all([
                 getCategories(),
                 getSubcategories(),
                 getActionTypes(),
+                getResponsibilityRoles(),
             ]);
             
-            const ambitsData = { title: "Ámbitos", data: actionTypes, columns: [{ key: 'name', label: "Nombre" }] };
+            const getRoleNames = (roleIds: string[] | undefined) => {
+                if (!roleIds) return '';
+                return roleIds
+                    .map(roleId => responsibilityRoles.find(r => r.id === roleId)?.name)
+                    .filter(Boolean)
+                    .join(', ');
+            };
+
+            const actionTypesWithRoleNames = actionTypes.map(at => ({
+                ...at,
+                configAdminRoleNames: getRoleNames(at.configAdminRoleIds),
+                creationRoleNames: getRoleNames(at.possibleCreationRoles),
+                analysisRoleNames: getRoleNames(at.possibleAnalysisRoles),
+                closureRoleNames: getRoleNames(at.possibleClosureRoles),
+            }));
+
+            const filteredActionTypes = isAdmin 
+                ? actionTypesWithRoleNames
+                : actionTypesWithRoleNames.filter(at => at.configAdminRoleIds?.some(roleId => userRoles.includes(roleId)));
 
             const data: any = {
-                ambits: ambitsData,
-                origins: { title: "Orígenes", data: categories, columns: [{ key: 'name', label: "Origen" }, { key: 'actionTypeNames', label: 'Ámbitos Relacionados' }] },
-                classifications: { title: "Clasificaciones", data: subcategories, columns: [{ key: 'name', label: "Clasificación" }, { key: 'categoryName', label: "Origen" }] },
+                // For Codificacion Tab
+                ambits_codificacion: { title: "Ámbitos", data: actionTypes },
+                origins: { title: "Orígenes", data: categories },
+                classifications: { title: "Clasificaciones", data: subcategories },
+                
+                // For Workflow Tab
+                ambits_workflow: { 
+                    title: "Workflow", 
+                    data: filteredActionTypes, 
+                    columns: [
+                        { key: 'name', label: "Ámbito" },
+                        { key: 'configAdminRoleNames', label: "Admins de Configuración" },
+                        { key: 'creationRoleNames', label: "Roles Creación" },
+                        { key: 'analysisRoleNames', label: "Roles Análisis" },
+                        { key: 'closureRoleNames', label: "Roles Cierre" },
+                    ] 
+                },
+                responsibilityRoles: { 
+                    title: "Roles de Responsabilidad", 
+                    data: responsibilityRoles, 
+                    columns: [
+                        { key: 'name', label: 'Nombre' },
+                        { key: 'type', label: 'Tipo' },
+                        { key: 'email', label: 'Email' },
+                        { key: 'emailPattern', label: 'Patrón Email' },
+                    ] 
+                },
             };
 
             setMasterData(data);
@@ -90,7 +134,7 @@ export default function SettingsPage() {
         } finally {
             setIsLoading(false);
         }
-    }, [toast]);
+    }, [toast, isAdmin, userRoles]);
 
     useEffect(() => {
         if(!masterData) {
@@ -101,9 +145,10 @@ export default function SettingsPage() {
 
     const handleSave = async (collectionName: string, item: MasterDataItem) => {
         try {
+            const actualCollectionName = collectionName.replace('_codificacion', '').replace('_workflow', '');
             const { id, ...dataToSave } = item as any;
             
-            const propertiesToRemove = ['categoryName', 'creationRoleNames', 'analysisRoleNames', 'closureRoleNames', 'actionTypeNames'];
+            const propertiesToRemove = ['categoryName', 'creationRoleNames', 'analysisRoleNames', 'closureRoleNames', 'actionTypeNames', 'configAdminRoleNames'];
             propertiesToRemove.forEach(prop => {
                 if (prop in dataToSave) {
                     delete dataToSave[prop];
@@ -111,10 +156,10 @@ export default function SettingsPage() {
             });
 
             if (id) {
-                await updateMasterDataItem(collectionName, id, dataToSave);
+                await updateMasterDataItem(actualCollectionName, id, dataToSave);
                 toast({ title: "Elemento actualizado", description: "El elemento se ha actualizado correctamente." });
             } else {
-                await addMasterDataItem(collectionName, dataToSave);
+                await addMasterDataItem(actualCollectionName, dataToSave);
                 toast({ title: "Elemento creado", description: "El elemento se ha creado correctamente." });
             }
             await loadData(activeTab);
@@ -126,7 +171,8 @@ export default function SettingsPage() {
 
     const handleDelete = async (collectionName: string, itemId: string) => {
         try {
-            await deleteMasterDataItem(collectionName, itemId);
+            const actualCollectionName = collectionName.replace('_codificacion', '').replace('_workflow', '');
+            await deleteMasterDataItem(actualCollectionName, itemId);
             toast({ title: "Elemento eliminado", description: "El elemento se ha eliminado correctamente." });
             await loadData(activeTab);
         } catch (error) {
@@ -137,6 +183,7 @@ export default function SettingsPage() {
 
     const handleReorder = async (collectionName: string, activeId: string, overId: string) => {
         if (!masterData || !masterData[collectionName]) return;
+        const actualCollectionName = collectionName.replace('_codificacion', '').replace('_workflow', '');
 
         const itemsToReorder = masterData[collectionName].data;
         const oldIndex = itemsToReorder.findIndex((i: MasterDataItem) => i.id === activeId);
@@ -146,7 +193,6 @@ export default function SettingsPage() {
 
         const reorderedItems = arrayMove(itemsToReorder, oldIndex, newIndex);
 
-        // Optimistic UI Update
         setMasterData((prevData: any) => ({
             ...prevData,
             [collectionName]: {
@@ -155,11 +201,10 @@ export default function SettingsPage() {
             }
         }));
 
-        // Persist changes in the background
         try {
             const updates = reorderedItems.map((item, index) => {
                 const newItem = { ...item, order: index };
-                return updateMasterDataItem(collectionName, newItem.id!, { order: newItem.order });
+                return updateMasterDataItem(actualCollectionName, newItem.id!, { order: newItem.order });
             });
             await Promise.all(updates);
         } catch (error) {
@@ -169,14 +214,13 @@ export default function SettingsPage() {
                 title: "Error al reordenar",
                 description: "No se pudo guardar el nuevo orden. Por favor, recarga la página.",
             });
-            // Revert optimistic update on failure by reloading data
             await loadData(activeTab);
         }
     };
     
-    const filteredAmbits = useMemo(() => {
-        if (isAdmin || !masterData?.ambits) return masterData?.ambits.data || [];
-        return masterData.ambits.data.filter((ambit: ImprovementActionType) => canManage(ambit, 'ambit'));
+    const filteredAmbitsForHierarchy = useMemo(() => {
+        if (isAdmin || !masterData?.ambits_codificacion) return masterData?.ambits_codificacion.data || [];
+        return masterData.ambits_codificacion.data.filter((ambit: ImprovementActionType) => canManage(ambit, 'ambit'));
     }, [isAdmin, masterData, canManage]);
 
 
@@ -184,7 +228,7 @@ export default function SettingsPage() {
         <div className="flex flex-col gap-4 h-full">
             <h1 className="text-3xl font-bold tracking-tight">Configuración</h1>
             <p className="text-muted-foreground">
-                Gestiona las tablas maestras de la aplicación, como ámbitos, orígenes, clasificaciones, etc.
+                Gestiona las tablas maestras y el workflow de la aplicación.
             </p>
             {isLoading && !masterData ? (
                 <div className="flex items-center justify-center h-64">
@@ -193,17 +237,38 @@ export default function SettingsPage() {
             ) : masterData ? (
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-col h-full">
                     <TabsList>
-                        <TabsTrigger value="hierarchy">Ámbitos, Orígenes y Clasificaciones</TabsTrigger>
+                        <TabsTrigger value="codificacion">Codificación</TabsTrigger>
+                        <TabsTrigger value="workflow">Workflow</TabsTrigger>
                     </TabsList>
-                    <TabsContent value="hierarchy" className="flex-grow mt-4">
+                    
+                    <TabsContent value="codificacion" className="flex-grow mt-4">
                        <HierarchicalSettings
-                          masterData={{...masterData, ambits: {...masterData.ambits, data: filteredAmbits}}}
-                          onSave={handleSave}
-                          onDelete={handleDelete}
+                          masterData={{
+                              ambits: { ...masterData.ambits_codificacion, data: filteredAmbitsForHierarchy },
+                              origins: masterData.origins,
+                              classifications: masterData.classifications
+                          }}
+                          onSave={(collection, item) => handleSave(`${collection}_codificacion`, item)}
+                          onDelete={(collection, id) => handleDelete(`${collection}_codificacion`, id)}
                           canManage={canManage}
-                          onReorder={handleReorder}
+                          onReorder={(collection, activeId, overId) => handleReorder(`${collection}_codificacion`, activeId, overId)}
                           isAdmin={isAdmin}
                        />
+                    </TabsContent>
+                    <TabsContent value="workflow" className="flex-grow mt-4">
+                        <MasterDataManager 
+                            data={{
+                                ambits: masterData.ambits_workflow,
+                                responsibilityRoles: masterData.responsibilityRoles
+                            }}
+                            onSave={(collection, item) => handleSave(collection, item)}
+                            onDelete={(collection, id) => handleDelete(collection, id)}
+                            activeTab="ambits"
+                            setActiveTab={() => {}}
+                            isLoading={isLoading}
+                            userIsAdmin={isAdmin}
+                            userRoles={userRoles}
+                        />
                     </TabsContent>
                 </Tabs>
 
