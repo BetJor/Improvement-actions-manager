@@ -34,6 +34,7 @@ import { Badge } from "./ui/badge"
 import { format, parseISO } from "date-fns"
 import { ActionStatusIndicator } from "./action-status-indicator"
 import * as XLSX from 'xlsx';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card"
 
 
 interface ActionsTableProps {
@@ -299,245 +300,284 @@ export function ActionsTable({ actions }: ActionsTableProps) {
 
 
   return (
-    <div className="w-full">
-      <div className="flex flex-wrap items-center py-4 gap-2">
-        <Input
-          placeholder="Filtrar por título, ID u origen..."
-          value={searchTerm}
-          onChange={e => setSearchTerm(e.target.value)}
-          className="max-w-sm"
-        />
-        <div className="flex gap-2 flex-wrap">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="ml-auto">
-                Estado <ChevronDown className="ml-2 h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              {allStatuses.map(status => (
-                <DropdownMenuCheckboxItem
-                  key={status}
-                  checked={statusFilter.has(status)}
-                  onCheckedChange={checked => {
-                    setStatusFilter(prev => {
-                      const newSet = new Set(prev)
-                      if (checked) newSet.add(status)
-                      else newSet.delete(status)
-                      return newSet
-                    })
-                  }}
-                >
-                  {status}
-                </DropdownMenuCheckboxItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline">
-                Ámbito <ChevronDown className="ml-2 h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              {allTypes.map(type => (
-                <DropdownMenuCheckboxItem
-                  key={type}
-                  checked={typeFilter.has(type)}
-                  onCheckedChange={checked => {
-                    setTypeFilter(prev => {
-                      const newSet = new Set(prev)
-                      if (checked) newSet.add(type)
-                      else newSet.delete(type)
-                      return newSet
-                    })
-                  }}
-                >
-                  {type}
-                </DropdownMenuCheckboxItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-           <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline">
-                Origen <ChevronDown className="ml-2 h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              {allOrigins.map(origin => (
-                <DropdownMenuCheckboxItem
-                  key={origin}
-                  checked={originFilter.has(origin)}
-                  onCheckedChange={checked => {
-                    setOriginFilter(prev => {
-                      const newSet = new Set(prev)
-                      if (checked) newSet.add(origin)
-                      else newSet.delete(origin)
-                      return newSet
-                    })
-                  }}
-                >
-                  {origin}
-                </DropdownMenuCheckboxItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline">
-                Clasificación <ChevronDown className="ml-2 h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              {allClassifications.map(classification => (
-                <DropdownMenuCheckboxItem
-                  key={classification}
-                  checked={classificationFilter.has(classification)}
-                  onCheckedChange={checked => {
-                    setClassificationFilter(prev => {
-                      const newSet = new Set(prev)
-                      if (checked) newSet.add(classification)
-                      else newSet.delete(classification)
-                      return newSet
-                    })
-                  }}
-                >
-                  {classification}
-                </DropdownMenuCheckboxItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline">
-                Centro <ChevronDown className="ml-2 h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              {allCenters.map(center => (
-                <DropdownMenuCheckboxItem
-                  key={center}
-                  checked={centerFilter.has(center)}
-                  onCheckedChange={checked => {
-                    setCenterFilter(prev => {
-                      const newSet = new Set(prev)
-                      if (checked) newSet.add(center)
-                      else newSet.delete(center)
-                      return newSet
-                    })
-                  }}
-                >
-                  {center}
-                </DropdownMenuCheckboxItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      </div>
-
-       {activeFiltersCount > 0 && (
-          <div className="flex items-center gap-2 mb-4">
-              <span className="text-sm font-medium">Filtros activos:</span>
-              <div className="flex flex-wrap gap-1">
-                  {searchTerm && (
-                     <Badge variant="secondary" className="pl-2 pr-1">
-                        Texto: "{searchTerm}"
-                        <button onClick={() => setSearchTerm('')} className="ml-1 rounded-full hover:bg-background/80 p-0.5"><X className="h-3 w-3"/></button>
-                    </Badge>
-                  )}
-                  {[...statusFilter].map(value => (
-                      <Badge key={value} variant="secondary" className="pl-2 pr-1">
-                          Estado: {value}
-                          <button onClick={() => removeFilter(setStatusFilter, value)} className="ml-1 rounded-full hover:bg-background/80 p-0.5"><X className="h-3 w-3"/></button>
-                      </Badge>
-                  ))}
-                  {[...typeFilter].map(value => (
-                      <Badge key={value} variant="secondary" className="pl-2 pr-1">
-                          Ámbito: {value}
-                          <button onClick={() => removeFilter(setTypeFilter, value)} className="ml-1 rounded-full hover:bg-background/80 p-0.5"><X className="h-3 w-3"/></button>
-                      </Badge>
-                  ))}
-                   {[...originFilter].map(value => (
-                      <Badge key={value} variant="secondary" className="pl-2 pr-1">
-                          Origen: {value}
-                          <button onClick={() => removeFilter(setOriginFilter, value)} className="ml-1 rounded-full hover:bg-background/80 p-0.5"><X className="h-3 w-3"/></button>
-                      </Badge>
-                  ))}
-                   {[...classificationFilter].map(value => (
-                      <Badge key={value} variant="secondary" className="pl-2 pr-1">
-                          Clasificación: {value}
-                          <button onClick={() => removeFilter(setClassificationFilter, value)} className="ml-1 rounded-full hover:bg-background/80 p-0.5"><X className="h-3 w-3"/></button>
-                      </Badge>
-                  ))}
-                  {[...centerFilter].map(value => (
-                      <Badge key={value} variant="secondary" className="pl-2 pr-1">
-                          Centro: {value}
-                          <button onClick={() => removeFilter(setCenterFilter, value)} className="ml-1 rounded-full hover:bg-background/80 p-0.5"><X className="h-3 w-3"/></button>
-                      </Badge>
-                  ))}
-              </div>
-              <Button variant="ghost" size="sm" onClick={clearAllFilters} className="ml-auto text-sm h-auto px-2 py-1">
-                  <X className="mr-1 h-4 w-4" />
-                  Limpiar filtros
-              </Button>
+    <Card className="flex flex-col h-full">
+      <CardHeader className="flex flex-row items-start justify-between">
+          <div>
+            <CardTitle>Acciones de Mejora</CardTitle>
+            <CardDescription>
+              Aquí puedes encontrar todas las acciones de mejora. Usa los filtros para acotar tu búsqueda.
+            </CardDescription>
           </div>
-      )}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+                <Button variant="outline">
+                    <FileSpreadsheet className="mr-2 h-4 w-4" />
+                    Exportar
+                    <ChevronDown className="ml-2 h-4 w-4" />
+                </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+                <DropdownMenuLabel>Selecciona qué exportar</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuCheckboxItem checked={selectedSections.has("details")} onCheckedChange={() => toggleSection("details")}>
+                    Detalles de las Acciones
+                </DropdownMenuCheckboxItem>
+                <DropdownMenuCheckboxItem checked={selectedSections.has("plan")} onCheckedChange={() => toggleSection("plan")}>
+                    Planes de Acción
+                </DropdownMenuCheckboxItem>
+                 <DropdownMenuCheckboxItem checked={selectedSections.has("comments")} onCheckedChange={() => toggleSection("comments")}>
+                    Comentarios
+                </DropdownMenuCheckboxItem>
+                 <DropdownMenuCheckboxItem checked={selectedSections.has("attachments")} onCheckedChange={() => toggleSection("attachments")}>
+                    Adjuntos
+                </DropdownMenuCheckboxItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleExportToExcel}>
+                    Exportar a Excel
+                </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </CardHeader>
+        <CardContent className="flex flex-col flex-grow">
+          <div className="flex flex-wrap items-center py-4 gap-2">
+            <Input
+              placeholder="Filtrar por título, ID u origen..."
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+              className="max-w-sm"
+            />
+            <div className="flex gap-2 flex-wrap">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" className="ml-auto">
+                    Estado <ChevronDown className="ml-2 h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  {allStatuses.map(status => (
+                    <DropdownMenuCheckboxItem
+                      key={status}
+                      checked={statusFilter.has(status)}
+                      onCheckedChange={checked => {
+                        setStatusFilter(prev => {
+                          const newSet = new Set(prev)
+                          if (checked) newSet.add(status)
+                          else newSet.delete(status)
+                          return newSet
+                        })
+                      }}
+                    >
+                      {status}
+                    </DropdownMenuCheckboxItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline">
+                    Ámbito <ChevronDown className="ml-2 h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  {allTypes.map(type => (
+                    <DropdownMenuCheckboxItem
+                      key={type}
+                      checked={typeFilter.has(type)}
+                      onCheckedChange={checked => {
+                        setTypeFilter(prev => {
+                          const newSet = new Set(prev)
+                          if (checked) newSet.add(type)
+                          else newSet.delete(type)
+                          return newSet
+                        })
+                      }}
+                    >
+                      {type}
+                    </DropdownMenuCheckboxItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline">
+                    Origen <ChevronDown className="ml-2 h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  {allOrigins.map(origin => (
+                    <DropdownMenuCheckboxItem
+                      key={origin}
+                      checked={originFilter.has(origin)}
+                      onCheckedChange={checked => {
+                        setOriginFilter(prev => {
+                          const newSet = new Set(prev)
+                          if (checked) newSet.add(origin)
+                          else newSet.delete(origin)
+                          return newSet
+                        })
+                      }}
+                    >
+                      {origin}
+                    </DropdownMenuCheckboxItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline">
+                    Clasificación <ChevronDown className="ml-2 h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  {allClassifications.map(classification => (
+                    <DropdownMenuCheckboxItem
+                      key={classification}
+                      checked={classificationFilter.has(classification)}
+                      onCheckedChange={checked => {
+                        setClassificationFilter(prev => {
+                          const newSet = new Set(prev)
+                          if (checked) newSet.add(classification)
+                          else newSet.delete(classification)
+                          return newSet
+                        })
+                      }}
+                    >
+                      {classification}
+                    </DropdownMenuCheckboxItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline">
+                    Centro <ChevronDown className="ml-2 h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  {allCenters.map(center => (
+                    <DropdownMenuCheckboxItem
+                      key={center}
+                      checked={centerFilter.has(center)}
+                      onCheckedChange={checked => {
+                        setCenterFilter(prev => {
+                          const newSet = new Set(prev)
+                          if (checked) newSet.add(center)
+                          else newSet.delete(center)
+                          return newSet
+                        })
+                      }}
+                    >
+                      {center}
+                    </DropdownMenuCheckboxItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </div>
 
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-12"></TableHead>
-              <TableHead><Button variant="ghost" onClick={() => requestSort('actionId')}>ID {getSortIcon('actionId')}</Button></TableHead>
-              <TableHead><Button variant="ghost" onClick={() => requestSort('title')}>Título {getSortIcon('title')}</Button></TableHead>
-              <TableHead><Button variant="ghost" onClick={() => requestSort('status')}>Estado {getSortIcon('status')}</Button></TableHead>
-              <TableHead><Button variant="ghost" onClick={() => requestSort('type')}>Ámbito {getSortIcon('type')}</Button></TableHead>
-              <TableHead><Button variant="ghost" onClick={() => requestSort('category')}>Origen {getSortIcon('category')}</Button></TableHead>
-              <TableHead><Button variant="ghost" onClick={() => requestSort('implementationDueDate')}>Fecha Vencimiento {getSortIcon('implementationDueDate')}</Button></TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredAndSortedActions.length > 0 ? (
-              filteredAndSortedActions.map(action => (
-                <TableRow key={action.id}>
-                   <TableCell>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={(e) => handleToggleFollow(action.id, e)}
-                        title={isFollowing(action.id) ? "Dejar de seguir la acción" : "Seguir acción"}
-                      >
-                        <Star className={cn("h-4 w-4", isFollowing(action.id) ? "text-yellow-400 fill-yellow-400" : "text-muted-foreground")} />
-                      </Button>
-                    </TableCell>
-                  <TableCell className="font-medium">
-                     <Button variant="link" asChild className="p-0 h-auto">
-                        <a href={`/actions/${action.id}`} onClick={(e) => handleOpenAction(e, action)}>{action.actionId}</a>
-                    </Button>
-                  </TableCell>
-                  <TableCell>{action.title}</TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                        <ActionStatusIndicator status={action.status} isCompliant={action.closure?.isCompliant} />
-                        <ActionStatusBadge status={action.status} isCompliant={action.closure?.isCompliant} />
-                    </div>
-                  </TableCell>
-                  <TableCell>{action.type}</TableCell>
-                  <TableCell>{action.category}</TableCell>
-                  <TableCell>{safeFormatDate(action.implementationDueDate)}</TableCell>
+          {activeFiltersCount > 0 && (
+              <div className="flex items-center gap-2 mb-4">
+                  <span className="text-sm font-medium">Filtros activos:</span>
+                  <div className="flex flex-wrap gap-1">
+                      {searchTerm && (
+                        <Badge variant="secondary" className="pl-2 pr-1">
+                            Texto: "{searchTerm}"
+                            <button onClick={() => setSearchTerm('')} className="ml-1 rounded-full hover:bg-background/80 p-0.5"><X className="h-3 w-3"/></button>
+                        </Badge>
+                      )}
+                      {[...statusFilter].map(value => (
+                          <Badge key={value} variant="secondary" className="pl-2 pr-1">
+                              Estado: {value}
+                              <button onClick={() => removeFilter(setStatusFilter, value)} className="ml-1 rounded-full hover:bg-background/80 p-0.5"><X className="h-3 w-3"/></button>
+                          </Badge>
+                      ))}
+                      {[...typeFilter].map(value => (
+                          <Badge key={value} variant="secondary" className="pl-2 pr-1">
+                              Ámbito: {value}
+                              <button onClick={() => removeFilter(setTypeFilter, value)} className="ml-1 rounded-full hover:bg-background/80 p-0.5"><X className="h-3 w-3"/></button>
+                          </Badge>
+                      ))}
+                      {[...originFilter].map(value => (
+                          <Badge key={value} variant="secondary" className="pl-2 pr-1">
+                              Origen: {value}
+                              <button onClick={() => removeFilter(setOriginFilter, value)} className="ml-1 rounded-full hover:bg-background/80 p-0.5"><X className="h-3 w-3"/></button>
+                          </Badge>
+                      ))}
+                      {[...classificationFilter].map(value => (
+                          <Badge key={value} variant="secondary" className="pl-2 pr-1">
+                              Clasificación: {value}
+                              <button onClick={() => removeFilter(setClassificationFilter, value)} className="ml-1 rounded-full hover:bg-background/80 p-0.5"><X className="h-3 w-3"/></button>
+                          </Badge>
+                      ))}
+                      {[...centerFilter].map(value => (
+                          <Badge key={value} variant="secondary" className="pl-2 pr-1">
+                              Centro: {value}
+                              <button onClick={() => removeFilter(setCenterFilter, value)} className="ml-1 rounded-full hover:bg-background/80 p-0.5"><X className="h-3 w-3"/></button>
+                          </Badge>
+                      ))}
+                  </div>
+                  <Button variant="ghost" size="sm" onClick={clearAllFilters} className="ml-auto text-sm h-auto px-2 py-1">
+                      <X className="mr-1 h-4 w-4" />
+                      Limpiar filtros
+                  </Button>
+              </div>
+          )}
+
+          <div className="rounded-md border flex-grow">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-12"></TableHead>
+                  <TableHead><Button variant="ghost" onClick={() => requestSort('actionId')}>ID {getSortIcon('actionId')}</Button></TableHead>
+                  <TableHead><Button variant="ghost" onClick={() => requestSort('title')}>Título {getSortIcon('title')}</Button></TableHead>
+                  <TableHead><Button variant="ghost" onClick={() => requestSort('status')}>Estado {getSortIcon('status')}</Button></TableHead>
+                  <TableHead><Button variant="ghost" onClick={() => requestSort('type')}>Ámbito {getSortIcon('type')}</Button></TableHead>
+                  <TableHead><Button variant="ghost" onClick={() => requestSort('category')}>Origen {getSortIcon('category')}</Button></TableHead>
+                  <TableHead><Button variant="ghost" onClick={() => requestSort('implementationDueDate')}>Fecha Vencimiento {getSortIcon('implementationDueDate')}</Button></TableHead>
                 </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell colSpan={7} className="h-24 text-center">
-                  No se encontraron resultados.
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </div>
-    </div>
+              </TableHeader>
+              <TableBody>
+                {filteredAndSortedActions.length > 0 ? (
+                  filteredAndSortedActions.map(action => (
+                    <TableRow key={action.id}>
+                      <TableCell>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={(e) => handleToggleFollow(action.id, e)}
+                            title={isFollowing(action.id) ? "Dejar de seguir la acción" : "Seguir acción"}
+                          >
+                            <Star className={cn("h-4 w-4", isFollowing(action.id) ? "text-yellow-400 fill-yellow-400" : "text-muted-foreground")} />
+                          </Button>
+                        </TableCell>
+                      <TableCell className="font-medium">
+                        <Button variant="link" asChild className="p-0 h-auto">
+                            <a href={`/actions/${action.id}`} onClick={(e) => handleOpenAction(e, action)}>{action.actionId}</a>
+                        </Button>
+                      </TableCell>
+                      <TableCell>{action.title}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                            <ActionStatusIndicator status={action.status} isCompliant={action.closure?.isCompliant} />
+                            <ActionStatusBadge status={action.status} isCompliant={action.closure?.isCompliant} />
+                        </div>
+                      </TableCell>
+                      <TableCell>{action.type}</TableCell>
+                      <TableCell>{action.category}</TableCell>
+                      <TableCell>{safeFormatDate(action.implementationDueDate)}</TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={7} className="h-24 text-center">
+                      No se encontraron resultados.
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+    </Card>
   )
 }
