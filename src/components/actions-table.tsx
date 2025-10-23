@@ -17,6 +17,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuCheckboxItem,
+  DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu"
@@ -581,3 +582,5 @@ export function ActionsTable({ actions }: ActionsTableProps) {
     </Card>
   )
 }
+
+    
