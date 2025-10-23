@@ -1,4 +1,5 @@
 
+
 "use client"
 
 import { useState, useEffect } from "react"
@@ -13,7 +14,7 @@ import { AnalysisSection } from "@/components/analysis-section"
 import { VerificationSection } from "@/components/verification-section"
 import { ClosureSection } from "@/components/closure-section"
 import { ActionDetailsPanel } from "@/components/action-details-panel"
-import { Loader2, FileEdit, Edit, Star, Printer, FileSpreadsheet, ChevronDown } from "lucide-react"
+import { Loader2, FileEdit, Edit, Star, Printer, FileSpreadsheet, ChevronDown, CheckCircle2 } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Separator } from "@/components/ui/separator"
@@ -273,36 +274,46 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
         let y = 20;
 
         // --- COLORS & STYLES ---
-        const primaryColor = '#2563EB'; // blue-600
-        const grayColor = '#6B7280'; // gray-500
-        const darkGrayColor = '#374151'; // gray-700
+        const primaryColor = '#00529B'; // Dark Blue
+        const grayColor = '#555555'; // Medium Gray
+        const lightGrayColor = '#888888'; // Lighter Gray
+        const blackColor = '#222222'; // Almost Black
+        const greenColor = '#28a745'; // Green for status
         
+        doc.setFont('helvetica', 'normal');
+
+        // --- HEADER ---
         doc.setFontSize(18);
         doc.setFont('helvetica', 'bold');
-        doc.setTextColor(darkGrayColor);
-        doc.text(`Acción de Mejora: ${action.actionId}`, margin, y);
-        y += 8;
-    
+        doc.setTextColor(primaryColor);
+        doc.text(`Acció de Millora: ${action.actionId}`, margin, y);
+        
         const statusText = action.status === 'Finalizada' && action.closure?.isCompliant === false ? 'Finalizada (No Conforme)' : action.status;
         doc.setFont('helvetica', 'normal');
-        doc.setFontSize(11);
-        doc.setTextColor(grayColor);
-        doc.text(`Estado actual: ${statusText}`, margin, y);
-        y += 15;
+        doc.setFontSize(10);
+        doc.setTextColor(greenColor);
+        const statusWidth = doc.getStringUnitWidth(statusText) * doc.getFontSize() / doc.internal.scaleFactor;
+        doc.text(statusText, pageWidth - margin - statusWidth, y);
+        // I can't add the CheckCircle2 icon easily, so I'll omit it.
+
+        y += 5;
+        doc.setDrawColor(lightGrayColor);
+        doc.setLineWidth(0.2);
+        doc.line(margin, y, pageWidth - margin, y);
+        y += 12;
 
         // --- HELPER FUNCTIONS ---
-        const addSectionTitle = (title: string, number?: number) => {
+        const addSectionTitle = (title: string, number: number) => {
             if (y > pageHeight - 30) { doc.addPage(); y = 20; }
-            doc.setFontSize(14);
+            doc.setFontSize(12);
             doc.setFont('helvetica', 'bold');
             doc.setTextColor(primaryColor);
-            const text = number ? `${number}. ${title}` : title;
-            doc.text(text, margin, y);
-            y += 6;
+            doc.text(`${number}. ${title}`, margin, y);
+            y += 5;
             doc.setDrawColor(primaryColor);
             doc.setLineWidth(0.3);
             doc.line(margin, y, pageWidth - margin, y);
-            y += 10;
+            y += 8;
         };
         
         const addAuditInfo = (text: string | undefined) => {
@@ -310,7 +321,7 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
             if (y > pageHeight - 20) { doc.addPage(); y = 20; }
             doc.setFont('helvetica', 'italic');
             doc.setFontSize(9);
-            doc.setTextColor(grayColor);
+            doc.setTextColor(lightGrayColor);
             doc.text(text, margin, y);
             y += 8;
         };
@@ -319,9 +330,9 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
             if (!text) return;
             if (y > pageHeight - 30) { doc.addPage(); y = 20; }
             
-            doc.setFontSize(11);
+            doc.setFontSize(10);
             doc.setFont('helvetica', 'bold');
-            doc.setTextColor(darkGrayColor);
+            doc.setTextColor(blackColor);
             doc.text(title, margin, y);
             y += 6;
         
@@ -330,178 +341,113 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
             doc.setTextColor(grayColor);
             const splitText = doc.splitTextToSize(text, pageWidth - (margin * 2));
             doc.text(splitText, margin, y);
-            y += doc.getTextDimensions(splitText, { maxWidth: pageWidth - (margin * 2) }).h + 10;
+            y += doc.getTextDimensions(splitText, { maxWidth: pageWidth - (margin * 2) }).h + 8;
         };
 
-        const addTwoColumnRow = (label: string, value: string | undefined) => {
-            if (!value) return;
+        const addTwoColumnRow = (label1: string, value1: string | undefined, label2: string, value2: string | undefined) => {
+            if (!value1 && !value2) return;
             if (y > pageHeight - 20) { doc.addPage(); y = 20; }
-            doc.setFont('helvetica', 'bold');
-            doc.setFontSize(10);
-            doc.setTextColor(darkGrayColor);
-            doc.text(label, margin + 2, y);
             
+            const col1X = margin;
+            const col2X = margin + (pageWidth / 2.5);
+
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(9);
+            doc.setTextColor(blackColor);
+            doc.text(label1, col1X, y);
+            if (label2) doc.text(label2, col2X, y);
+
             doc.setFont('helvetica', 'normal');
-            doc.text(value, margin + 50, y, { maxWidth: pageWidth - margin - 70 });
-            const textDimensions = doc.getTextDimensions(value, { maxWidth: pageWidth - margin - 70, font: doc.getFont() });
-            y += textDimensions.h + 4;
+            doc.setTextColor(grayColor);
+            
+            const value1Height = value1 ? doc.getTextDimensions(value1, { maxWidth: (pageWidth / 2.5) - 10 }).h : 0;
+            if(value1) doc.text(value1, col1X + 30, y, { maxWidth: (pageWidth / 2.5) - 30 });
+            
+            const value2Height = value2 ? doc.getTextDimensions(value2, { maxWidth: (pageWidth - col2X - margin) }).h : 0;
+            if(value2) doc.text(value2, col2X + 30, y, { maxWidth: (pageWidth - col2X - margin - 30) });
+
+            y += Math.max(value1Height, value2Height) + 6;
         };
         
         // --- SECTION 1: DETALLES DE LA ACCIÓN ---
-        addSectionTitle('Detalles de la Acción', 1);
-        addAuditInfo(`Creado por ${action.creator.name} el ${safeParseDate(action.creationDate) ? format(safeParseDate(action.creationDate)!, 'dd/MM/yyyy HH:mm') : 'N/D'}`);
-        addTwoColumnRow('Título:', action.title);
-        addTwoColumnRow('Ámbito:', action.type);
-        addTwoColumnRow('Origen:', action.category);
-        addTwoColumnRow('Clasificación:', action.subcategory);
-        addTwoColumnRow('Centro:', action.center);
-        addTwoColumnRow('Áreas Implicadas:', action.affectedAreas.join(', '));
-        addTextBlock('Observaciones:', action.description);
+        addSectionTitle('Detalls de la Acció', 1);
+        addAuditInfo(`Creat per ${action.creator.name} el ${safeParseDate(action.creationDate) ? format(safeParseDate(action.creationDate)!, 'dd/MM/yyyy HH:mm') : 'N/D'}`);
+        addTwoColumnRow('Títol:', action.title, 'Origen:', action.category);
+        addTwoColumnRow('Àmbit:', action.type, 'Classificació:', action.subcategory);
+        addTwoColumnRow('Centre:', action.center, 'Àrees Implicades:', action.affectedAreas.join(', '));
+        y += 2;
+        addTextBlock('Observacions:', action.description);
         y += 5;
         
-        // --- SECTION 2: CAUSAS Y ACCIÓN PROPUESTA ---
+        // --- SECTION 2: CAUSES I ACCIÓ PROPOSTA ---
         if (action.analysis) {
-            addSectionTitle('Causas y Acción Propuesta', 2);
-            addAuditInfo(`Análisis realizado por ${action.analysis.analysisResponsible.name} el ${safeParseDate(action.analysis.analysisDate) ? format(safeParseDate(action.analysis.analysisDate)!, 'dd/MM/yyyy') : 'N/D'}`);
-            addTextBlock('Análisis de Causa Raíz:', action.analysis.causes);
+            addSectionTitle('Causes i Acció Proposta', 2);
+            addAuditInfo(`Anàlisi realitzat per ${action.analysis.analysisResponsible.name} el ${safeParseDate(action.analysis.analysisDate) ? format(safeParseDate(action.analysis.analysisDate)!, 'dd/MM/yyyy') : 'N/D'}`);
+            addTextBlock('Anàlisi de Causa Relleu:', action.analysis.causes);
 
             if(action.analysis.proposedActions && action.analysis.proposedActions.length > 0) {
-                doc.setFontSize(11);
-                doc.setFont('helvetica', 'bold');
-                doc.setTextColor(darkGrayColor);
-                doc.text("Acción Propuesta", margin, y);
-                y += 8;
+                action.analysis.proposedActions.forEach((pa, index) => {
+                    if (y > pageHeight - 50) { doc.addPage(); y = 20; }
+                    doc.setFontSize(10);
+                    doc.setFont('helvetica', 'bold');
+                    doc.setTextColor(blackColor);
+                    doc.text(`Acció Proposta ${index + 1}: ${pa.description.split(' ').slice(0, 4).join(' ')}...`, margin, y);
+                    y += 8;
 
-                action.analysis.proposedActions.forEach(pa => {
-                    const statusColors = {
-                        "Implementada": '#22C55E', // green-500
-                        "Implementada Parcialmente": '#FBBF24', // amber-400
-                        "No Implementada": '#EF4444', // red-500
-                        "Pendiente": '#9CA3AF' // gray-400
-                    };
-                    const statusBarColor = statusColors[pa.status || "Pendiente"];
-
-                    const cardContent = [
-                        { text: pa.description, font: 'helvetica', style: 'normal', size: 10, color: darkGrayColor },
-                        { text: `Responsable: ${users.find(u => u.id === pa.responsibleUserId)?.name || 'N/D'}`, font: 'helvetica', style: 'normal', size: 9, color: grayColor },
-                        { text: `Fecha Vencimiento: ${safeParseDate(pa.dueDate) ? format(safeParseDate(pa.dueDate)!, 'dd/MM/yyyy') : 'N/D'}`, font: 'helvetica', style: 'normal', size: 9, color: grayColor },
-                        { text: `Estado: ${pa.status || 'Pendiente'}${pa.statusUpdateDate ? ` (el ${format(safeParseDate(pa.statusUpdateDate)!, "dd/MM/yyyy HH:mm")})` : ''}`, font: 'helvetica', style: 'bold', size: 9, color: darkGrayColor }
-                    ];
-
-                    let cardHeight = 5; // Initial padding
-                    cardContent.forEach((item, index) => {
-                        doc.setFont(item.font, item.style);
-                        doc.setFontSize(item.size);
-                        const splitText = doc.splitTextToSize(item.text, pageWidth - (margin * 2) - 15);
-                        cardHeight += doc.getTextDimensions(splitText).h;
-                        if (index === 0) cardHeight += 8; // Extra space after description
-                    });
-                    cardHeight += 5; // Final padding
-
-                    if (y + cardHeight > pageHeight - 20) { doc.addPage(); y = 20; }
+                    // Draw vertical blue bar
+                    doc.setFillColor(primaryColor);
+                    doc.rect(margin, y, 1, 10, 'F');
                     
-                    // Draw card
-                    doc.setFillColor('#F9FAFB'); // gray-50
-                    doc.setDrawColor('#E5E7EB'); // gray-200
-                    doc.roundedRect(margin, y, pageWidth - (margin * 2), cardHeight, 3, 3, 'FD');
+                    doc.setFont('helvetica', 'normal');
+                    doc.setFontSize(10);
+                    doc.setTextColor(grayColor);
+                    const descLines = doc.splitTextToSize(pa.description, pageWidth - (margin * 2) - 5);
+                    doc.text(descLines, margin + 5, y);
+                    y += doc.getTextDimensions(descLines).h + 4;
                     
-                    // Draw status bar
-                    doc.setFillColor(statusBarColor);
-                    doc.rect(margin, y, 3, cardHeight, 'F');
-                    
-                    let currentY = y + 8; // Start with top padding
-
-                    // Draw description
-                    doc.setFont('helvetica', 'normal').setFontSize(10).setTextColor(darkGrayColor);
-                    const descLines = doc.splitTextToSize(pa.description, pageWidth - (margin * 2) - 15);
-                    doc.text(descLines, margin + 8, currentY);
-                    currentY += doc.getTextDimensions(descLines).h + 3;
-
-                    // Separator
-                    doc.setDrawColor('#E5E7EB');
-                    doc.line(margin + 8, currentY, pageWidth - margin - 8, currentY);
-                    currentY += 5;
-                    
-                    // Metadata
-                    doc.setFont('helvetica', 'normal').setFontSize(9).setTextColor(grayColor);
-                    const responsibleText = `Responsable: ${users.find(u => u.id === pa.responsibleUserId)?.name || 'N/D'}`;
-                    doc.text(responsibleText, margin + 8, currentY);
-                    currentY += 5;
-
-                    const dueDateText = `Fecha Vencimiento: ${safeParseDate(pa.dueDate) ? format(safeParseDate(pa.dueDate)!, 'dd/MM/yyyy') : 'N/D'}`;
-                    doc.text(dueDateText, margin + 8, currentY);
-                    currentY += 5;
-                    
-                    doc.setFont('helvetica', 'bold').setFontSize(9).setTextColor(darkGrayColor);
-                    const statusText = `Estado: ${pa.status || 'Pendiente'}${pa.statusUpdateDate ? ` (el ${format(safeParseDate(pa.statusUpdateDate)!, "dd/MM/yyyy HH:mm")})` : ''}`;
-                    doc.text(statusText, margin + 8, currentY);
-
-                    y += cardHeight + 5; // Move to next card position
+                    doc.setFontSize(8);
+                    doc.setTextColor(lightGrayColor);
+                    const statusText = pa.statusUpdateDate ? `${pa.status} (el ${format(safeParseDate(pa.statusUpdateDate)!, "dd/MM/yyyy HH:mm")})` : pa.status;
+                    const metaText = `Responsable: ${users.find(u => u.id === pa.responsibleUserId)?.name || 'N/D'} | Data Venciment: ${safeParseDate(pa.dueDate) ? format(safeParseDate(pa.dueDate)!, 'dd/MM/yyyy') : 'N/D'} | **Estat:** ${statusText}`;
+                    doc.text(metaText, margin + 5, y);
+                    y += 10;
                 });
             }
-            y += 5;
-            addTextBlock('Responsable Verificación:', users.find(u => u.id === action.analysis?.verificationResponsibleUserId)?.name);
-            y += 5;
+            y += 2;
+            doc.setFont('helvetica', 'bold').setFontSize(9).setTextColor(blackColor);
+            doc.text('Responsable Verificació:', margin, y);
+            doc.setFont('helvetica', 'normal').setTextColor(grayColor);
+            doc.text(users.find(u => u.id === action.analysis?.verificationResponsibleUserId)?.name || 'N/A', margin + 50, y);
+            y += 10;
         }
         
-        // --- SECTION 3: VERIFICACIÓN DE IMPLANTACIÓN ---
+        // --- SECTION 3: VERIFICACIÓ DE IMPLANTACIÓ ---
         if (action.verification) {
-            addSectionTitle('Verificación de Implantación', 3);
-            addAuditInfo(`Verificado por ${action.verification.verificationResponsible.name} el ${safeParseDate(action.verification.verificationDate) ? format(safeParseDate(action.verification.verificationDate)!, 'dd/MM/yyyy') : 'N/D'}`);
-        
-            if (action.analysis?.proposedActions && action.analysis.proposedActions.length > 0) {
-                 doc.autoTable({
-                    startY: y,
-                    head: [['ACCIÓN PROPUESTA', 'ESTADO VERIFICACIÓN', 'FECHA DE ESTADO']],
-                    body: action.analysis.proposedActions.map(pa => [
-                        pa.description,
-                        action.verification?.proposedActionsVerificationStatus?.[pa.id] || 'Pendiente de Verificación',
-                        pa.statusUpdateDate ? format(safeParseDate(pa.statusUpdateDate)!, 'dd/MM/yyyy HH:mm') : 'N/D'
-                    ]),
-                    theme: 'grid',
-                    headStyles: { fillColor: '#111827', textColor: 255, fontStyle: 'bold', fontSize: 9 },
-                    styles: { fontSize: 9, cellPadding: 2.5, lineColor: '#E5E7EB', lineWidth: 0.2 },
-                    margin: { left: margin, right: margin },
-                });
-                y = doc.autoTable.previous.finalY + 10;
-            }
-        
-            addTextBlock('Comentarios Generales de Verificación:', action.verification.notes);
+            addSectionTitle('Verificació de Implantació', 3);
+            addAuditInfo(`Verificació realitzada per ${action.verification.verificationResponsible.name} el ${safeParseDate(action.verification.verificationDate) ? format(safeParseDate(action.verification.verificationDate)!, 'dd/MM/yyyy') : 'N/D'}`);
+            addTextBlock('Comentaris Generals de Verificació:', action.verification.notes);
             y += 5;
         }
 
         // --- SECTION 4: CIERRE DE LA ACCIÓN ---
         if (action.closure) {
-            addSectionTitle('Cierre de la Acción', 4);
-            addAuditInfo(`Cerrado por ${action.closure.closureResponsible.name} el ${safeParseDate(action.closure.date) ? format(safeParseDate(action.closure.date)!, 'dd/MM/yyyy') : 'N/D'}`);
+            addSectionTitle('Tancament de l\'Acció', 4);
+            addAuditInfo(`Tancat per ${action.closure.closureResponsible.name} el ${safeParseDate(action.closure.date) ? format(safeParseDate(action.closure.date)!, 'dd/MM/yyyy') : 'N/D'}`);
             
-            doc.setFontSize(11);
+            doc.setFontSize(10);
             doc.setFont('helvetica', 'bold');
-            doc.setTextColor(darkGrayColor);
-            doc.text("Resultado Final:", margin, y);
+            doc.setTextColor(blackColor);
+            doc.text("Resultat Final:", margin, y);
             
-            doc.setFontSize(11);
+            doc.setFontSize(10);
             doc.setFont('helvetica', 'bold');
-            doc.setTextColor(action.closure.isCompliant ? '#16A34A' : '#DC2626'); // green-600 or red-600
+            doc.setTextColor(action.closure.isCompliant ? greenColor : '#DC2626');
             doc.text(action.closure.isCompliant ? 'Conforme' : 'No Conforme', margin + 35, y);
             y += 10;
 
-            addTextBlock('Observaciones de Cierre:', action.closure.notes);
+            addTextBlock('Observacions de Tancament:', action.closure.notes);
         }
         
-        // --- FOOTER ---
-        const pageCount = doc.internal.pages.length > 1 ? doc.internal.pages.length - 1 : 1;
-        for (let i = 1; i <= pageCount; i++) {
-            doc.setPage(i);
-            const footerY = pageHeight - 15;
-            doc.setDrawColor('#E5E7EB');
-            doc.line(margin, footerY, pageWidth - margin, footerY);
-            doc.setFontSize(8);
-            doc.setTextColor(grayColor);
-            doc.text(`Informe generado el: ${format(new Date(), 'dd/MM/yyyy HH:mm')} | ID: ${action.actionId}`, margin, footerY + 5);
-            doc.text(`Página ${i} de ${pageCount}`, pageWidth - margin, footerY + 5, { align: 'right' });
-        }
-
         doc.save(`Accion_Mejora_${action.actionId}.pdf`);
     };
 
@@ -928,5 +874,7 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
         </div>
     )
 }
+
+    
 
     
