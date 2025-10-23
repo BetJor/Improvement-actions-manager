@@ -50,7 +50,7 @@ import { evaluatePattern } from "@/lib/pattern-evaluator"
 const formSchema = z.object({
   title: z.string().min(1, "El título es requerido."),
   category: z.string().min(1, "El origen es requerido."),
-  subcategory: z.string().min(1, "La clasificación es requerida."),
+  subcategory: z.string().optional(),
   affectedAreasIds: z.array(z.string()).min(1, "Debes seleccionar al menos un área implicada."),
   centerId: z.string().optional(),
   assignedTo: z.string({ required_error: "Debes seleccionar un grupo responsable." }).min(1, "Debes seleccionar un grupo responsable."),
