@@ -283,7 +283,7 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
         doc.setFont('helvetica', 'normal');
 
         // --- HEADER ---
-        doc.setFontSize(18);
+        doc.setFontSize(16);
         doc.setFont('helvetica', 'bold');
         doc.setTextColor(primaryColor);
         doc.text(`Acció de Millora: ${action.actionId}`, margin, y);
@@ -291,10 +291,9 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
         const statusText = action.status === 'Finalizada' && action.closure?.isCompliant === false ? 'Finalizada (No Conforme)' : action.status;
         doc.setFont('helvetica', 'normal');
         doc.setFontSize(10);
-        doc.setTextColor(greenColor);
+        doc.setTextColor(action.status === 'Finalizada' ? (action.closure?.isCompliant === false ? '#DC2626' : greenColor) : grayColor);
         const statusWidth = doc.getStringUnitWidth(statusText) * doc.getFontSize() / doc.internal.scaleFactor;
         doc.text(statusText, pageWidth - margin - statusWidth, y);
-        // I can't add the CheckCircle2 icon easily, so I'll omit it.
 
         y += 5;
         doc.setDrawColor(lightGrayColor);
@@ -360,7 +359,7 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
             doc.setFont('helvetica', 'normal');
             doc.setTextColor(grayColor);
             
-            const value1Height = value1 ? doc.getTextDimensions(value1, { maxWidth: (pageWidth / 2.5) - 10 }).h : 0;
+            const value1Height = value1 ? doc.getTextDimensions(value1, { maxWidth: (pageWidth / 2.5) - 30 }).h : 0;
             if(value1) doc.text(value1, col1X + 30, y, { maxWidth: (pageWidth / 2.5) - 30 });
             
             const value2Height = value2 ? doc.getTextDimensions(value2, { maxWidth: (pageWidth - col2X - margin) }).h : 0;
@@ -368,9 +367,48 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
 
             y += Math.max(value1Height, value2Height) + 6;
         };
+
+        const addProposedActionBlock = (pa: any, index: number) => {
+            const paTitle = `Acció Proposta ${index + 1}: ${pa.description.split(' ').slice(0, 4).join(' ')}...`;
+            const paDescription = pa.description;
+            const responsibleName = users.find(u => u.id === pa.responsibleUserId)?.name || 'N/D';
+            const dueDate = safeParseDate(pa.dueDate) ? format(safeParseDate(pa.dueDate)!, 'dd/MM/yyyy') : 'N/D';
+            const statusText = pa.status ? `${pa.status}${pa.statusUpdateDate ? ' (el ' + format(safeParseDate(pa.statusUpdateDate)!, "dd/MM/yyyy") + ')' : ''}` : 'Pendiente';
+
+            if (y > pageHeight - 60) { doc.addPage(); y = 20; }
+
+            // Title
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(blackColor);
+            doc.text(paTitle, margin, y);
+            y += 8;
+
+            // Vertical Bar and Description
+            doc.setFillColor(primaryColor);
+            doc.rect(margin, y, 1.2, doc.getTextDimensions(paDescription, { maxWidth: pageWidth - (margin * 2) - 5 }).h, 'F');
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(10);
+            doc.setTextColor(grayColor);
+            const descLines = doc.splitTextToSize(paDescription, pageWidth - (margin * 2) - 5);
+            doc.text(descLines, margin + 5, y);
+            y += doc.getTextDimensions(descLines).h + 4;
+            
+            // Metadata Footer
+            doc.setFontSize(8);
+            doc.setTextColor(lightGrayColor);
+            doc.text(`Responsable: ${responsibleName} | Data Venciment: ${dueDate} | `, margin + 5, y);
+            const metadataPrefixWidth = doc.getStringUnitWidth(`Responsable: ${responsibleName} | Data Venciment: ${dueDate} | `) * doc.getFontSize() / doc.internal.scaleFactor;
+            doc.setFont('helvetica', 'bold');
+            doc.text('Estat:', margin + 5 + metadataPrefixWidth, y);
+            const estatLabelWidth = doc.getStringUnitWidth('Estat:') * doc.getFontSize() / doc.internal.scaleFactor;
+            doc.setFont('helvetica', 'normal');
+            doc.text(` ${statusText}`, margin + 5 + metadataPrefixWidth + estatLabelWidth, y);
+            y += 12;
+        };
         
         // --- SECTION 1: DETALLES DE LA ACCIÓN ---
-        addSectionTitle('Detalls de la Acció', 1);
+        addSectionTitle('Observacions', 1);
         addAuditInfo(`Creat per ${action.creator.name} el ${safeParseDate(action.creationDate) ? format(safeParseDate(action.creationDate)!, 'dd/MM/yyyy HH:mm') : 'N/D'}`);
         addTwoColumnRow('Títol:', action.title, 'Origen:', action.category);
         addTwoColumnRow('Àmbit:', action.type, 'Classificació:', action.subcategory);
@@ -387,30 +425,7 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
 
             if(action.analysis.proposedActions && action.analysis.proposedActions.length > 0) {
                 action.analysis.proposedActions.forEach((pa, index) => {
-                    if (y > pageHeight - 50) { doc.addPage(); y = 20; }
-                    doc.setFontSize(10);
-                    doc.setFont('helvetica', 'bold');
-                    doc.setTextColor(blackColor);
-                    doc.text(`Acció Proposta ${index + 1}: ${pa.description.split(' ').slice(0, 4).join(' ')}...`, margin, y);
-                    y += 8;
-
-                    // Draw vertical blue bar
-                    doc.setFillColor(primaryColor);
-                    doc.rect(margin, y, 1, 10, 'F');
-                    
-                    doc.setFont('helvetica', 'normal');
-                    doc.setFontSize(10);
-                    doc.setTextColor(grayColor);
-                    const descLines = doc.splitTextToSize(pa.description, pageWidth - (margin * 2) - 5);
-                    doc.text(descLines, margin + 5, y);
-                    y += doc.getTextDimensions(descLines).h + 4;
-                    
-                    doc.setFontSize(8);
-                    doc.setTextColor(lightGrayColor);
-                    const statusText = pa.statusUpdateDate ? `${pa.status} (el ${format(safeParseDate(pa.statusUpdateDate)!, "dd/MM/yyyy HH:mm")})` : pa.status;
-                    const metaText = `Responsable: ${users.find(u => u.id === pa.responsibleUserId)?.name || 'N/D'} | Data Venciment: ${safeParseDate(pa.dueDate) ? format(safeParseDate(pa.dueDate)!, 'dd/MM/yyyy') : 'N/D'} | **Estat:** ${statusText}`;
-                    doc.text(metaText, margin + 5, y);
-                    y += 10;
+                    addProposedActionBlock(pa, index);
                 });
             }
             y += 2;
@@ -446,6 +461,20 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
             y += 10;
 
             addTextBlock('Observacions de Tancament:', action.closure.notes);
+        }
+
+        // --- FOOTER ---
+        const pageCount = (doc as any).internal.getNumberOfPages();
+        for (let i = 1; i <= pageCount; i++) {
+            doc.setPage(i);
+            doc.setFontSize(8);
+            doc.setTextColor(lightGrayColor);
+            const dateStr = `Data: ${format(new Date(), 'dd/MM/yyyy HH:mm')}`;
+            const actionIdStr = `Acció: ${action.actionId}`;
+            const pageStr = `Pàgina ${i} de ${pageCount}`;
+            doc.text(dateStr, margin, pageHeight - 10);
+            doc.text(actionIdStr, (pageWidth / 2), pageHeight - 10, { align: 'center' });
+            doc.text(pageStr, pageWidth - margin, pageHeight - 10, { align: 'right' });
         }
         
         doc.save(`Accion_Mejora_${action.actionId}.pdf`);
