@@ -88,10 +88,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  const loadFullUser = useCallback(async (fbUser: FirebaseUser | null) => {
+  const loadFullUser = useCallback(async (fbUser: FirebaseUser | null, forceReload: boolean = false) => {
     if (fbUser) {
         const impersonationData = sessionStorage.getItem(IMPERSONATION_KEY);
-        if (impersonationData) {
+        if (impersonationData && !forceReload) {
             const { impersonatedUser, originalUser } = JSON.parse(impersonationData);
             if (originalUser?.id === fbUser.uid) {
                 setUser(impersonatedUser);
@@ -199,16 +199,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const stopImpersonating = useCallback(async () => {
     sessionStorage.removeItem(IMPERSONATION_KEY);
     setIsImpersonating(false);
-    await loadFullUser(auth.currentUser); 
+    await loadFullUser(auth.currentUser, true); 
   }, [loadFullUser]);
   
   const updateDashboardLayout = async (layout: string[]) => {
       if (!user) return;
       try {
+        // Update local state optimistically
+        setUser(currentUser => currentUser ? { ...currentUser, dashboardLayout: layout } : null);
+        // Update backend without causing a full user reload
         await updateUser(user.id, { dashboardLayout: layout });
-        setUser({ ...user, dashboardLayout: layout }); // Update local state
       } catch (error) {
         console.error("Failed to update dashboard layout:", error);
+        // Optionally revert local state on error
+        const originalUser = await getUserById(user.id);
+        setUser(originalUser);
       }
   };
 
@@ -241,3 +246,5 @@ export function useAuth() {
   }
   return context;
 }
+
+    

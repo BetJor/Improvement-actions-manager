@@ -73,7 +73,7 @@ function SortableItem({ id, children }: { id: string, children: React.ReactNode 
 export function DashboardClient({ actions, assignedActions }: DashboardClientProps) {
   const { openTab } = useTabs();
   const { user, updateDashboardLayout } = useAuth();
-  const [items, setItems] = useState<string[]>([]);
+  const [items, setItems] = useState<string[]>(user?.dashboardLayout || defaultLayout);
   
   const { handleToggleFollow, isFollowing } = useFollowAction();
 
@@ -85,7 +85,6 @@ export function DashboardClient({ actions, assignedActions }: DashboardClientPro
 
   useEffect(() => {
     const userLayout = user?.dashboardLayout;
-    // Check if the user layout contains all available widgets. If not, use the default.
     const isLayoutIncomplete = !userLayout || !defaultLayout.every(widget => userLayout.includes(widget));
 
     if (isLayoutIncomplete) {
@@ -93,7 +92,8 @@ export function DashboardClient({ actions, assignedActions }: DashboardClientPro
     } else {
         setItems(userLayout);
     }
-  }, [user]);
+  }, [user?.dashboardLayout]);
+
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -111,7 +111,10 @@ export function DashboardClient({ actions, assignedActions }: DashboardClientPro
         const newIndex = currentItems.indexOf(over.id as string);
         const newOrder = arrayMove(currentItems, oldIndex, newIndex);
         
-        if(user) updateDashboardLayout(newOrder);
+        // Optimistic UI update first, then update the backend
+        if(user) {
+          updateDashboardLayout(newOrder);
+        }
 
         return newOrder;
       });
@@ -219,3 +222,5 @@ export function DashboardClient({ actions, assignedActions }: DashboardClientPro
     </div>
   )
 }
+
+    
