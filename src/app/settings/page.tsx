@@ -78,44 +78,10 @@ export default function SettingsPage() {
                 getResponsibilityRoles(),
             ]);
             
-            const getRoleNames = (roleIds: string[] | undefined) => {
-                if (!roleIds) return '';
-                return roleIds
-                    .map(roleId => responsibilityRoles.find(r => r.id === roleId)?.name)
-                    .filter(Boolean)
-                    .join(', ');
-            };
-
-            const actionTypesWithRoleNames = actionTypes.map(at => ({
-                ...at,
-                configAdminRoleNames: getRoleNames(at.configAdminRoleIds),
-                creationRoleNames: getRoleNames(at.possibleCreationRoles),
-                analysisRoleNames: getRoleNames(at.possibleAnalysisRoles),
-                closureRoleNames: getRoleNames(at.possibleClosureRoles),
-            }));
-
-            // Ordenar los ámbitos del workflow como en codificación
-            const sortedActionTypes = [...actionTypesWithRoleNames].sort((a, b) => (a.order ?? 0) - (b.order ?? 0) || a.name.localeCompare(b.name));
-
-            const filteredActionTypes = isAdmin 
-                ? sortedActionTypes
-                : sortedActionTypes.filter(at => at.configAdminRoleIds?.some(roleId => userRoles.includes(roleId)));
-
             const data: any = {
-                ambits: { data: actionTypes }, // Used by HierarchicalSettings
+                ambits: { data: actionTypes },
                 origins: { data: categories },
                 classifications: { data: subcategories },
-                workflow: { 
-                    title: "Workflow",
-                    data: filteredActionTypes, 
-                    columns: [
-                        { key: 'name', label: "Ámbito" },
-                        { key: 'configAdminRoleNames', label: "Admins de Configuración" },
-                        { key: 'creationRoleNames', label: "Roles Creación" },
-                        { key: 'analysisRoleNames', label: "Roles Análisis" },
-                        { key: 'closureRoleNames', label: "Roles Cierre" },
-                    ] 
-                },
                 responsibilityRoles: { 
                     title: "Roles de Responsabilidad", 
                     data: responsibilityRoles, 
@@ -144,13 +110,53 @@ export default function SettingsPage() {
         } finally {
             setIsLoading(false);
         }
-    }, [toast, isAdmin, userRoles]);
+    }, [toast]);
 
     useEffect(() => {
         if(!masterData) {
             loadData();
         }
     }, [loadData, masterData]);
+
+    const sortedWorkflowAmbits = useMemo(() => {
+        if (!masterData?.ambits?.data || !masterData?.responsibilityRoles?.data) {
+            return { data: [], columns: [] };
+        }
+
+        const getRoleNames = (roleIds: string[] | undefined) => {
+            if (!roleIds) return '';
+            return roleIds
+                .map(roleId => masterData.responsibilityRoles.data.find((r: ResponsibilityRole) => r.id === roleId)?.name)
+                .filter(Boolean)
+                .join(', ');
+        };
+
+        const actionTypesWithRoleNames = masterData.ambits.data.map((at: ImprovementActionType) => ({
+            ...at,
+            configAdminRoleNames: getRoleNames(at.configAdminRoleIds),
+            creationRoleNames: getRoleNames(at.possibleCreationRoles),
+            analysisRoleNames: getRoleNames(at.possibleAnalysisRoles),
+            closureRoleNames: getRoleNames(at.possibleClosureRoles),
+        }));
+
+        const sortedActionTypes = [...actionTypesWithRoleNames].sort((a, b) => (a.order ?? 0) - (b.order ?? 0) || a.name.localeCompare(b.name));
+        
+        const filteredActionTypes = isAdmin 
+            ? sortedActionTypes
+            : sortedActionTypes.filter(at => at.configAdminRoleIds?.some((roleId: string) => userRoles.includes(roleId)));
+
+        return {
+            title: "Workflow",
+            data: filteredActionTypes,
+            columns: [
+                { key: 'name', label: "Ámbito" },
+                { key: 'configAdminRoleNames', label: "Admins de Configuración" },
+                { key: 'creationRoleNames', label: "Roles Creación" },
+                { key: 'analysisRoleNames', label: "Roles Análisis" },
+                { key: 'closureRoleNames', label: "Roles Cierre" },
+            ]
+        };
+    }, [masterData, isAdmin, userRoles]);
 
 
     const handleSave = async (collectionName: string, item: MasterDataItem) => {
@@ -313,8 +319,8 @@ export default function SettingsPage() {
                         <Card>
                             <CardContent className="p-0">
                                 <MasterDataTable
-                                    data={masterData.workflow?.data || []}
-                                    columns={masterData.workflow?.columns || []}
+                                    data={sortedWorkflowAmbits.data}
+                                    columns={sortedWorkflowAmbits.columns}
                                     onEdit={handleEdit}
                                     onDelete={(item) => handleDelete('ambits', item.id!)}
                                     isLoading={isLoading}
