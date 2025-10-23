@@ -1,23 +1,27 @@
 rules_version = '2';
 
+// 1. All files in the storage are private by default.
+// 2. Only authenticated users can access the storage.
+// 3. For a granular file access control, we need to add a UID to the file metadata.
+//
+// service firebase.storage {
+//   match /b/{bucket}/o {
+//     match /users/{uid}/{allPaths=**} {
+//       allow read: if request.auth.uid == uid;
+//     }
+//   }
+// }
 service firebase.storage {
   match /b/{bucket}/o {
-
-    // Regles per al logo de l'empresa
-    match /app-settings/logo {
-      // Permet que qualsevol pugui llegir el logo
-      allow read;
-      // Permet que qualsevol usuari autenticat pugui escriure (pujar/actualitzar)
-      // La lògica de l'aplicació ja restringeix l'accés a aquesta funció només als administradors
-      allow write: if request.auth != null;
+    // Les imatges dels usuaris només les pot llegir i escriure el mateix usuari
+    match /users/{userId}/{allPaths=**} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
     }
 
-    // Regles per als adjunts de les accions
+    // Els adjunts de les accions de millora només els poden escriure usuaris autenticats.
+    // La lectura depèn de les regles de Firestore per a l'acció corresponent (no implementat aquí)
     match /actions/{actionId}/{allPaths=**} {
-      // Permet la lectura d'adjunts a qualsevol usuari autenticat
-      allow read: if request.auth != null;
-      // Permet l'escriptura d'adjunts a qualsevol usuari autenticat
-      allow write: if request.auth != null;
+       allow read, write: if request.auth != null;
     }
   }
 }

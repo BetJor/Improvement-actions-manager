@@ -33,7 +33,6 @@ import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import type { UserOptions } from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
-import axios from 'axios';
 
 
 interface jsPDFWithAutoTable extends jsPDF {
@@ -261,16 +260,6 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
     const generatePdf = async () => {
         if (!action) return;
     
-        let logoBase64 = null;
-        try {
-            const response = await axios.get('/logo-asepeyo.png', {
-                responseType: 'arraybuffer'
-            });
-            logoBase64 = Buffer.from(response.data, 'binary').toString('base64');
-        } catch (error) {
-            console.error("Could not fetch or convert company logo:", error);
-        }
-    
         const doc = new jsPDF() as jsPDFWithAutoTable;
         const pageHeight = doc.internal.pageSize.height || doc.internal.pageSize.getHeight();
         const pageWidth = doc.internal.pageSize.width || doc.internal.pageSize.getWidth();
@@ -281,13 +270,6 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
         const primaryColor = '#2563EB'; // blue-600
         const grayColor = '#6B7280'; // gray-500
         const darkGrayColor = '#374151'; // gray-700
-        
-        // --- HEADER & LOGO ---
-        if (logoBase64) {
-            const logoWidth = 40; 
-            const logoHeight = 10;
-            doc.addImage(`data:image/png;base64,${logoBase64}`, 'PNG', pageWidth - margin - logoWidth, margin, logoWidth, logoHeight);
-        }
         
         doc.setFontSize(22);
         doc.setFont('helvetica', 'bold');
