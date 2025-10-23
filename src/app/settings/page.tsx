@@ -254,13 +254,13 @@ export default function SettingsPage() {
     };
 
     const canAddItem = useMemo(() => {
-        if (userIsAdmin) return true;
+        if (isAdmin) return true;
         if (activeTab === 'workflow') return false; // Non-admins cannot create new ambits.
         return true;
-    }, [userIsAdmin, activeTab]);
+    }, [isAdmin, activeTab]);
 
     const canEditItem = useCallback((item: MasterDataItem) => {
-        if (userIsAdmin) return true;
+        if (isAdmin) return true;
         if (activeTab === 'workflow') {
             const ambit = item as ImprovementActionType;
             if (!ambit.configAdminRoleIds || ambit.configAdminRoleIds.length === 0) return false;
@@ -268,7 +268,7 @@ export default function SettingsPage() {
         }
         if (activeTab === 'responsibilityRoles') return false; // Only admin can edit roles
         return true;
-    }, [userIsAdmin, userRoles, activeTab]);
+    }, [isAdmin, userRoles, activeTab]);
 
 
     return (
