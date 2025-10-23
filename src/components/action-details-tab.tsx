@@ -260,18 +260,13 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
     
     const generatePdf = async () => {
         if (!action) return;
-        
+    
         let logoBase64 = null;
         try {
-            const response = await fetch('/logo-asepeyo.png');
-            const blob = await response.blob();
-            const reader = new FileReader();
-            await new Promise((resolve, reject) => {
-                reader.onload = resolve;
-                reader.onerror = reject;
-                reader.readAsDataURL(blob);
+            const response = await axios.get('/logo-asepeyo.png', {
+                responseType: 'arraybuffer'
             });
-            logoBase64 = (reader.result as string).split(',')[1];
+            logoBase64 = Buffer.from(response.data, 'binary').toString('base64');
         } catch (error) {
             console.error("Could not fetch or convert company logo:", error);
         }
