@@ -13,7 +13,7 @@ import { AnalysisSection } from "@/components/analysis-section"
 import { VerificationSection } from "@/components/verification-section"
 import { ClosureSection } from "@/components/closure-section"
 import { ActionDetailsPanel } from "@/components/action-details-panel"
-import { Loader2, FileEdit, Edit, Star, Printer, FileSpreadsheet } from "lucide-react"
+import { Loader2, FileEdit, Edit, Star, Printer, FileSpreadsheet, ChevronDown } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Separator } from "@/components/ui/separator"
@@ -33,6 +33,12 @@ import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import type { UserOptions } from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
 
 interface jsPDFWithAutoTable extends jsPDF {
@@ -623,14 +629,24 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
                     <h1 className="text-3xl font-bold tracking-tight">{action.actionId}: {action.title}</h1>
                     <ActionStatusBadge status={action.status} isCompliant={action.closure?.isCompliant} />
                     <div className="ml-auto flex items-center gap-2">
-                        <Button variant="outline" size="sm" onClick={generatePdf}>
-                            <Printer className="mr-2 h-4 w-4" />
-                            Exportar a PDF
-                        </Button>
-                        <Button variant="outline" size="sm" onClick={generateExcel}>
-                            <FileSpreadsheet className="mr-2 h-4 w-4" />
-                            Exportar a Excel
-                        </Button>
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="outline" size="sm">
+                                    Exportar
+                                    <ChevronDown className="ml-2 h-4 w-4" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent>
+                                <DropdownMenuItem onClick={generatePdf}>
+                                    <Printer className="mr-2 h-4 w-4" />
+                                    Exportar a PDF
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={generateExcel}>
+                                    <FileSpreadsheet className="mr-2 h-4 w-4" />
+                                    Exportar a Excel
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
                     </div>
                 </header>
 
