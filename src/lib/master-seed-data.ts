@@ -232,6 +232,25 @@ const seguridadSaludRiesgosClassifications = [
     "Riesgo Biológico (EP)"
 ];
 
+const riesgosSeguridadPacienteClassifications = [
+    "4.3 Liderazgo de la alta dirección en la gestión de riesgos",
+    "4.4 Política de la gestión de riesgos",
+    "4.5 Planificación del sistema de gestión de riesgos y objetivos",
+    "4.6 Responsabilidad y autoridad en la gestión de riesgos",
+    "4.7 Asignación de recursos",
+    "4.8 Competencia del personal",
+    "4.9 Documentación y registro del sistema de gestión de riesgos",
+    "4.10 Verificación y revisión del sistema de gestión de riesgos",
+    "4.11 Auditorías del sistema de gestión de riesgos",
+    "5.2 Análisis del contexto en donde se implanta el sistema de gestión de riesgos",
+    "5.3 Sistemas de comunicación, notificación, participación y consulta",
+    "5.4 Definición de los criterios para la evaluación del riesgo",
+    "5.5 Apreciación del riesgo",
+    "5.6 Tratamiento del riesgo",
+    "5.7 Registro de las actividades de los procesos para la gestión de riesgos",
+    "5.8 Seguimiento y revisión de los resultados de los procesos de gestión de riesgos"
+];
+
 export const seedSubcategories: SeedSubcategory[] = [
     // Calidad -> ISO 9001 - Auditoría Interna
     ...calidadClassifications.map((name, index) => ({
@@ -337,5 +356,19 @@ export const seedSubcategories: SeedSubcategory[] = [
         order: index,
         ambitName: 'Seguridad y Salud Laboral',
         originName: 'Planes de acción de gestión de riesgos'
+    })),
+    // Riesgos de Seguridad del Paciente -> ISO 179003 - Auditoría Interna
+    ...riesgosSeguridadPacienteClassifications.map((name, index) => ({
+        name: name,
+        order: index,
+        ambitName: 'Riesgos de Seguridad del Paciente',
+        originName: 'ISO 179003 - Auditoría Interna'
+    })),
+    // Riesgos de Seguridad del Paciente -> ISO 179003 - Auditoría Externa
+    ...riesgosSeguridadPacienteClassifications.map((name, index) => ({
+        name: name,
+        order: index,
+        ambitName: 'Riesgos de Seguridad del Paciente',
+        originName: 'ISO 179003 - Auditoría Externa'
     })),
 ];
