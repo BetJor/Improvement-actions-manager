@@ -343,7 +343,7 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
             y += doc.getTextDimensions(splitText, { maxWidth: pageWidth - (margin * 2) }).h + 8;
         };
 
-        const addTwoColumnRow = (label1: string, value1: string | undefined, label2: string, value2: string | undefined) => {
+        const addTwoColumnRow = (label1: string, value1: string | undefined, label2: string | undefined, value2: string | undefined) => {
             if (!value1 && !value2) return;
             if (y > pageHeight - 20) { doc.addPage(); y = 20; }
             
@@ -363,13 +363,13 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
             if(value1) doc.text(value1, col1X + 30, y, { maxWidth: (pageWidth / 2.5) - 30 });
             
             const value2Height = value2 ? doc.getTextDimensions(value2, { maxWidth: (pageWidth - col2X - margin) }).h : 0;
-            if(value2) doc.text(value2, col2X + 30, y, { maxWidth: (pageWidth - col2X - margin - 30) });
+            if(value2) doc.text(value2, col2X + 40, y, { maxWidth: (pageWidth - col2X - margin - 40) });
 
             y += Math.max(value1Height, value2Height) + 6;
         };
 
         const addProposedActionBlock = (pa: any, index: number) => {
-            const paTitle = pa.description;
+            const paTitle = `Acción Propuesta ${index + 1}`;
             const paDescription = pa.description;
             const responsibleName = users.find(u => u.id === pa.responsibleUserId)?.name || 'N/D';
             const dueDate = safeParseDate(pa.dueDate) ? format(safeParseDate(pa.dueDate)!, 'dd/MM/yyyy') : 'N/D';
@@ -385,28 +385,31 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
             doc.setTextColor(blackColor);
             doc.text(paTitle, margin + 5, y);
             y += 8;
-
-            // Vertical Bar and Description
-            doc.setFillColor(primaryColor);
             
             const descLines = doc.splitTextToSize(paDescription, pageWidth - (margin * 2) - 10);
             const descHeight = doc.getTextDimensions(descLines).h;
             
             y += 4;
             
+            // Dotted separator line
+            doc.setLineDashPattern([1, 1], 0);
+            doc.setDrawColor(lightGrayColor);
+            doc.line(margin + 5, y + descHeight, pageWidth - margin - 5, y + descHeight);
+            doc.setLineDashPattern([], 0); // Reset dash pattern
+            
             // Metadata Footer
             doc.setFontSize(8);
             doc.setTextColor(lightGrayColor);
             
             const metadataLine = `Responsable: ${responsibleName} | Fecha Vencimiento: ${dueDate} | `;
-            doc.text(metadataLine, margin + 5, y + descHeight);
+            doc.text(metadataLine, margin + 5, y + descHeight + 4);
             
             const metadataPrefixWidth = doc.getStringUnitWidth(metadataLine) * doc.getFontSize() / doc.internal.scaleFactor;
             doc.setFont('helvetica', 'bold');
-            doc.text('Estado:', margin + 5 + metadataPrefixWidth, y + descHeight);
+            doc.text('Estado:', margin + 5 + metadataPrefixWidth, y + descHeight + 4);
             const estatLabelWidth = doc.getStringUnitWidth('Estado:') * doc.getFontSize() / doc.internal.scaleFactor;
             doc.setFont('helvetica', 'normal');
-            doc.text(` ${statusText}`, margin + 5 + metadataPrefixWidth + estatLabelWidth, y + descHeight);
+            doc.text(` ${statusText}`, margin + 5 + metadataPrefixWidth + estatLabelWidth, y + descHeight + 4);
 
             const blockHeight = (y + descHeight + 12) - blockStartY;
 
@@ -429,11 +432,11 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
             
             doc.setFontSize(8);
             doc.setTextColor(lightGrayColor);
-            doc.text(metadataLine, margin + 5, blockStartY + 8 + descHeight + 4);
+            doc.text(metadataLine, margin + 5, blockStartY + 8 + descHeight + 8);
             doc.setFont('helvetica', 'bold');
-            doc.text('Estado:', margin + 5 + metadataPrefixWidth, blockStartY + 8 + descHeight + 4);
+            doc.text('Estado:', margin + 5 + metadataPrefixWidth, blockStartY + 8 + descHeight + 8);
             doc.setFont('helvetica', 'normal');
-            doc.text(` ${statusText}`, margin + 5 + metadataPrefixWidth + estatLabelWidth, blockStartY + 8 + descHeight + 4);
+            doc.text(` ${statusText}`, margin + 5 + metadataPrefixWidth + estatLabelWidth, blockStartY + 8 + descHeight + 8);
 
             y = blockStartY + blockHeight + 6;
         };
@@ -441,9 +444,11 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
         // --- SECTION 1: DETALLES DE LA ACCIÓN ---
         addSectionTitle('Detalles de la Acción', 1);
         addAuditInfo(`Creado por ${action.creator.name} el ${safeParseDate(action.creationDate) ? format(safeParseDate(action.creationDate)!, 'dd/MM/yyyy HH:mm') : 'N/D'}`);
-        addTwoColumnRow('Título:', action.title, 'Origen:', action.category);
-        addTwoColumnRow('Ámbito:', action.type, 'Clasificación:', action.subcategory);
-        addTwoColumnRow('Centro:', action.center, 'Áreas Implicadas:', action.affectedAreas.join(', '));
+        addTwoColumnRow('Título:', action.title, 'Centro:', action.center);
+        addTwoColumnRow('Ámbito:', action.type, 'Áreas Implicadas:', action.affectedAreas.join(', '));
+        addTwoColumnRow('Origen:', action.category, undefined, undefined);
+        addTwoColumnRow('Clasificación:', action.subcategory, undefined, undefined);
+
         y += 2;
         addTextBlock('Observaciones:', action.description);
         y += 5;
@@ -467,11 +472,28 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
             y += 10;
         }
         
-        // --- SECTION 3: VERIFICACIÓ DE IMPLANTACIÓ ---
+        // --- SECTION 3: VERIFICACIÓN DE IMPLANTACIÓN ---
         if (action.verification) {
             addSectionTitle('Verificación de Implantación', 3);
             addAuditInfo(`Verificación realizada por ${action.verification.verificationResponsible.name} el ${safeParseDate(action.verification.verificationDate) ? format(safeParseDate(action.verification.verificationDate)!, 'dd/MM/yyyy') : 'N/D'}`);
             addTextBlock('Comentarios Generales de Verificación:', action.verification.notes);
+
+            if (action.analysis?.proposedActions?.length) {
+                doc.autoTable({
+                    startY: y + 5,
+                    head: [['Acción Propuesta', 'Estado Verificación']],
+                    body: action.analysis.proposedActions.map(pa => [
+                        pa.description,
+                        action.verification!.proposedActionsVerificationStatus[pa.id] || 'Pendiente'
+                    ]),
+                    theme: 'grid',
+                    headStyles: { fillColor: [41, 128, 185], textColor: 255 },
+                    styles: { fontSize: 9 },
+                    margin: { left: margin, right: margin }
+                });
+                y = (doc as any).lastAutoTable.finalY + 10;
+            }
+
             y += 5;
         }
 
@@ -938,4 +960,5 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
     
 
     
+
 
