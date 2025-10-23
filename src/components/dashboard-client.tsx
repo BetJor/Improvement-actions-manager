@@ -106,18 +106,15 @@ export function DashboardClient({ actions, assignedActions }: DashboardClientPro
     const {active, over} = event;
     
     if (over && active.id !== over.id) {
-      setItems((currentItems) => {
-        const oldIndex = currentItems.indexOf(active.id as string);
-        const newIndex = currentItems.indexOf(over.id as string);
-        const newOrder = arrayMove(currentItems, oldIndex, newIndex);
+        const oldIndex = items.indexOf(active.id as string);
+        const newIndex = items.indexOf(over.id as string);
+        const newOrder = arrayMove(items, oldIndex, newIndex);
         
-        // Optimistic UI update first, then update the backend
-        if(user) {
-          updateDashboardLayout(newOrder);
+        setItems(newOrder);
+        
+        if (user) {
+            updateDashboardLayout(newOrder);
         }
-
-        return newOrder;
-      });
     }
   }
 
@@ -222,5 +219,3 @@ export function DashboardClient({ actions, assignedActions }: DashboardClientPro
     </div>
   )
 }
-
-    

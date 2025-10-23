@@ -202,20 +202,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await loadFullUser(auth.currentUser, true); 
   }, [loadFullUser]);
   
-  const updateDashboardLayout = async (layout: string[]) => {
+  const updateDashboardLayout = useCallback(async (layout: string[]) => {
       if (!user) return;
+      
+      // Update local state optimistically
+      setUser(currentUser => currentUser ? { ...currentUser, dashboardLayout: layout } : null);
+
       try {
-        // Update local state optimistically
-        setUser(currentUser => currentUser ? { ...currentUser, dashboardLayout: layout } : null);
-        // Update backend without causing a full user reload
         await updateUser(user.id, { dashboardLayout: layout });
       } catch (error) {
         console.error("Failed to update dashboard layout:", error);
-        // Optionally revert local state on error
+        // Optionally revert local state on error by fetching the user again
         const originalUser = await getUserById(user.id);
         setUser(originalUser);
       }
-  };
+  }, [user]);
 
   return (
     <AuthContext.Provider value={{ 
@@ -246,5 +247,3 @@ export function useAuth() {
   }
   return context;
 }
-
-    
