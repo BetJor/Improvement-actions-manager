@@ -76,7 +76,7 @@
       }
     },
     "table": {
-      "filterPlaceholder": "Filtrar por título, ID o responsable...",
+      "filterPlaceholder": "Filtrar por título, ID u origen...",
       "status": "Estado",
       "type": "Ámbito",
       "center": "Centro",
@@ -89,7 +89,7 @@
         "title": "Título",
         "status": "Estado",
         "type": "Ámbito",
-        "responsible": "Responsable",
+        "origin": "Origen",
         "dueDate": "Fecha Vencimiento"
       },
        "follow": {

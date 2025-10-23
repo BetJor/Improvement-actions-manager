@@ -104,8 +104,7 @@ export function ActionsTable({ actions }: ActionsTableProps) {
         searchTerm === "" ||
         action.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         action.actionId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (action.responsibleUser && action.responsibleUser.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
-        action.responsibleGroupId.toLowerCase().includes(searchTerm.toLowerCase())
+        action.category.toLowerCase().includes(searchTerm.toLowerCase())
 
       const statusMatch = statusFilter.size === 0 || statusFilter.has(action.status)
       const typeMatch = typeFilter.size === 0 || typeFilter.has(action.type)
@@ -294,7 +293,7 @@ export function ActionsTable({ actions }: ActionsTableProps) {
     <div className="w-full">
       <div className="flex items-center py-4 gap-2">
         <Input
-          placeholder="Filtrar por título, ID o responsable..."
+          placeholder="Filtrar por título, ID u origen..."
           value={searchTerm}
           onChange={e => setSearchTerm(e.target.value)}
           className="max-w-sm"
@@ -471,7 +470,7 @@ export function ActionsTable({ actions }: ActionsTableProps) {
               <TableHead><Button variant="ghost" onClick={() => requestSort('title')}>Título {getSortIcon('title')}</Button></TableHead>
               <TableHead><Button variant="ghost" onClick={() => requestSort('status')}>Estado {getSortIcon('status')}</Button></TableHead>
               <TableHead><Button variant="ghost" onClick={() => requestSort('type')}>Ámbito {getSortIcon('type')}</Button></TableHead>
-              <TableHead><Button variant="ghost" onClick={() => requestSort('responsible')}>Responsable {getSortIcon('responsible')}</Button></TableHead>
+              <TableHead><Button variant="ghost" onClick={() => requestSort('category')}>Origen {getSortIcon('category')}</Button></TableHead>
               <TableHead><Button variant="ghost" onClick={() => requestSort('implementationDueDate')}>Fecha Vencimiento {getSortIcon('implementationDueDate')}</Button></TableHead>
             </TableRow>
           </TableHeader>
@@ -502,7 +501,7 @@ export function ActionsTable({ actions }: ActionsTableProps) {
                     </div>
                   </TableCell>
                   <TableCell>{action.type}</TableCell>
-                  <TableCell>{action.responsibleUser?.name || action.responsibleGroupId}</TableCell>
+                  <TableCell>{action.category}</TableCell>
                   <TableCell>{safeFormatDate(action.implementationDueDate)}</TableCell>
                 </TableRow>
               ))

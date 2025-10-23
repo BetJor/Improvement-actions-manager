@@ -76,7 +76,7 @@
       }
     },
     "table": {
-      "filterPlaceholder": "Filtra per títol, ID o responsable...",
+      "filterPlaceholder": "Filtra per títol, ID o origen...",
       "status": "Estat",
       "type": "Àmbit",
       "center": "Centre",
@@ -89,7 +89,7 @@
         "title": "Títol",
         "status": "Estat",
         "type": "Àmbit",
-        "responsible": "Responsable",
+        "origin": "Origen",
         "dueDate": "Data Venciment"
       },
       "follow": {
