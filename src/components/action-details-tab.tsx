@@ -351,9 +351,9 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
         addSectionTitle('Detalles de la Acción', 1);
         addAuditInfo(`Creado por ${action.creator.name} el ${safeParseDate(action.creationDate) ? format(safeParseDate(action.creationDate)!, 'dd/MM/yyyy HH:mm') : 'N/D'}`);
         addTwoColumnRow('Título:', action.title);
-        addTwoColumnRow('Tipo:', action.type);
-        addTwoColumnRow('Categoría:', action.category);
-        addTwoColumnRow('Subcategoría:', action.subcategory);
+        addTwoColumnRow('Ámbito:', action.type);
+        addTwoColumnRow('Origen:', action.category);
+        addTwoColumnRow('Clasificación:', action.subcategory);
         addTwoColumnRow('Centro:', action.center);
         addTwoColumnRow('Áreas Implicadas:', action.affectedAreas.join(', '));
         addTextBlock('Hallazgo / Observaciones Iniciales:', action.description);
