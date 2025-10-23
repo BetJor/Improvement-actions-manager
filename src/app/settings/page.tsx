@@ -254,8 +254,8 @@ export default function SettingsPage() {
     };
 
     const canAddItem = useMemo(() => {
-        if (isAdmin) return true;
-        if (activeTab === 'workflow') return false; // Non-admins cannot create new ambits.
+        if (activeTab === 'workflow') return false; // Non-admins cannot create new ambits from workflow.
+        if (activeTab === 'responsibilityRoles' && !isAdmin) return false;
         return true;
     }, [isAdmin, activeTab]);
 
@@ -287,7 +287,7 @@ export default function SettingsPage() {
                     <TabsList>
                         <TabsTrigger value="codificacion">Codificación</TabsTrigger>
                         <TabsTrigger value="workflow">Workflow</TabsTrigger>
-                        <TabsTrigger value="responsibilityRoles">Roles de Responsabilidad</TabsTrigger>
+                        {isAdmin && <TabsTrigger value="responsibilityRoles">Roles de Responsabilidad</TabsTrigger>}
                     </TabsList>
                     
                     <TabsContent value="codificacion" className="flex-grow mt-4">
@@ -306,11 +306,6 @@ export default function SettingsPage() {
                     </TabsContent>
 
                     <TabsContent value="workflow" className="flex-grow mt-4">
-                         <div className="flex justify-end mb-4">
-                           <Button onClick={handleAddNew} disabled={!canAddItem}>
-                                <PlusCircle className="mr-2 h-4 w-4" /> Añadir Nuevo Ámbito
-                            </Button>
-                         </div>
                          <MasterDataTable
                             data={masterData.workflow?.data || []}
                             columns={masterData.workflow?.columns || []}
@@ -318,24 +313,27 @@ export default function SettingsPage() {
                             onDelete={(item) => handleDelete('ambits', item.id!)}
                             isLoading={isLoading}
                             canEdit={canEditItem}
+                            canDelete={false} // Disable delete in workflow view
                          />
                     </TabsContent>
                     
-                    <TabsContent value="responsibilityRoles" className="flex-grow mt-4">
-                         <div className="flex justify-end mb-4">
-                           <Button onClick={handleAddNew} disabled={!canAddItem}>
-                                <PlusCircle className="mr-2 h-4 w-4" /> Añadir Nuevo Rol
-                            </Button>
-                         </div>
-                         <MasterDataTable
-                            data={masterData.responsibilityRoles?.data || []}
-                            columns={masterData.responsibilityRoles?.columns || []}
-                            onEdit={handleEdit}
-                            onDelete={(item) => handleDelete('responsibilityRoles', item.id!)}
-                            isLoading={isLoading}
-                            canEdit={canEditItem}
-                         />
-                    </TabsContent>
+                    {isAdmin && (
+                        <TabsContent value="responsibilityRoles" className="flex-grow mt-4">
+                            <div className="flex justify-end mb-4">
+                            <Button onClick={handleAddNew} disabled={!canAddItem}>
+                                    <PlusCircle className="mr-2 h-4 w-4" /> Añadir Nuevo Rol
+                                </Button>
+                            </div>
+                            <MasterDataTable
+                                data={masterData.responsibilityRoles?.data || []}
+                                columns={masterData.responsibilityRoles?.columns || []}
+                                onEdit={handleEdit}
+                                onDelete={(item) => handleDelete('responsibilityRoles', item.id!)}
+                                isLoading={isLoading}
+                                canEdit={canEditItem}
+                            />
+                        </TabsContent>
+                    )}
 
                 </Tabs>
                  {formConfig && isFormOpen && (

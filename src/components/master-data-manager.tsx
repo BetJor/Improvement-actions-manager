@@ -330,9 +330,10 @@ interface MasterDataTableProps {
   onDelete: (item: MasterDataItem) => void;
   isLoading: boolean;
   canEdit: (item: MasterDataItem) => boolean;
+  canDelete?: boolean;
 }
 
-export function MasterDataTable({ data, columns, onEdit, onDelete, isLoading, canEdit }: MasterDataTableProps) {
+export function MasterDataTable({ data, columns, onEdit, onDelete, isLoading, canEdit, canDelete = true }: MasterDataTableProps) {
   return (
     <div className="rounded-md border">
       <Table>
@@ -352,6 +353,7 @@ export function MasterDataTable({ data, columns, onEdit, onDelete, isLoading, ca
           ) : data.length > 0 ? (
             data.map((item) => {
               const userCanEdit = canEdit(item);
+              const userCanDelete = canDelete && userCanEdit;
               return (
               <TableRow key={item.id}>
                 {columns.map(col => (
@@ -363,23 +365,25 @@ export function MasterDataTable({ data, columns, onEdit, onDelete, isLoading, ca
                   <Button variant="ghost" size="icon" onClick={() => onEdit(item)} disabled={!userCanEdit}>
                     <Pencil className="h-4 w-4" />
                   </Button>
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button variant="ghost" size="icon" disabled={!userCanEdit}>
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
-                        <AlertDialogDescription>Esta acción no se puede deshacer. Esto eliminará permanentemente el elemento.</AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                        <AlertDialogAction onClick={() => onDelete(item)}>Continuar</AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
+                  {canDelete && (
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="ghost" size="icon" disabled={!userCanDelete}>
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+                          <AlertDialogDescription>Esta acción no se puede deshacer. Esto eliminará permanentemente el elemento.</AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => onDelete(item)}>Continuar</AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  )}
                 </TableCell>
               </TableRow>
             )})
