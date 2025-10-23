@@ -73,6 +73,7 @@ export function Header() {
         <div className="flex items-center gap-4">
             <SidebarTrigger className="text-primary-foreground hover:text-primary-foreground/90" />
             <div className="flex items-center gap-2">
+                <ListChecks />
                 <h1 className="text-lg font-semibold text-primary-foreground">Acciones de Mejora</h1>
             </div>
         </div>
