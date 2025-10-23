@@ -204,11 +204,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   
   const updateDashboardLayout = useCallback(async (layout: string[]) => {
       if (!user) return;
-      
-      // Update local state optimistically
-      setUser(currentUser => currentUser ? { ...currentUser, dashboardLayout: layout } : null);
-
       try {
+        // Update backend without causing a full user reload
         await updateUser(user.id, { dashboardLayout: layout });
       } catch (error) {
         console.error("Failed to update dashboard layout:", error);
