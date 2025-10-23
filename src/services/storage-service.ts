@@ -1,4 +1,5 @@
 
+
 import { doc, updateDoc, arrayUnion } from 'firebase/firestore';
 import { db, storage } from '@/lib/firebase';
 import { ref, getDownloadURL, uploadBytesResumable } from "firebase/storage";
@@ -50,9 +51,10 @@ export async function uploadFileAndUpdateAction(actionId: string, file: File, us
             console.log(`[Storage Service] 6. Download URL obtained: ${downloadURL}`);
 
             // FIX: Create a clean user object for Firestore
-            const uploaderInfo = {
+            const uploaderInfo: ActionUserInfo = {
               id: user.id,
               name: user.name,
+              avatar: user.avatar || "",
             };
 
             const newAttachment: ActionAttachment = {
@@ -84,4 +86,3 @@ export async function uploadFileAndUpdateAction(actionId: string, file: File, us
     throw error;
   }
 }
-

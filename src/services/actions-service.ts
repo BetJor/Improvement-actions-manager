@@ -141,7 +141,7 @@ export const getActionById = async (id: string): Promise<ImprovementAction | nul
                 serializableData.responsibleUser = {
                     id: responsibleUser.id,
                     name: responsibleUser.name,
-                    avatar: responsibleUser.avatar
+                    avatar: responsibleUser.avatar || undefined,
                 }
             }
         }
@@ -203,7 +203,7 @@ export async function createAction(data: CreateActionData, masterData: any): Pro
       creator: {
         id: data.creator.id,
         name: creatorDetails?.name || data.creator.name,
-        avatar: creatorDetails?.avatar || data.creator.avatar,
+        avatar: creatorDetails?.avatar || "",
         email: creatorDetails?.email || '',
       },
       responsibleGroupId: data.assignedTo,

@@ -1,3 +1,4 @@
+
 import { collection, getDocs, doc, getDoc, addDoc, query, orderBy, writeBatch, updateDoc, deleteDoc, setDoc } from 'firebase/firestore';
 import { db, auth } from '@/lib/firebase';
 import { users as mockUsers } from '@/lib/static-data';
@@ -50,7 +51,7 @@ export async function getUserById(userId: string): Promise<User | null> {
                 name: authUser.displayName || authUser.email || 'Usuari Nou',
                 email: authUser.email || '',
                 role: 'Creator', // Default role for new sign-ups
-                avatar: authUser.photoURL || `https://i.pravatar.cc/150?u=${authUser.uid}`
+                avatar: authUser.photoURL || ""
             };
             await setDoc(userDocRef, newUser);
             return newUser;

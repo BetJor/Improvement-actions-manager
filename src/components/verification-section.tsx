@@ -168,7 +168,7 @@ export function VerificationSection({ action, user, isSubmitting, onSave }: Veri
       verificationResponsible: {
         id: user.id,
         name: user.name || "Usuario desconocido",
-        avatar: user.avatar || undefined,
+        avatar: user.avatar || "",
       },
       verificationDate: new Date().toISOString(),
     }
