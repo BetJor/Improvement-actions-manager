@@ -277,7 +277,7 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
         const grayColor = '#6B7280'; // gray-500
         const darkGrayColor = '#374151'; // gray-700
         
-        doc.setFontSize(22);
+        doc.setFontSize(18);
         doc.setFont('helvetica', 'bold');
         doc.setTextColor(darkGrayColor);
         doc.text(`Acción de Mejora: ${action.actionId}`, margin, y);
@@ -293,7 +293,7 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
         // --- HELPER FUNCTIONS ---
         const addSectionTitle = (title: string, number?: number) => {
             if (y > pageHeight - 30) { doc.addPage(); y = 20; }
-            doc.setFontSize(16);
+            doc.setFontSize(14);
             doc.setFont('helvetica', 'bold');
             doc.setTextColor(primaryColor);
             const text = number ? `${number}. ${title}` : title;
@@ -356,7 +356,7 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
         addTwoColumnRow('Clasificación:', action.subcategory);
         addTwoColumnRow('Centro:', action.center);
         addTwoColumnRow('Áreas Implicadas:', action.affectedAreas.join(', '));
-        addTextBlock('Hallazgo / Observaciones Iniciales:', action.description);
+        addTextBlock('Observaciones:', action.description);
         y += 5;
         
         // --- SECTION 2: CAUSAS Y ACCIÓN PROPUESTA ---
@@ -369,27 +369,77 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
                 doc.setFontSize(11);
                 doc.setFont('helvetica', 'bold');
                 doc.setTextColor(darkGrayColor);
-                doc.text("Acciones Propuestas", margin, y);
+                doc.text("Acción Propuesta", margin, y);
                 y += 8;
 
-                doc.autoTable({
-                    startY: y,
-                    head: [['ACCIÓN DETALLADA', 'RESPONSABLE', 'FECHA LÍMITE', 'ESTADO', 'FECHA ESTADO']],
-                    body: action.analysis.proposedActions.map(pa => [
-                        pa.description,
-                        users.find(u => u.id === pa.responsibleUserId)?.name || 'N/D',
-                        safeParseDate(pa.dueDate) ? format(safeParseDate(pa.dueDate)!, 'dd/MM/yyyy') : 'N/D',
-                        pa.status || 'Pendiente',
-                        pa.statusUpdateDate ? format(safeParseDate(pa.statusUpdateDate)!, 'dd/MM/yyyy HH:mm') : 'N/D'
-                    ]),
-                    theme: 'grid',
-                    headStyles: { fillColor: darkGrayColor, textColor: 255, fontStyle: 'bold', fontSize: 9 },
-                    styles: { fontSize: 9, cellPadding: 2.5, lineColor: '#E5E7EB', lineWidth: 0.2 },
-                    margin: { left: margin, right: margin },
-                });
-                y = doc.autoTable.previous.finalY + 10;
-            }
+                action.analysis.proposedActions.forEach(pa => {
+                    const statusColors = {
+                        "Implementada": '#22C55E', // green-500
+                        "Implementada Parcialmente": '#FBBF24', // amber-400
+                        "No Implementada": '#EF4444', // red-500
+                        "Pendiente": '#9CA3AF' // gray-400
+                    };
+                    const statusBarColor = statusColors[pa.status || "Pendiente"];
 
+                    const cardContent = [
+                        { text: pa.description, font: 'helvetica', style: 'normal', size: 10, color: darkGrayColor },
+                        { text: `Responsable: ${users.find(u => u.id === pa.responsibleUserId)?.name || 'N/D'}`, font: 'helvetica', style: 'normal', size: 9, color: grayColor },
+                        { text: `Fecha Vencimiento: ${safeParseDate(pa.dueDate) ? format(safeParseDate(pa.dueDate)!, 'dd/MM/yyyy') : 'N/D'}`, font: 'helvetica', style: 'normal', size: 9, color: grayColor },
+                        { text: `Estado: ${pa.status || 'Pendiente'}${pa.statusUpdateDate ? ` (el ${format(safeParseDate(pa.statusUpdateDate)!, "dd/MM/yyyy HH:mm")})` : ''}`, font: 'helvetica', style: 'bold', size: 9, color: darkGrayColor }
+                    ];
+
+                    let cardHeight = 5; // Initial padding
+                    cardContent.forEach((item, index) => {
+                        doc.setFont(item.font, item.style);
+                        doc.setFontSize(item.size);
+                        const splitText = doc.splitTextToSize(item.text, pageWidth - (margin * 2) - 15);
+                        cardHeight += doc.getTextDimensions(splitText).h;
+                        if (index === 0) cardHeight += 8; // Extra space after description
+                    });
+                    cardHeight += 5; // Final padding
+
+                    if (y + cardHeight > pageHeight - 20) { doc.addPage(); y = 20; }
+                    
+                    // Draw card
+                    doc.setFillColor('#F9FAFB'); // gray-50
+                    doc.setDrawColor('#E5E7EB'); // gray-200
+                    doc.roundedRect(margin, y, pageWidth - (margin * 2), cardHeight, 3, 3, 'FD');
+                    
+                    // Draw status bar
+                    doc.setFillColor(statusBarColor);
+                    doc.rect(margin, y, 3, cardHeight, 'F');
+                    
+                    let currentY = y + 8; // Start with top padding
+
+                    // Draw description
+                    doc.setFont('helvetica', 'normal').setFontSize(10).setTextColor(darkGrayColor);
+                    const descLines = doc.splitTextToSize(pa.description, pageWidth - (margin * 2) - 15);
+                    doc.text(descLines, margin + 8, currentY);
+                    currentY += doc.getTextDimensions(descLines).h + 3;
+
+                    // Separator
+                    doc.setDrawColor('#E5E7EB');
+                    doc.line(margin + 8, currentY, pageWidth - margin - 8, currentY);
+                    currentY += 5;
+                    
+                    // Metadata
+                    doc.setFont('helvetica', 'normal').setFontSize(9).setTextColor(grayColor);
+                    const responsibleText = `Responsable: ${users.find(u => u.id === pa.responsibleUserId)?.name || 'N/D'}`;
+                    doc.text(responsibleText, margin + 8, currentY);
+                    currentY += 5;
+
+                    const dueDateText = `Fecha Vencimiento: ${safeParseDate(pa.dueDate) ? format(safeParseDate(pa.dueDate)!, 'dd/MM/yyyy') : 'N/D'}`;
+                    doc.text(dueDateText, margin + 8, currentY);
+                    currentY += 5;
+                    
+                    doc.setFont('helvetica', 'bold').setFontSize(9).setTextColor(darkGrayColor);
+                    const statusText = `Estado: ${pa.status || 'Pendiente'}${pa.statusUpdateDate ? ` (el ${format(safeParseDate(pa.statusUpdateDate)!, "dd/MM/yyyy HH:mm")})` : ''}`;
+                    doc.text(statusText, margin + 8, currentY);
+
+                    y += cardHeight + 5; // Move to next card position
+                });
+            }
+            y += 5;
             addTextBlock('Responsable Verificación:', users.find(u => u.id === action.analysis?.verificationResponsibleUserId)?.name);
             y += 5;
         }
@@ -409,7 +459,7 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
                         pa.statusUpdateDate ? format(safeParseDate(pa.statusUpdateDate)!, 'dd/MM/yyyy HH:mm') : 'N/D'
                     ]),
                     theme: 'grid',
-                    headStyles: { fillColor: darkGrayColor, textColor: 255, fontStyle: 'bold', fontSize: 9 },
+                    headStyles: { fillColor: '#111827', textColor: 255, fontStyle: 'bold', fontSize: 9 },
                     styles: { fontSize: 9, cellPadding: 2.5, lineColor: '#E5E7EB', lineWidth: 0.2 },
                     margin: { left: margin, right: margin },
                 });
@@ -477,7 +527,7 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
             ["Fecha Vto. Implantación", safeParseDate(action.implementationDueDate) ? format(safeParseDate(action.implementationDueDate)!, 'dd/MM/yyyy') : 'N/D'],
             ["Fecha Vto. Cierre", safeParseDate(action.closureDueDate) ? format(safeParseDate(action.closureDueDate)!, 'dd/MM/yyyy') : 'N/D'],
             [], // Spacer
-            ["Hallazgo / Observaciones Iniciales"],
+            ["Observaciones"],
             [action.description],
             [],
         ];
@@ -878,3 +928,5 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
         </div>
     )
 }
+
+    
