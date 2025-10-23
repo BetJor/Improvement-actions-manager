@@ -63,6 +63,8 @@ export function ActionsTable({ actions }: ActionsTableProps) {
   const [statusFilter, setStatusFilter] = useState<Set<ImprovementActionStatus>>(new Set());
   const [typeFilter, setTypeFilter] = useState<Set<string>>(new Set());
   const [centerFilter, setCenterFilter] = useState<Set<string>>(new Set());
+  const [originFilter, setOriginFilter] = useState<Set<string>>(new Set());
+  const [classificationFilter, setClassificationFilter] = useState<Set<string>>(new Set());
   const [sortConfig, setSortConfig] = useState<{ key: SortKey; direction: 'asc' | 'desc' } | null>(null);
   
   const [selectedSections, setSelectedSections] = useState<Set<ExportableSection>>(new Set(["details"]));
@@ -80,6 +82,8 @@ export function ActionsTable({ actions }: ActionsTableProps) {
   const allStatuses = useMemo(() => Array.from(new Set(actions.map(a => a.status))), [actions]);
   const allTypes = useMemo(() => Array.from(new Set(actions.map(a => a.type))), [actions]);
   const allCenters = useMemo(() => Array.from(new Set(actions.map(a => a.center).filter(Boolean))) as string[], [actions]);
+  const allOrigins = useMemo(() => Array.from(new Set(actions.map(a => a.category).filter(Boolean))) as string[], [actions]);
+  const allClassifications = useMemo(() => Array.from(new Set(actions.map(a => a.subcategory).filter(Boolean))) as string[], [actions]);
 
   const removeFilter = (filterSetState: React.Dispatch<React.SetStateAction<Set<any>>>, value: any) => {
     filterSetState(prev => {
@@ -93,10 +97,12 @@ export function ActionsTable({ actions }: ActionsTableProps) {
     setStatusFilter(new Set());
     setTypeFilter(new Set());
     setCenterFilter(new Set());
+    setOriginFilter(new Set());
+    setClassificationFilter(new Set());
     setSearchTerm("");
   }
 
-  const activeFiltersCount = statusFilter.size + typeFilter.size + centerFilter.size + (searchTerm ? 1 : 0);
+  const activeFiltersCount = statusFilter.size + typeFilter.size + centerFilter.size + originFilter.size + classificationFilter.size + (searchTerm ? 1 : 0);
 
   const filteredAndSortedActions = useMemo(() => {
     let filtered = actions.filter(action => {
@@ -109,8 +115,11 @@ export function ActionsTable({ actions }: ActionsTableProps) {
       const statusMatch = statusFilter.size === 0 || statusFilter.has(action.status)
       const typeMatch = typeFilter.size === 0 || typeFilter.has(action.type)
       const centerMatch = centerFilter.size === 0 || (action.center && centerFilter.has(action.center));
+      const originMatch = originFilter.size === 0 || (action.category && originFilter.has(action.category));
+      const classificationMatch = classificationFilter.size === 0 || (action.subcategory && classificationFilter.has(action.subcategory));
 
-      return searchMatch && statusMatch && typeMatch && centerMatch
+
+      return searchMatch && statusMatch && typeMatch && centerMatch && originMatch && classificationMatch;
     })
 
     if (sortConfig !== null) {
@@ -138,7 +147,7 @@ export function ActionsTable({ actions }: ActionsTableProps) {
     }
 
     return filtered
-  }, [actions, searchTerm, statusFilter, typeFilter, centerFilter, sortConfig])
+  }, [actions, searchTerm, statusFilter, typeFilter, centerFilter, originFilter, classificationFilter, sortConfig])
 
   const requestSort = (key: SortKey) => {
     let direction: 'asc' | 'desc' = 'asc'
@@ -291,138 +300,140 @@ export function ActionsTable({ actions }: ActionsTableProps) {
 
   return (
     <div className="w-full">
-      <div className="flex items-center py-4 gap-2">
+      <div className="flex flex-wrap items-center py-4 gap-2">
         <Input
           placeholder="Filtrar por título, ID u origen..."
           value={searchTerm}
           onChange={e => setSearchTerm(e.target.value)}
           className="max-w-sm"
         />
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" className="ml-auto">
-              Estado <ChevronDown className="ml-2 h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            {allStatuses.map(status => (
-              <DropdownMenuCheckboxItem
-                key={status}
-                checked={statusFilter.has(status)}
-                onCheckedChange={checked => {
-                  setStatusFilter(prev => {
-                    const newSet = new Set(prev)
-                    if (checked) newSet.add(status)
-                    else newSet.delete(status)
-                    return newSet
-                  })
-                }}
-              >
-                {status}
-              </DropdownMenuCheckboxItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline">
-              Ámbito <ChevronDown className="ml-2 h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            {allTypes.map(type => (
-              <DropdownMenuCheckboxItem
-                key={type}
-                checked={typeFilter.has(type)}
-                onCheckedChange={checked => {
-                  setTypeFilter(prev => {
-                    const newSet = new Set(prev)
-                    if (checked) newSet.add(type)
-                    else newSet.delete(type)
-                    return newSet
-                  })
-                }}
-              >
-                {type}
-              </DropdownMenuCheckboxItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline">
-              Centro <ChevronDown className="ml-2 h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            {allCenters.map(center => (
-              <DropdownMenuCheckboxItem
-                key={center}
-                checked={centerFilter.has(center)}
-                onCheckedChange={checked => {
-                  setCenterFilter(prev => {
-                    const newSet = new Set(prev)
-                    if (checked) newSet.add(center)
-                    else newSet.delete(center)
-                    return newSet
-                  })
-                }}
-              >
-                {center}
-              </DropdownMenuCheckboxItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
-        
-        <DropdownMenu>
+        <div className="flex gap-2 flex-wrap">
+          <DropdownMenu>
             <DropdownMenuTrigger asChild>
-                <Button variant="outline">
-                    <FileSpreadsheet className="mr-2 h-4 w-4" />
-                    Exportar
-                    <ChevronDown className="ml-2 h-4 w-4" />
-                </Button>
+              <Button variant="outline" className="ml-auto">
+                Estado <ChevronDown className="ml-2 h-4 w-4" />
+              </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-64">
-                <DropdownMenuLabel>Selecciona los datos a exportar</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                  <DropdownMenuCheckboxItem
-                      checked={selectedSections.has("details")}
-                      onCheckedChange={() => toggleSection("details")}
-                      onSelect={(e) => e.preventDefault()}
-                  >
-                      Detalles de la Acción
-                  </DropdownMenuCheckboxItem>
-                  <DropdownMenuCheckboxItem
-                      checked={selectedSections.has("plan")}
-                      onCheckedChange={() => toggleSection("plan")}
-                      onSelect={(e) => e.preventDefault()}
-                  >
-                      Plan de Acción
-                  </DropdownMenuCheckboxItem>
-                  <DropdownMenuCheckboxItem
-                      checked={selectedSections.has("comments")}
-                      onCheckedChange={() => toggleSection("comments")}
-                      onSelect={(e) => e.preventDefault()}
-                  >
-                      Comentarios
-                  </DropdownMenuCheckboxItem>
-                  <DropdownMenuCheckboxItem
-                      checked={selectedSections.has("attachments")}
-                      onCheckedChange={() => toggleSection("attachments")}
-                      onSelect={(e) => e.preventDefault()}
-                  >
-                      Adjuntos
-                  </DropdownMenuCheckboxItem>
-                <DropdownMenuSeparator />
-                <div className="p-1">
-                    <Button onClick={handleExportToExcel} className="w-full bg-green-600 hover:bg-green-700" disabled={selectedSections.size === 0}>
-                        <FileSpreadsheet className="mr-2 h-4 w-4" />
-                        Exportar a Excel
-                    </Button>
-                </div>
+            <DropdownMenuContent align="end">
+              {allStatuses.map(status => (
+                <DropdownMenuCheckboxItem
+                  key={status}
+                  checked={statusFilter.has(status)}
+                  onCheckedChange={checked => {
+                    setStatusFilter(prev => {
+                      const newSet = new Set(prev)
+                      if (checked) newSet.add(status)
+                      else newSet.delete(status)
+                      return newSet
+                    })
+                  }}
+                >
+                  {status}
+                </DropdownMenuCheckboxItem>
+              ))}
             </DropdownMenuContent>
-        </DropdownMenu>
-
+          </DropdownMenu>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline">
+                Ámbito <ChevronDown className="ml-2 h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {allTypes.map(type => (
+                <DropdownMenuCheckboxItem
+                  key={type}
+                  checked={typeFilter.has(type)}
+                  onCheckedChange={checked => {
+                    setTypeFilter(prev => {
+                      const newSet = new Set(prev)
+                      if (checked) newSet.add(type)
+                      else newSet.delete(type)
+                      return newSet
+                    })
+                  }}
+                >
+                  {type}
+                </DropdownMenuCheckboxItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+           <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline">
+                Origen <ChevronDown className="ml-2 h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {allOrigins.map(origin => (
+                <DropdownMenuCheckboxItem
+                  key={origin}
+                  checked={originFilter.has(origin)}
+                  onCheckedChange={checked => {
+                    setOriginFilter(prev => {
+                      const newSet = new Set(prev)
+                      if (checked) newSet.add(origin)
+                      else newSet.delete(origin)
+                      return newSet
+                    })
+                  }}
+                >
+                  {origin}
+                </DropdownMenuCheckboxItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline">
+                Clasificación <ChevronDown className="ml-2 h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {allClassifications.map(classification => (
+                <DropdownMenuCheckboxItem
+                  key={classification}
+                  checked={classificationFilter.has(classification)}
+                  onCheckedChange={checked => {
+                    setClassificationFilter(prev => {
+                      const newSet = new Set(prev)
+                      if (checked) newSet.add(classification)
+                      else newSet.delete(classification)
+                      return newSet
+                    })
+                  }}
+                >
+                  {classification}
+                </DropdownMenuCheckboxItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline">
+                Centro <ChevronDown className="ml-2 h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {allCenters.map(center => (
+                <DropdownMenuCheckboxItem
+                  key={center}
+                  checked={centerFilter.has(center)}
+                  onCheckedChange={checked => {
+                    setCenterFilter(prev => {
+                      const newSet = new Set(prev)
+                      if (checked) newSet.add(center)
+                      else newSet.delete(center)
+                      return newSet
+                    })
+                  }}
+                >
+                  {center}
+                </DropdownMenuCheckboxItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
 
        {activeFiltersCount > 0 && (
@@ -445,6 +456,18 @@ export function ActionsTable({ actions }: ActionsTableProps) {
                       <Badge key={value} variant="secondary" className="pl-2 pr-1">
                           Ámbito: {value}
                           <button onClick={() => removeFilter(setTypeFilter, value)} className="ml-1 rounded-full hover:bg-background/80 p-0.5"><X className="h-3 w-3"/></button>
+                      </Badge>
+                  ))}
+                   {[...originFilter].map(value => (
+                      <Badge key={value} variant="secondary" className="pl-2 pr-1">
+                          Origen: {value}
+                          <button onClick={() => removeFilter(setOriginFilter, value)} className="ml-1 rounded-full hover:bg-background/80 p-0.5"><X className="h-3 w-3"/></button>
+                      </Badge>
+                  ))}
+                   {[...classificationFilter].map(value => (
+                      <Badge key={value} variant="secondary" className="pl-2 pr-1">
+                          Clasificación: {value}
+                          <button onClick={() => removeFilter(setClassificationFilter, value)} className="ml-1 rounded-full hover:bg-background/80 p-0.5"><X className="h-3 w-3"/></button>
                       </Badge>
                   ))}
                   {[...centerFilter].map(value => (
@@ -518,5 +541,3 @@ export function ActionsTable({ actions }: ActionsTableProps) {
     </div>
   )
 }
-
-    
