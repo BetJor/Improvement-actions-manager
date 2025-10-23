@@ -19,7 +19,9 @@ import { Loader2 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { arrayMove } from "@dnd-kit/sortable";
-import { MasterDataManager } from "@/components/master-data-manager";
+import { MasterDataTable, MasterDataFormDialog } from "@/components/master-data-manager";
+import { Button } from "@/components/ui/button";
+import { PlusCircle } from "lucide-react";
 
 export default function SettingsPage() {
     const { toast } = useToast();
@@ -28,6 +30,13 @@ export default function SettingsPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [activeTab, setActiveTab] = useState<string>("codificacion");
     
+    const [isFormOpen, setIsFormOpen] = useState(false);
+    const [formConfig, setFormConfig] = useState<{
+        collectionName: string;
+        item: MasterDataItem | null;
+        title: string;
+    } | null>(null);
+
     const canManage = useCallback((item: ImprovementActionType | ActionCategory | null, type: 'ambit' | 'origin' | 'classification'): boolean => {
         if (isAdmin) return true;
         if (!item || !userRoles) return false;
@@ -89,14 +98,11 @@ export default function SettingsPage() {
                 : actionTypesWithRoleNames.filter(at => at.configAdminRoleIds?.some(roleId => userRoles.includes(roleId)));
 
             const data: any = {
-                // For Codificacion Tab
-                ambits_codificacion: { title: "Ámbitos", data: actionTypes },
-                origins: { title: "Orígenes", data: categories },
-                classifications: { title: "Clasificaciones", data: subcategories },
-                
-                // For Workflow Tab
-                ambits_workflow: { 
-                    title: "Workflow", 
+                ambits: { data: actionTypes }, // Used by HierarchicalSettings
+                origins: { data: categories },
+                classifications: { data: subcategories },
+                workflow: { 
+                    title: "Workflow",
                     data: filteredActionTypes, 
                     columns: [
                         { key: 'name', label: "Ámbito" },
@@ -145,7 +151,6 @@ export default function SettingsPage() {
 
     const handleSave = async (collectionName: string, item: MasterDataItem) => {
         try {
-            const actualCollectionName = collectionName.replace('_codificacion', '').replace('_workflow', '');
             const { id, ...dataToSave } = item as any;
             
             const propertiesToRemove = ['categoryName', 'creationRoleNames', 'analysisRoleNames', 'closureRoleNames', 'actionTypeNames', 'configAdminRoleNames'];
@@ -156,10 +161,10 @@ export default function SettingsPage() {
             });
 
             if (id) {
-                await updateMasterDataItem(actualCollectionName, id, dataToSave);
+                await updateMasterDataItem(collectionName, id, dataToSave);
                 toast({ title: "Elemento actualizado", description: "El elemento se ha actualizado correctamente." });
             } else {
-                await addMasterDataItem(actualCollectionName, dataToSave);
+                await addMasterDataItem(collectionName, dataToSave);
                 toast({ title: "Elemento creado", description: "El elemento se ha creado correctamente." });
             }
             await loadData(activeTab);
@@ -171,8 +176,7 @@ export default function SettingsPage() {
 
     const handleDelete = async (collectionName: string, itemId: string) => {
         try {
-            const actualCollectionName = collectionName.replace('_codificacion', '').replace('_workflow', '');
-            await deleteMasterDataItem(actualCollectionName, itemId);
+            await deleteMasterDataItem(collectionName, itemId);
             toast({ title: "Elemento eliminado", description: "El elemento se ha eliminado correctamente." });
             await loadData(activeTab);
         } catch (error) {
@@ -180,10 +184,9 @@ export default function SettingsPage() {
             toast({ variant: "destructive", title: "Error al eliminar", description: "No se pudo eliminar el elemento." });
         }
     };
-
+    
     const handleReorder = async (collectionName: string, activeId: string, overId: string) => {
         if (!masterData || !masterData[collectionName]) return;
-        const actualCollectionName = collectionName.replace('_codificacion', '').replace('_workflow', '');
 
         const itemsToReorder = masterData[collectionName].data;
         const oldIndex = itemsToReorder.findIndex((i: MasterDataItem) => i.id === activeId);
@@ -204,7 +207,7 @@ export default function SettingsPage() {
         try {
             const updates = reorderedItems.map((item, index) => {
                 const newItem = { ...item, order: index };
-                return updateMasterDataItem(actualCollectionName, newItem.id!, { order: newItem.order });
+                return updateMasterDataItem(collectionName, newItem.id!, { order: newItem.order });
             });
             await Promise.all(updates);
         } catch (error) {
@@ -219,9 +222,53 @@ export default function SettingsPage() {
     };
     
     const filteredAmbitsForHierarchy = useMemo(() => {
-        if (isAdmin || !masterData?.ambits_codificacion) return masterData?.ambits_codificacion.data || [];
-        return masterData.ambits_codificacion.data.filter((ambit: ImprovementActionType) => canManage(ambit, 'ambit'));
+        if (isAdmin || !masterData?.ambits) return masterData?.ambits.data || [];
+        return masterData.ambits.data.filter((ambit: ImprovementActionType) => canManage(ambit, 'ambit'));
     }, [isAdmin, masterData, canManage]);
+
+
+    const handleAddNew = () => {
+        let title = '';
+        let collection = activeTab === 'workflow' ? 'ambits' : activeTab;
+        
+        const tabInfo = masterData[collection];
+        if (tabInfo && tabInfo.title) {
+          const singularTitle = tabInfo.title.endsWith('es') ? tabInfo.title.slice(0, -2) : (tabInfo.title.endsWith('s') ? tabInfo.title.slice(0, -1) : tabInfo.title);
+          title = singularTitle;
+        }
+
+        setFormConfig({ collectionName: collection, item: null, title: title });
+        setIsFormOpen(true);
+    };
+
+    const handleEdit = (item: MasterDataItem) => {
+        let title = '';
+        let collection = activeTab === 'workflow' ? 'ambits' : activeTab;
+        const tabInfo = masterData[collection];
+        if (tabInfo && tabInfo.title) {
+          const singularTitle = tabInfo.title.endsWith('es') ? tabInfo.title.slice(0, -2) : (tabInfo.title.endsWith('s') ? tabInfo.title.slice(0, -1) : tabInfo.title);
+          title = singularTitle;
+        }
+        setFormConfig({ collectionName: collection, item: item, title: title });
+        setIsFormOpen(true);
+    };
+
+    const canAddItem = useMemo(() => {
+        if (userIsAdmin) return true;
+        if (activeTab === 'workflow') return false; // Non-admins cannot create new ambits.
+        return true;
+    }, [userIsAdmin, activeTab]);
+
+    const canEditItem = useCallback((item: MasterDataItem) => {
+        if (userIsAdmin) return true;
+        if (activeTab === 'workflow') {
+            const ambit = item as ImprovementActionType;
+            if (!ambit.configAdminRoleIds || ambit.configAdminRoleIds.length === 0) return false;
+            return ambit.configAdminRoleIds.some(roleId => userRoles.includes(roleId));
+        }
+        if (activeTab === 'responsibilityRoles') return false; // Only admin can edit roles
+        return true;
+    }, [userIsAdmin, userRoles, activeTab]);
 
 
     return (
@@ -235,43 +282,79 @@ export default function SettingsPage() {
                     <Loader2 className="h-8 w-8 animate-spin" />
                 </div>
             ) : masterData ? (
+                <>
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-col h-full">
                     <TabsList>
                         <TabsTrigger value="codificacion">Codificación</TabsTrigger>
                         <TabsTrigger value="workflow">Workflow</TabsTrigger>
+                        <TabsTrigger value="responsibilityRoles">Roles de Responsabilidad</TabsTrigger>
                     </TabsList>
                     
                     <TabsContent value="codificacion" className="flex-grow mt-4">
                        <HierarchicalSettings
                           masterData={{
-                              ambits: { ...masterData.ambits_codificacion, data: filteredAmbitsForHierarchy },
+                              ambits: { ...masterData.ambits, data: filteredAmbitsForHierarchy },
                               origins: masterData.origins,
                               classifications: masterData.classifications
                           }}
-                          onSave={(collection, item) => handleSave(`${collection}_codificacion`, item)}
-                          onDelete={(collection, id) => handleDelete(`${collection}_codificacion`, id)}
+                          onSave={(collection, item) => handleSave(collection, item)}
+                          onDelete={(collection, id) => handleDelete(collection, id)}
                           canManage={canManage}
-                          onReorder={(collection, activeId, overId) => handleReorder(`${collection}_codificacion`, activeId, overId)}
+                          onReorder={(collection, activeId, overId) => handleReorder(collection, activeId, overId)}
                           isAdmin={isAdmin}
                        />
                     </TabsContent>
-                    <TabsContent value="workflow" className="flex-grow mt-4">
-                        <MasterDataManager 
-                            data={{
-                                ambits: masterData.ambits_workflow,
-                                responsibilityRoles: masterData.responsibilityRoles
-                            }}
-                            onSave={(collection, item) => handleSave(collection, item)}
-                            onDelete={(collection, id) => handleDelete(collection, id)}
-                            activeTab="ambits"
-                            setActiveTab={() => {}}
-                            isLoading={isLoading}
-                            userIsAdmin={isAdmin}
-                            userRoles={userRoles}
-                        />
-                    </TabsContent>
-                </Tabs>
 
+                    <TabsContent value="workflow" className="flex-grow mt-4">
+                         <div className="flex justify-end mb-4">
+                           <Button onClick={handleAddNew} disabled={!canAddItem}>
+                                <PlusCircle className="mr-2 h-4 w-4" /> Añadir Nuevo Ámbito
+                            </Button>
+                         </div>
+                         <MasterDataTable
+                            data={masterData.workflow?.data || []}
+                            columns={masterData.workflow?.columns || []}
+                            onEdit={handleEdit}
+                            onDelete={(item) => handleDelete('ambits', item.id!)}
+                            isLoading={isLoading}
+                            canEdit={canEditItem}
+                         />
+                    </TabsContent>
+                    
+                    <TabsContent value="responsibilityRoles" className="flex-grow mt-4">
+                         <div className="flex justify-end mb-4">
+                           <Button onClick={handleAddNew} disabled={!canAddItem}>
+                                <PlusCircle className="mr-2 h-4 w-4" /> Añadir Nuevo Rol
+                            </Button>
+                         </div>
+                         <MasterDataTable
+                            data={masterData.responsibilityRoles?.data || []}
+                            columns={masterData.responsibilityRoles?.columns || []}
+                            onEdit={handleEdit}
+                            onDelete={(item) => handleDelete('responsibilityRoles', item.id!)}
+                            isLoading={isLoading}
+                            canEdit={canEditItem}
+                         />
+                    </TabsContent>
+
+                </Tabs>
+                 {formConfig && isFormOpen && (
+                    <MasterDataFormDialog
+                        isOpen={isFormOpen}
+                        setIsOpen={setIsFormOpen}
+                        item={formConfig.item}
+                        collectionName={formConfig.collectionName}
+                        title={formConfig.title}
+                        onSave={handleSave}
+                        extraData={{
+                            categories: masterData.origins?.data,
+                            actionTypes: masterData.ambits?.data,
+                            responsibilityRoles: masterData.responsibilityRoles?.data,
+                        }}
+                        userIsAdmin={isAdmin}
+                    />
+                 )}
+                </>
             ) : (
                 <p>No se han podido cargar los datos.</p>
             )}
