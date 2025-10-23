@@ -1,17 +1,15 @@
-
 "use client"
 
 import { useEffect, useState, useRef } from "react"
 import { useForm } from "react-hook-form"
 import * as z from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { getPrompt, updatePrompt, getWorkflowSettings, updateWorkflowSettings } from "@/lib/data"
+import { getPrompt, updatePrompt } from "@/lib/data"
 import { useToast } from "@/hooks/use-toast"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { Loader2 } from "lucide-react"
 
 
@@ -20,10 +18,6 @@ const settingsSchema = z.object({
   improveWritingPrompt: z.string(),
   analysisSuggestionPrompt: z.string(),
   correctiveActionsPrompt: z.string(),
-  // Workflow
-  analysisDueDays: z.coerce.number().int().positive(),
-  implementationDueDays: z.coerce.number().int().positive(),
-  closureDueDays: z.coerce.number().int().positive(),
 })
 
 type SettingsFormValues = z.infer<typeof settingsSchema>;
@@ -39,9 +33,6 @@ export default function AiSettingsPage() {
       improveWritingPrompt: "",
       analysisSuggestionPrompt: "",
       correctiveActionsPrompt: "",
-      analysisDueDays: 30,
-      implementationDueDays: 75,
-      closureDueDays: 90,
     },
   })
 
@@ -49,18 +40,14 @@ export default function AiSettingsPage() {
     async function loadSettings() {
       setIsLoading(true)
       try {
-        const [improvePrompt, analysisPrompt, correctiveActionsPrompt, workflowSettings] = await Promise.all([
+        const [improvePrompt, analysisPrompt, correctiveActionsPrompt] = await Promise.all([
           getPrompt("improveWriting"),
           getPrompt("analysisSuggestion"),
           getPrompt("correctiveActions"),
-          getWorkflowSettings(),
         ]);
         form.setValue("improveWritingPrompt", improvePrompt);
         form.setValue("analysisSuggestionPrompt", analysisPrompt);
         form.setValue("correctiveActionsPrompt", correctiveActionsPrompt);
-        form.setValue("analysisDueDays", workflowSettings.analysisDueDays);
-        form.setValue("implementationDueDays", workflowSettings.implementationDueDays);
-        form.setValue("closureDueDays", workflowSettings.closureDueDays);
       } catch (error) {
         console.error("Failed to load settings:", error)
         toast({
@@ -82,22 +69,17 @@ export default function AiSettingsPage() {
         updatePrompt("improveWriting", values.improveWritingPrompt),
         updatePrompt("analysisSuggestion", values.analysisSuggestionPrompt),
         updatePrompt("correctiveActions", values.correctiveActionsPrompt),
-        updateWorkflowSettings({
-            analysisDueDays: values.analysisDueDays,
-            implementationDueDays: values.implementationDueDays,
-            closureDueDays: values.closureDueDays,
-        })
       ]);
       toast({
         title: "¡Guardado!",
-        description: "La configuración se ha guardado correctamente.",
+        description: "La configuración de la IA se ha guardado correctamente.",
       })
     } catch (error) {
       console.error("Failed to save settings:", error)
       toast({
         variant: "destructive",
         title: "Error",
-        description: "No se ha podido guardar la configuración.",
+        description: "No se ha podido guardar la configuración de la IA.",
       })
     } finally {
       setIsSaving(false)
@@ -107,8 +89,8 @@ export default function AiSettingsPage() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Configuración del Sistema</CardTitle>
-        <CardDescription>Gestiona los prompts de la IA y otros parámetros generales del sistema.</CardDescription>
+        <CardTitle>Configuración de IA</CardTitle>
+        <CardDescription>Gestiona los prompts que utiliza el sistema de inteligencia artificial.</CardDescription>
       </CardHeader>
       <CardContent>
         {isLoading ? (
@@ -119,55 +101,6 @@ export default function AiSettingsPage() {
         ) : (
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-              
-              <Card>
-                  <CardHeader>
-                      <CardTitle>Configuración de Vencimientos</CardTitle>
-                      <CardDescription>Define los plazos en días que se aplicarán a todas las nuevas acciones de mejora.</CardDescription>
-                  </CardHeader>
-                  <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                      <FormField
-                          control={form.control}
-                          name="analysisDueDays"
-                          render={({ field }) => (
-                          <FormItem>
-                              <FormLabel>Días para Análisis</FormLabel>
-                              <FormControl>
-                                <Input type="number" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                          </FormItem>
-                          )}
-                      />
-                      <FormField
-                          control={form.control}
-                          name="implementationDueDays"
-                          render={({ field }) => (
-                          <FormItem>
-                              <FormLabel>Días para Implantación</FormLabel>
-                              <FormControl>
-                                <Input type="number" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                          </FormItem>
-                          )}
-                      />
-                      <FormField
-                          control={form.control}
-                          name="closureDueDays"
-                          render={({ field }) => (
-                          <FormItem>
-                              <FormLabel>Días para Cierre</FormLabel>
-                              <FormControl>
-                                <Input type="number" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                          </FormItem>
-                          )}
-                      />
-                  </CardContent>
-              </Card>
-
               <Card>
                   <CardHeader>
                       <CardTitle>Configuración de Prompts de IA</CardTitle>

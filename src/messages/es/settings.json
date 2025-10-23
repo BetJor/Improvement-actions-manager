@@ -11,7 +11,8 @@
       "affectedAreas": "Áreas Afectadas",
       "responsibilityRoles": "Roles de Responsabilidad",
       "codificacion": "Codificación",
-      "workflow": "Workflow"
+      "workflow": "Workflow",
+      "vencimientos": "Vencimientos"
     },
     "col": {
       "name": "Nombre",

@@ -3,6 +3,9 @@
 "use client";
 
 import { useEffect, useState, useCallback, useMemo } from "react";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { HierarchicalSettings } from "@/components/hierarchical-settings";
 import {
     getCategories,
@@ -12,6 +15,8 @@ import {
     deleteMasterDataItem,
     getActionTypes,
     getResponsibilityRoles,
+    getWorkflowSettings,
+    updateWorkflowSettings,
 } from "@/lib/data";
 import { useToast } from "@/hooks/use-toast";
 import type { MasterDataItem, ActionCategory, ResponsibilityRole, ImprovementActionType, ActionSubcategory } from "@/lib/types";
@@ -22,13 +27,25 @@ import { arrayMove } from "@dnd-kit/sortable";
 import { MasterDataTable, MasterDataFormDialog } from "@/components/master-data-manager";
 import { Button } from "@/components/ui/button";
 import { PlusCircle } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+
+
+const settingsSchema = z.object({
+  analysisDueDays: z.coerce.number().int().positive(),
+  implementationDueDays: z.coerce.number().int().positive(),
+  closureDueDays: z.coerce.number().int().positive(),
+})
+type SettingsFormValues = z.infer<typeof settingsSchema>;
+
 
 export default function SettingsPage() {
     const { toast } = useToast();
     const { user, isAdmin, userRoles } = useAuth();
     const [masterData, setMasterData] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [isSaving, setIsSaving] = useState(false);
     const [activeTab, setActiveTab] = useState<string>("codificacion");
     
     const [isFormOpen, setIsFormOpen] = useState(false);
@@ -37,6 +54,15 @@ export default function SettingsPage() {
         item: MasterDataItem | null;
         title: string;
     } | null>(null);
+
+    const form = useForm<SettingsFormValues>({
+        resolver: zodResolver(settingsSchema),
+        defaultValues: {
+          analysisDueDays: 30,
+          implementationDueDays: 75,
+          closureDueDays: 90,
+        },
+    });
 
     const canManage = useCallback((item: ImprovementActionType | ActionCategory | null, type: 'ambit' | 'origin' | 'classification'): boolean => {
         if (isAdmin) return true;
@@ -47,7 +73,6 @@ export default function SettingsPage() {
         if (type === 'ambit') {
             const ambit = item as ImprovementActionType;
             if (!ambit.configAdminRoleIds || ambit.configAdminRoleIds.length === 0) return false;
-            // Un usuari pot gestionar si algun dels seus rols té permís
             return ambit.configAdminRoleIds.some(roleId => userRoles.includes(roleId));
         }
         if (type === 'origin') {
@@ -55,7 +80,6 @@ export default function SettingsPage() {
             if (!origen.actionTypeIds) return false;
             const relatedAmbits = origen.actionTypeIds.map(findAmbit).filter(Boolean);
             if (relatedAmbits.length === 0) return false;
-            // Només pot gestionar si pot gestionar TOTS els àmbits pares
             return relatedAmbits.every(ambit => canManage(ambit, 'ambit'));
         }
         if (type === 'classification') {
@@ -71,11 +95,12 @@ export default function SettingsPage() {
     const loadData = useCallback(async (currentTab?: string) => {
         setIsLoading(true);
         try {
-            const [categories, subcategories, actionTypes, responsibilityRoles] = await Promise.all([
+            const [categories, subcategories, actionTypes, responsibilityRoles, workflowSettings] = await Promise.all([
                 getCategories(),
                 getSubcategories(),
                 getActionTypes(),
                 getResponsibilityRoles(),
+                getWorkflowSettings(),
             ]);
             
             const data: any = {
@@ -93,8 +118,11 @@ export default function SettingsPage() {
                     ] 
                 },
             };
-
             setMasterData(data);
+
+            form.setValue("analysisDueDays", workflowSettings.analysisDueDays);
+            form.setValue("implementationDueDays", workflowSettings.implementationDueDays);
+            form.setValue("closureDueDays", workflowSettings.closureDueDays);
             
             if (currentTab) {
                 setActiveTab(currentTab);
@@ -110,7 +138,7 @@ export default function SettingsPage() {
         } finally {
             setIsLoading(false);
         }
-    }, [toast]);
+    }, [toast, form]);
 
     useEffect(() => {
         if(!masterData) {
@@ -159,28 +187,43 @@ export default function SettingsPage() {
     }, [masterData, isAdmin, userRoles]);
 
 
-    const handleSave = async (collectionName: string, item: MasterDataItem) => {
+    const handleSave = async (collectionName: string, item: MasterDataItem, values?: SettingsFormValues) => {
+        setIsSaving(true);
         try {
-            const { id, ...dataToSave } = item as any;
-            
-            const propertiesToRemove = ['categoryName', 'creationRoleNames', 'analysisRoleNames', 'closureRoleNames', 'actionTypeNames', 'configAdminRoleNames'];
-            propertiesToRemove.forEach(prop => {
-                if (prop in dataToSave) {
-                    delete dataToSave[prop];
-                }
-            });
+            if (collectionName === "workflowSettings" && values) {
+                 await updateWorkflowSettings({
+                    analysisDueDays: values.analysisDueDays,
+                    implementationDueDays: values.implementationDueDays,
+                    closureDueDays: values.closureDueDays,
+                });
+                toast({ title: "Configuración guardada", description: "Los vencimientos se han actualizado correctamente." });
 
-            if (id) {
-                await updateMasterDataItem(collectionName, id, dataToSave);
-                toast({ title: "Elemento actualizado", description: "El elemento se ha actualizado correctamente." });
             } else {
-                await addMasterDataItem(collectionName, dataToSave);
-                toast({ title: "Elemento creado", description: "El elemento se ha creado correctamente." });
+                const { id, ...dataToSave } = item as any;
+                
+                const propertiesToRemove = ['categoryName', 'creationRoleNames', 'analysisRoleNames', 'closureRoleNames', 'actionTypeNames', 'configAdminRoleNames'];
+                propertiesToRemove.forEach(prop => {
+                    if (prop in dataToSave) {
+                        delete dataToSave[prop];
+                    }
+                });
+
+                if (id) {
+                    await updateMasterDataItem(collectionName, id, dataToSave);
+                    toast({ title: "Elemento actualizado", description: "El elemento se ha actualizado correctamente." });
+                } else {
+                    await addMasterDataItem(collectionName, dataToSave);
+                    toast({ title: "Elemento creado", description: "El elemento se ha creado correctamente." });
+                }
             }
+            
             await loadData(activeTab);
+
         } catch (error) {
             console.error(`Error saving item in ${collectionName}:`, error);
             toast({ variant: "destructive", title: "Error al guardar", description: "No se pudo guardar el elemento." });
+        } finally {
+            setIsSaving(false);
         }
     };
 
@@ -298,6 +341,7 @@ export default function SettingsPage() {
                         <TabsTrigger value="codificacion">Codificación</TabsTrigger>
                         <TabsTrigger value="workflow">Workflow</TabsTrigger>
                         {isAdmin && <TabsTrigger value="responsibilityRoles">Roles de Responsabilidad</TabsTrigger>}
+                        {isAdmin && <TabsTrigger value="vencimientos">Vencimientos</TabsTrigger>}
                     </TabsList>
                     
                     <TabsContent value="codificacion" className="flex-grow mt-4">
@@ -353,6 +397,66 @@ export default function SettingsPage() {
                         </TabsContent>
                     )}
 
+                    {isAdmin && (
+                         <TabsContent value="vencimientos" className="flex-grow mt-4">
+                            <Form {...form}>
+                                 <form onSubmit={form.handleSubmit((values) => handleSave('workflowSettings', {}, values))} className="space-y-8">
+                                    <Card>
+                                        <CardHeader>
+                                            <CardTitle>Configuración de Vencimientos</CardTitle>
+                                            <CardDescription>Define los plazos en días que se aplicarán a todas las nuevas acciones de mejora.</CardDescription>
+                                        </CardHeader>
+                                        <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                            <FormField
+                                                control={form.control}
+                                                name="analysisDueDays"
+                                                render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>Días para Análisis</FormLabel>
+                                                    <FormControl>
+                                                        <Input type="number" {...field} />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                                )}
+                                            />
+                                            <FormField
+                                                control={form.control}
+                                                name="implementationDueDays"
+                                                render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>Días para Implantación</FormLabel>
+                                                    <FormControl>
+                                                        <Input type="number" {...field} />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                                )}
+                                            />
+                                            <FormField
+                                                control={form.control}
+                                                name="closureDueDays"
+                                                render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>Días para Cierre</FormLabel>
+                                                    <FormControl>
+                                                        <Input type="number" {...field} />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                                )}
+                                            />
+                                        </CardContent>
+                                    </Card>
+                                     <Button type="submit" disabled={isSaving}>
+                                        {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                        Guardar Configuración
+                                    </Button>
+                                 </form>
+                            </Form>
+                         </TabsContent>
+                    )}
+
                 </Tabs>
                  {formConfig && isFormOpen && (
                     <MasterDataFormDialog
@@ -361,7 +465,7 @@ export default function SettingsPage() {
                         item={formConfig.item}
                         collectionName={formConfig.collectionName}
                         title={formConfig.title}
-                        onSave={handleSave}
+                        onSave={(collection, item) => handleSave(collection, item)}
                         extraData={{
                             categories: masterData.origins?.data,
                             actionTypes: masterData.ambits?.data,
