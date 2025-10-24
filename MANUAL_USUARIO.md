@@ -8,6 +8,8 @@ Bienvenido/a al Gestor de Acciones de Mejora. Esta herramienta está diseñada p
 
 Para empezar a utilizar la aplicación, debes iniciar sesión.
 
+![Pantalla de inicio de sesión](public/assets/manual/login-screen.png "Pantalla de Inicio de Sesión")
+
 - **Inicio de sesión con Google**: Haz clic en el botón "Continuar con Google" para un acceso rápido y seguro utilizando tu cuenta de Google corporativa.
 - **Inicio de sesión con Correo y Contraseña**: Introduce tu correo electrónico y contraseña en los campos correspondientes y haz clic en "Iniciar Sesión".
 - **¿Has olvidado la contraseña?**: Si no recuerdas tu contraseña, introduce tu correo electrónico y haz clic en el enlace "¿Has olvidado la contraseña?". Recibirás un correo con las instrucciones para restablecerla.
@@ -24,9 +26,13 @@ La aplicación se estructura en torno a dos áreas principales:
 
 2.  **Sistema de Pestañas**: Cada sección que abras se mostrará en una pestaña en la parte superior del área de trabajo. Esto te permite tener abiertas múltiples acciones o informes simultáneamente y cambiar entre ellos fácilmente.
 
+![Navegación principal de la aplicación](public/assets/manual/main-navigation.png "Navegación Principal")
+
 ## 4. Panel de Control
 
 Tu Panel de Control es el centro neurálgico donde puedes ver rápidamente la información más relevante para ti.
+
+![Panel de Control del usuario](public/assets/manual/dashboard.png "Panel de Control")
 
 - **Mis Acciones Pendientes**: Muestra las acciones que requieren tu atención inmediata (p. ej., un análisis por hacer, una verificación pendiente).
 - **Acciones en Seguimiento**: Lista las acciones que has marcado con una estrella (`★`) para seguir su progreso de cerca.
@@ -37,6 +43,8 @@ Tu Panel de Control es el centro neurálgico donde puedes ver rápidamente la in
 ### 5.1. Listado de Acciones
 
 En la sección **Acciones**, encontrarás una tabla con todas las acciones de mejora del sistema.
+
+![Listado de acciones de mejora con filtros](public/assets/manual/actions-list.png "Listado de Acciones")
 
 - **Filtrar y Buscar**:
     *   Utiliza el campo de búsqueda principal para buscar por ID, título o palabras clave.
@@ -56,6 +64,8 @@ Puedes crear una nueva acción desde:
 
 **Formulario de Creación**:
 
+![Formulario de creación de una nueva acción](public/assets/manual/new-action-form.png "Formulario de Creación de Acción")
+
 1.  **Asunto**: Título descriptivo de la acción.
 2.  **Observaciones**: Descripción detallada del problema, no conformidad u oportunidad de mejora.
     *   Puedes utilizar el icono del **micrófono** (`🎤`) para dictar el texto.
@@ -71,6 +81,8 @@ Puedes crear una nueva acción desde:
 ### 5.3. Detalle y Ciclo de Vida de una Acción
 
 Al hacer clic en una acción, se abre su pestaña de detalle, que contiene toda la información y las etapas de su ciclo de vida.
+
+![Vista de detalle de una acción](public/assets/manual/action-detail-view.png "Detalle de una Acción")
 
 - **Pestañas Principales**:
     1.  **Detalles**: Muestra la información inicial de la acción. Si está en "Borrador", podrás editarla desde aquí.
