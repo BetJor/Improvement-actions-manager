@@ -73,7 +73,46 @@ El proyecto sigue una estructura estándar para aplicaciones Next.js, con alguna
 - Los componentes de la interfaz llaman a estas funciones asíncronas para obtener sugerencias de la IA.
 - Los "prompts" que utiliza la IA se almacenan en Firestore (`app_settings/prompts`), lo que permite modificarlos en caliente desde la página de "Configuración IA" sin necesidad de redesplegar el código.
 
-## 5. Decisiones de Arquitectura
+## 5. Modelo de Datos (Firestore)
+
+La base de datos en Firestore se estructura en las siguientes colecciones principales:
+
+-   `actions`: Colección principal donde se almacena cada acción de mejora.
+    -   `id` (string): Identificador único del documento.
+    -   `actionId` (string): ID legible para el usuario (ej. "AM-24001").
+    -   `title` (string): Título de la acción.
+    -   `description` (string): Descripción detallada.
+    -   `status` (string): Estado actual del workflow ('Borrador', 'Pendiente Análisis', etc.).
+    -   `creator` (map): Objeto con información del usuario creador (`id`, `name`, `email`).
+    -   `creationDate` (timestamp): Fecha de creación.
+    -   `responsibleGroupId` (string): Email o ID del grupo responsable del análisis.
+    -   `typeId`, `categoryId`, `subcategoryId`, `centerId` (strings): IDs que enlazan con las colecciones de datos maestros.
+    -   `analysis` (map): Objeto que contiene el análisis de causas, las acciones propuestas y el responsable de verificación.
+    -   `verification` (map): Objeto con las notas y resultados de la verificación.
+    -   `closure` (map): Objeto con las conclusiones y el estado final (Conforme/No Conforme).
+    -   `comments` (array): Lista de comentarios.
+    -   `attachments` (array): Lista de ficheros adjuntos.
+    -   `followers` (array): Lista de IDs de usuarios que siguen la acción.
+
+-   `users`: Almacena los perfiles de los usuarios de la aplicación.
+    -   `id` (string): UID de Firebase Authentication.
+    -   `name` (string): Nombre del usuario.
+    -   `email` (string): Correo electrónico.
+    -   `role` (string): Rol principal del usuario en el sistema ('Admin', 'Creator', etc.).
+    -   `avatar` (string): URL de la imagen de perfil.
+
+-   **Colecciones de Datos Maestros**:
+    -   `ambits`: Tipos principales de acción (Calidad, Medioambiente...).
+    -   `origins`: Orígenes de las acciones (Auditoría interna, externa...), enlazados a un `ambit`.
+    -   `classifications`: Clasificación más detallada, enlazada a un `origin`.
+    -   `responsibilityRoles`: Define los roles funcionales (ej. "Comité de Calidad") y cómo se resuelven (email fijo o patrón dinámico).
+    -   `locations`: Almacena los centros de trabajo y las áreas funcionales.
+
+-   `app_settings`: Colección para configuraciones globales.
+    -   `prompts` (documento): Almacena los textos de los prompts de la IA.
+    -   `workflow` (documento): Guarda la configuración de los plazos del workflow.
+
+## 6. Decisiones de Arquitectura
 
 - **Separación de Servicios**: La lógica de negocio y el acceso a datos están aislados en la carpeta `services`. Esto hace que los componentes sean más "tontos" y se centren en la presentación, facilitando el mantenimiento y las pruebas.
 - **Estado Global Centralizado**: El uso de `useActionState` para las acciones de mejora evita la complejidad de librerías de estado más pesadas y resuelve el problema de la sincronización de datos entre componentes.
