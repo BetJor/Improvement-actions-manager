@@ -1,94 +1,93 @@
+# Manual de Usuario: Gestor de Acciones de Mejora
 
-# Manual d'Usuari: Gestor d'Accions de Millora
+## 1. Introducción
 
-## 1. Introducció
+Bienvenido/a al Gestor de Acciones de Mejora. Esta herramienta está diseñada para facilitar la creación, seguimiento y gestión de todas las acciones de mejora, no conformidades, sugerencias y auditorías dentro de su organización, siguiendo un flujo de trabajo estructurado y eficiente.
 
-Benvingut/da al Gestor d'Accions de Millora. Aquesta eina està dissenyada per a facilitar la creació, seguiment i gestió de totes les accions de millora, no conformitats, suggeriments i auditories dins de la seva organització, seguint un flux de treball estructurat i eficient.
+## 2. Acceso a la Aplicación
 
-## 2. Accés a l'Aplicació
+Para empezar a utilizar la aplicación, debes iniciar sesión.
 
-Per a començar a utilitzar l'aplicació, has d'iniciar sessió.
+- **Inicio de sesión con Google**: Haz clic en el botón "Continuar con Google" para un acceso rápido y seguro utilizando tu cuenta de Google corporativa.
+- **Inicio de sesión con Correo y Contraseña**: Introduce tu correo electrónico y contraseña en los campos correspondientes y haz clic en "Iniciar Sesión".
+- **¿Has olvidado la contraseña?**: Si no recuerdas tu contraseña, introduce tu correo electrónico y haz clic en el enlace "¿Has olvidado la contraseña?". Recibirás un correo con las instrucciones para restablecerla.
 
-- **Inici de sessió amb Google**: Fes clic al botó "Continuar con Google" per a un accés ràpid i segur utilitzant el teu compte de Google corporatiu.
-- **Inici de sessió amb Correu i Contrasenya**: Introdueix el teu correu electrònic i contrasenya als camps corresponents i fes clic a "Iniciar Sesión".
-- **Has oblidat la contrasenya?**: Si no recordes la teva contrasenya, introdueix el teu correu electrònic i fes clic a l'enllaç "¿Has olvidado la contraseña?". Rebràs un correu amb les instruccions per a restablir-la.
+## 3. Navegación Principal
 
-## 3. Navegació Principal
+La aplicación se estructura en torno a dos áreas principales:
 
-L'aplicació s'estructura al voltant de dues àrees principals:
+1.  **Barra Lateral Izquierda**: Contiene los enlaces a las secciones principales:
+    *   **Panel de Control**: Tu página de inicio personalizada.
+    *   **Acciones**: Listado completo de todas las acciones de mejora.
+    *   **Informes**: Visualización gráfica y análisis de datos.
+    *   **Configuración / Gestión de Usuarios**: Secciones de administración (visibles según tus permisos).
 
-1.  **Barra Lateral Esquerra**: Conté els enllaços a les seccions principals:
-    *   **Panel de Control**: La teva pàgina d'inici personalitzada.
-    *   **Acciones**: Llistat complet de totes les accions de millora.
-    *   **Informes**: Visualització gràfica i anàlisi de dades.
-    *   **Configuración / Gestión de Usuarios**: Seccions d'administració (visibles segons els teus permisos).
-
-2.  **Sistema de Pestanyes**: Cada secció que obris es mostrarà en una pestanya a la part superior de l'àrea de treball. Això et permet tenir obertes múltiples accions o informes simultàniament i canviar entre ells fàcilment.
+2.  **Sistema de Pestañas**: Cada sección que abras se mostrará en una pestaña en la parte superior del área de trabajo. Esto te permite tener abiertas múltiples acciones o informes simultáneamente y cambiar entre ellos fácilmente.
 
 ## 4. Panel de Control
 
-El teu Panell de Control és el centre neuràlgic on pots veure ràpidament la informació més rellevant per a tu.
+Tu Panel de Control es el centro neurálgico donde puedes ver rápidamente la información más relevante para ti.
 
-- **Mis Acciones Pendientes**: Mostra les accions que requereixen la teva atenció immediata (p. ex., un anàlisi per fer, una verificació pendent).
-- **Acciones en Seguimiento**: Llista les accions que has marcat amb una estrella (`★`) per a seguir-ne el progrés de prop.
-- **Personalització**: Pots arrossegar i deixar anar aquests blocs per a reordenar el panell segons les teves preferències. La teva disposició es desarà automàticament.
+- **Mis Acciones Pendientes**: Muestra las acciones que requieren tu atención inmediata (p. ej., un análisis por hacer, una verificación pendiente).
+- **Acciones en Seguimiento**: Lista las acciones que has marcado con una estrella (`★`) para seguir su progreso de cerca.
+- **Personalización**: Puedes arrastrar y soltar estos bloques para reordenar el panel según tus preferencias. Tu disposición se guardará automáticamente.
 
-## 5. Gestió d'Accions de Millora
+## 5. Gestión de Acciones de Mejora
 
-### 5.1. Llistat d'Accions
+### 5.1. Listado de Acciones
 
-A la secció **Acciones**, trobaràs una taula amb totes les accions de millora del sistema.
+En la sección **Acciones**, encontrarás una tabla con todas las acciones de mejora del sistema.
 
-- **Filtrar i Cercar**:
-    *   Utilitza el camp de cerca principal per a buscar per ID, títol o paraules clau.
-    *   Fes servir els botons de filtre ("Estado", "Ámbito", "Centro", etc.) per a refinar la teva cerca. Els filtres actius es mostraran a sobre de la taula i es poden eliminar individualment.
-- **Ordenar**: Fes clic a les capçaleres de les columnes (com "ID" o "Título") per a ordenar la taula de manera ascendent o descendent.
-- **Seguiment**: Fes clic a la icona de l'estrella (`★`) al costat d'una acció per a afegir-la (o treure-la) de la teva llista d'accions en seguiment.
+- **Filtrar y Buscar**:
+    *   Utiliza el campo de búsqueda principal para buscar por ID, título o palabras clave.
+    *   Usa los botones de filtro ("Estado", "Ámbito", "Centro", etc.) para refinar tu búsqueda. Los filtros activos se mostrarán encima de la tabla y se pueden eliminar individualmente.
+- **Ordenar**: Haz clic en las cabeceras de las columnas (como "ID" o "Título") para ordenar la tabla de manera ascendente o descendente.
+- **Seguimiento**: Haz clic en el icono de la estrella (`★`) junto a una acción para añadirla (o quitarla) de tu lista de acciones en seguimiento.
 - **Exportar**:
-    1.  Fes clic al botó **Exportar**.
-    2.  Al menú desplegable, selecciona les seccions que vols incloure al teu informe Excel (Detalles, Plan de Acción, Comentarios, Adjuntos).
-    3.  Finalment, fes clic al botó verd **"Exportar a Excel"** per a descarregar l'arxiu.
+    1.  Haz clic en el botón **Exportar**.
+    2.  En el menú desplegable, selecciona las secciones que quieres incluir en tu informe Excel (Detalles, Plan de Acción, Comentarios, Adjuntos).
+    3.  Finalmente, haz clic en el botón verde **"Exportar a Excel"** para descargar el archivo.
 
-### 5.2. Creació d'una Nova Acció
+### 5.2. Creación de una Nueva Acción
 
-Pots crear una nova acció des de:
-- El botó flotant amb el símbol `+` a la cantonada inferior dreta.
-- El botó "Crear Acción" a la pàgina del llistat d'accions.
+Puedes crear una nueva acción desde:
+- El botón flotante con el símbolo `+` en la esquina inferior derecha.
+- El botón "Crear Acción" en la página del listado de acciones.
 
-**Formulari de Creació**:
+**Formulario de Creación**:
 
-1.  **Asunto**: Títol descriptiu de l'acció.
-2.  **Observaciones**: Descripció detallada del problema, no conformitat o oportunitat de millora.
-    *   Pots utilitzar la icona del **micròfon** (`🎤`) per a dictar el text.
-    *   Pots utilitzar la icona de la **vareta màgica** (`✨`) perquè la Intel·ligència Artificial millori la claredat i professionalitat del teu text.
-3.  **Àmbito, Origen, Clasificación**: Categoritza l'acció segons les opcions disponibles. Aquesta classificació és jeràrquica.
-4.  **Centro y Áreas Implicadas**: Selecciona el centre de treball i les àrees funcionals afectades.
-5.  **Asignado A (Responsable Análisis)**: Tria el grup o usuari que serà responsable de realitzar l'anàlisi de causes.
+1.  **Asunto**: Título descriptivo de la acción.
+2.  **Observaciones**: Descripción detallada del problema, no conformidad u oportunidad de mejora.
+    *   Puedes utilizar el icono del **micrófono** (`🎤`) para dictar el texto.
+    *   Puedes utilizar el icono de la **varita mágica** (`✨`) para que la Inteligencia Artificial mejore la claridad y profesionalidad de tu texto.
+3.  **Ámbito, Origen, Clasificación**: Categoriza la acción según las opciones disponibles. Esta clasificación es jerárquica.
+4.  **Centro y Áreas Implicadas**: Selecciona el centro de trabajo y las áreas funcionales afectadas.
+5.  **Asignado A (Responsable Análisis)**: Elige el grupo o usuario que será responsable de realizar el análisis de causas.
 
-**Finalització**:
-- **Guardar Borrador**: Desa l'acció en estat "Borrador". Només tu la podràs veure i editar.
-- **Enviar para Análisis**: Desa l'acció i la canvia a l'estat "Pendiente Análisis", assignant-la al responsable que hagis triat i fent-la visible per a altres usuaris.
+**Finalización**:
+- **Guardar Borrador**: Guarda la acción en estado "Borrador". Solo tú podrás verla y editarla.
+- **Enviar para Análisis**: Guarda la acción y la cambia al estado "Pendiente Análisis", asignándola al responsable que hayas elegido y haciéndola visible para otros usuarios.
 
-### 5.3. Detall i Cicle de Vida d'una Acció
+### 5.3. Detalle y Ciclo de Vida de una Acción
 
-En fer clic a una acció, s'obre la seva pestanya de detall, que conté tota la informació i les etapes del seu cicle de vida.
+Al hacer clic en una acción, se abre su pestaña de detalle, que contiene toda la información y las etapas de su ciclo de vida.
 
-- **Pestanyes Principals**:
-    1.  **Detalles**: Mostra la informació inicial de l'acció. Si està en "Borrador", podràs editar-la des d'aquí.
-    2.  **Causas y Acción Propuesta**: Si ets el responsable de l'anàlisi, aquí podràs documentar les causes arrel i definir un pla d'acció detallat (amb tasques, responsables i dates). També pots utilitzar l'assistent d'IA per a generar propostes.
-    3.  **Verificación de Implantación**: Un cop completat el pla d'acció, el responsable de la verificació haurà de comprovar si les accions han estat eficaces i documentar-ho aquí.
-    4.  **Cierre de la Acción**: Finalment, el creador de l'acció ha de realitzar el tancament formal, indicant si el resultat final és "Conforme" o "No Conforme". Si és "No Conforme", es crearà automàticament una nova acció (BIS) per a continuar el seguiment.
+- **Pestañas Principales**:
+    1.  **Detalles**: Muestra la información inicial de la acción. Si está en "Borrador", podrás editarla desde aquí.
+    2.  **Causas y Acción Propuesta**: Si eres el responsable del análisis, aquí podrás documentar las causas raíz y definir un plan de acción detallado (con tareas, responsables y fechas). También puedes utilizar el asistente de IA para generar propuestas.
+    3.  **Verificación de Implantación**: Una vez completado el plan de acción, el responsable de la verificación deberá comprobar si las acciones han sido eficaces y documentarlo aquí.
+    4.  **Cierre de la Acción**: Finalmente, el creador de la acción debe realizar el cierre formal, indicando si el resultado final es "Conforme" o "No Conforme". Si es "No Conforme", se creará automáticamente una nueva acción (BIS) para continuar el seguimiento.
 
-- **Panell Lateral Dret**:
-    - **Detalles**: Un resum ràpid de la informació clau (creador, responsable, dates).
-    - **Comentarios**: Un espai per a la comunicació entre els implicats.
-    - **Adjuntos**: Permet pujar i descarregar fitxers rellevants (fotos, documents, etc.).
+- **Panel Lateral Derecho**:
+    - **Detalles**: Un resumen rápido de la información clave (creador, responsable, fechas).
+    - **Comentarios**: Un espacio para la comunicación entre los implicados.
+    - **Adjuntos**: Permite subir y descargar archivos relevantes (fotos, documentos, etc.).
 
-## 6. Seccions d'Administració (si tens permisos)
+## 6. Secciones de Administración (si tienes permisos)
 
-- **Configuración**: Permet gestionar les dades mestres de l'aplicació, com ara els Àmbits, Orígens, Classificacions i els rols de responsabilitat que defineixen els permisos del workflow.
-- **Configuración IA**: Visualitza els prompts que utilitzen els assistents d'intel·ligència artificial de l'aplicació.
-- **Gestión de Usuarios**: Administra els usuaris del sistema, els seus rols i permisos. Permet als administradors suplantar la identitat d'altres usuaris per a finalitats de suport.
+- **Configuración**: Permite gestionar los datos maestros de la aplicación, como los Ámbitos, Orígenes, Clasificaciones y los roles de responsabilidad que definen los permisos del workflow.
+- **Configuración IA**: Visualiza los prompts que utilizan los asistentes de inteligencia artificial de la aplicación.
+- **Gestión de Usuarios**: Administra los usuarios del sistema, sus roles y permisos. Permite a los administradores suplantar la identidad de otros usuarios para fines de soporte.
 
 ---
-Esperem que aquest manual et sigui de gran ajuda. Per a qualsevol dubte, contacta amb el departament de Qualitat o Sistemes.
+Esperamos que este manual te sea de gran ayuda. Para cualquier duda, contacta con el departamento de Calidad o Sistemas.
