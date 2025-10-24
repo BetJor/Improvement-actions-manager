@@ -34,12 +34,6 @@ import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import type { UserOptions } from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
 
 
 interface jsPDFWithAutoTable extends jsPDF {
@@ -264,14 +258,48 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
         }
     };
     
+    const getBase64Image = async (url: string): Promise<string> => {
+        const response = await fetch(url);
+        const blob = await response.blob();
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                // Ensure the result is a string before splitting
+                const base64data = reader.result as string;
+                // Remove the data URL prefix
+                resolve(base64data.split(',')[1]);
+            };
+            reader.onerror = reject;
+            reader.readAsDataURL(blob);
+        });
+    }
+
     const generatePdf = async () => {
         if (!action) return;
-    
+
         const doc = new jsPDF() as jsPDFWithAutoTable;
         const pageHeight = doc.internal.pageSize.height || doc.internal.pageSize.getHeight();
         const pageWidth = doc.internal.pageSize.width || doc.internal.pageSize.getWidth();
         const margin = 15;
         let y = 20;
+
+        let logoData = null;
+        try {
+            const response = await fetch('/logo-quironsalud.png');
+            const blob = await response.blob();
+            const reader = new FileReader();
+            logoData = await new Promise<string>((resolve) => {
+                reader.onloadend = () => {
+                    // We only want the Base64 part of the data URL
+                    const base64 = (reader.result as string).split(',')[1];
+                    resolve(base64);
+                };
+                reader.readAsDataURL(blob);
+            });
+        } catch (error) {
+            console.error("Error loading logo for PDF:", error);
+        }
+
 
         // --- COLORS & STYLES ---
         const primaryColor = '#00529B'; // Dark Blue
@@ -293,7 +321,11 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
         doc.setFontSize(10);
         doc.setTextColor(action.status === 'Finalizada' ? (action.closure?.isCompliant === false ? '#DC2626' : greenColor) : grayColor);
         const statusWidth = doc.getStringUnitWidth(statusText) * doc.getFontSize() / doc.internal.scaleFactor;
-        doc.text(statusText, pageWidth - margin - statusWidth, y);
+        doc.text(statusText, pageWidth - margin - statusWidth - (logoData ? 20 : 0), y - 5);
+        if (logoData) {
+            doc.addImage(logoData, 'PNG', pageWidth - margin - 15, y - 10, 15, 15);
+        }
+
 
         y += 5;
         doc.setDrawColor(lightGrayColor);
@@ -707,24 +739,10 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
                     <h1 className="text-3xl font-bold tracking-tight">{action.actionId}: {action.title}</h1>
                     <ActionStatusBadge status={action.status} isCompliant={action.closure?.isCompliant} />
                     <div className="ml-auto flex items-center gap-2">
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button variant="outline" size="sm">
-                                    Exportar
-                                    <ChevronDown className="ml-2 h-4 w-4" />
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent>
-                                <DropdownMenuItem onClick={generatePdf}>
-                                    <Printer className="mr-2 h-4 w-4" />
-                                    Exportar a PDF
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={generateExcel}>
-                                    <FileSpreadsheet className="mr-2 h-4 w-4" />
-                                    Exportar a Excel
-                                </DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
+                        <Button variant="outline" size="sm" onClick={generatePdf}>
+                            <Printer className="mr-2 h-4 w-4" />
+                            Exportar a PDF
+                        </Button>
                     </div>
                 </header>
 
@@ -960,5 +978,6 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
     
 
     
+
 
 
