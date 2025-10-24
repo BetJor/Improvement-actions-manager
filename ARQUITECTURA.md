@@ -117,3 +117,6 @@ La base de datos en Firestore se estructura en las siguientes colecciones princi
 - **Separación de Servicios**: La lógica de negocio y el acceso a datos están aislados en la carpeta `services`. Esto hace que los componentes sean más "tontos" y se centren en la presentación, facilitando el mantenimiento y las pruebas.
 - **Estado Global Centralizado**: El uso de `useActionState` para las acciones de mejora evita la complejidad de librerías de estado más pesadas y resuelve el problema de la sincronización de datos entre componentes.
 - **Navegación por Pestañas Dinámicas**: El hook `useTabs` permite una experiencia de usuario similar a la de un escritorio, donde se pueden tener varias vistas abiertas simultáneamente. El contenido de las pestañas se carga de forma diferida (`lazy loading`) para optimizar el rendimiento inicial.
+
+---
+*Versión 1.0 - 2024-07-31*

@@ -78,3 +78,6 @@ A continuación, se detallan los casos de prueba agrupados por requisito funcion
 | :------ | :-------- | :---------------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------- |
 | CPF-021 | RF-007.2  | Exportar detalle de acción a PDF | 1. Abrir la vista de detalle de cualquier acción. 2. Hacer clic en el botón "Exportar" y seleccionar "Exportar a PDF".                                           | Se genera y descarga un archivo PDF con toda la información de la acción, bien formateada y con el logotipo de la empresa. |
 | CPF-022 | RF-007.3  | Exportar listado a Excel      | 1. Ir al listado de "Acciones". 2. Aplicar un filtro (p. ej., por estado). 3. Hacer clic en "Exportar" y seleccionar las secciones a incluir. 4. Clic en "Exportar a Excel". | Se descarga un archivo Excel (`.xlsx`) que contiene únicamente las acciones filtradas y las columnas de datos seleccionadas. |
+
+---
+*Versión 1.0 - 2024-07-31*

@@ -103,3 +103,6 @@ Al hacer clic en una acción, se abre su pestaña de detalle, que contiene toda 
 
 ---
 Esperamos que este manual te sea de gran ayuda. Para cualquier duda, contacta con el departamento de Calidad o Sistemas.
+
+---
+*Versión 1.0 - 2024-07-31*

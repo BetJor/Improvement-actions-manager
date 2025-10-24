@@ -93,3 +93,6 @@ El sistema debe gestionar el flujo de trabajo de una acción a través de los si
 -   **Usuario**: Almacena la información del perfil del usuario, incluyendo su nombre, email, rol y avatar.
 -   **Datos Maestros**: Colecciones separadas para Ámbitos, Orígenes, Clasificaciones, Centros, etc.
 -   **Configuración App**: Documentación donde se guardan parámetros globales como los prompts de la IA o la configuración del workflow.
+
+---
+*Versión 1.0 - 2024-07-31*

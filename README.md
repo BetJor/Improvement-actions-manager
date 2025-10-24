@@ -23,3 +23,6 @@ npm run dev
 ```
 
 Un cop arrencat, podràs accedir a l'aplicació a [http://localhost:9002](http://localhost:9002).
+
+---
+*Versión 1.0 - 2024-07-31*
