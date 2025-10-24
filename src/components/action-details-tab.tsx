@@ -258,22 +258,6 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
         }
     };
     
-    const getBase64Image = async (url: string): Promise<string> => {
-        const response = await fetch(url);
-        const blob = await response.blob();
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                // Ensure the result is a string before splitting
-                const base64data = reader.result as string;
-                // Remove the data URL prefix
-                resolve(base64data.split(',')[1]);
-            };
-            reader.onerror = reject;
-            reader.readAsDataURL(blob);
-        });
-    }
-
     const generatePdf = async () => {
         if (!action) return;
 
@@ -282,24 +266,6 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
         const pageWidth = doc.internal.pageSize.width || doc.internal.pageSize.getWidth();
         const margin = 15;
         let y = 20;
-
-        let logoData = null;
-        try {
-            const response = await fetch('/logo-quironsalud.png');
-            const blob = await response.blob();
-            const reader = new FileReader();
-            logoData = await new Promise<string>((resolve) => {
-                reader.onloadend = () => {
-                    // We only want the Base64 part of the data URL
-                    const base64 = (reader.result as string).split(',')[1];
-                    resolve(base64);
-                };
-                reader.readAsDataURL(blob);
-            });
-        } catch (error) {
-            console.error("Error loading logo for PDF:", error);
-        }
-
 
         // --- COLORS & STYLES ---
         const primaryColor = '#00529B'; // Dark Blue
@@ -321,10 +287,7 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
         doc.setFontSize(10);
         doc.setTextColor(action.status === 'Finalizada' ? (action.closure?.isCompliant === false ? '#DC2626' : greenColor) : grayColor);
         const statusWidth = doc.getStringUnitWidth(statusText) * doc.getFontSize() / doc.internal.scaleFactor;
-        doc.text(statusText, pageWidth - margin - statusWidth - (logoData ? 20 : 0), y - 5);
-        if (logoData) {
-            doc.addImage(logoData, 'PNG', pageWidth - margin - 15, y - 10, 15, 15);
-        }
+        doc.text(statusText, pageWidth - margin - statusWidth, y);
 
 
         y += 5;
@@ -978,6 +941,7 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
     
 
     
+
 
 
 
