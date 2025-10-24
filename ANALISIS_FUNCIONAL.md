@@ -1,95 +1,95 @@
-# Anàlisi Funcional: Gestor d'Accions de Millora
+# Análisis Funcional: Gestor de Acciones de Mejora
 
-## 1. Introducció
+## 1. Introducción
 
-### 1.1. Propòsit
+### 1.1. Propósito
 
-Aquest document descriu els requisits funcionals i no funcionals de l'aplicació "Gestor d'Accions de Millora". L'objectiu és servir com a guia per a l'equip de desenvolupament, stakeholders i usuaris clau, definint el comportament esperat del sistema, les seves funcionalitats i les regles de negoci que el governen.
+Este documento describe los requisitos funcionales y no funcionales de la aplicación "Gestor de Acciones de Mejora". El objetivo es servir como guía para el equipo de desarrollo, stakeholders y usuarios clave, definiendo el comportamiento esperado del sistema, sus funcionalidades y las reglas de negocio que lo gobiernan.
 
-### 1.2. Abast
+### 1.2. Alcance
 
-L'aplicació permetrà la gestió integral del cicle de vida de les accions de millora, incloent-hi la seva creació, anàlisi de causes, definició de plans d'acció, verificació i tancament. Incorporarà funcionalitats d'intel·ligència artificial per a assistir els usuaris en la redacció i anàlisi.
+La aplicación permitirá la gestión integral del ciclo de vida de las acciones de mejora, incluyendo su creación, análisis de causas, definición de planes de acción, verificación y cierre. Incorporará funcionalidades de inteligencia artificial para asistir a los usuarios en la redacción y análisis.
 
-## 2. Rols d'Usuari
+## 2. Roles de Usuario
 
-El sistema definirà diversos rols per a gestionar els permisos i l'accés a les funcionalitats:
+El sistema definirá varios roles para gestionar los permisos y el acceso a las funcionalidades:
 
--   **Creador**: Qualsevol usuari autenticat. Pot crear noves accions de millora i tancar les que ell mateix ha creat.
--   **Responsable d'Anàlisi**: Usuari o grup designat per a investigar les causes d'una acció i proposar un pla.
--   **Responsable d'Execució**: Usuari designat per a executar una de les tasques del pla d'acció.
--   **Responsable de Verificació**: Usuari designat per a comprovar l'eficàcia de les accions implantades.
--   **Administrador**: Superusuari amb accés a totes les funcionalitats, incloent-hi la gestió d'usuaris i la configuració del sistema.
+-   **Creador**: Cualquier usuario autenticado. Puede crear nuevas acciones de mejora y cerrar las que él mismo ha creado.
+-   **Responsable de Análisis**: Usuario o grupo designado para investigar las causas de una acción y proponer un plan.
+-   **Responsable de Ejecución**: Usuario designado para ejecutar una de las tareas del plan de acción.
+-   **Responsable de Verificación**: Usuario designado para comprobar la eficacia de las acciones implantadas.
+-   **Administrador**: Superusuario con acceso a todas las funcionalidades, incluyendo la gestión de usuarios y la configuración del sistema.
 
-## 3. Requisits Funcionals
+## 3. Requisitos Funcionales
 
-### 3.1. RF-001: Autenticació i Gestió d'Usuaris
+### 3.1. RF-001: Autenticación y Gestión de Usuarios
 
--   **RF-001.1**: El sistema ha de permetre als usuaris iniciar sessió mitjançant la seva compta de Google.
--   **RF-001.2**: El sistema ha de permetre als usuaris iniciar sessió amb correu electrònic i contrasenya.
--   **RF-001.3**: Els usuaris han de poder restablir la seva contrasenya si l'han oblidat.
--   **RF-001.4**: Els administradors han de poder gestionar els usuaris del sistema (crear, editar, eliminar) i assignar-los rols.
--   **RF--001.5**: Els administradors han de poder suplantar la identitat d'altres usuaris per a finalitats de suport.
+-   **RF-001.1**: El sistema debe permitir a los usuarios iniciar sesión mediante su cuenta de Google.
+-   **RF-001.2**: El sistema debe permitir a los usuarios iniciar sesión con correo electrónico y contraseña.
+-   **RF-001.3**: Los usuarios deben poder restablecer su contraseña si la han olvidado.
+-   **RF-001.4**: Los administradores deben poder gestionar los usuarios del sistema (crear, editar, eliminar) y asignarles roles.
+-   **RF-001.5**: Los administradores deben poder suplantar la identidad de otros usuarios para finalidades de soporte.
 
-### 3.2. RF-002: Gestió d'Accions de Millora (CRUD)
+### 3.2. RF-002: Gestión de Acciones de Mejora (CRUD)
 
--   **RF-002.1: Creació**: Qualsevol usuari autenticat pot crear una nova acció de millora.
-    -   La acció es pot desar com a "Borrador" (només visible per al creador) o "Enviar per a Anàlisi".
-    -   Camps obligatoris: Assumpte, Observacions, Àmbit, Origen, Responsable d'Anàlisi.
--   **RF-002.2: Lectura (Llistat)**: Els usuaris han de poder visualitzar un llistat de totes les accions a les quals tenen accés.
-    -   El llistat ha de ser paginat, ordenable i filtrable per múltiples criteris (ID, títol, estat, àmbit, responsable, etc.).
--   **RF-002.3: Lectura (Detall)**: Els usuaris han de poder obrir una acció per a veure'n tots els detalls, organitzats en pestanyes segons la fase del cicle de vida.
--   **RF-002.4: Modificació**: Els usuaris amb permisos poden editar les dades d'una acció, segons l'estat en què es trobi.
-    -   Exemple: El creador pot editar un "Borrador"; el responsable d'anàlisi pot editar la secció d'anàlisi de causes.
--   **RF-002.5: Seguiment**: Els usuaris han de poder marcar accions com a "seguides" per a tenir-les localitzades al seu panell de control.
+-   **RF-002.1: Creación**: Cualquier usuario autenticado puede crear una nueva acción de mejora.
+    -   La acción se puede guardar como "Borrador" (solo visible para el creador) o "Enviar para Análisis".
+    -   Campos obligatorios: Asunto, Observaciones, Ámbito, Origen, Responsable de Análisis.
+-   **RF-002.2: Lectura (Listado)**: Los usuarios deben poder visualizar un listado de todas las acciones a las que tienen acceso.
+    -   El listado debe ser paginado, ordenable y filtrable por múltiples criterios (ID, título, estado, ámbito, responsable, etc.).
+-   **RF-002.3: Lectura (Detalle)**: Los usuarios deben poder abrir una acción para ver todos sus detalles, organizados en pestañas según la fase del ciclo de vida.
+-   **RF-002.4: Modificación**: Los usuarios con permisos pueden editar los datos de una acción, según el estado en que se encuentre.
+    -   Ejemplo: El creador puede editar un "Borrador"; el responsable de análisis puede editar la sección de análisis de causas.
+-   **RF-002.5: Seguimiento**: Los usuarios deben poder marcar acciones como "seguidas" para tenerlas localizadas en su panel de control.
 
-### 3.3. RF-003: Cicle de Vida d'una Acció (Workflow)
+### 3.3. RF-003: Ciclo de Vida de una Acción (Workflow)
 
-El sistema ha de gestionar el flux de treball d'una acció a través dels següents estats:
+El sistema debe gestionar el flujo de trabajo de una acción a través de los siguientes estados:
 
-1.  **Borrador**: Estat inicial. Només visible per al creador.
-2.  **Pendent Anàlisi**: La acció s'ha enviat al responsable designat, que ha de dur a terme l'anàlisi de causes.
-3.  **Pendent Comprobació**: El responsable d'anàlisi ha completat l'anàlisi i ha definit un pla d'acció. Ara, el responsable de verificació ha de comprovar-ne l'eficàcia.
-4.  **Pendent de Tancament**: La verificació s'ha completat. El creador original ha de donar el seu vistiplau final.
-5.  **Finalitzada**: La acció s'ha tancat.
-    -   Si el tancament és "Conforme", el cicle acaba.
-    -   Si el tancament és "No Conforme", el sistema ha de crear automàticament una nova acció (tipus BIS) vinculada a l'original per a continuar el tractament.
+1.  **Borrador**: Estado inicial. Solo visible para el creador.
+2.  **Pendiente Análisis**: La acción se ha enviado al responsable designado, que debe llevar a cabo el análisis de causas.
+3.  **Pendiente Comprobación**: El responsable de análisis ha completado el análisis y ha definido un plan de acción. Ahora, el responsable de verificación debe comprobar su eficacia.
+4.  **Pendiente de Cierre**: La verificación se ha completado. El creador original debe dar su visto bueno final.
+5.  **Finalizada**: La acción se ha cerrado.
+    -   Si el cierre es "Conforme", el ciclo termina.
+    -   Si el cierre es "No Conforme", el sistema debe crear automáticamente una nueva acción (tipo BIS) vinculada a la original para continuar el tratamiento.
 
-### 3.4. RF-004: Panell de Control (Dashboard)
+### 3.4. RF-004: Panel de Control (Dashboard)
 
--   **RF-004.1**: Cada usuari ha de tenir un panell de control personalitzat en iniciar sessió.
--   **RF-004.2**: El panell ha de mostrar un widget amb "Les Meves Accions Pendents", que són aquelles que requereixen una acció per part de l'usuari (p. ex., un anàlisi a fer, una verificació a realitzar).
--   **RF-004.3**: El panell ha de mostrar un widget amb les "Accions en Seguiment".
--   **RF-004.4**: L'usuari ha de poder reordenar els widgets del panell mitjançant "drag-and-drop", i la seva preferència s'ha de desar.
+-   **RF-004.1**: Cada usuario debe tener un panel de control personalizado al iniciar sesión.
+-   **RF-004.2**: El panel debe mostrar un widget con "Mis Acciones Pendientes", que son aquellas que requieren una acción por parte del usuario (p. ej., un análisis a hacer, una verificación a realizar).
+-   **RF-004.3**: El panel debe mostrar un widget con las "Acciones en Seguimiento".
+-   **RF-004.4**: El usuario debe poder reordenar los widgets del panel mediante "drag-and-drop", y su preferencia se debe guardar.
 
-### 3.5. RF-005: Funcionalitats d'IA (Genkit)
+### 3.5. RF-005: Funcionalidades de IA (Genkit)
 
--   **RF-005.1: Millora de Text**: En crear o editar una acció, l'usuari ha de poder utilitzar un assistent d'IA per a millorar la claredat i professionalitat del text de les observacions.
--   **RF-005.2: Suggeriment d'Anàlisi**: El responsable d'anàlisi ha de poder sol·licitar a un assistent d'IA una proposta d'anàlisi de causes i un pla d'acció basat en les observacions inicials.
--   **RF-005.3: Dictat per Veu**: Els camps de text llargs han de permetre l'entrada de contingut mitjançant dictat per veu.
+-   **RF-005.1: Mejora de Texto**: Al crear o editar una acción, el usuario debe poder utilizar un asistente de IA para mejorar la claridad y profesionalidad del texto de las observaciones.
+-   **RF-005.2: Sugerencia de Análisis**: El responsable de análisis debe poder solicitar a un asistente de IA una propuesta de análisis de causas y un plan de acción basado en las observaciones iniciales.
+-   **RF-005.3: Dictado por Voz**: Los campos de texto largos deben permitir la entrada de contenido mediante dictado por voz.
 
-### 3.6. RF-006: Gestió de Dades Mestres
+### 3.6. RF-006: Gestión de Datos Maestros
 
--   **RF-006.1**: Els administradors han de poder accedir a una secció de "Configuració" per a gestionar les taules mestres del sistema.
--   **RF-006.2**: S'ha de poder gestionar (crear, editar, eliminar) els següents tipus de dades: Àmbits, Orígens, Classificacions, Àrees Afectades i Rols de Responsabilitat.
--   **RF-006.3**: La gestió d'Orígens i Classificacions ha de ser jeràrquica, depenent de l'Àmbit seleccionat.
+-   **RF-006.1**: Los administradores deben poder acceder a una sección de "Configuración" para gestionar las tablas maestras del sistema.
+-   **RF-006.2**: Se debe poder gestionar (crear, editar, eliminar) los siguientes tipos de datos: Ámbitos, Orígenes, Clasificaciones, Áreas Afectadas y Roles de Responsabilidad.
+-   **RF-006.3**: La gestión de Orígenes y Clasificaciones debe ser jerárquica, dependiendo del Ámbito seleccionado.
 
-### 3.7. RF-007: Informes i Exportació
+### 3.7. RF-007: Informes y Exportación
 
--   **RF-007.1**: El sistema ha de proporcionar una secció d'informes amb visualitzacions gràfiques sobre l'estat de les accions.
--   **RF-007.2**: S'ha de poder exportar el detall complet d'una acció individual a format PDF.
--   **RF-007.3**: S'ha de poder exportar el llistat d'accions (amb els filtres aplicats) a format Excel.
+-   **RF-007.1**: El sistema debe proporcionar una sección de informes con visualizaciones gráficas sobre el estado de las acciones.
+-   **RF-007.2**: Se debe poder exportar el detalle completo de una acción individual a formato PDF.
+-   **RF-007.3**: Se debe poder exportar el listado de acciones (con los filtros aplicados) a formato Excel.
 
-## 4. Requisits No Funcționals
+## 4. Requisitos No Funcionales
 
--   **RNF-001 (Rendiment)**: Les consultes a la base de dades han d'estar optimitzades. La càrrega inicial de llistats llargs no ha de bloquejar la interfície.
--   **RNF-002 (Usabilitat)**: La interfície ha de ser intuïtiva, moderna i responsiva (adaptable a dispositius mòbils).
--   **RNF-003 (Seguretat)**: L'accés a les dades ha d'estar restringit segons el rol de l'usuari. Les regles de seguretat de Firestore han de garantir que un usuari només pot llegir o modificar les dades a les quals té permís.
--   **RNF-004 (Escalabilitat)**: L'arquitectura basada en Firebase ha de permetre un creixement futur en volum de dades i usuaris sense degradar el rendiment.
--   **RNF-005 (Internacionalització)**: La aplicació ha d'estar preparada per a suportar múltiples idiomes (inicialment, català i castellà).
+-   **RNF-001 (Rendimiento)**: Las consultas a la base de datos deben estar optimizadas. La carga inicial de listados largos no debe bloquear la interfaz.
+-   **RNF-002 (Usabilidad)**: La interfaz debe ser intuitiva, moderna y responsiva (adaptable a dispositivos móviles).
+-   **RNF-003 (Seguridad)**: El acceso a los datos debe estar restringido según el rol del usuario. Las reglas de seguridad de Firestore deben garantizar que un usuario solo puede leer o modificar los datos a los que tiene permiso.
+-   **RNF-004 (Escalabilidad)**: La arquitectura basada en Firebase debe permitir un crecimiento futuro en volumen de datos y usuarios sin degradar el rendimiento.
+-   **RNF-005 (Internacionalización)**: La aplicación debe estar preparada para soportar múltiples idiomas (inicialmente, catalán y castellano).
 
-## 5. Model de Dades Simplificat
+## 5. Modelo de Datos Simplificado
 
--   **Acció de Millora**: Entitat principal que conté tota la informació de l'acció, incloent-hi títol, descripció, estats, dates, responsables, anàlisi, pla d'acció, comentaris i adjunts.
--   **Usuari**: Emmagatzema la informació del perfil de l'usuari, incloent-hi el seu nom, email, rol i avatar.
--   **Dades Mestres**: Col·leccions separades per a Àmbits, Orígens, Classificacions, Centres, etc.
--   **Configuració App**: Documentació on es guarden paràmetres globals com els prompts de la IA o la configuració del workflow.
+-   **Acción de Mejora**: Entidad principal que contiene toda la información de la acción, incluyendo título, descripción, estados, fechas, responsables, análisis, plan de acción, comentarios y adjuntos.
+-   **Usuario**: Almacena la información del perfil del usuario, incluyendo su nombre, email, rol y avatar.
+-   **Datos Maestros**: Colecciones separadas para Ámbitos, Orígenes, Clasificaciones, Centros, etc.
+-   **Configuración App**: Documentación donde se guardan parámetros globales como los prompts de la IA o la configuración del workflow.
