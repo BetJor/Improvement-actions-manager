@@ -1,5 +1,4 @@
 
-
 "use client"
 
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -198,7 +197,7 @@ export function ActionForm({
     });
 
     // Make sure the initial value is in the list when editing
-    if (mode === 'edit' && initialData?.assignedTo && !options.some(opt => opt.value === initialData.assignedTo)) {
+    if ((mode === 'edit' || mode === 'view') && initialData?.assignedTo && !options.some(opt => opt.value === initialData.assignedTo)) {
         options.push({ value: initialData.assignedTo, label: initialData.assignedTo });
     }
 
@@ -209,16 +208,22 @@ export function ActionForm({
 
   // When a parent dropdown changes, reset the children.
   useEffect(() => {
-    form.resetField("category", { defaultValue: '' });
-  }, [selectedActionTypeId, form]);
+    if (mode === 'create') {
+        form.resetField("category", { defaultValue: '' });
+    }
+  }, [selectedActionTypeId, form, mode]);
 
   useEffect(() => {
-    form.resetField("subcategory", { defaultValue: '' });
-  }, [selectedCategoryId, form]);
+    if (mode === 'create') {
+        form.resetField("subcategory", { defaultValue: '' });
+    }
+  }, [selectedCategoryId, form, mode]);
   
   useEffect(() => {
-    form.resetField("assignedTo", { defaultValue: '' });
-  }, [selectedActionTypeId, selectedCenterId, selectedAffectedAreasIds, form]);
+    if (mode === 'create') {
+        form.resetField("assignedTo", { defaultValue: '' });
+    }
+  }, [selectedActionTypeId, selectedCenterId, selectedAffectedAreasIds, form, mode]);
 
 
   useEffect(() => {
@@ -486,7 +491,7 @@ export function ActionForm({
                             <CommandInput placeholder="Cerca un centre..." />
                             <CommandEmpty>No se ha trobat cap centre.</CommandEmpty>
                             <CommandGroup>
-                            {masterData?.centers?.data.map((center: Center) => (
+                            {masterData?.centers?.data && masterData.centers.data.map((center: Center) => (
                                 <CommandItem
                                 value={center.name}
                                 key={center.id}
