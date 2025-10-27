@@ -26,7 +26,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { getPrompt } from "@/lib/data"
 import { useToast } from "@/hooks/use-toast"
 import { useState, useMemo, useEffect, useRef } from "react"
-import { Loader2, Mic, MicOff, Wand2, Save, Send, Ban, ChevronsUpDown, Check } from "lucide-react"
+import { Loader2, Mic, MicOff, Wand2, Save, Send, Ban, ChevronsUpDown, Check, Pencil } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { improveWriting } from "@/ai/flows/improveWriting"
 import {
@@ -79,6 +79,42 @@ const ReadOnlyField = ({ label, value }: { label: string, value?: string | strin
     )
 }
 
+const EditableSelectField = ({ form, fieldName, label, placeholder, options, currentTextValue, onEditClick, isEditing, disabled }: any) => (
+    <FormItem>
+        <FormLabel>{label}</FormLabel>
+        {isEditing ? (
+            <Select
+                onValueChange={(value) => {
+                    form.setValue(fieldName, value);
+                    onEditClick(null);
+                }}
+                defaultValue={form.getValues(fieldName)}
+                disabled={disabled}
+                open={true} // Auto open when switching to edit
+            >
+                <FormControl>
+                    <SelectTrigger>
+                        <SelectValue placeholder={placeholder} />
+                    </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                    {options.map((opt: any) => (
+                        <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                    ))}
+                </SelectContent>
+            </Select>
+        ) : (
+            <div className="flex items-center justify-between rounded-md border px-3 py-2">
+                <span className="text-sm">{currentTextValue || <span className="text-muted-foreground">{placeholder}</span>}</span>
+                <Button type="button" variant="ghost" size="icon" className="h-6 w-6" onClick={() => onEditClick(fieldName)} disabled={disabled}>
+                    <Pencil className="h-4 w-4" />
+                </Button>
+            </div>
+        )}
+        <FormMessage />
+    </FormItem>
+);
+
 export function ActionForm({
     mode,
     initialData,
@@ -90,6 +126,8 @@ export function ActionForm({
   const { toast } = useToast()
   const { user, isAdmin, userRoles } = useAuth()
   
+  const [editingField, setEditingField] = useState<string | null>(null);
+
   const [isRecording, setIsRecording] = useState(false);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   let finalTranscript = '';
@@ -214,26 +252,25 @@ export function ActionForm({
   }, [selectedActionTypeId, selectedCenterId, selectedAffectedAreasIds, masterData, user, initialData?.assignedTo, mode]);
 
 
-  // When a parent dropdown changes, reset the children.
-  useEffect(() => {
-    if(mode === 'create') {
-        form.resetField("category", { defaultValue: '' });
-        form.resetField("subcategory", { defaultValue: '' });
-        form.resetField("assignedTo", { defaultValue: '' });
-    }
-  }, [selectedActionTypeId, form, mode]);
+  const handleEditClick = (fieldName: string | null) => {
+    setEditingField(fieldName);
+  };
+  
+  const handleSelectChange = (fieldName: string, value: string) => {
+      form.setValue(fieldName as any, value);
+      handleEditClick(null); // Close the select after choosing a value
 
-  useEffect(() => {
-      if(mode === 'create') {
-        form.resetField("subcategory", { defaultValue: '' });
+      // Reset dependent fields when a parent changes
+      if (fieldName === 'typeId') {
+          form.setValue('category', '');
+          form.setValue('subcategory', '');
+          form.setValue('assignedTo', '');
+      } else if (fieldName === 'category') {
+          form.setValue('subcategory', '');
+      } else if (fieldName === 'centerId' || fieldName === 'affectedAreasIds') {
+           form.setValue('assignedTo', '');
       }
-  }, [selectedCategoryId, form, mode]);
-
-  useEffect(() => {
-    if(mode === 'create') {
-        form.resetField("assignedTo", { defaultValue: '' });
-    }
-  }, [selectedCenterId, selectedAffectedAreasIds, form, mode]);
+  };
 
 
   useEffect(() => {
@@ -379,6 +416,40 @@ export function ActionForm({
     )
   }
 
+  const renderSelectField = (fieldName: any, label: string, placeholder: string, options: {value: string, label: string}[], currentTextValue?: string) => (
+    <FormItem>
+        <FormLabel>{label}</FormLabel>
+        {mode === 'edit' && editingField !== fieldName ? (
+             <div className="flex items-center justify-between rounded-md border px-3 py-2 min-h-10">
+                <span className="text-sm">{currentTextValue || <span className="text-muted-foreground">{placeholder}</span>}</span>
+                <Button type="button" variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleEditClick(fieldName)} disabled={disableForm}>
+                    <Pencil className="h-4 w-4" />
+                </Button>
+            </div>
+        ) : (
+            <Select
+                onValueChange={(value) => handleSelectChange(fieldName, value)}
+                defaultValue={form.getValues(fieldName)}
+                disabled={disableForm || options.length === 0}
+                open={mode === 'create' ? undefined : editingField === fieldName}
+                onOpenChange={(isOpen) => !isOpen && handleEditClick(null)}
+            >
+                <FormControl>
+                    <SelectTrigger>
+                        <SelectValue placeholder={placeholder} />
+                    </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                    {options.map((opt) => (
+                        <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                    ))}
+                </SelectContent>
+            </Select>
+        )}
+        <FormMessage />
+    </FormItem>
+);
+
   return (
     <>
       <Form {...form}>
@@ -399,74 +470,11 @@ export function ActionForm({
           />
 
           <div className="grid md:grid-cols-2 gap-6">
-            <FormField
-              control={form.control}
-              name="typeId"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Ámbito</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value} disabled={disableForm}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecciona un ámbito" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {filteredAmbits.map((type: any) => (
-                        <SelectItem key={type.id} value={type.id}>{type.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-             <FormField
-              control={form.control}
-              name="category"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Origen</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value} disabled={disableForm || !selectedActionTypeId}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecciona un origen" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {filteredCategories.map((cat: any) => (
-                        <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+             {renderSelectField('typeId', 'Ámbito', 'Selecciona un ámbito', filteredAmbits.map((t: any) => ({ value: t.id, label: t.name })), initialData?.type)}
+             {renderSelectField('category', 'Origen', 'Selecciona un origen', filteredCategories.map((c: any) => ({ value: c.id, label: c.name })), initialData?.category)}
           </div>
-
-          <FormField
-            control={form.control}
-            name="subcategory"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Clasificación</FormLabel>
-                <Select onValueChange={field.onChange} value={field.value} disabled={disableForm || !selectedCategoryId}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecciona una clasificación" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {filteredSubcategories.map((sub: any) => (
-                        <SelectItem key={sub.id} value={sub.id}>{sub.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          
+           {renderSelectField('subcategory', 'Clasificación', 'Selecciona una clasificación', filteredSubcategories.map((s: any) => ({ value: s.id, label: s.name })), initialData?.subcategory)}
           
           <div className="grid md:grid-cols-2 gap-6">
              <FormField
@@ -501,12 +509,12 @@ export function ActionForm({
                             <CommandInput placeholder="Cerca un centre..." />
                             <CommandEmpty>No se ha trobat cap centre.</CommandEmpty>
                             <CommandGroup>
-                            {masterData?.centers?.data && masterData.centers.data.map((center: Center) => (
+                            {masterData?.centers?.data?.map((center: Center) => (
                                 <CommandItem
                                 value={center.name}
                                 key={center.id}
                                 onSelect={() => {
-                                    form.setValue("centerId", center.id);
+                                    handleSelectChange('centerId', center.id!)
                                     setIsCenterPopoverOpen(false);
                                 }}
                                 >
@@ -574,7 +582,7 @@ export function ActionForm({
                                     const newSelection = checked
                                         ? [...currentSelection, area.id!]
                                         : currentSelection.filter(id => id !== area.id);
-                                    field.onChange(newSelection);
+                                    handleSelectChange('affectedAreasIds', newSelection);
                                 }}
                              >
                                 {area.name}
@@ -588,35 +596,7 @@ export function ActionForm({
             />
           </div>
           
-          <FormField
-            control={form.control}
-            name="assignedTo"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Asignado A</FormLabel>
-                  <Select 
-                  onValueChange={field.onChange} 
-                  value={field.value} 
-                  disabled={disableForm || responsibleOptions.length === 0}
-                >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecciona una persona responsable" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {responsibleOptions.map(opt => (
-                      <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormDescription>
-                  Asigna a la persona encargada del análisis.
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+           {renderSelectField('assignedTo', 'Asignado A', 'Selecciona una persona responsable', responsibleOptions, initialData?.assignedTo)}
 
           <FormField
             control={form.control}
