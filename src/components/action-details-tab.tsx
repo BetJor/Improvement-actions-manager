@@ -761,7 +761,7 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
                                 <>
                                  {action.status === "Borrador" && (
                                     <div className="flex items-start justify-between gap-4">
-                                        <Button onClick={() => setIsEditing(true)} className="ml-auto">
+                                        <Button onClick={() => setIsEditing(true)} disabled={!masterData} className="ml-auto">
                                             <FileEdit className="mr-2 h-4 w-4" /> Editar Borrador
                                         </Button>
                                     </div>
@@ -960,6 +960,7 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
     
 
     
+
 
 
 
