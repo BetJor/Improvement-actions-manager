@@ -146,22 +146,16 @@ export function ActionForm({
 
   const filteredAmbits = useMemo(() => {
     if (!masterData?.ambits?.data) return [];
-    if (mode === 'create') {
-        if (isAdmin) return masterData.ambits.data;
-        return masterData.ambits.data.filter((ambit: ImprovementActionType) => {
-            if (!ambit.possibleCreationRoles || ambit.possibleCreationRoles.length === 0) return false;
-            return ambit.possibleCreationRoles.some(roleId => userRoles.includes(roleId));
-        });
-    }
-    if (mode === 'edit') {
-        if(isAdmin) return masterData.ambits.data;
-        // In edit mode, show all if admin, otherwise filter like create
-        return masterData.ambits.data.filter((ambit: ImprovementActionType) => {
-            if (!ambit.possibleCreationRoles || ambit.possibleCreationRoles.length === 0) return false;
-            return ambit.possibleCreationRoles.some(roleId => userRoles.includes(roleId));
-        });
-    }
-    return masterData.ambits.data;
+    if (mode === 'view') return masterData.ambits.data;
+    
+    // For create and edit, an admin should see all options.
+    if (isAdmin) return masterData.ambits.data;
+
+    // For non-admins, filter based on creation roles.
+    return masterData.ambits.data.filter((ambit: ImprovementActionType) => {
+        if (!ambit.possibleCreationRoles || ambit.possibleCreationRoles.length === 0) return false;
+        return ambit.possibleCreationRoles.some(roleId => userRoles.includes(roleId));
+    });
   }, [masterData, isAdmin, userRoles, mode]);
 
   const filteredCategories = useMemo(() => {
@@ -668,5 +662,3 @@ export function ActionForm({
     </>
   )
 }
-
-    
