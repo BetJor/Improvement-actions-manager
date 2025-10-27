@@ -79,42 +79,6 @@ const ReadOnlyField = ({ label, value }: { label: string, value?: string | strin
     )
 }
 
-const EditableSelectField = ({ form, fieldName, label, placeholder, options, currentTextValue, onEditClick, isEditing, disabled }: any) => (
-    <FormItem>
-        <FormLabel>{label}</FormLabel>
-        {isEditing ? (
-            <Select
-                onValueChange={(value) => {
-                    form.setValue(fieldName, value);
-                    onEditClick(null);
-                }}
-                defaultValue={form.getValues(fieldName)}
-                disabled={disabled}
-                open={true} // Auto open when switching to edit
-            >
-                <FormControl>
-                    <SelectTrigger>
-                        <SelectValue placeholder={placeholder} />
-                    </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                    {options.map((opt: any) => (
-                        <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                    ))}
-                </SelectContent>
-            </Select>
-        ) : (
-            <div className="flex items-center justify-between rounded-md border px-3 py-2">
-                <span className="text-sm">{currentTextValue || <span className="text-muted-foreground">{placeholder}</span>}</span>
-                <Button type="button" variant="ghost" size="icon" className="h-6 w-6" onClick={() => onEditClick(fieldName)} disabled={disabled}>
-                    <Pencil className="h-4 w-4" />
-                </Button>
-            </div>
-        )}
-        <FormMessage />
-    </FormItem>
-);
-
 export function ActionForm({
     mode,
     initialData,
@@ -152,7 +116,6 @@ export function ActionForm({
     },
   })
   
-  // Set form values when in edit/view mode and data is available
   useEffect(() => {
     if ((mode === 'edit' || mode === 'view') && initialData && masterData) {
         form.reset({
@@ -190,10 +153,16 @@ export function ActionForm({
             return ambit.possibleCreationRoles.some(roleId => userRoles.includes(roleId));
         });
     }
-    // In edit or view mode, just show all available ambits. Permissions are handled by who can see the page.
+    if (mode === 'edit') {
+        if(isAdmin) return masterData.ambits.data;
+        // In edit mode, show all if admin, otherwise filter like create
+        return masterData.ambits.data.filter((ambit: ImprovementActionType) => {
+            if (!ambit.possibleCreationRoles || ambit.possibleCreationRoles.length === 0) return false;
+            return ambit.possibleCreationRoles.some(roleId => userRoles.includes(roleId));
+        });
+    }
     return masterData.ambits.data;
   }, [masterData, isAdmin, userRoles, mode]);
-
 
   const filteredCategories = useMemo(() => {
     if (!selectedActionTypeId || !masterData?.origins?.data) return [];
@@ -208,7 +177,6 @@ export function ActionForm({
     return masterData.classifications.data.filter((sc: ActionSubcategory) => sc.categoryId === selectedCategoryId);
   }, [selectedCategoryId, masterData]);
   
-  // Dynamic responsible options logic
   const responsibleOptions = useMemo(() => {
     if (!selectedActionTypeId || !masterData || !user) return [];
     
@@ -241,7 +209,6 @@ export function ActionForm({
         }
     });
 
-    // Make sure the initial value is in the list when editing
     if ((mode === 'edit' || mode === 'view') && initialData?.assignedTo && !options.some(opt => opt.value === initialData.assignedTo)) {
         options.push({ value: initialData.assignedTo, label: initialData.assignedTo });
     }
@@ -256,11 +223,10 @@ export function ActionForm({
     setEditingField(fieldName);
   };
   
-  const handleSelectChange = (fieldName: string, value: string) => {
+  const handleSelectChange = (fieldName: string, value: string | string[]) => {
       form.setValue(fieldName as any, value);
-      handleEditClick(null); // Close the select after choosing a value
+      handleEditClick(null); 
 
-      // Reset dependent fields when a parent changes
       if (fieldName === 'typeId') {
           form.setValue('category', '');
           form.setValue('subcategory', '');
@@ -430,7 +396,7 @@ export function ActionForm({
             <Select
                 onValueChange={(value) => handleSelectChange(fieldName, value)}
                 defaultValue={form.getValues(fieldName)}
-                disabled={disableForm || options.length === 0}
+                disabled={disableForm || !options || options.length === 0}
                 open={mode === 'create' ? undefined : editingField === fieldName}
                 onOpenChange={(isOpen) => !isOpen && handleEditClick(null)}
             >
@@ -440,7 +406,7 @@ export function ActionForm({
                     </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                    {options.map((opt) => (
+                    {options && options.map((opt) => (
                         <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
                     ))}
                 </SelectContent>
@@ -495,7 +461,7 @@ export function ActionForm({
                                 !field.value && "text-muted-foreground"
                             )}
                             >
-                            {field.value && masterData.centers?.data
+                            {field.value && masterData?.centers?.data
                                 ? masterData.centers.data.find(
                                     (center: Center) => center.id === field.value
                                 )?.name
@@ -573,7 +539,7 @@ export function ActionForm({
                     <DropdownMenuContent className="w-[var(--radix-dropdown-menu-trigger-width)]" align="start">
                         <DropdownMenuLabel>Áreas Afectadas</DropdownMenuLabel>
                         <DropdownMenuSeparator />
-                        {masterData?.affectedAreas.map((area: AffectedArea) => (
+                        {masterData?.affectedAreas?.map((area: AffectedArea) => (
                              <DropdownMenuCheckboxItem
                                 key={area.id}
                                 checked={field.value?.includes(area.id!)}
@@ -702,3 +668,5 @@ export function ActionForm({
     </>
   )
 }
+
+    
