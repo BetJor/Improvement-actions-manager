@@ -164,18 +164,6 @@ export function ActionForm({
     return masterData.classifications.data.filter((sc: ActionSubcategory) => sc.categoryId === selectedCategoryId);
   }, [selectedCategoryId, masterData]);
   
-  useEffect(() => {
-    if (form.getValues("typeId") !== initialData?.typeId) {
-       form.resetField("category", { defaultValue: "" });
-    }
-  }, [selectedActionTypeId, form, initialData]);
-
-  useEffect(() => {
-    if (form.getValues("category") !== initialData?.categoryId) {
-       form.resetField("subcategory", { defaultValue: "" });
-    }
-  }, [selectedCategoryId, form, initialData]);
-
   // Dynamic responsible options logic
   const responsibleOptions = useMemo(() => {
     if (!selectedActionTypeId || !masterData || !user) return [];
@@ -209,15 +197,27 @@ export function ActionForm({
         }
     });
 
+    // Make sure the initial value is in the list when editing
     if (mode === 'edit' && initialData?.assignedTo && !options.some(opt => opt.value === initialData.assignedTo)) {
         options.push({ value: initialData.assignedTo, label: initialData.assignedTo });
     }
 
-    return options;
-}, [selectedActionTypeId, selectedCenterId, selectedAffectedAreasIds, masterData, user, initialData?.assignedTo, mode]);
+    return options.filter((option, index, self) => 
+        index === self.findIndex((t) => (t.value === option.value))
+    );
+  }, [selectedActionTypeId, selectedCenterId, selectedAffectedAreasIds, masterData, user, initialData?.assignedTo, mode]);
+
+  // When a parent dropdown changes, reset the children.
+  useEffect(() => {
+    form.resetField("category", { defaultValue: '' });
+  }, [selectedActionTypeId, form]);
 
   useEffect(() => {
-    form.resetField("assignedTo", { defaultValue: "" });
+    form.resetField("subcategory", { defaultValue: '' });
+  }, [selectedCategoryId, form]);
+  
+  useEffect(() => {
+    form.resetField("assignedTo", { defaultValue: '' });
   }, [selectedActionTypeId, selectedCenterId, selectedAffectedAreasIds, form]);
 
 
@@ -466,13 +466,14 @@ export function ActionForm({
                             <Button
                             variant="outline"
                             role="combobox"
+                            disabled={disableForm}
                             className={cn(
                                 "w-full justify-between",
                                 !field.value && "text-muted-foreground"
                             )}
                             >
-                            {field.value
-                                ? masterData.centers?.data.find(
+                            {field.value && masterData.centers?.data
+                                ? masterData.centers.data.find(
                                     (center: Center) => center.id === field.value
                                 )?.name
                                 : "Selecciona un centre"}
@@ -523,17 +524,18 @@ export function ActionForm({
                       <FormControl>
                          <Button
                             variant="outline"
+                            disabled={disableForm}
                             className={cn(
                                 "w-full justify-start text-left font-normal",
                                 !field.value?.length && "text-muted-foreground"
                             )}
                             >
                             <span className="truncate">
-                                {field.value?.length > 0
+                                {field.value?.length > 0 && masterData?.affectedAreas
                                 ? field.value
                                     .map(
                                     (id) =>
-                                        masterData?.affectedAreas.find(
+                                        masterData.affectedAreas.find(
                                         (area: AffectedArea) => area.id === id
                                         )?.name
                                     )
