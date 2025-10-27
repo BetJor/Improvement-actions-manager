@@ -184,6 +184,9 @@ export async function createAction(data: CreateActionData, masterData: any): Pro
     const centerName = masterData.centers.data.find((c: any) => c.id === data.centerId)?.name || data.centerId || '';
     const typeName = masterData.ambits.data.find((t: any) => t.id === data.typeId)?.name || data.typeId || '';
 
+    // Get the global workflow settings for due dates
+    const workflowSettings = await getWorkflowSettings();
+
     const newActionData: Omit<ImprovementAction, 'id'> = {
       actionId: newActionId,
       title: data.title,
@@ -208,39 +211,31 @@ export async function createAction(data: CreateActionData, masterData: any): Pro
       },
       responsibleGroupId: data.assignedTo,
       creationDate: creationDate,
-      analysisDueDate: '', 
-      implementationDueDate: '',
-      closureDueDate: '',
+      // Vencimiento de Análisis se calcula, pero los otros se dejan en blanco.
+      analysisDueDate: addDays(today, workflowSettings.analysisDueDays).toISOString(), 
+      implementationDueDate: '', // Se deja en blanco
+      closureDueDate: '', // Se deja en blanco
       followers: [],
       readers: [],
       authors: [],
     };
   
-    // 3. Plan the workflow using the traditional method
-    const workflowPlan = await planTraditionalActionWorkflow(newActionData);
-
-    // 4. Add the workflow plan and dates to the action data
-    newActionData.workflowPlan = workflowPlan;
-    newActionData.analysisDueDate = workflowPlan.steps.find(s => s.stepName.includes('Anàlisi'))?.dueDate || '';
-    newActionData.implementationDueDate = workflowPlan.steps.find(s => s.stepName.includes('Implantació'))?.dueDate || '';
-    newActionData.closureDueDate = workflowPlan.steps.find(s => s.stepName.includes('Tancament'))?.dueDate || '';
-    
-    // 5. Apply initial permissions for 'Borrador' state
+    // 3. Apply initial permissions for 'Borrador' state
     if (newActionData.status === 'Borrador' && newActionData.creator.email) {
         newActionData.readers = [newActionData.creator.email];
         newActionData.authors = [newActionData.creator.email];
     }
     
-    // 6. Add user as follower if sending for analysis right away
+    // 4. Add user as follower if sending for analysis right away
     if (newActionData.status === 'Pendiente Análisis') {
       newActionData.followers = [newActionData.creator.id];
     }
 
-    // 7. Add the new document to Firestore
+    // 5. Add the new document to Firestore
     const docRef = await addDoc(actionsCol, newActionData);
     const newAction = { id: docRef.id, ...newActionData } as ImprovementAction;
 
-    // 8. Handle status change logic if not a draft
+    // 6. Handle status change logic if not a draft
     if (newAction.status !== 'Borrador') {
         await handleStatusChange(newAction, 'Borrador');
     }
@@ -320,12 +315,14 @@ export async function updateAction(actionId: string, data: any, masterData: any 
         // 1. Calculate Implementation Due Date when saving Analysis
         if (data.analysis && Array.isArray(data.analysis.proposedActions)) {
             const dueDates = data.analysis.proposedActions
-                .map((pa: ProposedAction) => new Date(pa.dueDate))
-                .filter((d: Date) => !isNaN(d.getTime()));
+                .map((pa: ProposedAction) => pa.dueDate ? new Date(pa.dueDate as string) : null)
+                .filter((d): d is Date => d !== null && !isNaN(d.getTime()));
 
             if (dueDates.length > 0) {
                 const maxDueDate = new Date(Math.max.apply(null, dueDates.map(d => d.getTime())));
                 dataToUpdate.implementationDueDate = maxDueDate.toISOString();
+            } else {
+                 dataToUpdate.implementationDueDate = ''; // No proposed actions, no due date
             }
         }
         
@@ -334,17 +331,18 @@ export async function updateAction(actionId: string, data: any, masterData: any 
             const workflowSettings = await getWorkflowSettings();
             const closureDays = workflowSettings.closureDueDays;
 
-            // We need the *final* state of proposedActions from the database after the verification update
-            // For now, let's assume the update includes the status, and we'll calculate based on that.
-            // A more robust way would be to get the action *after* this update.
-            // Let's find the latest `statusUpdateDate` from all proposed actions in the original action.
+            // We need the *final* state of proposedActions from the database AFTER the verification update
+            // However, the state of the *implementation* should already be in the original action if this logic is correct.
             const statusUpdateDates = originalAction.analysis?.proposedActions
                 ?.map(pa => pa.statusUpdateDate ? new Date(pa.statusUpdateDate) : null)
-                .filter((d): d is Date => d !== null);
+                .filter((d): d is Date => d !== null && !isNaN(d.getTime()));
 
             if (statusUpdateDates && statusUpdateDates.length > 0) {
                 const latestUpdateDate = new Date(Math.max.apply(null, statusUpdateDates.map(d => d.getTime())));
                 dataToUpdate.closureDueDate = addDays(latestUpdateDate, closureDays).toISOString();
+            } else {
+                // If there are no status updates, base it on the verification date itself
+                 dataToUpdate.closureDueDate = addDays(new Date(), closureDays).toISOString();
             }
         }
 
