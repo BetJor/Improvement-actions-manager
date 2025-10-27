@@ -2,9 +2,9 @@
 
 import { collection, doc, getDoc, getDocs, addDoc, updateDoc, query, orderBy, limit, arrayUnion, Timestamp, runTransaction, arrayRemove, where, writeBatch, setDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { format, parse, subDays } from 'date-fns';
+import { format, parse, subDays, addDays } from 'date-fns';
 import type { ImprovementAction, ImprovementActionStatus, ActionUserInfo, ProposedAction } from '@/lib/types';
-import { planTraditionalActionWorkflow } from './workflow-service';
+import { planTraditionalActionWorkflow, getWorkflowSettings } from './workflow-service';
 import { getUsers, getUserById } from './users-service';
 import { getCategories, getSubcategories, getAffectedAreas, getCenters, getActionTypes, getResponsibilityRoles } from './master-data-service';
 import { getPermissionRuleForState, resolveRoles } from './permissions-service';
@@ -315,7 +315,40 @@ export async function updateAction(actionId: string, data: any, masterData: any 
               typeId: data.typeId,
             };
         }
-  
+
+        // --- NEW DUE DATE LOGIC ---
+        // 1. Calculate Implementation Due Date when saving Analysis
+        if (data.analysis && Array.isArray(data.analysis.proposedActions)) {
+            const dueDates = data.analysis.proposedActions
+                .map((pa: ProposedAction) => new Date(pa.dueDate))
+                .filter((d: Date) => !isNaN(d.getTime()));
+
+            if (dueDates.length > 0) {
+                const maxDueDate = new Date(Math.max.apply(null, dueDates.map(d => d.getTime())));
+                dataToUpdate.implementationDueDate = maxDueDate.toISOString();
+            }
+        }
+        
+        // 2. Calculate Closure Due Date when saving Verification
+        if (data.verification) {
+            const workflowSettings = await getWorkflowSettings();
+            const closureDays = workflowSettings.closureDueDays;
+
+            // We need the *final* state of proposedActions from the database after the verification update
+            // For now, let's assume the update includes the status, and we'll calculate based on that.
+            // A more robust way would be to get the action *after* this update.
+            // Let's find the latest `statusUpdateDate` from all proposed actions in the original action.
+            const statusUpdateDates = originalAction.analysis?.proposedActions
+                ?.map(pa => pa.statusUpdateDate ? new Date(pa.statusUpdateDate) : null)
+                .filter((d): d is Date => d !== null);
+
+            if (statusUpdateDates && statusUpdateDates.length > 0) {
+                const latestUpdateDate = new Date(Math.max.apply(null, statusUpdateDates.map(d => d.getTime())));
+                dataToUpdate.closureDueDate = addDays(latestUpdateDate, closureDays).toISOString();
+            }
+        }
+
+
         // Crucially, if a new status is provided, it must be preserved.
         if (status) {
             console.log(`[ActionService] Applying new status from parameters: ${status}`);

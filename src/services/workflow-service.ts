@@ -1,4 +1,5 @@
 
+
 import { collection, getDocs, doc, query, where, getDoc, setDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { format, addDays, parseISO } from 'date-fns';
@@ -47,12 +48,15 @@ export async function planTraditionalActionWorkflow(action: Omit<ImprovementActi
 
     // Get due days from global config
     const analysisDays = workflowSettings.analysisDueDays;
-    const implementationDays = workflowSettings.implementationDueDays;
+    // NOTE: implementationDueDays is now calculated based on proposed actions, not from global config.
     const closureDays = workflowSettings.closureDueDays;
 
     const analysisDueDate = addDays(creationDate, analysisDays);
-    const implementationDueDate = addDays(creationDate, implementationDays);
-    const closureDueDate = addDays(creationDate, closureDays);
+    // The implementation and closure due dates will be calculated later.
+    // We set them to the analysis due date as a temporary placeholder.
+    const implementationDueDate = analysisDueDate;
+    const closureDueDate = addDays(implementationDueDate, closureDays);
+
 
     steps.push({
         stepName: 'Anàlisi de Causes',
