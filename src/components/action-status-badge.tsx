@@ -16,10 +16,15 @@ export function ActionStatusBadge({ status, isCompliant = null }: ActionStatusBa
     Finalizada: "bg-green-500 text-white",
   }
 
-  // Special case for non-compliant finalized actions
-  const finalStyle = (status === 'Finalizada' && isCompliant === false)
+  const isNonCompliantFinalized = status === 'Finalizada' && isCompliant === false;
+
+  const finalStyle = isNonCompliantFinalized
     ? "bg-red-500 text-white"
     : statusStyles[status];
+
+  const statusText = isNonCompliantFinalized
+    ? `${status} (No Conforme)`
+    : status;
 
   return (
     <Badge
@@ -28,7 +33,7 @@ export function ActionStatusBadge({ status, isCompliant = null }: ActionStatusBa
         finalStyle
       )}
     >
-      {status}
+      {statusText}
     </Badge>
   )
 }

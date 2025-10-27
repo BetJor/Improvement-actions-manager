@@ -45,7 +45,7 @@ export function ActionStatusIndicator({ status, isCompliant = null }: ActionStat
           };
         }
         return {
-          label: "Finalizada",
+          label: "Finalizada (Conforme)",
           bars: [ 'bg-green-700', 'bg-green-700', 'bg-green-700', 'bg-green-700' ]
         };
       default:
