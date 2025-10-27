@@ -511,6 +511,25 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
             addTextBlock('Observaciones de Cierre:', action.closure.notes);
         }
 
+        // --- SECTION 5: ADJUNTOS ---
+        if (action.attachments && action.attachments.length > 0) {
+            addSectionTitle('Adjuntos', 5);
+            doc.autoTable({
+                startY: y,
+                head: [['Nombre Archivo', 'Subido Por', 'Fecha Subida']],
+                body: action.attachments.map(file => [
+                    file.fileName,
+                    file.uploadedBy.name,
+                    safeParseDate(file.uploadedAt) ? format(safeParseDate(file.uploadedAt)!, 'dd/MM/yyyy HH:mm') : 'N/D'
+                ]),
+                theme: 'grid',
+                headStyles: { fillColor: [41, 128, 185], textColor: 255 },
+                styles: { fontSize: 9 },
+                margin: { left: margin, right: margin }
+            });
+            y = (doc as any).lastAutoTable.finalY + 10;
+        }
+
         // --- FOOTER ---
         const pageCount = (doc as any).internal.getNumberOfPages();
         for (let i = 1; i <= pageCount; i++) {
@@ -941,6 +960,7 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
     
 
     
+
 
 
 
