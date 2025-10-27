@@ -113,7 +113,7 @@ export function ActionForm({
       typeId: "",
     },
   })
-
+  
   // Set form values when in edit/view mode and data is available
   useEffect(() => {
     if ((mode === 'edit' || mode === 'view') && initialData && masterData) {
@@ -145,15 +145,16 @@ export function ActionForm({
 
   const filteredAmbits = useMemo(() => {
     if (!masterData?.ambits?.data) return [];
-    if (isAdmin) return masterData.ambits.data;
-    
-    return masterData.ambits.data.filter((ambit: ImprovementActionType) => {
-        if (!ambit.possibleCreationRoles || ambit.possibleCreationRoles.length === 0) {
-            return false;
-        }
-        return ambit.possibleCreationRoles.some(roleId => userRoles.includes(roleId));
-    });
-  }, [masterData, isAdmin, userRoles]);
+    if (mode === 'create') {
+        if (isAdmin) return masterData.ambits.data;
+        return masterData.ambits.data.filter((ambit: ImprovementActionType) => {
+            if (!ambit.possibleCreationRoles || ambit.possibleCreationRoles.length === 0) return false;
+            return ambit.possibleCreationRoles.some(roleId => userRoles.includes(roleId));
+        });
+    }
+    // In edit or view mode, just show all available ambits. Permissions are handled by who can see the page.
+    return masterData.ambits.data;
+  }, [masterData, isAdmin, userRoles, mode]);
 
 
   const filteredCategories = useMemo(() => {
@@ -215,19 +216,24 @@ export function ActionForm({
 
   // When a parent dropdown changes, reset the children.
   useEffect(() => {
-    if(form.formState.isSubmitted || mode === 'edit') return;
-    form.resetField("category", { defaultValue: '' });
+    if(mode === 'create') {
+        form.resetField("category", { defaultValue: '' });
+        form.resetField("subcategory", { defaultValue: '' });
+        form.resetField("assignedTo", { defaultValue: '' });
+    }
   }, [selectedActionTypeId, form, mode]);
 
   useEffect(() => {
-      if(form.formState.isSubmitted || mode === 'edit') return;
-      form.resetField("subcategory", { defaultValue: '' });
+      if(mode === 'create') {
+        form.resetField("subcategory", { defaultValue: '' });
+      }
   }, [selectedCategoryId, form, mode]);
 
   useEffect(() => {
-    if(form.formState.isSubmitted || mode === 'edit') return;
-    form.resetField("assignedTo", { defaultValue: '' });
-  }, [selectedActionTypeId, selectedCenterId, selectedAffectedAreasIds, form, mode]);
+    if(mode === 'create') {
+        form.resetField("assignedTo", { defaultValue: '' });
+    }
+  }, [selectedCenterId, selectedAffectedAreasIds, form, mode]);
 
 
   useEffect(() => {
@@ -716,5 +722,3 @@ export function ActionForm({
     </>
   )
 }
-
-    
