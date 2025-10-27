@@ -102,16 +102,7 @@ export function ActionForm({
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: initialData ? {
-      title: initialData.title || "",
-      description: initialData.description || "",
-      assignedTo: initialData.assignedTo || "",
-      category: initialData.categoryId || "",
-      subcategory: initialData.subcategoryId || "",
-      affectedAreasIds: initialData.affectedAreasIds || [],
-      centerId: initialData.centerId || "",
-      typeId: initialData.typeId || "",
-    } : {
+    defaultValues: {
       title: "",
       category: "",
       subcategory: "",
@@ -123,6 +114,21 @@ export function ActionForm({
     },
   })
 
+  // Set form values when in edit/view mode and data is available
+  useEffect(() => {
+    if ((mode === 'edit' || mode === 'view') && initialData && masterData) {
+        form.reset({
+            title: initialData.title || "",
+            description: initialData.description || "",
+            assignedTo: initialData.assignedTo || "",
+            category: initialData.categoryId || "",
+            subcategory: initialData.subcategoryId || "",
+            affectedAreasIds: initialData.affectedAreasIds || [],
+            centerId: initialData.centerId || "",
+            typeId: initialData.typeId || "",
+        });
+    }
+  }, [mode, initialData, masterData, form]);
 
   useEffect(() => {
     async function checkPrompts() {
@@ -206,23 +212,21 @@ export function ActionForm({
     );
   }, [selectedActionTypeId, selectedCenterId, selectedAffectedAreasIds, masterData, user, initialData?.assignedTo, mode]);
 
+
   // When a parent dropdown changes, reset the children.
   useEffect(() => {
-    if (mode === 'create') {
-        form.resetField("category", { defaultValue: '' });
-    }
+    if(form.formState.isSubmitted || mode === 'edit') return;
+    form.resetField("category", { defaultValue: '' });
   }, [selectedActionTypeId, form, mode]);
 
   useEffect(() => {
-    if (mode === 'create') {
-        form.resetField("subcategory", { defaultValue: '' });
-    }
+      if(form.formState.isSubmitted || mode === 'edit') return;
+      form.resetField("subcategory", { defaultValue: '' });
   }, [selectedCategoryId, form, mode]);
-  
+
   useEffect(() => {
-    if (mode === 'create') {
-        form.resetField("assignedTo", { defaultValue: '' });
-    }
+    if(form.formState.isSubmitted || mode === 'edit') return;
+    form.resetField("assignedTo", { defaultValue: '' });
   }, [selectedActionTypeId, selectedCenterId, selectedAffectedAreasIds, form, mode]);
 
 
@@ -712,3 +716,5 @@ export function ActionForm({
     </>
   )
 }
+
+    
