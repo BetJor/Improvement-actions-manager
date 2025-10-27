@@ -26,12 +26,12 @@ export default async function ActionDetailPage({ params }: { params: { id: strin
   ]);
 
   const masterData = {
-    actionTypes: types,
-    categories: cats,
-    subcategories: subcats,
+    ambits: { data: types },
+    origins: { data: cats },
+    classifications: { data: subcats },
     affectedAreas: areas,
-    centers: centers,
-    responsibilityRoles: roles,
+    centers: { data: centers },
+    responsibilityRoles: { data: roles },
   };
 
 
