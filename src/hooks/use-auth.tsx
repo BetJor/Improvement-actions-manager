@@ -165,18 +165,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = async () => {
     try {
-      await stopImpersonating();
+      // First, sign out from Firebase to invalidate the user's token.
+      await signOut(auth);
       
-      // Manually clear the user state before signing out
+      // Then, clean up local state like impersonation.
+      sessionStorage.removeItem(IMPERSONATION_KEY);
+      setIsImpersonating(false);
       setUser(null);
       setFirebaseUser(null);
-      setIsImpersonating(false);
 
-      await signOut(auth);
+      // Finally, redirect to the login page.
       router.push(`/login`);
       
     } catch (error) {
       console.error("Error signing out", error);
+      // Even if there's an error, force a clean state and redirect.
+      sessionStorage.removeItem(IMPERSONATION_KEY);
+      setUser(null);
+      router.push(`/login`);
     }
   };
 
