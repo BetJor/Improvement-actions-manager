@@ -196,8 +196,6 @@ export default function SettingsPage() {
                     implementationDueDays: values.implementationDueDays,
                     closureDueDays: values.closureDueDays,
                 });
-                toast({ title: "Configuración guardada", description: "Los vencimientos se han actualizado correctamente." });
-
             } else {
                 const { id, ...dataToSave } = item as any;
                 
@@ -210,10 +208,8 @@ export default function SettingsPage() {
 
                 if (id) {
                     await updateMasterDataItem(collectionName, id, dataToSave);
-                    toast({ title: "Elemento actualizado", description: "El elemento se ha actualizado correctamente." });
                 } else {
                     await addMasterDataItem(collectionName, dataToSave);
-                    toast({ title: "Elemento creado", description: "El elemento se ha creado correctamente." });
                 }
             }
             
@@ -221,7 +217,6 @@ export default function SettingsPage() {
 
         } catch (error) {
             console.error(`Error saving item in ${collectionName}:`, error);
-            toast({ variant: "destructive", title: "Error al guardar", description: "No se pudo guardar el elemento." });
         } finally {
             setIsSaving(false);
         }
@@ -230,11 +225,9 @@ export default function SettingsPage() {
     const handleDelete = async (collectionName: string, itemId: string) => {
         try {
             await deleteMasterDataItem(collectionName, itemId);
-            toast({ title: "Elemento eliminado", description: "El elemento se ha eliminado correctamente." });
             await loadData(activeTab);
         } catch (error) {
             console.error(`Error deleting item from ${collectionName}:`, error);
-            toast({ variant: "destructive", title: "Error al eliminar", description: "No se pudo eliminar el elemento." });
         }
     };
     
@@ -465,7 +458,7 @@ export default function SettingsPage() {
                         item={formConfig.item}
                         collectionName={formConfig.collectionName}
                         title={formConfig.title}
-                        onSave={(collection, item) => handleSave(collection, item)}
+                        onSave={onSave}
                         extraData={{
                             categories: masterData.origins?.data,
                             actionTypes: masterData.ambits?.data,
