@@ -69,13 +69,13 @@ interface ActionFormProps {
 }
 
 
-const ReadOnlyField = ({ label, value }: { label: string; value?: string; }) => {
+const ReadOnlyField = ({ label, value }: { label: string; value?: string | React.ReactNode; }) => {
   if (!value) return null;
   return (
     <div className="grid gap-1.5">
       <Label className="text-primary">{label}</Label>
-      <div className="flex items-center justify-between text-sm font-medium">
-        <span>{value}</span>
+      <div className="text-sm font-medium">
+        {value}
       </div>
     </div>
   );
@@ -104,7 +104,7 @@ export function ActionForm({
   
   const [isCenterPopoverOpen, setIsCenterPopoverOpen] = useState(false);
 
-  const initialFormValues = useMemo(() => {
+ const initialFormValues = useMemo(() => {
     if (initialData) {
       return {
         title: initialData.title || "",
@@ -133,6 +133,8 @@ export function ActionForm({
     resolver: zodResolver(formSchema),
     defaultValues: initialFormValues,
   });
+
+  const { reset } = form;
 
   const selectedActionTypeId = form.watch("typeId");
   const selectedCategoryId = form.watch("category");
@@ -191,6 +193,12 @@ export function ActionForm({
 
     return options.filter((option, index, self) => index === self.findIndex((t) => (t.value === option.value)));
   }, [selectedActionTypeId, selectedCenterId, selectedAffectedAreasIds, masterData, user, initialData?.assignedTo, mode]);
+
+  useEffect(() => {
+    if (mode === 'edit' && initialData && filteredAmbits.length > 0 && responsibleOptions.length > 0) {
+      reset(initialFormValues);
+    }
+  }, [mode, initialData, filteredAmbits, responsibleOptions, reset, initialFormValues]);
   
 
   useEffect(() => {
@@ -281,18 +289,24 @@ export function ActionForm({
 
   if (mode === 'view' && initialData) {
     return (
-        <div className="space-y-6">
+      <div className="space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <ReadOnlyField label="Ámbito" value={initialData.type} />
             <ReadOnlyField label="Origen" value={initialData.category}/>
-            <ReadOnlyField label="Clasificación" value={initialData.subcategory}/>
-            <ReadOnlyField label="Áreas Funcionales Implicadas" value={initialData.affectedAreas.join(', ')}/>
-            <ReadOnlyField label="Centro" value={initialData.center}/>
-            <ReadOnlyField label="Asignado A (Responsable Análisis)" value={initialData.assignedTo}/>
-            <div className="space-y-2">
-                <Label className="text-primary">Observaciones</Label>
-                <p className="text-muted-foreground whitespace-pre-wrap">{initialData.description}</p>
-            </div>
         </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <ReadOnlyField label="Clasificación" value={initialData.subcategory}/>
+            <ReadOnlyField label="Centro" value={initialData.center}/>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+             <ReadOnlyField label="Áreas Funcionales Implicadas" value={initialData.affectedAreas.join(', ')}/>
+             <ReadOnlyField label="Asignado A (Responsable Análisis)" value={initialData.assignedTo}/>
+        </div>
+        <div className="space-y-2">
+            <Label className="text-primary">Observaciones</Label>
+            <p className="text-muted-foreground whitespace-pre-wrap">{initialData.description}</p>
+        </div>
+    </div>
     );
   }
 
