@@ -157,6 +157,7 @@ export interface ImprovementAction {
 
   // Dates
   analysisDueDate: string;
+  verificationDueDate: string;
   implementationDueDate: string;
   closureDueDate: string;
 

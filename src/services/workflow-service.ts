@@ -9,6 +9,7 @@ import { getActionTypes } from './master-data-service';
 
 interface WorkflowSettings {
     analysisDueDays: number;
+    verificationDueDays: number;
     implementationDueDays: number;
     closureDueDays: number;
 }
@@ -22,6 +23,7 @@ export async function getWorkflowSettings(): Promise<WorkflowSettings> {
     // Return default values if the document doesn't exist
     return {
         analysisDueDays: 30,
+        verificationDueDays: 15,
         implementationDueDays: 75,
         closureDueDays: 90,
     };

@@ -33,6 +33,7 @@ import { Input } from "@/components/ui/input";
 
 const settingsSchema = z.object({
   analysisDueDays: z.coerce.number().int().positive(),
+  verificationDueDays: z.coerce.number().int().positive(),
   implementationDueDays: z.coerce.number().int().positive(),
   closureDueDays: z.coerce.number().int().positive(),
 })
@@ -57,6 +58,7 @@ export default function SettingsPage() {
         resolver: zodResolver(settingsSchema),
         defaultValues: {
           analysisDueDays: 30,
+          verificationDueDays: 15,
           implementationDueDays: 75,
           closureDueDays: 90,
         },
@@ -119,6 +121,7 @@ export default function SettingsPage() {
             setMasterData(data);
 
             form.setValue("analysisDueDays", workflowSettings.analysisDueDays);
+            form.setValue("verificationDueDays", workflowSettings.verificationDueDays);
             form.setValue("implementationDueDays", workflowSettings.implementationDueDays);
             form.setValue("closureDueDays", workflowSettings.closureDueDays);
             
@@ -186,6 +189,7 @@ export default function SettingsPage() {
             if (collectionName === "workflowSettings" && values) {
                  await updateWorkflowSettings({
                     analysisDueDays: values.analysisDueDays,
+                    verificationDueDays: values.verificationDueDays,
                     implementationDueDays: values.implementationDueDays,
                     closureDueDays: values.closureDueDays,
                 });
@@ -212,6 +216,7 @@ export default function SettingsPage() {
             console.error(`Error saving item in ${collectionName}:`, error);
         } finally {
             setIsSaving(false);
+            setIsFormOpen(false);
         }
     };
 
@@ -332,7 +337,7 @@ export default function SettingsPage() {
                               origins: masterData.origins,
                               classifications: masterData.classifications
                           }}
-                          onSave={(collection, item) => handleSave(collection, item)}
+                          onSave={handleSave}
                           onDelete={(collection, id) => handleDelete(collection, id)}
                           canManage={canManage}
                           onReorder={(collection, activeId, overId) => handleReorder(collection, activeId, overId)}
@@ -387,13 +392,26 @@ export default function SettingsPage() {
                                             <CardTitle>Configuración de Vencimientos</CardTitle>
                                             <CardDescription>Define los plazos en días que se aplicarán a todas las nuevas acciones de mejora.</CardDescription>
                                         </CardHeader>
-                                        <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                        <CardContent className="grid grid-cols-1 md:grid-cols-4 gap-6">
                                             <FormField
                                                 control={form.control}
                                                 name="analysisDueDays"
                                                 render={({ field }) => (
                                                 <FormItem>
                                                     <FormLabel>Días para Análisis</FormLabel>
+                                                    <FormControl>
+                                                        <Input type="number" {...field} />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                                )}
+                                            />
+                                            <FormField
+                                                control={form.control}
+                                                name="verificationDueDays"
+                                                render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>Días para Verificación</FormLabel>
                                                     <FormControl>
                                                         <Input type="number" {...field} />
                                                     </FormControl>

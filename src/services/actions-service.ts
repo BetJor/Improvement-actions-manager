@@ -10,7 +10,7 @@ import { getCategories, getSubcategories, getAffectedAreas, getCenters, getActio
 import { getPermissionRuleForState, resolveRoles } from './permissions-service';
 import { sendStateChangeEmail } from './notification-service';
 
-interface CreateActionData extends Omit<ImprovementAction, 'id' | 'actionId' | 'status' | 'creationDate' | 'category' | 'subcategory' | 'type' | 'affectedAreas' | 'center' | 'analysisDueDate' | 'implementationDueDate' | 'closureDueDate' | 'readers' | 'authors' > {
+interface CreateActionData extends Omit<ImprovementAction, 'id' | 'actionId' | 'status' | 'creationDate' | 'category' | 'subcategory' | 'type' | 'affectedAreas' | 'center' | 'analysisDueDate' | 'implementationDueDate' | 'closureDueDate' | 'readers' | 'authors' | 'verificationDueDate' > {
   status: 'Borrador' | 'Pendiente Análisis';
   category: string; // ID
   subcategory: string; // ID
@@ -47,6 +47,9 @@ export const getActions = async (): Promise<ImprovementAction[]> => {
         }
         if (data.analysisDueDate && data.analysisDueDate instanceof Timestamp) {
             data.analysisDueDate = data.analysisDueDate.toDate().toISOString();
+        }
+        if (data.verificationDueDate && data.verificationDueDate instanceof Timestamp) {
+            data.verificationDueDate = data.verificationDueDate.toDate().toISOString();
         }
         if (data.implementationDueDate && data.implementationDueDate instanceof Timestamp) {
             data.implementationDueDate = data.implementationDueDate.toDate().toISOString();
@@ -118,6 +121,7 @@ export const getActionById = async (id: string): Promise<ImprovementAction | nul
             ...data,
             creationDate: convertTimestamp(data.creationDate),
             analysisDueDate: convertTimestamp(data.analysisDueDate),
+            verificationDueDate: convertTimestamp(data.verificationDueDate),
             implementationDueDate: convertTimestamp(data.implementationDueDate),
             closureDueDate: convertTimestamp(data.closureDueDate),
             analysis: data.analysis ? {
@@ -211,10 +215,10 @@ export async function createAction(data: CreateActionData, masterData: any): Pro
       },
       responsibleGroupId: data.assignedTo,
       creationDate: creationDate,
-      // Vencimiento de Análisis se calcula, pero los otros se dejan en blanco.
       analysisDueDate: addDays(today, workflowSettings.analysisDueDays).toISOString(), 
-      implementationDueDate: '', // Se deja en blanco
-      closureDueDate: '', // Se deja en blanco
+      verificationDueDate: '',
+      implementationDueDate: '', 
+      closureDueDate: '',
       followers: [],
       readers: [],
       authors: [],
@@ -248,6 +252,24 @@ export async function createAction(data: CreateActionData, masterData: any): Pro
 async function handleStatusChange(action: ImprovementAction, oldStatus: ImprovementActionStatus) {
     console.log(`[ActionService] handleStatusChange called for action ${action.id} from ${oldStatus} to ${action.status}`);
     const actionDocRef = doc(db, 'actions', action.id);
+    
+    // Step 1: Update due dates based on the new status
+    const workflowSettings = await getWorkflowSettings();
+    const dataToUpdate: any = {};
+    const today = new Date();
+
+    if (action.status === 'Pendiente Comprobación') {
+        dataToUpdate.verificationDueDate = addDays(today, workflowSettings.verificationDueDays).toISOString();
+    }
+    
+    if (action.status === 'Pendiente de Cierre') {
+        dataToUpdate.closureDueDate = addDays(today, workflowSettings.closureDueDays).toISOString();
+    }
+    
+    if (Object.keys(dataToUpdate).length > 0) {
+        console.log(`[ActionService] Updating due dates for action ${action.id}:`, dataToUpdate);
+        await updateDoc(actionDocRef, dataToUpdate);
+    }
     
     console.log(`[ActionService] Updating permissions for action ${action.id}...`);
     await updateActionPermissions(action.id, action.typeId, action.status, action);
@@ -326,27 +348,8 @@ export async function updateAction(actionId: string, data: any, masterData: any 
             }
         }
         
-        // 2. Calculate Closure Due Date when saving Verification
-        if (data.verification) {
-            const workflowSettings = await getWorkflowSettings();
-            const closureDays = workflowSettings.closureDueDays;
-
-            // We need the *final* state of proposedActions from the database AFTER the verification update
-            // However, the state of the *implementation* should already be in the original action if this logic is correct.
-            const statusUpdateDates = originalAction.analysis?.proposedActions
-                ?.map(pa => pa.statusUpdateDate ? new Date(pa.statusUpdateDate) : null)
-                .filter((d): d is Date => d !== null && !isNaN(d.getTime()));
-
-            if (statusUpdateDates && statusUpdateDates.length > 0) {
-                const latestUpdateDate = new Date(Math.max.apply(null, statusUpdateDates.map(d => d.getTime())));
-                dataToUpdate.closureDueDate = addDays(latestUpdateDate, closureDays).toISOString();
-            } else {
-                // If there are no status updates, base it on the verification date itself
-                 dataToUpdate.closureDueDate = addDays(new Date(), closureDays).toISOString();
-            }
-        }
-
-
+        // 2. Calculate Closure Due Date is now handled in handleStatusChange
+        
         // Crucially, if a new status is provided, it must be preserved.
         if (status) {
             console.log(`[ActionService] Applying new status from parameters: ${status}`);
