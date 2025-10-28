@@ -45,6 +45,7 @@ import type { ImprovementAction, ImprovementActionType, ResponsibilityRole, Affe
 import { useAuth } from "@/hooks/use-auth"
 import { evaluatePattern } from "@/lib/pattern-evaluator"
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "./ui/dropdown-menu"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "./ui/card"
 
 
 const formSchema = z.object({
@@ -65,6 +66,7 @@ interface ActionFormProps {
     isSubmitting: boolean;
     onSubmit: (values: any, status?: 'Borrador' | 'Pendiente Análisis') => void;
     onCancel?: () => void;
+    editButton?: React.ReactNode;
     key?: string;
 }
 
@@ -88,7 +90,8 @@ export function ActionForm({
     masterData,
     isSubmitting,
     onSubmit,
-    onCancel
+    onCancel,
+    editButton
 }: ActionFormProps) {
   const { toast } = useToast()
   const { user, isAdmin, userRoles } = useAuth()
@@ -134,14 +137,11 @@ export function ActionForm({
     defaultValues: initialFormValues,
   });
 
+  const { reset } = form;
 
   useEffect(() => {
-    // Aquest useEffect només s'executarà un cop quan initialData canviï (en obrir la pestanya).
-    // Això estableix els valors inicials de l'esborrany al formulari de manera segura.
-    if (mode === 'edit' && initialData) {
-      form.reset(initialFormValues);
-    }
-  }, [initialData, mode, form, initialFormValues]);
+    reset(initialFormValues);
+  }, [initialData, reset, initialFormValues]);
 
   
   const selectedActionTypeId = form.watch("typeId");
@@ -200,7 +200,7 @@ export function ActionForm({
     }
 
     return options.filter((option, index, self) => index === self.findIndex((t) => (t.value === option.value)));
-  }, [selectedActionTypeId, selectedCenterId, selectedAffectedAreasIds, masterData, user, initialData?.assignedTo, mode]);
+  }, [selectedActionTypeId, selectedCenterId, selectedAffectedAreasIds, masterData, user, initialData, mode]);
   
 
   useEffect(() => {
@@ -289,33 +289,19 @@ export function ActionForm({
 
   const disableForm = isSubmitting || mode === 'view';
 
-  if (mode === 'view' && initialData) {
-    return (
-      <div className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <ReadOnlyField label="Ámbito" value={initialData.type} />
-            <ReadOnlyField label="Origen" value={initialData.category}/>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <ReadOnlyField label="Clasificación" value={initialData.subcategory}/>
-            <ReadOnlyField label="Centro" value={initialData.center}/>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-             <ReadOnlyField label="Áreas Funcionales Implicadas" value={initialData.affectedAreas.join(', ')}/>
-             <ReadOnlyField label="Asignado A (Responsable Análisis)" value={initialData.assignedTo}/>
-        </div>
-        <div className="space-y-2">
-            <Label className="text-primary">Observaciones</Label>
-            <p className="text-muted-foreground whitespace-pre-wrap">{initialData.description}</p>
-        </div>
-    </div>
-    );
-  }
-
-  return (
-    <>
-      <Form {...form}>
-        <form onSubmit={(e) => e.preventDefault()} className="space-y-6">
+ const detailsSection = (
+    <div className="space-y-6">
+        {mode === 'view' ? (
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <ReadOnlyField label="Ámbito" value={initialData?.type} />
+                <ReadOnlyField label="Origen" value={initialData?.category}/>
+                <ReadOnlyField label="Clasificación" value={initialData?.subcategory}/>
+                <ReadOnlyField label="Áreas Funcionales Implicadas" value={initialData?.affectedAreas.join(', ')}/>
+                <ReadOnlyField label="Centro" value={initialData?.center}/>
+                <ReadOnlyField label="Asignado A (Responsable Análisis)" value={initialData?.assignedTo}/>
+             </div>
+        ) : (
+        <>
           <FormField
             control={form.control}
             name="title"
@@ -455,13 +441,24 @@ export function ActionForm({
                   </FormItem>
                 )}
             />
+        </>
+        )}
+    </div>
+ );
 
+
+ const observationsSection = (
+    <div className="space-y-6">
+        {mode === 'view' ? (
+            <div className="space-y-2">
+                <p className="text-muted-foreground whitespace-pre-wrap">{initialData?.description}</p>
+            </div>
+        ) : (
           <FormField
             control={form.control}
             name="description"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Observaciones</FormLabel>
                 <div className="flex items-center rounded-md border border-input focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2">
                     <FormControl>
                         <Textarea placeholder="Describe la no conformidad o el área de mejora..." className="flex-grow resize-y min-h-[120px] border-none focus-visible:ring-0 focus-visible:ring-offset-0" {...field} disabled={disableForm} />
@@ -477,7 +474,36 @@ export function ActionForm({
               </FormItem>
             )}
           />
-          
+        )}
+    </div>
+ );
+
+  return (
+    <>
+      <Form {...form}>
+        <form onSubmit={(e) => e.preventDefault()} className="space-y-6">
+           <Card>
+                <CardHeader className="flex flex-row justify-between items-start">
+                    <div>
+                        <CardTitle>Detalles de la Acción</CardTitle>
+                        {mode === 'edit' && <CardDescription>Estás editando los detalles de esta acción.</CardDescription>}
+                    </div>
+                    {editButton}
+                </CardHeader>
+                <CardContent>
+                    {detailsSection}
+                </CardContent>
+           </Card>
+
+            <Card>
+                <CardHeader>
+                    <CardTitle>Observaciones</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    {observationsSection}
+                </CardContent>
+            </Card>
+
           {mode === 'create' && (
               <div className="flex gap-2">
                   <Button type="button" variant="outline" onClick={() => handleFormSubmit('Borrador')} disabled={disableForm}>
@@ -522,5 +548,3 @@ export function ActionForm({
     </>
   )
 }
-
-    
