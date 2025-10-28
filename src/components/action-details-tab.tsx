@@ -746,15 +746,25 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
                             </div>
                            )}
 
-                            <ActionForm 
-                                key={isEditing ? 'edit' : 'view'}
-                                mode={isEditing ? 'edit' : 'view'}
-                                initialData={action}
-                                masterData={masterData}
-                                isSubmitting={isSubmitting}
-                                onSubmit={handleEditSubmit}
-                                onCancel={() => setIsEditing(false)}
-                            />
+                           <Card>
+                                <CardHeader>
+                                    <CardTitle>Detalles de la Acción</CardTitle>
+                                    <CardDescription>
+                                        {isEditing ? 'Estás editando los detalles de esta acción.' : 'Visualizando los detalles de la acción.'}
+                                    </CardDescription>
+                                </CardHeader>
+                                <CardContent>
+                                    <ActionForm 
+                                        key={isEditing ? 'edit' : 'view'}
+                                        mode={isEditing ? 'edit' : 'view'}
+                                        initialData={action}
+                                        masterData={masterData}
+                                        isSubmitting={isSubmitting}
+                                        onSubmit={handleEditSubmit}
+                                        onCancel={() => setIsEditing(false)}
+                                    />
+                                </CardContent>
+                           </Card>
                         </div>
                     </TabsContent>
 

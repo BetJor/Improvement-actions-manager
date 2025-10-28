@@ -116,7 +116,6 @@ export function ActionForm({
   })
   
   useEffect(() => {
-    // This effect runs only when the form is ready to be populated
     if (mode !== 'create' && initialData && masterData) {
         form.reset({
             title: initialData.title || "",
@@ -129,7 +128,7 @@ export function ActionForm({
             typeId: initialData.typeId || "",
         });
     }
-  }, [mode, initialData, masterData, form]);
+  }, [mode, initialData, masterData, form.reset, form]);
 
   useEffect(() => {
     async function checkPrompts() {
@@ -147,12 +146,10 @@ export function ActionForm({
   const filteredAmbits = useMemo(() => {
     if (!masterData?.ambits?.data) return [];
     
-    // Admins can see all ambits, both in creation and editing.
     if (isAdmin) {
         return masterData.ambits.data;
     }
 
-    // For non-admins, filter based on their creation roles.
     return masterData.ambits.data.filter((ambit: ImprovementActionType) => {
         if (!ambit.possibleCreationRoles || ambit.possibleCreationRoles.length === 0) return false;
         return ambit.possibleCreationRoles.some(roleId => userRoles.includes(roleId));
@@ -213,7 +210,6 @@ export function ActionForm({
     );
   }, [selectedActionTypeId, selectedCenterId, selectedAffectedAreasIds, masterData, user, initialData?.assignedTo, mode]);
   
-  // Effect to reset dependent fields when a parent field changes
   useEffect(() => {
     form.register('typeId');
     const subscription = form.watch((value, { name }) => {
@@ -346,29 +342,18 @@ export function ActionForm({
   if (mode === 'view' && initialData) {
     return (
         <div className="space-y-6">
-            <Card>
-                <CardHeader>
-                    <CardTitle>Detalles de la Acción</CardTitle>
-                </CardHeader>
-                <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
-                    <ReadOnlyField label="Ámbito" value={initialData.type} />
-                    <ReadOnlyField label="Origen" value={initialData.category} />
-                    <ReadOnlyField label="Clasificación" value={initialData.subcategory} />
-                    <ReadOnlyField label="Áreas Funcionales Implicadas" value={initialData.affectedAreas} />
-                    <ReadOnlyField label="Centro" value={initialData.center} />
-                    <ReadOnlyField label="Asignado A (Responsable Análisis)" value={initialData.assignedTo} />
-                </CardContent>
-            </Card>
-            <Card>
-                <CardHeader>
-                    <CardTitle>Observaciones</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <p className="text-muted-foreground whitespace-pre-wrap">
-                        {initialData.description}
-                    </p>
-                </CardContent>
-            </Card>
+            <ReadOnlyField label="Ámbito" value={initialData.type} />
+            <ReadOnlyField label="Origen" value={initialData.category} />
+            <ReadOnlyField label="Clasificación" value={initialData.subcategory} />
+            <ReadOnlyField label="Áreas Funcionales Implicadas" value={initialData.affectedAreas} />
+            <ReadOnlyField label="Centro" value={initialData.center} />
+            <ReadOnlyField label="Asignado A (Responsable Análisis)" value={initialData.assignedTo} />
+            <div className="space-y-2">
+                <Label className="text-primary">Observaciones</Label>
+                <p className="text-muted-foreground whitespace-pre-wrap">
+                    {initialData.description}
+                </p>
+            </div>
         </div>
     )
   }
@@ -507,7 +492,7 @@ export function ActionForm({
                           <CommandInput placeholder="Cerca un centre..." />
                           <CommandEmpty>No se ha trobat cap centre.</CommandEmpty>
                           <CommandGroup>
-                            {masterData?.centers?.data.map((center: Center) => (
+                            {masterData?.centers?.data?.map((center: Center) => (
                               <CommandItem
                                 value={center.name}
                                 key={center.id}
