@@ -192,12 +192,13 @@ export function ActionForm({
     return null;
   }, [initialData]);
 
+  const { reset } = form;
   useEffect(() => {
     // Reset the form only when initial values are available and options are populated
     if (initialFormValues && filteredAmbits.length > 0) {
-      form.reset(initialFormValues);
+      reset(initialFormValues);
     }
-  }, [initialFormValues, form, filteredAmbits, responsibleOptions]);
+  }, [initialFormValues, reset, filteredAmbits, responsibleOptions]);
 
 
   useEffect(() => {
