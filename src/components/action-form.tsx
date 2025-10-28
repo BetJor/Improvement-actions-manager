@@ -104,9 +104,20 @@ export function ActionForm({
   
   const [isCenterPopoverOpen, setIsCenterPopoverOpen] = useState(false);
 
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
+  const initialFormValues = useMemo(() => {
+    if (initialData) {
+      return {
+        title: initialData.title || "",
+        description: initialData.description || "",
+        assignedTo: initialData.assignedTo || "",
+        category: initialData.categoryId || "",
+        subcategory: initialData.subcategoryId || "",
+        affectedAreasIds: initialData.affectedAreasIds || [],
+        centerId: initialData.centerId || "",
+        typeId: initialData.typeId || "",
+      };
+    }
+    return {
       title: "",
       category: "",
       subcategory: "",
@@ -115,7 +126,12 @@ export function ActionForm({
       assignedTo: "",
       description: "",
       typeId: "",
-    },
+    };
+  }, [initialData]);
+
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: initialFormValues,
   });
 
   const selectedActionTypeId = form.watch("typeId");
@@ -176,30 +192,6 @@ export function ActionForm({
     return options.filter((option, index, self) => index === self.findIndex((t) => (t.value === option.value)));
   }, [selectedActionTypeId, selectedCenterId, selectedAffectedAreasIds, masterData, user, initialData?.assignedTo, mode]);
   
-  const initialFormValues = useMemo(() => {
-    if (initialData) {
-      return {
-        title: initialData.title || "",
-        description: initialData.description || "",
-        assignedTo: initialData.assignedTo || "",
-        category: initialData.categoryId || "",
-        subcategory: initialData.subcategoryId || "",
-        affectedAreasIds: initialData.affectedAreasIds || [],
-        centerId: initialData.centerId || "",
-        typeId: initialData.typeId || "",
-      };
-    }
-    return null;
-  }, [initialData]);
-
-  const { reset } = form;
-  useEffect(() => {
-    // Reset the form only when initial values are available and options are populated
-    if (initialFormValues && filteredAmbits.length > 0) {
-      reset(initialFormValues);
-    }
-  }, [initialFormValues, reset, filteredAmbits, responsibleOptions]);
-
 
   useEffect(() => {
     async function checkPrompts() {
