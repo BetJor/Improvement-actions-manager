@@ -90,7 +90,7 @@
         "status": "Estado",
         "type": "Ámbito",
         "origin": "Origen",
-        "dueDate": "Fecha Vencimiento"
+        "dueDate": "Vto. Implantación"
       },
        "follow": {
         "follow": "Seguir acción",

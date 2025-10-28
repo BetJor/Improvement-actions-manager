@@ -29,7 +29,7 @@ import { useTabs } from "@/hooks/use-tabs"
 import { getActionById, getActionTypes, getCategories, getSubcategories, getAffectedAreas, getCenters, getResponsibilityRoles, getUsers } from "@/lib/data"
 import { ActionDetailsTab } from "@/components/action-details-tab"
 import { useAuth } from "@/hooks/use-auth"
-import { cn } from "@/lib/utils"
+import { cn, safeParseDate } from "@/lib/utils"
 import { useFollowAction } from "@/hooks/use-follow-action"
 import { Badge } from "./ui/badge"
 import { format, parseISO } from "date-fns"
@@ -42,13 +42,12 @@ interface ActionsTableProps {
   actions: ImprovementAction[];
 }
 
-type SortKey = keyof ImprovementAction | 'responsible'
-
-const safeFormatDate = (dateString?: string) => {
+const safeFormatDate = (dateString?: string, includeTime: boolean = false) => {
     if (!dateString) return '';
     try {
         const date = parseISO(dateString);
-        return format(date, 'dd/MM/yyyy HH:mm');
+        const formatString = includeTime ? 'dd/MM/yyyy HH:mm' : 'dd/MM/yyyy';
+        return format(date, formatString);
     } catch {
         return dateString; // Return original string if it's not a valid ISO date
     }
@@ -206,7 +205,7 @@ export function ActionsTable({ actions }: ActionsTableProps) {
             'Título': action.title,
             'Estado': action.status,
             'Creador': action.creator.name,
-            'Fecha Creación': safeFormatDate(action.creationDate),
+            'Fecha Creación': safeFormatDate(action.creationDate, true),
             'Responsable Análisis': action.responsibleUser?.name || action.responsibleGroupId,
             'Ámbito': action.type,
             'Origen': action.category,
@@ -219,7 +218,7 @@ export function ActionsTable({ actions }: ActionsTableProps) {
             'Observaciones Verificación': action.verification?.notes,
             'Observaciones Cierre': action.closure?.notes,
             'Resultado Cierre': action.closure ? (action.closure.isCompliant ? 'Conforme' : 'No Conforme') : '',
-            'Fecha Cierre': safeFormatDate(action.closure?.date),
+            'Fecha Cierre': safeFormatDate(action.closure?.date, true),
         }));
         const ws = XLSX.utils.json_to_sheet(detailsData);
         XLSX.utils.book_append_sheet(wb, ws, "Detalles Acciones");
@@ -236,7 +235,7 @@ export function ActionsTable({ actions }: ActionsTableProps) {
                         'Responsable': users.find(u => u.id === pa.responsibleUserId)?.name || '',
                         'Fecha Límite': safeFormatDate(pa.dueDate as string),
                         'Estado': pa.status,
-                        'Fecha Estado': safeFormatDate(pa.statusUpdateDate),
+                        'Fecha Estado': safeFormatDate(pa.statusUpdateDate, true),
                         'Verificación': action.verification?.proposedActionsVerificationStatus?.[pa.id] || '',
                     });
                 });
@@ -253,7 +252,7 @@ export function ActionsTable({ actions }: ActionsTableProps) {
                 action.comments.forEach(c => {
                     commentsData.push({
                         'ID Acción': action.actionId,
-                        'Fecha': safeFormatDate(c.date),
+                        'Fecha': safeFormatDate(c.date, true),
                         'Autor': c.author.name,
                         'Comentario': c.text,
                     });
@@ -273,7 +272,7 @@ export function ActionsTable({ actions }: ActionsTableProps) {
                         'ID Acción': action.actionId,
                         'Nombre Archivo': a.fileName,
                         'Subido Por': a.uploadedBy.name,
-                        'Fecha Subida': safeFormatDate(a.uploadedAt),
+                        'Fecha Subida': safeFormatDate(a.uploadedAt, true),
                         'URL': a.fileUrl,
                     });
                 });
@@ -550,7 +549,7 @@ export function ActionsTable({ actions }: ActionsTableProps) {
                   <TableHead><Button variant="ghost" onClick={() => requestSort('status')}>Estado {getSortIcon('status')}</Button></TableHead>
                   <TableHead><Button variant="ghost" onClick={() => requestSort('type')}>Ámbito {getSortIcon('type')}</Button></TableHead>
                   <TableHead><Button variant="ghost" onClick={() => requestSort('category')}>Origen {getSortIcon('category')}</Button></TableHead>
-                  <TableHead><Button variant="ghost" onClick={() => requestSort('implementationDueDate')}>Fecha Vencimiento {getSortIcon('implementationDueDate')}</Button></TableHead>
+                  <TableHead><Button variant="ghost" onClick={() => requestSort('implementationDueDate')}>Vto. Implantación {getSortIcon('implementationDueDate')}</Button></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
