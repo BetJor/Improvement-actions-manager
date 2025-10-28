@@ -26,7 +26,7 @@ import {
 import { Textarea } from "@/components/ui/textarea"
 import { getPrompt } from "@/lib/data"
 import { useToast } from "@/hooks/use-toast"
-import { useState, useMemo, useEffect, useRef } from "react"
+import { useState, useMemo, useEffect, useRef, useCallback } from "react"
 import { Loader2, Mic, MicOff, Wand2, Save, Send, Ban, ChevronsUpDown, Check, Pencil } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { improveWriting } from "@/ai/flows/improveWriting"
@@ -134,8 +134,16 @@ export function ActionForm({
     defaultValues: initialFormValues,
   });
 
-  const { reset } = form;
 
+  useEffect(() => {
+    // Aquest useEffect només s'executarà un cop quan initialData canviï (en obrir la pestanya).
+    // Això estableix els valors inicials de l'esborrany al formulari de manera segura.
+    if (mode === 'edit' && initialData) {
+      form.reset(initialFormValues);
+    }
+  }, [initialData, mode, form, initialFormValues]);
+
+  
   const selectedActionTypeId = form.watch("typeId");
   const selectedCategoryId = form.watch("category");
   const selectedCenterId = form.watch("centerId");
@@ -193,12 +201,6 @@ export function ActionForm({
 
     return options.filter((option, index, self) => index === self.findIndex((t) => (t.value === option.value)));
   }, [selectedActionTypeId, selectedCenterId, selectedAffectedAreasIds, masterData, user, initialData?.assignedTo, mode]);
-
-  useEffect(() => {
-    if (mode === 'edit' && initialData && filteredAmbits.length > 0 && responsibleOptions.length > 0) {
-      reset(initialFormValues);
-    }
-  }, [mode, initialData, filteredAmbits, responsibleOptions, reset, initialFormValues]);
   
 
   useEffect(() => {
@@ -520,3 +522,5 @@ export function ActionForm({
     </>
   )
 }
+
+    
