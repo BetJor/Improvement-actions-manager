@@ -118,6 +118,7 @@
       "creationDate": "Data Creació",
       "analysisDue": "Venciment Anàlisi",
       "implementationDue": "Venciment Implantació",
+      "verificationDue": "Venciment Verificació",
       "closureDue": "Venciment Tancament",
       "workflowPlan": {
         "title": "Pla de Treball",

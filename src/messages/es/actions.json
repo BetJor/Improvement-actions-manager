@@ -118,6 +118,7 @@
       "creationDate": "Fecha Creación",
       "analysisDue": "Vencimiento Análisis",
       "implementationDue": "Vencimiento Implantación",
+      "verificationDue": "Vencimiento Verificación",
       "closureDue": "Vencimiento Cierre",
       "workflowPlan": {
         "title": "Plan de Trabajo",

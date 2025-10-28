@@ -93,6 +93,7 @@ export function DetailsSection({ action }: DetailsSectionProps) {
             <DetailRow icon={Calendar} label="Fecha Creación" value={action.creationDate} isDate />
             <DetailRow icon={CalendarClock} label="Vencimiento Análisis" value={action.analysisDueDate} isDate />
             <DetailRow icon={CalendarClock} label="Vencimiento Implantación" value={action.implementationDueDate} isDate />
+            <DetailRow icon={CalendarClock} label="Vencimiento Verificación" value={action.verificationDueDate} isDate />
             <DetailRow icon={CalendarClock} label="Vencimiento Cierre" value={action.closureDueDate} isDate />
           </CardContent>
         </CollapsibleContent>
