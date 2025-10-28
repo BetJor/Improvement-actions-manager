@@ -40,7 +40,19 @@ const formSchema = z.object({
     required_error: "El rol és requerit.",
   }),
   avatar: z.string().url("La URL de l'avatar no és vàlida.").optional().or(z.literal('')),
-})
+  password: z.string().optional(),
+  confirmPassword: z.string().optional(),
+}).refine(data => {
+  // If password is provided, confirmPassword must match.
+  // This rule applies only if password is not undefined/null/empty.
+  if (data.password) {
+    return data.password === data.confirmPassword;
+  }
+  return true;
+}, {
+  message: "Les contrasenyes no coincideixen.",
+  path: ["confirmPassword"], 
+});
 
 type UserFormValues = z.infer<typeof formSchema>
 
@@ -57,28 +69,50 @@ export function UserFormDialog({
   user,
   onSave,
 }: UserFormDialogProps) {
+  
+  const formSchemaForContext = user 
+    ? formSchema.omit({ password: true, confirmPassword: true }) 
+    : formSchema.refine(data => data.password && data.password.length >= 6, {
+        message: "La contrasenya ha de tenir almenys 6 caràcters.",
+        path: ["password"],
+      });
+
+
   const form = useForm<UserFormValues>({
-    resolver: zodResolver(formSchema),
+    resolver: zodResolver(formSchemaForContext),
     defaultValues: {
       name: "",
       email: "",
       role: undefined,
       avatar: "",
+      password: "",
+      confirmPassword: ""
     },
   })
 
   useEffect(() => {
-    if (user) {
-      form.reset(user)
-    } else {
-      form.reset({
-        name: "",
-        email: "",
-        role: undefined,
-        avatar: "",
-      })
+    if (isOpen) {
+      if (user) {
+        form.reset({
+            name: user.name,
+            email: user.email,
+            role: user.role,
+            avatar: user.avatar,
+            password: '',
+            confirmPassword: '',
+        });
+      } else {
+        form.reset({
+          name: "",
+          email: "",
+          role: undefined,
+          avatar: "",
+          password: "",
+          confirmPassword: ""
+        });
+      }
     }
-  }, [user, form])
+  }, [user, form, isOpen])
 
   const handleSubmit = (values: UserFormValues) => {
     onSave(values, user?.id)
@@ -86,7 +120,7 @@ export function UserFormDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>{user ? "Editar Usuari" : "Crear Nou Usuari"}</DialogTitle>
           <DialogDescription>
@@ -115,7 +149,7 @@ export function UserFormDialog({
                 <FormItem>
                   <FormLabel>Correu Electrònic</FormLabel>
                   <FormControl>
-                    <Input type="email" placeholder="p. ex., joan.pere@example.com" {...field} />
+                    <Input type="email" placeholder="p. ex., joan.pere@example.com" {...field} disabled={!!user} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -127,7 +161,7 @@ export function UserFormDialog({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Rol</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Selecciona un rol" />
@@ -158,6 +192,38 @@ export function UserFormDialog({
                 </FormItem>
               )}
             />
+            
+            {!user && (
+              <>
+                <FormField
+                  control={form.control}
+                  name="password"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Contrasenya</FormLabel>
+                      <FormControl>
+                        <Input type="password" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="confirmPassword"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Confirmar Contrasenya</FormLabel>
+                      <FormControl>
+                        <Input type="password" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </>
+            )}
+
             <DialogFooter>
               <DialogClose asChild>
                 <Button type="button" variant="outline">Cancel·lar</Button>

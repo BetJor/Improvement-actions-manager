@@ -3,6 +3,7 @@ import { collection, getDocs, doc, getDoc, addDoc, query, orderBy, writeBatch, u
 import { db, auth } from '@/lib/firebase';
 import { users as mockUsers } from '@/lib/static-data';
 import type { User } from '@/lib/types';
+import { createUserWithEmailAndPassword } from 'firebase/auth';
 
 export async function getUsers(): Promise<User[]> {
     const usersCol = collection(db, 'users');
@@ -65,13 +66,37 @@ export async function getUserById(userId: string): Promise<User | null> {
 }
 
 
-export async function addUser(user: Omit<User, 'id'>): Promise<string> {
-    // In a real app, you'd create the user in Firebase Auth first,
-    // and use the resulting UID as the document ID here.
-    // This function is mainly for manual additions via the user management page.
-    const collectionRef = collection(db, 'users');
-    const docRef = await addDoc(collectionRef, user);
-    return docRef.id;
+export async function addUser(userData: Omit<User, 'id'> & { password?: string }): Promise<string> {
+    
+    if (!userData.password) {
+        throw new Error("La contraseña es obligatoria para crear un nuevo usuario.");
+    }
+
+    // WARNING: This is a simplified example. In a real app, this should be a secure backend operation (e.g., Cloud Function).
+    // The currently signed-in user must have permissions to create other users.
+    // For this demo, we assume this is run by an admin on the client. This is NOT secure for production.
+    try {
+        const userCredential = await createUserWithEmailAndPassword(auth, userData.email, userData.password);
+        const newUserId = userCredential.user.uid;
+        
+        const userProfile: User = {
+            id: newUserId,
+            name: userData.name,
+            email: userData.email,
+            role: userData.role,
+            avatar: userData.avatar || `https://i.pravatar.cc/150?u=${newUserId}`
+        };
+
+        await setDoc(doc(db, "users", newUserId), userProfile);
+        
+        return newUserId;
+    } catch (error: any) {
+        if (error.code === 'auth/email-already-in-use') {
+            throw new Error("Este correo electrónico ya está en uso por otro usuario.");
+        }
+        console.error("Error creating user in Firebase Auth:", error);
+        throw new Error("No se pudo crear el usuario en el sistema de autenticación.");
+    }
 }
 
 export async function updateUser(userId: string, user: Partial<Omit<User, 'id'>>): Promise<void> {
@@ -81,8 +106,7 @@ export async function updateUser(userId: string, user: Partial<Omit<User, 'id'>>
 
 export async function deleteUser(userId: string): Promise<void> {
     // In a real app, you should also handle deleting the user from Firebase Auth.
+    // This requires an Admin SDK on a backend.
     const docRef = doc(db, 'users', userId);
     await deleteDoc(docRef);
 }
-
-    
