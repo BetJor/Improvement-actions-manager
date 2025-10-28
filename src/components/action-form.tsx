@@ -27,7 +27,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { getPrompt } from "@/lib/data"
 import { useToast } from "@/hooks/use-toast"
 import { useState, useMemo, useEffect, useRef } from "react"
-import { Loader2, Mic, MicOff, Wand2, Save, Send, Ban, ChevronsUpDown, Check } from "lucide-react"
+import { Loader2, Mic, MicOff, Wand2, Save, Send, Ban, ChevronsUpDown, Check, Pencil } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { improveWriting } from "@/ai/flows/improveWriting"
 import {
@@ -42,10 +42,10 @@ import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover"
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "./ui/command"
 import { Label } from "@/components/ui/label"
 import type { ImprovementAction, ImprovementActionType, ResponsibilityRole, AffectedArea, Center, ActionCategory, ActionSubcategory } from "@/lib/types"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "./ui/card"
-import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "./ui/dropdown-menu"
 import { useAuth } from "@/hooks/use-auth"
 import { evaluatePattern } from "@/lib/pattern-evaluator"
+import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "./ui/dropdown-menu"
+
 
 const formSchema = z.object({
   title: z.string().min(1, "El título es requerido."),
@@ -68,17 +68,84 @@ interface ActionFormProps {
     key?: string;
 }
 
-const ReadOnlyField = ({ label, value }: { label: string, value?: string | string[] }) => {
-    if (!value || (Array.isArray(value) && value.length === 0)) return null;
+
+const ReadOnlyField = ({ label, value, onEdit, canEdit }: { label: string; value?: string; onEdit: () => void; canEdit: boolean }) => {
+  if (!value) return null;
+  return (
+    <div className="grid gap-1.5">
+      <Label className="text-primary">{label}</Label>
+      <div className="flex items-center justify-between text-sm font-medium">
+        <span>{value}</span>
+        {canEdit && (
+            <Button variant="ghost" size="icon" onClick={onEdit} className="h-7 w-7">
+                <Pencil className="h-4 w-4" />
+            </Button>
+        )}
+      </div>
+    </div>
+  );
+};
+
+
+const renderSelectField = (
+    editingField: string | null,
+    fieldName: string,
+    label: string,
+    value: string,
+    displayValue: string,
+    options: { value: string, label: string }[],
+    form: any,
+    setEditingField: (name: string | null) => void,
+    isSubmitting: boolean
+) => {
+    const isEditing = editingField === fieldName;
+    const canEdit = !isSubmitting;
+
+    if (isEditing) {
+        return (
+            <FormField
+                control={form.control}
+                name={fieldName}
+                render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>{label}</FormLabel>
+                        <Select
+                            onValueChange={(newValue) => {
+                                field.onChange(newValue);
+                                setEditingField(null);
+                            }}
+                            defaultValue={field.value}
+                            onOpenChange={(isOpen) => !isOpen && setEditingField(null)}
+                            open={true}
+                        >
+                            <FormControl>
+                                <SelectTrigger>
+                                    <SelectValue placeholder={`Selecciona un ${label.toLowerCase()}`} />
+                                </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                                {options.map((opt) => (
+                                    <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                        <FormMessage />
+                    </FormItem>
+                )}
+            />
+        );
+    }
+
     return (
-        <div className="grid gap-1.5">
-            <Label className="text-primary">{label}</Label>
-            <div className="text-sm font-medium">
-              {Array.isArray(value) ? value.join(', ') : value}
-            </div>
-        </div>
-    )
-}
+        <ReadOnlyField
+            label={label}
+            value={displayValue}
+            onEdit={() => setEditingField(fieldName)}
+            canEdit={canEdit}
+        />
+    );
+};
+
 
 export function ActionForm({
     mode,
@@ -99,7 +166,10 @@ export function ActionForm({
   const [aiSuggestion, setAiSuggestion] = useState<string | null>(null);
   const [isSuggestionDialogOpen, setIsSuggestionDialogOpen] = useState(false);
   const [hasImprovePrompt, setHasImprovePrompt] = useState(false);
+  
   const [isCenterPopoverOpen, setIsCenterPopoverOpen] = useState(false);
+
+  const [editingField, setEditingField] = useState<string | null>(null);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -113,30 +183,7 @@ export function ActionForm({
       description: "",
       typeId: "",
     },
-  })
-  
-  useEffect(() => {
-    if ((mode === 'edit' || mode === 'view') && initialData) {
-      form.reset({
-        title: initialData.title || "",
-        description: initialData.description || "",
-        assignedTo: initialData.assignedTo || "",
-        category: initialData.categoryId || "",
-        subcategory: initialData.subcategoryId || "",
-        affectedAreasIds: initialData.affectedAreasIds || [],
-        centerId: initialData.centerId || "",
-        typeId: initialData.typeId || "",
-      });
-    }
-  }, [mode, initialData, form]);
-
-  useEffect(() => {
-    async function checkPrompts() {
-      const improvePrompt = await getPrompt("improveWriting");
-      setHasImprovePrompt(!!improvePrompt);
-    }
-    checkPrompts();
-  }, []);
+  });
 
   const selectedActionTypeId = form.watch("typeId");
   const selectedCategoryId = form.watch("category");
@@ -145,11 +192,9 @@ export function ActionForm({
 
   const filteredAmbits = useMemo(() => {
     if (!masterData?.ambits?.data) return [];
-    
     if (isAdmin) {
         return masterData.ambits.data;
     }
-
     return masterData.ambits.data.filter((ambit: ImprovementActionType) => {
         if (!ambit.possibleCreationRoles || ambit.possibleCreationRoles.length === 0) return false;
         return ambit.possibleCreationRoles.some(roleId => userRoles.includes(roleId));
@@ -163,7 +208,6 @@ export function ActionForm({
     );
   }, [selectedActionTypeId, masterData]);
 
-
   const filteredSubcategories = useMemo(() => {
     if (!selectedCategoryId || !masterData?.classifications?.data) return [];
     return masterData.classifications.data.filter((sc: ActionSubcategory) => sc.categoryId === selectedCategoryId);
@@ -171,7 +215,6 @@ export function ActionForm({
   
   const responsibleOptions = useMemo(() => {
     if (!selectedActionTypeId || !masterData || !user) return [];
-    
     const actionType: ImprovementActionType | undefined = masterData.ambits?.data.find((t: any) => t.id === selectedActionTypeId);
     if (!actionType?.possibleAnalysisRoles) return [];
 
@@ -184,18 +227,10 @@ export function ActionForm({
                 options.push({ value: role.email, label: `${role.name} (${role.email})` });
             } else if (role.type === 'Pattern' && role.emailPattern) {
                 const center: Center | undefined = masterData.centers?.data.find((c: any) => c.id === selectedCenterId);
-                const context = {
-                    action: {
-                        creator: user,
-                        center: center,
-                        affectedAreasIds: selectedAffectedAreasIds,
-                    }
-                };
+                const context = { action: { creator: user, center: center, affectedAreasIds: selectedAffectedAreasIds } };
                 const resolvedEmails = evaluatePattern(role.emailPattern, context);
                 resolvedEmails.forEach(email => {
-                    if (email && !email.includes('{')) {
-                        options.push({ value: email, label: `${role.name} (${email})` });
-                    }
+                    if (email && !email.includes('{')) options.push({ value: email, label: `${role.name} (${email})` });
                 });
             }
         }
@@ -205,25 +240,59 @@ export function ActionForm({
         options.push({ value: initialData.assignedTo, label: initialData.assignedTo });
     }
 
-    return options.filter((option, index, self) => 
-        index === self.findIndex((t) => (t.value === option.value))
-    );
+    return options.filter((option, index, self) => index === self.findIndex((t) => (t.value === option.value)));
   }, [selectedActionTypeId, selectedCenterId, selectedAffectedAreasIds, masterData, user, initialData?.assignedTo, mode]);
   
+  const initialFormValues = useMemo(() => {
+    if (mode === 'edit' && initialData) {
+      return {
+        title: initialData.title || "",
+        description: initialData.description || "",
+        assignedTo: initialData.assignedTo || "",
+        category: initialData.categoryId || "",
+        subcategory: initialData.subcategoryId || "",
+        affectedAreasIds: initialData.affectedAreasIds || [],
+        centerId: initialData.centerId || "",
+        typeId: initialData.typeId || "",
+      };
+    }
+    return null;
+  }, [mode, initialData]);
+
+  useEffect(() => {
+    if (initialFormValues && filteredAmbits.length > 0 && responsibleOptions.length > 0) {
+      form.reset(initialFormValues);
+    }
+  }, [initialFormValues, form, filteredAmbits, responsibleOptions]);
+
+
+  useEffect(() => {
+    async function checkPrompts() {
+      const improvePrompt = await getPrompt("improveWriting");
+      setHasImprovePrompt(!!improvePrompt);
+    }
+    checkPrompts();
+  }, []);
+
   useEffect(() => {
     const subscription = form.watch((value, { name }) => {
       if (name === 'typeId') {
         form.setValue('category', '');
         form.setValue('subcategory', '');
         form.setValue('assignedTo', '');
+        if (editingField) setEditingField(null);
       }
       if (name === 'category') {
         form.setValue('subcategory', '');
+        if (editingField) setEditingField(null);
+      }
+      if (name === 'centerId' || name === 'affectedAreasIds') {
+        form.setValue('assignedTo', '');
+        if (editingField) setEditingField(null);
       }
     });
     return () => subscription.unsubscribe();
-  }, [form]);
-
+  }, [form, editingField]);
 
   useEffect(() => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -244,41 +313,19 @@ export function ActionForm({
         }
         form.setValue('description', finalTranscript + interimTranscript);
       };
-
-      recognition.onend = () => {
-        setIsRecording(false);
-      };
-      
+      recognition.onend = () => setIsRecording(false);
       recognition.onerror = (event) => {
         console.error("Speech recognition error", event.error);
-        toast({
-            variant: "destructive",
-            title: "Error de reconocimiento de voz",
-            description: "No se ha podido acceder al micrófono o ha ocurrido un error.",
-        })
+        toast({ variant: "destructive", title: "Error de reconocimiento de voz" });
         setIsRecording(false);
       };
-
       recognitionRef.current = recognition;
-    } else {
-       console.warn("Speech Recognition not supported in this browser.");
     }
-    
-    return () => {
-        recognitionRef.current?.stop();
-    }
+    return () => recognitionRef.current?.stop();
   }, [form, toast, finalTranscript]);
 
   const toggleRecording = () => {
-    if (!recognitionRef.current) {
-        toast({
-            variant: "destructive",
-            title: "Navegador no compatible",
-            description: "Tu navegador no soporta el reconocimiento de voz.",
-        })
-        return;
-    }
-
+    if (!recognitionRef.current) return;
     if (isRecording) {
       recognitionRef.current.stop();
     } else {
@@ -291,42 +338,29 @@ export function ActionForm({
   const handleImproveText = async () => {
     const currentDescription = form.getValues('description');
     if (!currentDescription.trim()) {
-        toast({
-            variant: "destructive",
-            title: "Campo vacío",
-            description: "No hay texto para mejorar.",
-        });
-        return;
+      toast({ variant: "destructive", title: "Campo vacío" });
+      return;
     }
-
     setIsImprovingText(true);
     try {
-        const improvedText = await improveWriting({ text: currentDescription });
-        if (improvedText) {
-            setAiSuggestion(improvedText);
-            setIsSuggestionDialogOpen(true);
-        } else {
-            toast({
-                variant: "destructive",
-                title: "La IA no ha devuelto sugerencias",
-                description: "El modelo no ha podido generar una mejora para este texto.",
-            });
-        }
+      const improvedText = await improveWriting({ text: currentDescription });
+      if (improvedText) {
+        setAiSuggestion(improvedText);
+        setIsSuggestionDialogOpen(true);
+      } else {
+        toast({ variant: "destructive", title: "La IA no ha devuelto sugerencias" });
+      }
     } catch (error) {
-        console.error("Error improving text:", error);
-        toast({
-            variant: "destructive",
-            title: "Error de la IA",
-            description: "No se ha podido mejorar el texto.",
-        });
+      console.error("Error improving text:", error);
+      toast({ variant: "destructive", title: "Error de la IA" });
     } finally {
-        setIsImprovingText(false);
+      setIsImprovingText(false);
     }
   };
 
   const handleAcceptSuggestion = () => {
     if (aiSuggestion) {
-        form.setValue('description', aiSuggestion, { shouldValidate: true });
+      form.setValue('description', aiSuggestion, { shouldValidate: true });
     }
     setIsSuggestionDialogOpen(false);
     setAiSuggestion(null);
@@ -341,27 +375,32 @@ export function ActionForm({
   if (mode === 'view' && initialData) {
     return (
         <div className="space-y-6">
-            <ReadOnlyField label="Ámbito" value={initialData.type} />
-            <ReadOnlyField label="Origen" value={initialData.category} />
-            <ReadOnlyField label="Clasificación" value={initialData.subcategory} />
-            <ReadOnlyField label="Áreas Funcionales Implicadas" value={initialData.affectedAreas} />
-            <ReadOnlyField label="Centro" value={initialData.center} />
-            <ReadOnlyField label="Asignado A (Responsable Análisis)" value={initialData.assignedTo} />
+            <ReadOnlyField label="Ámbito" value={initialData.type} onEdit={() => {}} canEdit={false} />
+            <ReadOnlyField label="Origen" value={initialData.category} onEdit={() => {}} canEdit={false}/>
+            <ReadOnlyField label="Clasificación" value={initialData.subcategory} onEdit={() => {}} canEdit={false}/>
+            <ReadOnlyField label="Áreas Funcionales Implicadas" value={initialData.affectedAreas.join(', ')} onEdit={() => {}} canEdit={false}/>
+            <ReadOnlyField label="Centro" value={initialData.center} onEdit={() => {}} canEdit={false}/>
+            <ReadOnlyField label="Asignado A (Responsable Análisis)" value={initialData.assignedTo} onEdit={() => {}} canEdit={false}/>
             <div className="space-y-2">
                 <Label className="text-primary">Observaciones</Label>
-                <p className="text-muted-foreground whitespace-pre-wrap">
-                    {initialData.description}
-                </p>
+                <p className="text-muted-foreground whitespace-pre-wrap">{initialData.description}</p>
             </div>
         </div>
-    )
+    );
   }
+
+  const getDisplayValue = (collectionKey: string, id: string | undefined): string => {
+      if (!masterData || !id) return id || '';
+      const collection = masterData[collectionKey]?.data;
+      if (!collection) return id;
+      const item = collection.find((item: any) => item.id === id);
+      return item?.name || id;
+  };
 
   return (
     <>
       <Form {...form}>
         <form onSubmit={(e) => e.preventDefault()} className="space-y-6">
-          
           <FormField
             control={form.control}
             name="title"
@@ -377,148 +416,102 @@ export function ActionForm({
           />
 
           <div className="grid md:grid-cols-2 gap-6">
-             <FormField
+            {mode === 'create' || editingField === 'typeId' ? (
+              <FormField
                 control={form.control}
                 name="typeId"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Ámbito</FormLabel>
-                    <Select 
-                      onValueChange={field.onChange} 
-                      value={field.value}
-                      disabled={disableForm || !filteredAmbits || filteredAmbits.length === 0}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecciona un ámbito" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {filteredAmbits?.map((opt: any) => (
-                          <SelectItem key={opt.id} value={opt.id}>{opt.name}</SelectItem>
-                        ))}
-                      </SelectContent>
+                    <Select onValueChange={(v) => { field.onChange(v); setEditingField(null); }} value={field.value} disabled={disableForm || !filteredAmbits || filteredAmbits.length === 0}>
+                      <FormControl><SelectTrigger><SelectValue placeholder="Selecciona un ámbito" /></SelectTrigger></FormControl>
+                      <SelectContent>{filteredAmbits?.map((opt: any) => (<SelectItem key={opt.id} value={opt.id}>{opt.name}</SelectItem>))}</SelectContent>
                     </Select>
                     <FormMessage />
                   </FormItem>
                 )}
               />
+            ) : (
+              <ReadOnlyField label="Ámbito" value={getDisplayValue('ambits', form.getValues('typeId'))} onEdit={() => setEditingField('typeId')} canEdit={!disableForm} />
+            )}
+
+            {mode === 'create' || editingField === 'category' ? (
               <FormField
                 control={form.control}
                 name="category"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Origen</FormLabel>
-                    <Select 
-                      onValueChange={field.onChange} 
-                      value={field.value}
-                      disabled={disableForm || !filteredCategories || filteredCategories.length === 0}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecciona un origen" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {filteredCategories?.map((opt: any) => (
-                          <SelectItem key={opt.id} value={opt.id}>{opt.name}</SelectItem>
-                        ))}
-                      </SelectContent>
+                    <Select onValueChange={(v) => { field.onChange(v); setEditingField(null); }} value={field.value} disabled={disableForm || !filteredCategories || filteredCategories.length === 0}>
+                      <FormControl><SelectTrigger><SelectValue placeholder="Selecciona un origen" /></SelectTrigger></FormControl>
+                      <SelectContent>{filteredCategories?.map((opt: any) => (<SelectItem key={opt.id} value={opt.id}>{opt.name}</SelectItem>))}</SelectContent>
                     </Select>
                     <FormMessage />
                   </FormItem>
                 )}
               />
+            ) : (
+                <ReadOnlyField label="Origen" value={getDisplayValue('origins', form.getValues('category'))} onEdit={() => setEditingField('category')} canEdit={!disableForm} />
+            )}
           </div>
           
-           <FormField
-              control={form.control}
-              name="subcategory"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Clasificación</FormLabel>
-                  <Select 
-                    onValueChange={field.onChange} 
-                    value={field.value}
-                    disabled={disableForm || !filteredSubcategories || filteredSubcategories.length === 0}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecciona una clasificación" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {filteredSubcategories?.map((opt: any) => (
-                        <SelectItem key={opt.id} value={opt.id}>{opt.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          
-          <div className="grid md:grid-cols-2 gap-6">
+           {mode === 'create' || editingField === 'subcategory' ? (
              <FormField
                 control={form.control}
-                name="centerId"
+                name="subcategory"
                 render={({ field }) => (
-                  <FormItem className="flex flex-col gap-2">
-                    <FormLabel>Centro</FormLabel>
-                    <Popover open={isCenterPopoverOpen} onOpenChange={setIsCenterPopoverOpen}>
-                      <PopoverTrigger asChild>
-                        <FormControl>
-                          <Button
-                            variant="outline"
-                            role="combobox"
-                            disabled={disableForm}
-                            className={cn(
-                              "w-full justify-between",
-                              !field.value && "text-muted-foreground"
-                            )}
-                          >
-                            {field.value && masterData?.centers?.data
-                              ? masterData.centers.data.find(
-                                  (center: Center) => center.id === field.value
-                                )?.name
-                              : "Selecciona un centre"}
-                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                          </Button>
-                        </FormControl>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-[--radix-popover-trigger-width] max-h-[--radix-popover-content-available-height] p-0">
-                        <Command>
-                          <CommandInput placeholder="Cerca un centre..." />
-                          <CommandEmpty>No se ha trobat cap centre.</CommandEmpty>
-                          <CommandGroup>
-                            {masterData?.centers?.data?.map((center: Center) => (
-                              <CommandItem
-                                value={center.name}
-                                key={center.id}
-                                onSelect={() => {
-                                  form.setValue("centerId", center.id!);
-                                  setIsCenterPopoverOpen(false);
-                                }}
-                              >
-                                <Check
-                                  className={cn(
-                                    "mr-2 h-4 w-4",
-                                    center.id === field.value
-                                      ? "opacity-100"
-                                      : "opacity-0"
-                                  )}
-                                />
-                                {center.name}
-                              </CommandItem>
-                            ))}
-                          </CommandGroup>
-                        </Command>
-                      </PopoverContent>
-                    </Popover>
+                  <FormItem>
+                    <FormLabel>Clasificación</FormLabel>
+                    <Select onValueChange={(v) => { field.onChange(v); setEditingField(null); }} value={field.value} disabled={disableForm || !filteredSubcategories || filteredSubcategories.length === 0}>
+                      <FormControl><SelectTrigger><SelectValue placeholder="Selecciona una clasificación" /></SelectTrigger></FormControl>
+                      <SelectContent>{filteredSubcategories?.map((opt: any) => (<SelectItem key={opt.id} value={opt.id}>{opt.name}</SelectItem>))}</SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}
               />
+           ) : (
+             <ReadOnlyField label="Clasificación" value={getDisplayValue('classifications', form.getValues('subcategory'))} onEdit={() => setEditingField('subcategory')} canEdit={!disableForm} />
+           )}
+          
+          <div className="grid md:grid-cols-2 gap-6">
+             {mode === 'create' || editingField === 'centerId' ? (
+                <FormField
+                    control={form.control}
+                    name="centerId"
+                    render={({ field }) => (
+                    <FormItem className="flex flex-col gap-2">
+                        <FormLabel>Centro</FormLabel>
+                        <Popover open={isCenterPopoverOpen} onOpenChange={setIsCenterPopoverOpen}>
+                        <PopoverTrigger asChild>
+                            <FormControl>
+                            <Button variant="outline" role="combobox" disabled={disableForm} className={cn("w-full justify-between", !field.value && "text-muted-foreground")}>
+                                {field.value && masterData?.centers?.data ? masterData.centers.data.find((center: Center) => center.id === field.value)?.name : "Selecciona un centre"}
+                                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                            </Button>
+                            </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-[--radix-popover-trigger-width] max-h-[--radix-popover-content-available-height] p-0">
+                            <Command><CommandInput placeholder="Cerca un centre..." /><CommandEmpty>No se ha trobat cap centre.</CommandEmpty>
+                            <CommandGroup>
+                                {masterData?.centers?.data?.map((center: Center) => (
+                                <CommandItem value={center.name} key={center.id} onSelect={() => { form.setValue("centerId", center.id!); setIsCenterPopoverOpen(false); setEditingField(null); }}>
+                                    <Check className={cn("mr-2 h-4 w-4", center.id === field.value ? "opacity-100" : "opacity-0")} />
+                                    {center.name}
+                                </CommandItem>
+                                ))}
+                            </CommandGroup>
+                            </Command>
+                        </PopoverContent>
+                        </Popover>
+                        <FormMessage />
+                    </FormItem>
+                    )}
+                />
+            ) : (
+                <ReadOnlyField label="Centro" value={getDisplayValue('centers', form.getValues('centerId'))} onEdit={() => setEditingField('centerId')} canEdit={!disableForm} />
+            )}
+
             <FormField
               control={form.control}
               name="affectedAreasIds"
@@ -528,50 +521,18 @@ export function ActionForm({
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <FormControl>
-                         <Button
-                            variant="outline"
-                            disabled={disableForm}
-                            className={cn(
-                                "w-full justify-start text-left font-normal",
-                                !field.value?.length && "text-muted-foreground"
-                            )}
-                            >
-                            <span className="truncate">
-                                {field.value?.length > 0 && masterData?.affectedAreas
-                                ? field.value
-                                    .map(
-                                    (id) =>
-                                        masterData.affectedAreas.find(
-                                        (area: AffectedArea) => area.id === id
-                                        )?.name
-                                    )
-                                    .filter(Boolean)
-                                    .join(", ")
-                                : "Selecciona áreas"}
-                            </span>
+                         <Button variant="outline" disabled={disableForm} className={cn("w-full justify-start text-left font-normal", !field.value?.length && "text-muted-foreground")}>
+                            <span className="truncate">{field.value?.length > 0 && masterData?.affectedAreas ? field.value.map((id) => masterData.affectedAreas.find((area: AffectedArea) => area.id === id)?.name).filter(Boolean).join(", ") : "Selecciona áreas"}</span>
                             <ChevronsUpDown className="ml-auto h-4 w-4 shrink-0 opacity-50" />
                         </Button>
                       </FormControl>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent className="w-[var(--radix-dropdown-menu-trigger-width)]" align="start">
-                        <DropdownMenuLabel>Áreas Afectadas</DropdownMenuLabel>
-                        <DropdownMenuSeparator />
+                        <DropdownMenuLabel>Áreas Afectadas</DropdownMenuLabel><DropdownMenuSeparator />
                         {masterData?.affectedAreas?.map((area: AffectedArea) => (
-                             <DropdownMenuCheckboxItem
-                                key={area.id}
-                                checked={field.value?.includes(area.id!)}
-                                onCheckedChange={(checked) => {
-                                    return checked
-                                    ? field.onChange([...(field.value || []), area.id])
-                                    : field.onChange(
-                                        (field.value || []).filter(
-                                            (value) => value !== area.id
-                                        )
-                                        )
-                                }}
-                             >
-                                {area.name}
-                            </DropdownMenuCheckboxItem>
+                             <DropdownMenuCheckboxItem key={area.id} checked={field.value?.includes(area.id!)} onCheckedChange={(checked) => {
+                                return checked ? field.onChange([...(field.value || []), area.id]) : field.onChange((field.value || []).filter((value) => value !== area.id))
+                             }}>{area.name}</DropdownMenuCheckboxItem>
                         ))}
                     </DropdownMenuContent>
                   </DropdownMenu>
@@ -581,32 +542,24 @@ export function ActionForm({
             />
           </div>
           
-           <FormField
-              control={form.control}
-              name="assignedTo"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Asignado A</FormLabel>
-                  <Select 
-                    onValueChange={field.onChange} 
-                    value={field.value}
-                    disabled={disableForm || !responsibleOptions || responsibleOptions.length === 0}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecciona una persona responsable" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {responsibleOptions?.map((opt: any) => (
-                        <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
+          {mode === 'create' || editingField === 'assignedTo' ? (
+            <FormField
+                control={form.control}
+                name="assignedTo"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Asignado A</FormLabel>
+                    <Select onValueChange={(v) => { field.onChange(v); setEditingField(null); }} value={field.value} disabled={disableForm || !responsibleOptions || responsibleOptions.length === 0}>
+                      <FormControl><SelectTrigger><SelectValue placeholder="Selecciona una persona responsable" /></SelectTrigger></FormControl>
+                      <SelectContent>{responsibleOptions?.map((opt: any) => (<SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>))}</SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
             />
+          ) : (
+             <ReadOnlyField label="Asignado A" value={form.getValues('assignedTo')} onEdit={() => setEditingField('assignedTo')} canEdit={!disableForm} />
+          )}
 
           <FormField
             control={form.control}
@@ -616,41 +569,12 @@ export function ActionForm({
                 <FormLabel>Observaciones</FormLabel>
                 <div className="flex items-center rounded-md border border-input focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2">
                     <FormControl>
-                        <Textarea
-                        placeholder="Describe la no conformidad o el área de mejora..."
-                        className="flex-grow resize-y min-h-[120px] border-none focus-visible:ring-0 focus-visible:ring-offset-0"
-                        {...field}
-                        disabled={disableForm}
-                        />
+                        <Textarea placeholder="Describe la no conformidad o el área de mejora..." className="flex-grow resize-y min-h-[120px] border-none focus-visible:ring-0 focus-visible:ring-offset-0" {...field} disabled={disableForm} />
                     </FormControl>
                     {mode !== 'view' && (
                         <div className="flex flex-col gap-2 p-2 self-start">
-                            <Button 
-                                type="button" 
-                                size="icon" 
-                                variant="ghost" 
-                                onClick={toggleRecording}
-                                disabled={disableForm}
-                                className={cn("h-8 w-8", isRecording && "bg-red-500/20 text-red-500 hover:bg-red-500/30 hover:text-red-500")}
-                                title="Activar/desactivar el micrófono"
-                            >
-                                {isRecording ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
-                                <span className="sr-only">{isRecording ? "Detener grabación" : "Iniciar grabación"}</span>
-                            </Button>
-                            {hasImprovePrompt && (
-                              <Button 
-                                  type="button" 
-                                  size="icon" 
-                                  variant="ghost" 
-                                  onClick={handleImproveText}
-                                  disabled={disableForm || isImprovingText}
-                                  className="h-8 w-8"
-                                  title="Mejorar texto con IA"
-                              >
-                                  {isImprovingText ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}
-                                  <span className="sr-only">Mejorar texto con IA</span>
-                              </Button>
-                            )}
+                            <Button type="button" size="icon" variant="ghost" onClick={toggleRecording} disabled={disableForm} className={cn("h-8 w-8", isRecording && "bg-red-500/20 text-red-500 hover:bg-red-500/30 hover:text-red-500")} title="Activar/desactivar el micrófono"><Mic className="h-4 w-4" /><span className="sr-only">{isRecording ? "Detener grabación" : "Iniciar grabación"}</span></Button>
+                            {hasImprovePrompt && (<Button type="button" size="icon" variant="ghost" onClick={handleImproveText} disabled={disableForm || isImprovingText} className="h-8 w-8" title="Mejorar texto con IA">{isImprovingText ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}<span className="sr-only">Mejorar texto con IA</span></Button>)}
                         </div>
                     )}
                  </div>
@@ -674,18 +598,9 @@ export function ActionForm({
 
           {mode === 'edit' && (
             <div className="flex gap-2">
-                <Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting}>
-                    <Ban className="mr-2 h-4 w-4" />
-                    Cancelar
-                </Button>
-                <Button type="button" onClick={() => onSubmit(form.getValues(), 'Borrador')} disabled={isSubmitting}>
-                    {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                    Guardar Borrador
-                </Button>
-                 <Button type="button" onClick={() => onSubmit(form.getValues(), 'Pendiente Análisis')} disabled={isSubmitting}>
-                    {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
-                    Enviar para Análisis
-                </Button>
+                <Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting}><Ban className="mr-2 h-4 w-4" />Cancelar</Button>
+                <Button type="button" onClick={() => onSubmit(form.getValues(), 'Borrador')} disabled={isSubmitting}>{isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}Guardar Borrador</Button>
+                 <Button type="button" onClick={() => onSubmit(form.getValues(), 'Pendiente Análisis')} disabled={isSubmitting}>{isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}Enviar para Análisis</Button>
             </div>
           )}
         </form>
