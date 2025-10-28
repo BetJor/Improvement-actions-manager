@@ -60,34 +60,44 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
     const [users, setUsers] = useState<User[]>([]);
     const [isStatusDialogOpen, setIsStatusDialogOpen] = useState(false);
     const [selectedProposedAction, setSelectedProposedAction] = useState<any>(null);
-    const [masterData, setMasterData] = useState(initialMasterData);
+    const [masterData, setMasterData] = useState<any>(null);
+    const [isLoadingMasterData, setIsLoadingMasterData] = useState(true);
     
     const { handleToggleFollow, isFollowing } = useFollowAction();
 
-    useEffect(() => {
+     useEffect(() => {
         const loadAllMasterData = async () => {
-            const [types, cats, subcats, areas, centers, roles] = await Promise.all([
-                getActionTypes(),
-                getCategories(),
-                getSubcategories(),
-                getAffectedAreas(),
-                getCenters(),
-                getResponsibilityRoles(),
-            ]);
-            setMasterData({
-                ambits: { data: types },
-                origins: { data: cats },
-                classifications: { data: subcats },
-                affectedAreas: areas,
-                centers: { data: centers },
-                responsibilityRoles: { data: roles },
-            });
+            setIsLoadingMasterData(true);
+            try {
+                const [types, cats, subcats, areas, centers, roles] = await Promise.all([
+                    getActionTypes(),
+                    getCategories(),
+                    getSubcategories(),
+                    getAffectedAreas(),
+                    getCenters(),
+                    getResponsibilityRoles(),
+                ]);
+                setMasterData({
+                    ambits: { data: types },
+                    origins: { data: cats },
+                    classifications: { data: subcats },
+                    affectedAreas: areas,
+                    centers: { data: centers },
+                    responsibilityRoles: { data: roles },
+                });
+            } catch (error) {
+                console.error("Failed to load master data in ActionDetailsTab:", error);
+                toast({
+                    variant: "destructive",
+                    title: "Error de carga",
+                    description: "No se pudieron cargar los datos maestros necesarios para esta acción.",
+                });
+            } finally {
+                setIsLoadingMasterData(false);
+            }
         };
-
-        if (!initialMasterData) {
-            loadAllMasterData();
-        }
-    }, [initialMasterData]);
+        loadAllMasterData();
+    }, [toast]);
 
 
     useEffect(() => {
@@ -650,7 +660,7 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
         XLSX.writeFile(wb, `Accion_Mejora_${action.actionId}.xlsx`);
     };
 
-    if (!action || !masterData) {
+    if (isLoadingMasterData || !action || !masterData) {
         return (
             <div className="flex h-full w-full items-center justify-center">
                 <Loader2 className="h-6 w-6 animate-spin" />
@@ -693,18 +703,6 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
       }
     };
 
-    const renderReadOnlyContent = (titleKey: string, descriptionKey: string, content: React.ReactNode) => (
-        <Card>
-            <CardHeader>
-                <CardTitle>{titleKey}</CardTitle>
-                <CardDescription>{descriptionKey}</CardDescription>
-            </CardHeader>
-            <CardContent>
-                {content}
-            </CardContent>
-        </Card>
-    );
-
     return (
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
       
@@ -740,42 +738,23 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
                     <TabsContent value="details" className="mt-4">
                        <div className="space-y-6">
                            
-                           {isEditing ? (
-                                <Card>
-                                    <CardHeader>
-                                        <CardTitle>Editando Acción de Mejora</CardTitle>
-                                        <CardDescription>Estás modificando los detalles de esta acción. Guarda los cambios cuando hayas terminado.</CardDescription>
-                                    </CardHeader>
-                                    <CardContent>
-                                        <ActionForm 
-                                            key={action.id}
-                                            mode='edit'
-                                            initialData={action}
-                                            masterData={masterData}
-                                            isSubmitting={isSubmitting}
-                                            onSubmit={handleEditSubmit}
-                                            onCancel={() => setIsEditing(false)}
-                                        />
-                                    </CardContent>
-                                </Card>
-                            ) : (
-                                <>
-                                 {action.status === "Borrador" && (
-                                    <div className="flex items-start justify-between gap-4">
-                                        <Button onClick={() => setIsEditing(true)} disabled={!masterData} className="ml-auto">
-                                            <FileEdit className="mr-2 h-4 w-4" /> Editar Borrador
-                                        </Button>
-                                    </div>
-                                 )}
-                                 <ActionForm 
-                                    mode='view'
-                                    initialData={action}
-                                    masterData={masterData}
-                                    isSubmitting={isSubmitting}
-                                    onSubmit={handleEditSubmit}
-                                />
-                                </>
-                            )}
+                           {action.status === 'Borrador' && (
+                            <div className="flex items-start justify-between gap-4">
+                                <Button onClick={() => setIsEditing(true)} disabled={isLoadingMasterData || isEditing}>
+                                    <FileEdit className="mr-2 h-4 w-4" /> Editar Borrador
+                                </Button>
+                            </div>
+                           )}
+
+                            <ActionForm 
+                                key={isEditing ? 'edit' : 'view'}
+                                mode={isEditing ? 'edit' : 'view'}
+                                initialData={action}
+                                masterData={masterData}
+                                isSubmitting={isSubmitting}
+                                onSubmit={handleEditSubmit}
+                                onCancel={() => setIsEditing(false)}
+                            />
                         </div>
                     </TabsContent>
 
@@ -957,14 +936,3 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
         </div>
     )
 }
-
-    
-
-    
-
-
-
-
-
-
-
