@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useEffect } from 'react';
@@ -10,6 +11,7 @@ import { AppSidebar } from './app-sidebar';
 import { DynamicTabs } from './dynamic-tabs';
 import { SidebarProvider } from './ui/sidebar';
 import { ActionStateProvider } from '@/hooks/use-action-state';
+import { FirebaseErrorListener } from '@/components/firebase-error-listener';
 
 function MainLayout({ children }: { children: React.ReactNode }) {
     const { tabs, activeTab } = useTabs();
@@ -66,6 +68,7 @@ export function AppContent({ children }: { children: React.ReactNode }) {
     <ActionStateProvider>
       <SidebarProvider>
         <TabsProvider initialPath={pathname}>
+            <FirebaseErrorListener />
             <MainLayout>
                 {children}
             </MainLayout>

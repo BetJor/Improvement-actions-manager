@@ -4,6 +4,8 @@ import { db, auth } from '@/lib/firebase';
 import { users as mockUsers } from '@/lib/static-data';
 import type { User } from '@/lib/types';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError, type SecurityRuleContext } from '@/firebase/errors';
 
 export async function getUsers(): Promise<User[]> {
     const usersCol = collection(db, 'users');
@@ -87,7 +89,18 @@ export async function addUser(userData: Omit<User, 'id'> & { password?: string }
             avatar: userData.avatar || `https://i.pravatar.cc/150?u=${newUserId}`
         };
 
-        await setDoc(doc(db, "users", newUserId), userProfile);
+        const docRef = doc(db, "users", newUserId);
+
+        setDoc(docRef, userProfile)
+            .catch(async (serverError) => {
+                const permissionError = new FirestorePermissionError({
+                    path: docRef.path,
+                    operation: 'create',
+                    requestResourceData: userProfile,
+                } satisfies SecurityRuleContext);
+
+                errorEmitter.emit('permission-error', permissionError);
+            });
         
         return newUserId;
     } catch (error: any) {
