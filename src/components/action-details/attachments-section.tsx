@@ -11,9 +11,12 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-import { Paperclip, Upload, Download, Loader2, ChevronRight } from "lucide-react"
+import { Paperclip, Upload, Download, Loader2, ChevronRight, FileText } from "lucide-react"
 import { Badge } from "../ui/badge"
 import { getAuth, onAuthStateChanged } from "firebase/auth";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "../ui/dialog"
+import { Label } from "../ui/label"
+import { Textarea } from "../ui/textarea"
 
 interface AttachmentsSectionProps {
   action: ImprovementAction
@@ -25,62 +28,52 @@ export function AttachmentsSection({ action, onActionUpdate }: AttachmentsSectio
   const { toast } = useToast()
   
   const [isUploadingFile, setIsUploadingFile] = useState(false)
+  const [isDescriptionDialogOpen, setIsDescriptionDialogOpen] = useState(false);
+  const [fileToUpload, setFileToUpload] = useState<File | null>(null);
+  const [fileDescription, setFileDescription] = useState("");
+
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const safeUpload = async (file: File) => {
-    // Use a promise to wait for authentication to be confirmed
-    return new Promise<void>((resolve, reject) => {
-      // onAuthStateChanged is the most reliable way to check the auth state
-      const unsubscribe = onAuthStateChanged(getAuth(), async (user) => {
-        // Unsubscribe immediately to avoid memory leaks
-        unsubscribe();
-  
-        if (user) {
-          console.log("[Attachments] Auth confirmed, starting upload.");
-          try {
-            await uploadFileAndUpdateAction(action.id, file, {
-              id: user.uid, // Use the user ID from the SDK
-              name: user.displayName || 'Unknown User',
-              avatar: user.photoURL || undefined,
-            });
-            resolve();
-          } catch (error) {
-            reject(error);
-          }
-        } else {
-          reject(new Error("No authenticated user found."));
-        }
-      });
-    });
-  };
-  
-
-  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    console.log("--- [Attachments] handleFileChange triggered ---");
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (!file || !user) {
-        console.error("[Attachments] No file or user. File:", file, "User:", user);
         return;
     }
+    setFileToUpload(file);
+    setIsDescriptionDialogOpen(true);
+  }
 
-    console.log(`[Attachments] File selected: ${file.name}, User: ${user.id}`);
-    setIsUploadingFile(true)
+  const handleUploadWithDescription = async () => {
+    if (!fileToUpload || !user) return;
+    
+    setIsDescriptionDialogOpen(false);
+    setIsUploadingFile(true);
+
     try {
-      console.log("[Attachments] Calling safeUpload...");
-      await safeUpload(file);
-      console.log("[Attachments] safeUpload completed successfully.");
+      const auth = getAuth();
+      const currentUser = await new Promise<any>((resolve, reject) => {
+        const unsubscribe = onAuthStateChanged(auth, (user) => {
+          unsubscribe();
+          resolve(user);
+        }, reject);
+      });
+
+      if (!currentUser) throw new Error("No authenticated user found.");
+
+      await uploadFileAndUpdateAction(action.id, fileToUpload, {
+        id: currentUser.uid,
+        name: currentUser.displayName || 'Unknown User',
+        avatar: currentUser.photoURL || undefined,
+      }, fileDescription);
+      
       toast({
         title: "Archivo subido",
-        description: `${file.name} se ha subido y adjuntado correctamente.`,
+        description: `${fileToUpload.name} se ha subido y adjuntado correctamente.`,
       });
    
-      console.log("[Attachments] Fetching updated action...");
       const updatedAction = await getActionById(action.id)
       if (updatedAction) {
-        console.log("[Attachments] Action updated, calling onActionUpdate.");
         onActionUpdate(updatedAction)
-      } else {
-        console.warn("[Attachments] Updated action not found after upload.");
       }
 
     } catch (error) {
@@ -91,17 +84,20 @@ export function AttachmentsSection({ action, onActionUpdate }: AttachmentsSectio
         description: "No se ha podido subir el archivo.",
       })
     } finally {
-      console.log("--- [Attachments] Finally block. Resetting state. ---");
-      setIsUploadingFile(false)
+      setIsUploadingFile(false);
+      setFileToUpload(null);
+      setFileDescription("");
       if (fileInputRef.current) {
         fileInputRef.current.value = ""
       }
     }
   }
 
+
   return (
+    <>
     <Card>
-      <Collapsible>
+      <Collapsible defaultOpen>
         <div className="flex justify-between items-center p-4">
           <CardTitle className="flex items-center gap-2 text-base">
             <Paperclip className="h-5 w-5" />
@@ -144,28 +140,33 @@ export function AttachmentsSection({ action, onActionUpdate }: AttachmentsSectio
                 />
               </label>
             </div>
-            <div className="space-y-2">
+            <div className="space-y-3">
               {(action.attachments && action.attachments.length > 0) ? (
                 action.attachments.map((file) => (
-                  <div key={file.id} className="flex items-center justify-between rounded-lg border bg-muted/30 p-2">
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <div className="flex items-center gap-2 truncate">
-                            <Paperclip className="h-4 w-4 shrink-0" />
-                            <span className="truncate text-sm">{file.fileName}</span>
-                          </div>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>{file.fileName}</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                    <Button variant="ghost" size="icon" asChild>
-                      <a href={file.fileUrl} target="_blank" rel="noopener noreferrer" download={file.fileName}>
-                        <Download className="h-4 w-4" />
-                      </a>
-                    </Button>
+                  <div key={file.id} className="flex flex-col gap-1 rounded-lg border bg-muted/30 p-3">
+                    <div className="flex items-center justify-between">
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <div className="flex items-center gap-2 truncate">
+                              <Paperclip className="h-4 w-4 shrink-0" />
+                              <span className="truncate text-sm font-semibold">{file.fileName}</span>
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>{file.fileName}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                      <Button variant="ghost" size="icon" asChild className="h-8 w-8">
+                        <a href={file.fileUrl} target="_blank" rel="noopener noreferrer" download={file.fileName}>
+                          <Download className="h-4 w-4" />
+                        </a>
+                      </Button>
+                    </div>
+                    {file.description && (
+                       <p className="text-sm text-muted-foreground pl-6">{file.description}</p>
+                    )}
                   </div>
                 ))
               ) : (
@@ -176,5 +177,32 @@ export function AttachmentsSection({ action, onActionUpdate }: AttachmentsSectio
         </CollapsibleContent>
       </Collapsible>
     </Card>
+
+    <Dialog open={isDescriptionDialogOpen} onOpenChange={setIsDescriptionDialogOpen}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Añadir descripción al archivo</DialogTitle>
+          <DialogDescription>
+            Añade una descripción opcional para el archivo "{fileToUpload?.name}".
+          </DialogDescription>
+        </DialogHeader>
+        <div className="py-4">
+          <Label htmlFor="file-description">Descripción</Label>
+          <Textarea 
+            id="file-description"
+            value={fileDescription}
+            onChange={(e) => setFileDescription(e.target.value)}
+            placeholder="Describe el contenido o el propósito de este archivo..."
+          />
+        </div>
+        <DialogFooter>
+          <DialogClose asChild>
+            <Button variant="outline" onClick={() => { setFileToUpload(null); setFileDescription(""); }}>Cancelar</Button>
+          </DialogClose>
+          <Button onClick={handleUploadWithDescription}>Subir archivo</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+    </>
   )
 }

@@ -6,7 +6,7 @@ import { ref, getDownloadURL, uploadBytesResumable } from "firebase/storage";
 import type { ActionUserInfo, ActionAttachment } from '@/lib/types';
 
 
-export async function uploadFileAndUpdateAction(actionId: string, file: File, user: ActionUserInfo): Promise<void> {
+export async function uploadFileAndUpdateAction(actionId: string, file: File, user: ActionUserInfo, description?: string): Promise<void> {
   console.log("--- [Storage Service] Starting upload process ---");
   if (!file) {
     console.error("[Storage Service] Error: No file provided.");
@@ -60,6 +60,7 @@ export async function uploadFileAndUpdateAction(actionId: string, file: File, us
             const newAttachment: ActionAttachment = {
               id: crypto.randomUUID(),
               fileName: file.name,
+              description: description || '',
               fileUrl: downloadURL,
               uploadedBy: uploaderInfo, // Use the clean object
               uploadedAt: new Date().toISOString(),
@@ -86,3 +87,4 @@ export async function uploadFileAndUpdateAction(actionId: string, file: File, us
     throw error;
   }
 }
+

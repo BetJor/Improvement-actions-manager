@@ -65,7 +65,6 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
     const { handleToggleFollow, isFollowing } = useFollowAction();
 
     useEffect(() => {
-        // Function to load all master data required by the tab
         const loadAllMasterData = async () => {
             const [types, cats, subcats, areas, centers, roles] = await Promise.all([
                 getActionTypes(),
@@ -516,9 +515,10 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
             addSectionTitle('Adjuntos', 5);
             doc.autoTable({
                 startY: y,
-                head: [['Nombre Archivo', 'Subido Por', 'Fecha Subida']],
+                head: [['Nombre Archivo', 'Descripción', 'Subido Por', 'Fecha Subida']],
                 body: action.attachments.map(file => [
                     file.fileName,
+                    file.description || '',
                     file.uploadedBy.name,
                     safeParseDate(file.uploadedAt) ? format(safeParseDate(file.uploadedAt)!, 'dd/MM/yyyy HH:mm') : 'N/D'
                 ]),
@@ -637,12 +637,13 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
         if (action.attachments?.length) {
             const attachmentsData = action.attachments.map(a => ({
                 'Nombre Archivo': a.fileName,
+                'Descripción': a.description || '',
                 'Subido Por': a.uploadedBy.name,
                 'Fecha Subida': safeParseDate(a.uploadedAt) ? format(safeParseDate(a.uploadedAt)!, 'dd/MM/yyyy HH:mm') : 'N/D',
                 'URL': a.fileUrl,
             }));
             const wsAttachments = XLSX.utils.json_to_sheet(attachmentsData);
-            wsAttachments['!cols'] = [{ wch: 40 }, { wch: 25 }, { wch: 20 }, { wch: 100 }];
+            wsAttachments['!cols'] = [{ wch: 40 }, { wch: 50 }, { wch: 25 }, { wch: 20 }, { wch: 100 }];
             XLSX.utils.book_append_sheet(wb, wsAttachments, 'Adjuntos');
         }
     
@@ -960,6 +961,7 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
     
 
     
+
 
 
 

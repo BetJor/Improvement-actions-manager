@@ -104,6 +104,7 @@ export interface ActionComment {
 export interface ActionAttachment {
     id: string;
     fileName: string;
+    description?: string;
     fileUrl: string;
     uploadedBy: ActionUserInfo;
     uploadedAt: string; // ISO string
