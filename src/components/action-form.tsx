@@ -27,7 +27,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { getPrompt } from "@/lib/data"
 import { useToast } from "@/hooks/use-toast"
 import { useState, useMemo, useEffect, useRef } from "react"
-import { Loader2, Mic, MicOff, Wand2, Save, Send, Ban, ChevronsUpDown, Check, Pencil } from "lucide-react"
+import { Loader2, Mic, MicOff, Wand2, Save, Send, Ban, ChevronsUpDown, Check } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { improveWriting } from "@/ai/flows/improveWriting"
 import {
@@ -69,7 +69,7 @@ interface ActionFormProps {
 }
 
 const ReadOnlyField = ({ label, value }: { label: string, value?: string | string[] }) => {
-    if (!value) return null;
+    if (!value || (Array.isArray(value) && value.length === 0)) return null;
     return (
         <div className="grid gap-1.5">
             <Label className="text-primary">{label}</Label>
@@ -116,19 +116,19 @@ export function ActionForm({
   })
   
   useEffect(() => {
-    if (mode !== 'create' && initialData && masterData) {
-        form.reset({
-            title: initialData.title || "",
-            description: initialData.description || "",
-            assignedTo: initialData.assignedTo || "",
-            category: initialData.categoryId || "",
-            subcategory: initialData.subcategoryId || "",
-            affectedAreasIds: initialData.affectedAreasIds || [],
-            centerId: initialData.centerId || "",
-            typeId: initialData.typeId || "",
-        });
+    if ((mode === 'edit' || mode === 'view') && initialData) {
+      form.reset({
+        title: initialData.title || "",
+        description: initialData.description || "",
+        assignedTo: initialData.assignedTo || "",
+        category: initialData.categoryId || "",
+        subcategory: initialData.subcategoryId || "",
+        affectedAreasIds: initialData.affectedAreasIds || [],
+        centerId: initialData.centerId || "",
+        typeId: initialData.typeId || "",
+      });
     }
-  }, [mode, initialData, masterData, form.reset, form]);
+  }, [mode, initialData, form]);
 
   useEffect(() => {
     async function checkPrompts() {
@@ -211,7 +211,6 @@ export function ActionForm({
   }, [selectedActionTypeId, selectedCenterId, selectedAffectedAreasIds, masterData, user, initialData?.assignedTo, mode]);
   
   useEffect(() => {
-    form.register('typeId');
     const subscription = form.watch((value, { name }) => {
       if (name === 'typeId') {
         form.setValue('category', '');

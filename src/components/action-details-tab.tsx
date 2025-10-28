@@ -621,7 +621,7 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
             const proposedActionsData = action.analysis.proposedActions.map(pa => ({
                 'Descripción': pa.description,
                 'Responsable': users.find(u => u.id === pa.responsibleUserId)?.name || 'N/D',
-                'Fecha Límite': safeParseDate(pa.dueDate) ? format(safeParseDate(pa.dueDate)!, 'dd/MM/yyyy') : 'N/D',
+                'Fecha Límite': safeParseDate(pa.dueDate as string) ? format(safeParseDate(pa.dueDate as string)!, 'dd/MM/yyyy') : 'N/D',
                 'Estado': pa.status || 'Pendiente',
                 'Fecha Estado': pa.statusUpdateDate ? format(safeParseDate(pa.statusUpdateDate)!, 'dd/MM/yyyy HH:mm') : 'N/D',
                 'Verificación': action.verification?.proposedActionsVerificationStatus?.[pa.id] || 'Pendiente',
@@ -737,21 +737,19 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
                     
                     <TabsContent value="details" className="mt-4">
                        <div className="space-y-6">
-                           
-                           {action.status === 'Borrador' && (
-                            <div className="flex items-start justify-between gap-4">
-                                <Button onClick={() => setIsEditing(true)} disabled={isLoadingMasterData || isEditing}>
-                                    <FileEdit className="mr-2 h-4 w-4" /> Editar Borrador
-                                </Button>
-                            </div>
-                           )}
-
                            <Card>
-                                <CardHeader>
-                                    <CardTitle>Detalles de la Acción</CardTitle>
-                                    <CardDescription>
-                                        {isEditing ? 'Estás editando los detalles de esta acción.' : 'Visualizando los detalles de la acción.'}
-                                    </CardDescription>
+                                <CardHeader className="flex flex-row justify-between items-start">
+                                    <div>
+                                        <CardTitle>Detalles de la Acción</CardTitle>
+                                        <CardDescription>
+                                            {isEditing ? 'Estás editando los detalles de esta acción.' : 'Visualizando los detalles de la acción.'}
+                                        </CardDescription>
+                                    </div>
+                                    {action.status === 'Borrador' && !isEditing && (
+                                        <Button onClick={() => setIsEditing(true)} disabled={isLoadingMasterData}>
+                                            <FileEdit className="mr-2 h-4 w-4" /> Editar Borrador
+                                        </Button>
+                                    )}
                                 </CardHeader>
                                 <CardContent>
                                     <ActionForm 
