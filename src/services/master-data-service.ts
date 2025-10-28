@@ -213,7 +213,7 @@ export async function deleteMasterDataItem(collectionName: string, itemId: strin
             const ambitData = ambitDoc.data() as ImprovementActionType;
             const fieldsToUpdate: any = {};
             
-            ['configAdminRoleIds', 'possibleCreationRoles', 'possibleAnalysisRoles', 'possibleClosureRoles'].forEach(field => {
+            ['configAdminRoleIds', 'possibleCreationRoles', 'possibleAnalysisRoles'].forEach(field => {
                 const roleIds = (ambitData as any)[field];
                 if (Array.isArray(roleIds) && roleIds.includes(itemId)) {
                     fieldsToUpdate[field] = arrayRemove(itemId);

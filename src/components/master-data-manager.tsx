@@ -63,7 +63,6 @@ interface MasterDataFormDialogProps {
 
 export function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, title, onSave, extraData, isPermissionDialog = false, userIsAdmin = false }: MasterDataFormDialogProps) {
   const [formData, setFormData] = useState<MasterDataItem>({ id: "", name: "" });
-  const { toast } = useToast();
 
   useEffect(() => {
     let defaultData: MasterDataItem = { id: "", name: "" };
@@ -71,7 +70,7 @@ export function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, 
       defaultData = { ...defaultData, type: "Fixed" };
     }
     if (collectionName === 'ambits') { // Correspon a 'ambits'
-      defaultData = { ...defaultData, configAdminRoleIds: [], possibleCreationRoles: [], possibleAnalysisRoles: [], possibleClosureRoles: [] };
+      defaultData = { ...defaultData, configAdminRoleIds: [], possibleCreationRoles: [], possibleAnalysisRoles: [] };
     }
     if (collectionName === 'origins') {
       const parentAmbitId = extraData?.parentItemId;
@@ -86,12 +85,8 @@ export function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, 
 
   const handleSave = async () => {
     if (!isPermissionDialog && !formData.name) {
-      toast({
-        variant: "destructive",
-        title: "Error de validación",
-        description: "El campo 'Nombre' es obligatorio.",
-      });
-      return;
+        // No toast for validation
+        return;
     }
     await onSave(collectionName, formData);
     setIsOpen(false);
@@ -228,7 +223,6 @@ export function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, 
                 <h4 className="font-semibold text-center text-muted-foreground">Permisos de Workflow</h4>
                 {renderDropdown('possibleCreationRoles', 'Roles de Creación')}
                 {renderDropdown('possibleAnalysisRoles', 'Roles de Análisis')}
-                {renderDropdown('possibleClosureRoles', 'Roles de Cierre')}
             </div>
         );
     }

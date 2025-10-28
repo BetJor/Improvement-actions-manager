@@ -157,7 +157,6 @@ export default function SettingsPage() {
             configAdminRoleNames: getRoleNames(at.configAdminRoleIds),
             creationRoleNames: getRoleNames(at.possibleCreationRoles),
             analysisRoleNames: getRoleNames(at.possibleAnalysisRoles),
-            closureRoleNames: getRoleNames(at.possibleClosureRoles),
         }));
 
         const sortedActionTypes = [...actionTypesWithRoleNames].sort((a, b) => (a.order ?? 0) - (b.order ?? 0) || a.name.localeCompare(b.name));
@@ -174,7 +173,6 @@ export default function SettingsPage() {
                 { key: 'configAdminRoleNames', label: "Admins de Configuración" },
                 { key: 'creationRoleNames', label: "Roles Creación" },
                 { key: 'analysisRoleNames', label: "Roles Análisis" },
-                { key: 'closureRoleNames', label: "Roles Cierre" },
             ]
         };
     }, [masterData, isAdmin, userRoles]);
