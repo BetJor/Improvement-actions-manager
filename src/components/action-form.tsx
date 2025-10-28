@@ -322,12 +322,34 @@ export function ActionForm({
 
   const disableForm = isSubmitting || mode === 'view';
 
-  const renderSelectField = (fieldName: any, label: string, placeholder: string, options: {value: string, label: string}[]) => {
+  const getDisplayValue = (fieldName: 'typeId' | 'category' | 'subcategory' | 'centerId' | 'assignedTo') => {
+    if (!masterData) return 'Cargando...';
+    
+    const value = form.getValues(fieldName);
+    if (!value) return 'No especificado';
+    
+    switch(fieldName) {
+      case 'typeId':
+        return masterData.ambits?.data?.find((item: any) => item.id === value)?.name || value;
+      case 'category':
+        return masterData.origins?.data?.find((item: any) => item.id === value)?.name || value;
+      case 'subcategory':
+        return masterData.classifications?.data?.find((item: any) => item.id === value)?.name || value;
+      case 'centerId':
+        return masterData.centers?.data?.find((item: any) => item.id === value)?.name || value;
+      case 'assignedTo':
+        return responsibleOptions.find(opt => opt.value === value)?.label || value;
+      default:
+        return value;
+    }
+  }
+
+
+  const renderSelectField = (fieldName: 'typeId' | 'category' | 'subcategory' | 'centerId' | 'assignedTo', label: string, placeholder: string, options: {value: string, label: string}[]) => {
       const isEditingThisField = editingField === fieldName;
       
       if (mode === 'edit' && !isEditingThisField) {
-        const savedValue = form.getValues(fieldName);
-        const displayValue = options.find(opt => opt.value === savedValue)?.label || savedValue || 'No especificado';
+        const displayValue = getDisplayValue(fieldName);
         return (
           <FormItem>
             <FormLabel>{label}</FormLabel>
@@ -440,78 +462,89 @@ export function ActionForm({
            {renderSelectField('subcategory', 'Clasificación', 'Selecciona una clasificación', filteredSubcategories.map(s => ({ value: s.id!, label: s.name })))}
           
           <div className="grid md:grid-cols-2 gap-6">
-             {editingField === 'centerId' || mode === 'create' ? (
-                 <FormField
-                    control={form.control}
-                    name="centerId"
-                    render={({ field }) => (
-                        <FormItem className="flex flex-col gap-2">
-                            <FormLabel>Centro</FormLabel>
-                            <Popover open={isCenterPopoverOpen} onOpenChange={setIsCenterPopoverOpen}>
-                                <PopoverTrigger asChild>
-                                <FormControl>
-                                    <Button
-                                    variant="outline"
-                                    role="combobox"
-                                    disabled={disableForm}
-                                    className={cn(
-                                        "w-full justify-between",
-                                        !field.value && "text-muted-foreground"
-                                    )}
-                                    >
-                                    {field.value && masterData?.centers?.data
-                                        ? masterData.centers.data.find(
-                                            (center: Center) => center.id === field.value
-                                        )?.name
-                                        : "Selecciona un centre"}
-                                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                                    </Button>
-                                </FormControl>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-[--radix-popover-trigger-width] max-h-[--radix-popover-content-available-height] p-0">
-                                <Command>
-                                    <CommandInput placeholder="Cerca un centre..." />
-                                    <CommandEmpty>No se ha trobat cap centre.</CommandEmpty>
-                                    <CommandGroup>
-                                    {masterData?.centers?.data?.map((center: Center) => (
-                                        <CommandItem
-                                        value={center.name}
-                                        key={center.id}
-                                        onSelect={() => {
-                                            form.setValue("centerId", center.id!);
-                                            setIsCenterPopoverOpen(false);
-                                            if (mode === 'edit') setEditingField(null);
-                                        }}
-                                        >
-                                        <Check
-                                            className={cn(
-                                            "mr-2 h-4 w-4",
-                                            center.id === field.value
-                                                ? "opacity-100"
-                                                : "opacity-0"
-                                            )}
-                                        />
-                                        {center.name}
-                                        </CommandItem>
-                                    ))}
-                                    </CommandGroup>
-                                </Command>
-                                </PopoverContent>
-                            </Popover>
-                            <FormMessage />
-                        </FormItem>
-                    )} />
-             ) : (
-                <FormItem>
+            {editingField === 'centerId' || mode === 'create' ? (
+              <FormField
+                control={form.control}
+                name="centerId"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col gap-2">
                     <FormLabel>Centro</FormLabel>
-                    <div className="flex items-center gap-2">
-                        <Input readOnly value={masterData?.centers?.data?.find((c: Center) => c.id === form.getValues('centerId'))?.name || 'No especificado'} className="bg-muted/50" />
-                        <Button type="button" variant="ghost" size="icon" onClick={() => setEditingField('centerId')} className="h-9 w-9">
-                            <Pencil className="h-4 w-4"/>
-                        </Button>
-                    </div>
-                </FormItem>
-             )}
+                    <Popover open={isCenterPopoverOpen} onOpenChange={setIsCenterPopoverOpen}>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            variant="outline"
+                            role="combobox"
+                            disabled={disableForm}
+                            className={cn(
+                              "w-full justify-between",
+                              !field.value && "text-muted-foreground"
+                            )}
+                          >
+                            {field.value && masterData?.centers?.data
+                              ? masterData.centers.data.find(
+                                  (center: Center) => center.id === field.value
+                                )?.name
+                              : "Selecciona un centre"}
+                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-[--radix-popover-trigger-width] max-h-[--radix-popover-content-available-height] p-0">
+                        <Command>
+                          <CommandInput placeholder="Cerca un centre..." />
+                          <CommandEmpty>No se ha trobat cap centre.</CommandEmpty>
+                          <CommandGroup>
+                            {masterData?.centers?.data?.map((center: Center) => (
+                              <CommandItem
+                                value={center.name}
+                                key={center.id}
+                                onSelect={() => {
+                                  form.setValue("centerId", center.id!);
+                                  setIsCenterPopoverOpen(false);
+                                  if (mode === 'edit') setEditingField(null);
+                                }}
+                              >
+                                <Check
+                                  className={cn(
+                                    "mr-2 h-4 w-4",
+                                    center.id === field.value
+                                      ? "opacity-100"
+                                      : "opacity-0"
+                                  )}
+                                />
+                                {center.name}
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            ) : (
+              <FormItem>
+                <FormLabel>Centro</FormLabel>
+                <div className="flex items-center gap-2">
+                  <Input
+                    readOnly
+                    value={getDisplayValue('centerId')}
+                    className="bg-muted/50"
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setEditingField('centerId')}
+                    className="h-9 w-9"
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                </div>
+              </FormItem>
+            )}
             <FormField
               control={form.control}
               name="affectedAreasIds"
