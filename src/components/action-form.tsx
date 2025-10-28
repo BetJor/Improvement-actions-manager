@@ -69,81 +69,16 @@ interface ActionFormProps {
 }
 
 
-const ReadOnlyField = ({ label, value, onEdit, canEdit }: { label: string; value?: string; onEdit: () => void; canEdit: boolean }) => {
+const ReadOnlyField = ({ label, value }: { label: string; value?: string; }) => {
   if (!value) return null;
   return (
     <div className="grid gap-1.5">
       <Label className="text-primary">{label}</Label>
       <div className="flex items-center justify-between text-sm font-medium">
         <span>{value}</span>
-        {canEdit && (
-            <Button variant="ghost" size="icon" onClick={onEdit} className="h-7 w-7">
-                <Pencil className="h-4 w-4" />
-            </Button>
-        )}
       </div>
     </div>
   );
-};
-
-
-const renderSelectField = (
-    editingField: string | null,
-    fieldName: string,
-    label: string,
-    value: string,
-    displayValue: string,
-    options: { value: string, label: string }[],
-    form: any,
-    setEditingField: (name: string | null) => void,
-    isSubmitting: boolean
-) => {
-    const isEditing = editingField === fieldName;
-    const canEdit = !isSubmitting;
-
-    if (isEditing) {
-        return (
-            <FormField
-                control={form.control}
-                name={fieldName}
-                render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>{label}</FormLabel>
-                        <Select
-                            onValueChange={(newValue) => {
-                                field.onChange(newValue);
-                                setEditingField(null);
-                            }}
-                            defaultValue={field.value}
-                            onOpenChange={(isOpen) => !isOpen && setEditingField(null)}
-                            open={true}
-                        >
-                            <FormControl>
-                                <SelectTrigger>
-                                    <SelectValue placeholder={`Selecciona un ${label.toLowerCase()}`} />
-                                </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                                {options.map((opt) => (
-                                    <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                        <FormMessage />
-                    </FormItem>
-                )}
-            />
-        );
-    }
-
-    return (
-        <ReadOnlyField
-            label={label}
-            value={displayValue}
-            onEdit={() => setEditingField(fieldName)}
-            canEdit={canEdit}
-        />
-    );
 };
 
 
@@ -168,8 +103,6 @@ export function ActionForm({
   const [hasImprovePrompt, setHasImprovePrompt] = useState(false);
   
   const [isCenterPopoverOpen, setIsCenterPopoverOpen] = useState(false);
-
-  const [editingField, setEditingField] = useState<string | null>(null);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -244,7 +177,7 @@ export function ActionForm({
   }, [selectedActionTypeId, selectedCenterId, selectedAffectedAreasIds, masterData, user, initialData?.assignedTo, mode]);
   
   const initialFormValues = useMemo(() => {
-    if (mode === 'edit' && initialData) {
+    if (initialData) {
       return {
         title: initialData.title || "",
         description: initialData.description || "",
@@ -257,10 +190,11 @@ export function ActionForm({
       };
     }
     return null;
-  }, [mode, initialData]);
+  }, [initialData]);
 
   useEffect(() => {
-    if (initialFormValues && filteredAmbits.length > 0 && responsibleOptions.length > 0) {
+    // Reset the form only when initial values are available and options are populated
+    if (initialFormValues && filteredAmbits.length > 0) {
       form.reset(initialFormValues);
     }
   }, [initialFormValues, form, filteredAmbits, responsibleOptions]);
@@ -273,26 +207,6 @@ export function ActionForm({
     }
     checkPrompts();
   }, []);
-
-  useEffect(() => {
-    const subscription = form.watch((value, { name }) => {
-      if (name === 'typeId') {
-        form.setValue('category', '');
-        form.setValue('subcategory', '');
-        form.setValue('assignedTo', '');
-        if (editingField) setEditingField(null);
-      }
-      if (name === 'category') {
-        form.setValue('subcategory', '');
-        if (editingField) setEditingField(null);
-      }
-      if (name === 'centerId' || name === 'affectedAreasIds') {
-        form.setValue('assignedTo', '');
-        if (editingField) setEditingField(null);
-      }
-    });
-    return () => subscription.unsubscribe();
-  }, [form, editingField]);
 
   useEffect(() => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -375,12 +289,12 @@ export function ActionForm({
   if (mode === 'view' && initialData) {
     return (
         <div className="space-y-6">
-            <ReadOnlyField label="Ámbito" value={initialData.type} onEdit={() => {}} canEdit={false} />
-            <ReadOnlyField label="Origen" value={initialData.category} onEdit={() => {}} canEdit={false}/>
-            <ReadOnlyField label="Clasificación" value={initialData.subcategory} onEdit={() => {}} canEdit={false}/>
-            <ReadOnlyField label="Áreas Funcionales Implicadas" value={initialData.affectedAreas.join(', ')} onEdit={() => {}} canEdit={false}/>
-            <ReadOnlyField label="Centro" value={initialData.center} onEdit={() => {}} canEdit={false}/>
-            <ReadOnlyField label="Asignado A (Responsable Análisis)" value={initialData.assignedTo} onEdit={() => {}} canEdit={false}/>
+            <ReadOnlyField label="Ámbito" value={initialData.type} />
+            <ReadOnlyField label="Origen" value={initialData.category}/>
+            <ReadOnlyField label="Clasificación" value={initialData.subcategory}/>
+            <ReadOnlyField label="Áreas Funcionales Implicadas" value={initialData.affectedAreas.join(', ')}/>
+            <ReadOnlyField label="Centro" value={initialData.center}/>
+            <ReadOnlyField label="Asignado A (Responsable Análisis)" value={initialData.assignedTo}/>
             <div className="space-y-2">
                 <Label className="text-primary">Observaciones</Label>
                 <p className="text-muted-foreground whitespace-pre-wrap">{initialData.description}</p>
@@ -388,14 +302,6 @@ export function ActionForm({
         </div>
     );
   }
-
-  const getDisplayValue = (collectionKey: string, id: string | undefined): string => {
-      if (!masterData || !id) return id || '';
-      const collection = masterData[collectionKey]?.data;
-      if (!collection) return id;
-      const item = collection.find((item: any) => item.id === id);
-      return item?.name || id;
-  };
 
   return (
     <>
@@ -416,14 +322,13 @@ export function ActionForm({
           />
 
           <div className="grid md:grid-cols-2 gap-6">
-            {mode === 'create' || editingField === 'typeId' ? (
               <FormField
                 control={form.control}
                 name="typeId"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Ámbito</FormLabel>
-                    <Select onValueChange={(v) => { field.onChange(v); setEditingField(null); }} value={field.value} disabled={disableForm || !filteredAmbits || filteredAmbits.length === 0}>
+                    <Select onValueChange={field.onChange} value={field.value} disabled={disableForm || !filteredAmbits || filteredAmbits.length === 0}>
                       <FormControl><SelectTrigger><SelectValue placeholder="Selecciona un ámbito" /></SelectTrigger></FormControl>
                       <SelectContent>{filteredAmbits?.map((opt: any) => (<SelectItem key={opt.id} value={opt.id}>{opt.name}</SelectItem>))}</SelectContent>
                     </Select>
@@ -431,18 +336,14 @@ export function ActionForm({
                   </FormItem>
                 )}
               />
-            ) : (
-              <ReadOnlyField label="Ámbito" value={getDisplayValue('ambits', form.getValues('typeId'))} onEdit={() => setEditingField('typeId')} canEdit={!disableForm} />
-            )}
-
-            {mode === 'create' || editingField === 'category' ? (
+            
               <FormField
                 control={form.control}
                 name="category"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Origen</FormLabel>
-                    <Select onValueChange={(v) => { field.onChange(v); setEditingField(null); }} value={field.value} disabled={disableForm || !filteredCategories || filteredCategories.length === 0}>
+                    <Select onValueChange={field.onChange} value={field.value} disabled={disableForm || !filteredCategories || filteredCategories.length === 0}>
                       <FormControl><SelectTrigger><SelectValue placeholder="Selecciona un origen" /></SelectTrigger></FormControl>
                       <SelectContent>{filteredCategories?.map((opt: any) => (<SelectItem key={opt.id} value={opt.id}>{opt.name}</SelectItem>))}</SelectContent>
                     </Select>
@@ -450,19 +351,15 @@ export function ActionForm({
                   </FormItem>
                 )}
               />
-            ) : (
-                <ReadOnlyField label="Origen" value={getDisplayValue('origins', form.getValues('category'))} onEdit={() => setEditingField('category')} canEdit={!disableForm} />
-            )}
           </div>
           
-           {mode === 'create' || editingField === 'subcategory' ? (
              <FormField
                 control={form.control}
                 name="subcategory"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Clasificación</FormLabel>
-                    <Select onValueChange={(v) => { field.onChange(v); setEditingField(null); }} value={field.value} disabled={disableForm || !filteredSubcategories || filteredSubcategories.length === 0}>
+                    <Select onValueChange={field.onChange} value={field.value} disabled={disableForm || !filteredSubcategories || filteredSubcategories.length === 0}>
                       <FormControl><SelectTrigger><SelectValue placeholder="Selecciona una clasificación" /></SelectTrigger></FormControl>
                       <SelectContent>{filteredSubcategories?.map((opt: any) => (<SelectItem key={opt.id} value={opt.id}>{opt.name}</SelectItem>))}</SelectContent>
                     </Select>
@@ -470,12 +367,8 @@ export function ActionForm({
                   </FormItem>
                 )}
               />
-           ) : (
-             <ReadOnlyField label="Clasificación" value={getDisplayValue('classifications', form.getValues('subcategory'))} onEdit={() => setEditingField('subcategory')} canEdit={!disableForm} />
-           )}
           
           <div className="grid md:grid-cols-2 gap-6">
-             {mode === 'create' || editingField === 'centerId' ? (
                 <FormField
                     control={form.control}
                     name="centerId"
@@ -495,7 +388,7 @@ export function ActionForm({
                             <Command><CommandInput placeholder="Cerca un centre..." /><CommandEmpty>No se ha trobat cap centre.</CommandEmpty>
                             <CommandGroup>
                                 {masterData?.centers?.data?.map((center: Center) => (
-                                <CommandItem value={center.name} key={center.id} onSelect={() => { form.setValue("centerId", center.id!); setIsCenterPopoverOpen(false); setEditingField(null); }}>
+                                <CommandItem value={center.name} key={center.id} onSelect={() => { form.setValue("centerId", center.id!); setIsCenterPopoverOpen(false); }}>
                                     <Check className={cn("mr-2 h-4 w-4", center.id === field.value ? "opacity-100" : "opacity-0")} />
                                     {center.name}
                                 </CommandItem>
@@ -508,9 +401,6 @@ export function ActionForm({
                     </FormItem>
                     )}
                 />
-            ) : (
-                <ReadOnlyField label="Centro" value={getDisplayValue('centers', form.getValues('centerId'))} onEdit={() => setEditingField('centerId')} canEdit={!disableForm} />
-            )}
 
             <FormField
               control={form.control}
@@ -542,14 +432,13 @@ export function ActionForm({
             />
           </div>
           
-          {mode === 'create' || editingField === 'assignedTo' ? (
             <FormField
                 control={form.control}
                 name="assignedTo"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Asignado A</FormLabel>
-                    <Select onValueChange={(v) => { field.onChange(v); setEditingField(null); }} value={field.value} disabled={disableForm || !responsibleOptions || responsibleOptions.length === 0}>
+                    <Select onValueChange={field.onChange} value={field.value} disabled={disableForm || !responsibleOptions || responsibleOptions.length === 0}>
                       <FormControl><SelectTrigger><SelectValue placeholder="Selecciona una persona responsable" /></SelectTrigger></FormControl>
                       <SelectContent>{responsibleOptions?.map((opt: any) => (<SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>))}</SelectContent>
                     </Select>
@@ -557,9 +446,6 @@ export function ActionForm({
                   </FormItem>
                 )}
             />
-          ) : (
-             <ReadOnlyField label="Asignado A" value={form.getValues('assignedTo')} onEdit={() => setEditingField('assignedTo')} canEdit={!disableForm} />
-          )}
 
           <FormField
             control={form.control}
