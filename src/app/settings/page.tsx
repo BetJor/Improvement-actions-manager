@@ -34,7 +34,6 @@ import { Input } from "@/components/ui/input";
 const settingsSchema = z.object({
   analysisDueDays: z.coerce.number().int().positive(),
   verificationDueDays: z.coerce.number().int().positive(),
-  implementationDueDays: z.coerce.number().int().positive(),
   closureDueDays: z.coerce.number().int().positive(),
 })
 type SettingsFormValues = z.infer<typeof settingsSchema>;
@@ -59,7 +58,6 @@ export default function SettingsPage() {
         defaultValues: {
           analysisDueDays: 30,
           verificationDueDays: 15,
-          implementationDueDays: 75,
           closureDueDays: 90,
         },
     });
@@ -122,7 +120,6 @@ export default function SettingsPage() {
 
             form.setValue("analysisDueDays", workflowSettings.analysisDueDays);
             form.setValue("verificationDueDays", workflowSettings.verificationDueDays);
-            form.setValue("implementationDueDays", workflowSettings.implementationDueDays);
             form.setValue("closureDueDays", workflowSettings.closureDueDays);
             
             if (currentTab) {
@@ -190,7 +187,6 @@ export default function SettingsPage() {
                  await updateWorkflowSettings({
                     analysisDueDays: values.analysisDueDays,
                     verificationDueDays: values.verificationDueDays,
-                    implementationDueDays: values.implementationDueDays,
                     closureDueDays: values.closureDueDays,
                 });
             } else {
@@ -392,7 +388,7 @@ export default function SettingsPage() {
                                             <CardTitle>Configuración de Vencimientos</CardTitle>
                                             <CardDescription>Define los plazos en días que se aplicarán a todas las nuevas acciones de mejora.</CardDescription>
                                         </CardHeader>
-                                        <CardContent className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                                        <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                             <FormField
                                                 control={form.control}
                                                 name="analysisDueDays"
@@ -412,19 +408,6 @@ export default function SettingsPage() {
                                                 render={({ field }) => (
                                                 <FormItem>
                                                     <FormLabel>Días para Verificación</FormLabel>
-                                                    <FormControl>
-                                                        <Input type="number" {...field} />
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                                )}
-                                            />
-                                            <FormField
-                                                control={form.control}
-                                                name="implementationDueDays"
-                                                render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>Días para Implantación</FormLabel>
                                                     <FormControl>
                                                         <Input type="number" {...field} />
                                                     </FormControl>

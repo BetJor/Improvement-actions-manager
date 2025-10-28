@@ -10,7 +10,6 @@ import { getActionTypes } from './master-data-service';
 interface WorkflowSettings {
     analysisDueDays: number;
     verificationDueDays: number;
-    implementationDueDays: number;
     closureDueDays: number;
 }
 
@@ -24,12 +23,11 @@ export async function getWorkflowSettings(): Promise<WorkflowSettings> {
     return {
         analysisDueDays: 30,
         verificationDueDays: 15,
-        implementationDueDays: 75,
         closureDueDays: 90,
     };
 }
 
-export async function updateWorkflowSettings(settings: WorkflowSettings): Promise<void> {
+export async function updateWorkflowSettings(settings: Omit<WorkflowSettings, 'implementationDueDays'>): Promise<void> {
     const docRef = doc(db, 'app_settings', 'workflow');
     await setDoc(docRef, settings, { merge: true });
 }
