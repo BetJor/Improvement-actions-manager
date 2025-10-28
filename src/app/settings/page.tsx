@@ -18,7 +18,6 @@ import {
     getWorkflowSettings,
     updateWorkflowSettings,
 } from "@/lib/data";
-import { useToast } from "@/hooks/use-toast";
 import type { MasterDataItem, ActionCategory, ResponsibilityRole, ImprovementActionType, ActionSubcategory } from "@/lib/types";
 import { Loader2 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
@@ -41,7 +40,6 @@ type SettingsFormValues = z.infer<typeof settingsSchema>;
 
 
 export default function SettingsPage() {
-    const { toast } = useToast();
     const { user, isAdmin, userRoles } = useAuth();
     const [masterData, setMasterData] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -130,15 +128,10 @@ export default function SettingsPage() {
 
         } catch (error) {
             console.error("Failed to load master data:", error);
-            toast({
-                variant: "destructive",
-                title: "Error de carga",
-                description: "No se han podido cargar los datos maestros.",
-            });
         } finally {
             setIsLoading(false);
         }
-    }, [toast, form]);
+    }, [form]);
 
     useEffect(() => {
         if(!masterData) {
@@ -258,11 +251,6 @@ export default function SettingsPage() {
             await Promise.all(updates);
         } catch (error) {
             console.error("Failed to save reordered items:", error);
-            toast({
-                variant: "destructive",
-                title: "Error al reordenar",
-                description: "No se pudo guardar el nuevo orden. Por favor, recarga la página.",
-            });
             await loadData(activeTab);
         }
     };
@@ -458,7 +446,7 @@ export default function SettingsPage() {
                         item={formConfig.item}
                         collectionName={formConfig.collectionName}
                         title={formConfig.title}
-                        onSave={onSave}
+                        onSave={handleSave}
                         extraData={{
                             categories: masterData.origins?.data,
                             actionTypes: masterData.ambits?.data,
