@@ -29,6 +29,12 @@ export default function LoginPage() {
           title: "Error al iniciar sesión", 
           description: "Credenciales incorrectas. Por favor, revisa tu correo electrónico y contraseña." 
         });
+      } else if (error.code === 'auth/invalid-email') {
+        toast({ 
+          variant: "destructive", 
+          title: "Error al iniciar sesión", 
+          description: "El formato del correo electrónico no es válido."
+        });
       } else {
         toast({ variant: "destructive", title: "Error al iniciar sesión", description: error.message });
       }
