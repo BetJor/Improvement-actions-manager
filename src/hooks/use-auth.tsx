@@ -124,6 +124,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setLoading(true);
       await loadFullUser(fbUser);
       if (fbUser && pathname.includes('/login')) {
+        // Use window.location.href for a full page navigation, which is cleaner
+        // for redirecting away from a login page.
         window.location.href = `/dashboard`;
       }
     });

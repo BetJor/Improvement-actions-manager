@@ -50,20 +50,34 @@ export function AppContent({ children }: { children: React.ReactNode }) {
     }
   }, [user, loading, pathname, router]);
 
+  // While loading, show a full-screen spinner.
+  // This prevents any content (even the login page) from flashing briefly
+  // while Firebase determines the auth state.
   if (loading) {
     return <div className="flex h-screen w-full items-center justify-center"><Loader2 className="h-8 w-8 animate-spin" /><span>Cargando...</span></div>;
   }
   
   const isLoginPage = pathname.includes('/login');
 
-  if (!user && !isLoginPage) {
-     return null; 
+  // If we are on the login page but the user is already authenticated,
+  // we show the loading screen while the redirect in useAuth takes effect.
+  // This prevents the login form from flashing.
+  if (isLoginPage && user) {
+     return <div className="flex h-screen w-full items-center justify-center"><Loader2 className="h-8 w-8 animate-spin" /><span>Redirigiendo...</span></div>;
   }
-  
-  if (isLoginPage) {
+
+  // If on login page and not authenticated, show the login page.
+  if (isLoginPage && !user) {
     return <>{children}</>;
   }
   
+  // If not on login page and not authenticated, we'll be redirected by the useEffect.
+  // Return null to prevent rendering the main layout.
+  if (!isLoginPage && !user) {
+     return null; 
+  }
+  
+  // If we get here, user is authenticated and not on the login page, so render the main app.
   return (
     <ActionStateProvider>
       <SidebarProvider>
