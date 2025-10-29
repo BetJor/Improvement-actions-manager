@@ -118,10 +118,12 @@ export default function UserManagementPage() {
           <CardTitle>Gestión de Usuarios</CardTitle>
           <CardDescription>Administra los usuarios de la aplicación, asigna roles y gestiona permisos.</CardDescription>
         </div>
+        {/*
         <Button onClick={handleAddNew}>
             <PlusCircle className="mr-2 h-4 w-4" />
             Añadir Nuevo Usuario
         </Button>
+        */}
       </CardHeader>
       <CardContent>
         <div className="rounded-md border">
@@ -160,6 +162,7 @@ export default function UserManagementPage() {
                                     <LogIn className="h-4 w-4" />
                                 </Button>
                             )}
+                            {/*
                             <Button variant="ghost" size="icon" onClick={() => handleEdit(user)}>
                                 <Pencil className="h-4 w-4" />
                             </Button>
@@ -182,6 +185,7 @@ export default function UserManagementPage() {
                                 </AlertDialogFooter>
                                 </AlertDialogContent>
                             </AlertDialog>
+                            */}
                         </TableCell>
                     </TableRow>
                     ))
