@@ -15,6 +15,18 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const { toast } = useToast();
 
+  const handleGoogleSignIn = async () => {
+    try {
+      await signInWithGoogle();
+    } catch (error: any) {
+      toast({ 
+        variant: "destructive", 
+        title: "Error de inicio de sesión", 
+        description: error.message 
+      });
+    }
+  };
+
   const handleSignIn = async () => {
     if (!email || !password) {
       toast({ variant: "destructive", title: "Los campos de correo y contraseña son obligatorios." });
@@ -62,7 +74,7 @@ export default function LoginPage() {
           <CardDescription>Accede a la plataforma con tus credenciales.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          <Button onClick={signInWithGoogle} className="w-full">
+          <Button onClick={handleGoogleSignIn} className="w-full">
             <Chrome className="mr-2 h-4 w-4" />
             Continuar con Google
           </Button>

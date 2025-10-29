@@ -147,7 +147,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signInWithGoogle = async () => {
     const provider = new GoogleAuthProvider();
-    await signInWithPopup(auth, provider);
+    const result = await signInWithPopup(auth, provider);
+    const user = result.user;
+    if (user.email && !user.email.endsWith('@costaisa.com')) {
+      await signOut(auth);
+      throw new Error('El acceso está restringido a usuarios del dominio costaisa.com');
+    }
   };
 
   const signInWithGoogleRedirect = async () => {
