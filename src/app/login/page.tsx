@@ -23,7 +23,15 @@ export default function LoginPage() {
     try {
       await signInWithEmail(email, password);
     } catch (error: any) {
-      toast({ variant: "destructive", title: "Error al iniciar sesión", description: error.message });
+      if (error.code === 'auth/invalid-credential') {
+        toast({ 
+          variant: "destructive", 
+          title: "Error al iniciar sesión", 
+          description: "Credenciales incorrectas. Por favor, revisa tu correo electrónico y contraseña." 
+        });
+      } else {
+        toast({ variant: "destructive", title: "Error al iniciar sesión", description: error.message });
+      }
     }
   };
 
