@@ -33,34 +33,32 @@ import {
 } from "@/components/ui/select"
 import type { User } from "@/lib/types"
 
-const formSchema = z.object({
+const baseSchema = z.object({
   name: z.string().min(1, "El nombre es requerido."),
   email: z.string().email("La dirección de correo no es válida."),
   role: z.enum(["Creator", "Responsible", "Director", "Committee", "Admin"], {
     required_error: "El rol es requerido.",
   }),
   avatar: z.string().url("La URL del avatar no es válida.").optional().or(z.literal('')),
-  password: z.string().optional(),
-  confirmPassword: z.string().optional(),
-}).refine(data => {
-  // If password is provided, confirmPassword must match.
-  // This rule applies only if password is not undefined/null/empty.
-  if (data.password) {
-    return data.password === data.confirmPassword;
-  }
-  return true;
-}, {
-  message: "Las contraseñas no coinciden.",
-  path: ["confirmPassword"], 
 });
 
-type UserFormValues = z.infer<typeof formSchema>
+const createSchema = baseSchema.extend({
+  password: z.string().min(6, "La contraseña debe tener al menos 6 caracteres."),
+  confirmPassword: z.string(),
+}).refine(data => data.password === data.confirmPassword, {
+  message: "Las contraseñas no coinciden.",
+  path: ["confirmPassword"],
+});
+
+const editSchema = baseSchema;
+
+type UserFormValues = z.infer<typeof createSchema>;
 
 interface UserFormDialogProps {
   isOpen: boolean
   setIsOpen: (isOpen: boolean) => void
   user: User | null
-  onSave: (data: Omit<User, "id">, id?: string) => Promise<void>
+  onSave: (data: Partial<UserFormValues>, id?: string) => Promise<void>
 }
 
 export function UserFormDialog({
@@ -70,16 +68,10 @@ export function UserFormDialog({
   onSave,
 }: UserFormDialogProps) {
   
-  const formSchemaForContext = user 
-    ? formSchema.omit({ password: true, confirmPassword: true }) 
-    : formSchema.refine(data => data.password && data.password.length >= 6, {
-        message: "La contraseña debe tener al menos 6 caracteres.",
-        path: ["password"],
-      });
-
+  const formSchema = user ? editSchema : createSchema;
 
   const form = useForm<UserFormValues>({
-    resolver: zodResolver(formSchemaForContext),
+    resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
       email: "",
@@ -114,7 +106,7 @@ export function UserFormDialog({
     }
   }, [user, form, isOpen])
 
-  const handleSubmit = (values: UserFormValues) => {
+  const handleSubmit = (values: Partial<UserFormValues>) => {
     onSave(values, user?.id)
   }
 
