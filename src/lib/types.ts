@@ -8,9 +8,9 @@ export interface MasterDataItem {
 }
     
 export interface ImprovementActionType extends MasterDataItem {
+  configAdminRoleIds?: string[]; // IDs of ResponsibilityRole who can configure this scope
   possibleCreationRoles?: string[]; // IDs from ResponsibilityRole collection
   possibleAnalysisRoles?: string[]; // IDs from ResponsibilityRole collection
-  configAdminRoleIds?: string[]; // IDs of ResponsibilityRole who can configure this scope
 }
 
 export interface ResponsibilityRole extends MasterDataItem {
@@ -24,7 +24,7 @@ export interface Center extends MasterDataItem {
 }
 
 
-export type ImprovementActionStatus = 'Borrador' | 'Pendiente Análisis' | 'Pendiente Comprobación' | 'Pendiente de Cierre' | 'Finalizada';
+export type ImprovementActionStatus = 'Borrador' | 'Pendiente Análisis' | 'Pendiente Comprobación' | 'Pendiente de Cierre' | 'Finalizada' | 'Anulada';
 
 export interface User {
   id: string;

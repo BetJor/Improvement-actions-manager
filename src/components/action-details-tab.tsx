@@ -14,7 +14,7 @@ import { AnalysisSection } from "@/components/analysis-section"
 import { VerificationSection } from "@/components/verification-section"
 import { ClosureSection } from "@/components/closure-section"
 import { ActionDetailsPanel } from "@/components/action-details-panel"
-import { Loader2, FileEdit, Edit, Star, Printer, FileSpreadsheet, ChevronDown, CheckCircle2 } from "lucide-react"
+import { Loader2, FileEdit, Edit, Star, Printer, FileSpreadsheet, ChevronDown, CheckCircle2, Ban } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Separator } from "@/components/ui/separator"
@@ -34,6 +34,17 @@ import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import type { UserOptions } from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 
 
 interface jsPDFWithAutoTable extends jsPDF {
@@ -51,7 +62,7 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
     const { toast } = useToast()
     const router = useRouter();
     const { closeCurrentTab } = useTabs();
-    const { user } = useAuth()
+    const { user, isAdmin } = useAuth()
     const { actions, setActions } = useActionState();
 
     const [action, setAction] = useState<ImprovementAction | null>(initialAction);
@@ -267,6 +278,42 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
         }
     };
     
+    const handleCancelAction = async () => {
+        if (!action || !user || !isAdmin) return;
+        
+        setIsSubmitting(true);
+        try {
+            const cancellationComment = `Acción anulada por ${user.name} el ${new Date().toLocaleDateString()}.`;
+            
+            await updateAction(action.id, {
+                status: 'Anulada',
+                newComment: {
+                    id: crypto.randomUUID(),
+                    author: { id: 'system', name: 'Sistema' },
+                    date: new Date().toISOString(),
+                    text: cancellationComment,
+                },
+            });
+
+            toast({
+                title: "Acción Anulada",
+                description: "La acción de mejora ha sido marcada como anulada.",
+            });
+
+            await handleActionUpdate();
+
+        } catch (error) {
+            console.error("Error cancelling action:", error);
+            toast({
+                variant: "destructive",
+                title: "Error al anular",
+                description: "No se ha podido anular la acción.",
+            });
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
     const generatePdf = async () => {
         if (!action) return;
 
@@ -720,6 +767,30 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
                     <h1 className="text-3xl font-bold tracking-tight">{action.actionId}: {action.title}</h1>
                     <ActionStatusBadge status={action.status} isCompliant={action.closure?.isCompliant} />
                     <div className="ml-auto flex items-center gap-2">
+                        {isAdmin && action.status !== 'Finalizada' && action.status !== 'Anulada' && (
+                            <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                    <Button variant="destructive" size="sm" disabled={isSubmitting}>
+                                        <Ban className="mr-2 h-4 w-4" />
+                                        Anular Acción
+                                    </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                        <AlertDialogTitle>¿Estás seguro de que quieres anular esta acción?</AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                            Esta acción no se puede deshacer. La acción quedará marcada como "Anulada" y no se podrá editar.
+                                        </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                        <AlertDialogAction onClick={handleCancelAction} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                                            Sí, anular acción
+                                        </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                </AlertDialogContent>
+                            </AlertDialog>
+                        )}
                         <Button variant="outline" size="sm" onClick={generatePdf}>
                             <Printer className="mr-2 h-4 w-4" />
                             Exportar a PDF

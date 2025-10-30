@@ -14,6 +14,7 @@ export function ActionStatusBadge({ status, isCompliant = null }: ActionStatusBa
     "Pendiente Comprobación": "bg-green-200 text-green-800",
     "Pendiente de Cierre": "bg-green-300 text-green-800",
     Finalizada: "bg-green-500 text-white",
+    Anulada: "bg-slate-500 text-white",
   }
 
   const isNonCompliantFinalized = status === 'Finalizada' && isCompliant === false;
