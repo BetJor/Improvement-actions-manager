@@ -105,6 +105,7 @@
       "cancelAction": "Anul·lar Acció",
       "cancelActionConfirm": "Estàs segur que vols anul·lar aquesta acció?",
       "cancelActionDescription": "Aquesta acció no es pot desfer. L'acció quedarà marcada com a 'Anul·lada' i no es podrà editar.",
+      "cancelationReason": "Motiu de l'anul·lació",
       "causesAndProposedAction": "Causes i Acció Proposada",
       "causesAnalysis": "Anàlisi de les Causes",
       "proposedAction": "Acció Propusada",

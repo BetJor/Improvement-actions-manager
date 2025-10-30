@@ -45,6 +45,8 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import { Label } from "./ui/label"
+import { Textarea } from "./ui/textarea"
 
 
 interface jsPDFWithAutoTable extends jsPDF {
@@ -73,6 +75,7 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
     const [selectedProposedAction, setSelectedProposedAction] = useState<any>(null);
     const [masterData, setMasterData] = useState<any>(null);
     const [isLoadingMasterData, setIsLoadingMasterData] = useState(true);
+    const [cancellationReason, setCancellationReason] = useState("");
     
     const { handleToggleFollow, isFollowing } = useFollowAction();
 
@@ -279,11 +282,11 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
     };
     
     const handleCancelAction = async () => {
-        if (!action || !user || !isAdmin) return;
+        if (!action || !user || !isAdmin || !cancellationReason.trim()) return;
         
         setIsSubmitting(true);
         try {
-            const cancellationComment = `Acción anulada por ${user.name} el ${new Date().toLocaleDateString()}.`;
+            const cancellationComment = `Acción anulada por ${user.name} el ${new Date().toLocaleDateString()}. Motivo: ${cancellationReason}`;
             
             await updateAction(action.id, {
                 status: 'Anulada',
@@ -299,7 +302,8 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
                 title: "Acción Anulada",
                 description: "La acción de mejora ha sido marcada como anulada.",
             });
-
+            
+            setCancellationReason("");
             await handleActionUpdate();
 
         } catch (error) {
@@ -782,11 +786,24 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
                                             Esta acción no se puede deshacer. La acción quedará marcada como "Anulada" y no se podrá editar.
                                         </AlertDialogDescription>
                                     </AlertDialogHeader>
+                                    <div className="grid gap-2 py-4">
+                                        <Label htmlFor="cancellation-reason">Motivo de la anulación</Label>
+                                        <Textarea
+                                            id="cancellation-reason"
+                                            placeholder="Introduce aquí el motivo de la anulación..."
+                                            value={cancellationReason}
+                                            onChange={(e) => setCancellationReason(e.target.value)}
+                                        />
+                                    </div>
                                     <AlertDialogFooter>
-                                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                        <AlertDialogAction onClick={handleCancelAction} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                                        <AlertDialogCancel onClick={() => setCancellationReason("")}>Cancelar</AlertDialogCancel>
+                                        <Button
+                                            variant="destructive"
+                                            onClick={handleCancelAction}
+                                            disabled={!cancellationReason.trim()}
+                                        >
                                             Sí, anular acción
-                                        </AlertDialogAction>
+                                        </Button>
                                     </AlertDialogFooter>
                                 </AlertDialogContent>
                             </AlertDialog>
