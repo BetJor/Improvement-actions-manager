@@ -14,7 +14,7 @@ import { AnalysisSection } from "@/components/analysis-section"
 import { VerificationSection } from "@/components/verification-section"
 import { ClosureSection } from "@/components/closure-section"
 import { ActionDetailsPanel } from "@/components/action-details-panel"
-import { Loader2, FileEdit, Edit, Star, Printer, FileSpreadsheet, ChevronDown, CheckCircle2, Ban } from "lucide-react"
+import { Loader2, FileEdit, Edit, Star, Printer, FileSpreadsheet, ChevronDown, CheckCircle2, Ban, MoreVertical } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Separator } from "@/components/ui/separator"
@@ -47,6 +47,13 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Label } from "./ui/label"
 import { Textarea } from "./ui/textarea"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
 
 interface jsPDFWithAutoTable extends jsPDF {
@@ -773,48 +780,64 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
                     <h1 className="text-3xl font-bold tracking-tight">{action.actionId}: {action.title}</h1>
                     <ActionStatusBadge status={action.status} isCompliant={action.closure?.isCompliant} />
                     <div className="ml-auto flex items-center gap-2">
-                        {isAdmin && action.status !== 'Finalizada' && action.status !== 'Anulada' && (
-                            <AlertDialog open={isCancelDialogOpen} onOpenChange={setIsCancelDialogOpen}>
-                                <AlertDialogTrigger asChild>
-                                    <Button variant="destructive" size="sm" disabled={isSubmitting}>
-                                        <Ban className="mr-2 h-4 w-4" />
-                                        Anular Acción
-                                    </Button>
-                                </AlertDialogTrigger>
-                                <AlertDialogContent>
-                                    <AlertDialogHeader>
-                                        <AlertDialogTitle>¿Estás seguro de que quieres anular esta acción?</AlertDialogTitle>
-                                        <AlertDialogDescription>
-                                            Esta acción no se puede deshacer. La acción quedará marcada como "Anulada" y no se podrá editar.
-                                        </AlertDialogDescription>
-                                    </AlertDialogHeader>
-                                    <div className="grid gap-2 py-4">
-                                        <Label htmlFor="cancellation-reason">Motivo de la anulación</Label>
-                                        <Textarea
-                                            id="cancellation-reason"
-                                            placeholder="Introduce aquí el motivo de la anulación..."
-                                            value={cancellationReason}
-                                            onChange={(e) => setCancellationReason(e.target.value)}
-                                        />
-                                    </div>
-                                    <AlertDialogFooter>
-                                        <AlertDialogCancel onClick={() => setCancellationReason("")}>Cancelar</AlertDialogCancel>
-                                        <Button
-                                            variant="destructive"
-                                            onClick={handleCancelAction}
-                                            disabled={!cancellationReason.trim() || isSubmitting}
-                                        >
-                                            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                            Sí, anular acción
-                                        </Button>
-                                    </AlertDialogFooter>
-                                </AlertDialogContent>
-                            </AlertDialog>
-                        )}
-                        <Button variant="outline" size="sm" onClick={generatePdf}>
-                            <Printer className="mr-2 h-4 w-4" />
-                            Exportar a PDF
-                        </Button>
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="outline" size="icon">
+                                    <MoreVertical className="h-4 w-4" />
+                                    <span className="sr-only">Más opciones</span>
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={generatePdf}>
+                                    <Printer className="mr-2 h-4 w-4" />
+                                    <span>Exportar a PDF</span>
+                                </DropdownMenuItem>
+                                {isAdmin && action.status !== 'Finalizada' && action.status !== 'Anulada' && (
+                                    <>
+                                        <DropdownMenuSeparator />
+                                        <AlertDialog open={isCancelDialogOpen} onOpenChange={setIsCancelDialogOpen}>
+                                            <AlertDialogTrigger asChild>
+                                                <DropdownMenuItem 
+                                                    onSelect={(e) => e.preventDefault()}
+                                                    className="text-red-600 focus:bg-red-50 focus:text-red-700"
+                                                >
+                                                    <Ban className="mr-2 h-4 w-4" />
+                                                    Anular Acción
+                                                </DropdownMenuItem>
+                                            </AlertDialogTrigger>
+                                            <AlertDialogContent>
+                                                <AlertDialogHeader>
+                                                    <AlertDialogTitle>¿Estás seguro de que quieres anular esta acción?</AlertDialogTitle>
+                                                    <AlertDialogDescription>
+                                                        Esta acción no se puede deshacer. La acción quedará marcada como "Anulada" y no se podrá editar.
+                                                    </AlertDialogDescription>
+                                                </AlertDialogHeader>
+                                                <div className="grid gap-2 py-4">
+                                                    <Label htmlFor="cancellation-reason">Motivo de la anulación</Label>
+                                                    <Textarea
+                                                        id="cancellation-reason"
+                                                        placeholder="Introduce aquí el motivo de la anulación..."
+                                                        value={cancellationReason}
+                                                        onChange={(e) => setCancellationReason(e.target.value)}
+                                                    />
+                                                </div>
+                                                <AlertDialogFooter>
+                                                    <AlertDialogCancel onClick={() => setCancellationReason("")}>Cancelar</AlertDialogCancel>
+                                                    <Button
+                                                        variant="destructive"
+                                                        onClick={handleCancelAction}
+                                                        disabled={!cancellationReason.trim() || isSubmitting}
+                                                    >
+                                                        {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                                        Sí, anular acción
+                                                    </Button>
+                                                </AlertDialogFooter>
+                                            </AlertDialogContent>
+                                        </AlertDialog>
+                                    </>
+                                )}
+                            </DropdownMenuContent>
+                        </DropdownMenu>
                     </div>
                 </header>
 
@@ -1025,3 +1048,5 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
         </div>
     )
 }
+
+    
