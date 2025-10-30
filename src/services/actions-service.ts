@@ -310,11 +310,8 @@ export async function updateAction(actionId: string, data: any, masterData: any 
             transaction.update(actionDocRef, { "analysis.proposedActions": updatedProposedActions });
         });
     } else {
-        // If masterData is NOT provided, it's a direct update (e.g., workflow step)
-        if (!masterData) {
-            dataToUpdate = { ...data };
-        } else {
-            // Reprocess names from IDs, but only if masterData is passed
+        // If masterData is provided, it's a form submission, so process names
+        if (masterData) {
             dataToUpdate = {
               title: data.title,
               description: data.description,
@@ -331,6 +328,14 @@ export async function updateAction(actionId: string, data: any, masterData: any 
               type: masterData?.ambits?.data?.find((t: any) => t.id === data.typeId)?.name || data.typeId || '',
               typeId: data.typeId,
             };
+        } else {
+            // Otherwise, it's a direct data update (e.g., status change, analysis save)
+            dataToUpdate = { ...data };
+        }
+       
+        // Preserve new status if provided from form submission
+        if (status) {
+            dataToUpdate.status = status;
         }
 
         // --- NEW DUE DATE LOGIC ---
@@ -347,16 +352,8 @@ export async function updateAction(actionId: string, data: any, masterData: any 
                  dataToUpdate.implementationDueDate = ''; // No proposed actions, no due date
             }
         }
-        
-        // 2. Calculate Closure Due Date is now handled in handleStatusChange
-        
-        // Crucially, if a new status is provided, it must be preserved.
-        if (status) {
-            console.log(`[ActionService] Applying new status from parameters: ${status}`);
-            dataToUpdate.status = status;
-        }
-  
-        // Auto-follow if sent to analysis
+
+        // Auto-follow if sent to analysis from draft
         if (dataToUpdate.status === 'Pendiente Análisis' && originalAction.status === 'Borrador' && originalAction.creator?.id) {
             dataToUpdate.followers = arrayUnion(originalAction.creator.id);
         }
