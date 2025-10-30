@@ -12,9 +12,10 @@ import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
-import { MessageSquare, Send, Loader2, ChevronRight } from "lucide-react"
+import { MessageSquare, Send, Loader2, ChevronRight, Info } from "lucide-react"
 import { formatDistanceToNow } from "date-fns"
 import { es } from "date-fns/locale"
+import { cn } from "@/lib/utils"
 
 interface CommentsSectionProps {
   action: ImprovementAction
@@ -65,6 +66,37 @@ export function CommentsSection({ action, onActionUpdate }: CommentsSectionProps
       setIsSubmittingComment(false)
     }
   }
+  
+  const SystemComment = ({ comment }: { comment: ActionComment }) => (
+    <div className="flex items-start gap-3 rounded-lg border border-blue-200 bg-blue-50 p-3">
+        <Info className="h-5 w-5 text-blue-600 mt-0.5 shrink-0" />
+        <div className="flex-1">
+            <p className="text-sm text-blue-800 whitespace-pre-wrap">{comment.text}</p>
+            <p className="text-xs text-blue-500 mt-1">
+                {formatDistanceToNow(new Date(comment.date), { addSuffix: true, locale: es })}
+            </p>
+        </div>
+    </div>
+  );
+
+  const UserComment = ({ comment }: { comment: ActionComment }) => (
+     <div className="flex gap-3">
+        <Avatar className="h-8 w-8">
+          {comment.author.avatar && <AvatarImage src={comment.author.avatar} />}
+          <AvatarFallback>{comment.author.name.charAt(0)}</AvatarFallback>
+        </Avatar>
+        <div className="flex-1">
+          <div className="flex justify-between items-center">
+            <p className="font-semibold text-sm">{comment.author.name}</p>
+            <p className="text-xs text-muted-foreground">
+              {formatDistanceToNow(new Date(comment.date), { addSuffix: true, locale: es })}
+            </p>
+          </div>
+          <p className="text-sm text-muted-foreground bg-muted p-2 rounded-md mt-1 whitespace-pre-wrap">{comment.text}</p>
+        </div>
+      </div>
+  );
+
 
   return (
     <Card>
@@ -86,23 +118,11 @@ export function CommentsSection({ action, onActionUpdate }: CommentsSectionProps
         <CollapsibleContent>
           <CardContent className="space-y-4 pt-0">
             <div className="space-y-4 max-h-60 overflow-y-auto pr-2">
-              {(action.comments || []).length > 0 ? (
+              {(action.comments && action.comments.length > 0) ? (
                 action.comments.map(comment => (
-                  <div key={comment.id} className="flex gap-3">
-                    <Avatar className="h-8 w-8">
-                      {comment.author.avatar && <AvatarImage src={comment.author.avatar} />}
-                      <AvatarFallback>{comment.author.name.charAt(0)}</AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1">
-                      <div className="flex justify-between items-center">
-                        <p className="font-semibold text-sm">{comment.author.name}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {formatDistanceToNow(new Date(comment.date), { addSuffix: true, locale: es })}
-                        </p>
-                      </div>
-                      <p className="text-sm text-muted-foreground bg-muted p-2 rounded-md mt-1 whitespace-pre-wrap">{comment.text}</p>
-                    </div>
-                  </div>
+                    comment.author.id === 'system' 
+                        ? <SystemComment key={comment.id} comment={comment} />
+                        : <UserComment key={comment.id} comment={comment} />
                 ))
               ) : (
                 <p className="text-sm text-muted-foreground text-center py-4">Aún no hay comentarios.</p>
