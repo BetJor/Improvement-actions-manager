@@ -76,6 +76,7 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
     const [masterData, setMasterData] = useState<any>(null);
     const [isLoadingMasterData, setIsLoadingMasterData] = useState(true);
     const [cancellationReason, setCancellationReason] = useState("");
+    const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
     
     const { handleToggleFollow, isFollowing } = useFollowAction();
 
@@ -304,6 +305,7 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
             });
             
             setCancellationReason("");
+            setIsCancelDialogOpen(false); // Close dialog on success
             await handleActionUpdate();
 
         } catch (error) {
@@ -772,7 +774,7 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
                     <ActionStatusBadge status={action.status} isCompliant={action.closure?.isCompliant} />
                     <div className="ml-auto flex items-center gap-2">
                         {isAdmin && action.status !== 'Finalizada' && action.status !== 'Anulada' && (
-                            <AlertDialog>
+                            <AlertDialog open={isCancelDialogOpen} onOpenChange={setIsCancelDialogOpen}>
                                 <AlertDialogTrigger asChild>
                                     <Button variant="destructive" size="sm" disabled={isSubmitting}>
                                         <Ban className="mr-2 h-4 w-4" />
@@ -800,8 +802,9 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
                                         <Button
                                             variant="destructive"
                                             onClick={handleCancelAction}
-                                            disabled={!cancellationReason.trim()}
+                                            disabled={!cancellationReason.trim() || isSubmitting}
                                         >
+                                            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                                             Sí, anular acción
                                         </Button>
                                     </AlertDialogFooter>
