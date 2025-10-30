@@ -275,9 +275,8 @@ async function handleStatusChange(action: ImprovementAction, oldStatus: Improvem
     await updateActionPermissions(action.id, action.typeId, action.status, action);
 }
 
-
-// Function to update an existing action
-export async function updateAction(actionId: string, data: any, masterData: any | null = null, status?: 'Borrador' | 'Pendiente Análisis'): Promise<ImprovementAction | null> {
+// This is the refactored function
+export async function updateAction(actionId: string, data: Partial<ImprovementAction> & { newComment?: any, updateProposedActionStatus?: any }, masterData: any | null = null, statusFromForm?: 'Borrador' | 'Pendiente Análisis'): Promise<ImprovementAction | null> {
     const actionDocRef = doc(db, 'actions', actionId);
     const originalActionSnap = await getDoc(actionDocRef);
     if (!originalActionSnap.exists()) {
@@ -286,9 +285,17 @@ export async function updateAction(actionId: string, data: any, masterData: any 
     const originalAction = { id: originalActionSnap.id, ...originalActionSnap.data() } as ImprovementAction;
     
     let dataToUpdate: any = {};
-    
+
+    // Case 1: Simple update with a comment
     if (data.newComment) {
         await updateDoc(actionDocRef, { comments: arrayUnion(data.newComment) });
+        // If a status update is also present (e.g., from cancellation)
+        if (data.status && data.status !== originalAction.status) {
+            await updateDoc(actionDocRef, { status: data.status });
+            const freshAction = await getActionById(actionId);
+            await handleStatusChange(freshAction!, originalAction.status);
+        }
+    // Case 2: Update status of a proposed action
     } else if (data.updateProposedActionStatus) {
         await runTransaction(db, async (transaction) => {
             const actionDoc = await transaction.get(actionDocRef);
@@ -299,28 +306,24 @@ export async function updateAction(actionId: string, data: any, masterData: any 
             
             const updatedProposedActions = proposedActions.map(pa => 
                 pa.id === data.updateProposedActionStatus.proposedActionId 
-                    ? { 
-                        ...pa, 
-                        status: data.updateProposedActionStatus.status,
-                        statusUpdateDate: new Date().toISOString() // Add the update date
-                      } 
+                    ? { ...pa, status: data.updateProposedActionStatus.status, statusUpdateDate: new Date().toISOString() } 
                     : pa
             );
             
             transaction.update(actionDocRef, { "analysis.proposedActions": updatedProposedActions });
         });
+    // Case 3: Full form update or complex state update (analysis, verification, closure)
     } else {
-        // If masterData is provided, it's a form submission, so process names
-        if (masterData) {
+        if (masterData) { // This indicates a form submission from ActionForm
             dataToUpdate = {
               title: data.title,
               description: data.description,
               assignedTo: data.assignedTo,
               responsibleGroupId: data.assignedTo,
-              category: masterData?.origins?.data?.find((c: any) => c.id === data.category)?.name || data.category || '',
-              categoryId: data.category,
-              subcategory: masterData?.classifications?.data?.find((s: any) => s.id === data.subcategory)?.name || data.subcategory || '',
-              subcategoryId: data.subcategory,
+              category: masterData?.origins?.data?.find((c: any) => c.id === data.categoryId)?.name || data.category || '',
+              categoryId: data.categoryId,
+              subcategory: masterData?.classifications?.data?.find((s: any) => s.id === data.subcategoryId)?.name || data.subcategory || '',
+              subcategoryId: data.subcategoryId,
               affectedAreas: data.affectedAreasIds.map((id: string) => masterData?.affectedAreas?.find((a: any) => a.id === id)?.name || id),
               affectedAreasIds: data.affectedAreasIds,
               center: masterData?.centers?.data?.find((c: any) => c.id === data.centerId)?.name || data.centerId || '',
@@ -328,18 +331,15 @@ export async function updateAction(actionId: string, data: any, masterData: any 
               type: masterData?.ambits?.data?.find((t: any) => t.id === data.typeId)?.name || data.typeId || '',
               typeId: data.typeId,
             };
+            if (statusFromForm) {
+                dataToUpdate.status = statusFromForm;
+            }
         } else {
-            // Otherwise, it's a direct data update (e.g., status change, analysis save)
+            // This is for other updates like analysis, verification, closure
             dataToUpdate = { ...data };
         }
        
-        // Preserve new status if provided from form submission
-        if (status) {
-            dataToUpdate.status = status;
-        }
-
-        // --- NEW DUE DATE LOGIC ---
-        // 1. Calculate Implementation Due Date when saving Analysis
+        // Calculate Implementation Due Date when saving Analysis
         if (data.analysis && Array.isArray(data.analysis.proposedActions)) {
             const dueDates = data.analysis.proposedActions
                 .map((pa: ProposedAction) => pa.dueDate ? new Date(pa.dueDate as string) : null)
@@ -349,7 +349,7 @@ export async function updateAction(actionId: string, data: any, masterData: any 
                 const maxDueDate = new Date(Math.max.apply(null, dueDates.map(d => d.getTime())));
                 dataToUpdate.implementationDueDate = maxDueDate.toISOString();
             } else {
-                 dataToUpdate.implementationDueDate = ''; // No proposed actions, no due date
+                 dataToUpdate.implementationDueDate = '';
             }
         }
 
@@ -385,23 +385,18 @@ export async function updateAction(actionId: string, data: any, masterData: any 
             await createAction(bisActionData, allMasterData);
         }
         
-        // Apply updates to Firestore
         if (Object.keys(dataToUpdate).length > 0) {
-            console.log("[ActionService] Updating Firestore with:", dataToUpdate);
             await updateDoc(actionDocRef, dataToUpdate);
         }
     }
     
-    // Get a fresh copy of the action *after* updates
     const updatedActionDoc = await getDoc(actionDocRef);
     const updatedAction = { id: updatedActionDoc.id, ...updatedActionDoc.data() } as ImprovementAction;
 
-    // Handle status change if it occurred
     if (updatedAction.status !== originalAction.status) {
         await handleStatusChange(updatedAction, originalAction.status);
     }
 
-    // Return the latest version of the document
     return await getActionById(actionId);
 }
 
