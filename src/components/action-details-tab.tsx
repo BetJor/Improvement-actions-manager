@@ -186,7 +186,7 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
         try {
             const oldValue = field.split('.').reduce((o, i) => o?.[i], action);
 
-            const { updatedAction: returnedAction, bisActionTitle } = await updateAction(action.id, { [field]: newValue });
+            const { bisActionTitle } = await updateAction(action.id, { [field]: newValue });
             
             toast({
                 title: "Campo actualizado",
@@ -376,8 +376,8 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
         if (!action || !user || !isAdmin || !editingProposedAction) return;
 
         const actionIndex = action.analysis?.proposedActions.findIndex(pa => pa.id === updatedProposedAction.id) ?? -1;
+        
         let changes: string[] = [];
-
         if (editingProposedAction.description !== updatedProposedAction.description) changes.push("la descripción");
         if (editingProposedAction.responsibleUserId !== updatedProposedAction.responsibleUserId) changes.push("el responsable");
         if (safeParseDate(editingProposedAction.dueDate)?.getTime() !== safeParseDate(updatedProposedAction.dueDate)?.getTime()) changes.push("la fecha de vencimiento");
