@@ -839,17 +839,19 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
                         <Star className={cn("h-5 w-5", isFollowing(action.id) ? "text-yellow-400 fill-yellow-400" : "text-muted-foreground")} />
                       </Button>
                     <div className="flex-1 flex items-start gap-2">
-                        <h1 className="text-3xl font-bold tracking-tight">{action.actionId}: {action.title}</h1>
-                        {isAdmin && (
-                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEditClick('title', 'Título', action.title)}>
-                                <Pencil className="h-4 w-4" />
-                            </Button>
-                        )}
+                         <div className="group relative">
+                            <h1 className="text-3xl font-bold tracking-tight pr-8">{action.actionId}: {action.title}</h1>
+                             {isAdmin && (
+                                <Button variant="ghost" size="icon" className="absolute top-0 -right-2 h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => handleEditClick('title', 'Título', action.title)}>
+                                    <Pencil className="h-4 w-4" />
+                                </Button>
+                            )}
+                        </div>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 group relative">
                         <ActionStatusBadge status={action.status} isCompliant={action.closure?.isCompliant} />
-                        {isAdmin && (
-                             <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEditClick('status', 'Estado', action.status, { statuses: ALL_STATUSES })}>
+                         {isAdmin && (
+                             <Button variant="ghost" size="icon" className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => handleEditClick('status', 'Estado', action.status, { statuses: ALL_STATUSES })}>
                                 <Pencil className="h-4 w-4" />
                             </Button>
                         )}
