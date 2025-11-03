@@ -461,19 +461,22 @@ export function ActionForm({
  const observationsSection = (
     <div className="space-y-6">
         {mode === 'view' ? (
-            <div className="group relative">
-                <p className="text-muted-foreground whitespace-pre-wrap p-3 border rounded-md min-h-[100px] bg-muted/30">{initialData?.description}</p>
-                {isAdmin && (
-                    <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        className="absolute top-2 right-2 h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity" 
-                        onClick={() => onEditField('description', 'Observaciones', initialData?.description, {}, 'textarea')}
-                    >
-                        <Pencil className="h-4 w-4" />
-                    </Button>
-                )}
-            </div>
+             <FormItem>
+                <div className="group flex items-center gap-2">
+                    <Label className="text-lg font-semibold">Observaciones</Label>
+                    {isAdmin && (
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                            onClick={() => onEditField('description', 'Observaciones', initialData?.description, {}, 'textarea')}
+                        >
+                            <Pencil className="h-4 w-4" />
+                        </Button>
+                    )}
+                </div>
+                <p className="text-sm text-muted-foreground whitespace-pre-wrap">{initialData?.description}</p>
+            </FormItem>
         ) : (
           <FormField
             control={form.control}
@@ -519,7 +522,8 @@ export function ActionForm({
 
             <Card>
                 <CardHeader>
-                    <CardTitle>Observaciones</CardTitle>
+                    {/* The title is inside the observationsSection now for view mode */}
+                    {mode !== 'view' && <CardTitle>Observaciones</CardTitle>}
                 </CardHeader>
                 <CardContent>
                     {observationsSection}
@@ -570,5 +574,3 @@ export function ActionForm({
     </>
   )
 }
-
-    
