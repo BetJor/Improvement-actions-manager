@@ -181,18 +181,10 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
 
     const handleAdminEditSave = async (field: string, newValue: any) => {
         if (!action || !user || !isAdmin) return;
-    
-        const getNestedValue = (obj: any, path: string) => path.split('.').reduce((acc, part) => acc && acc[part], obj);
-        const oldValue = getNestedValue(action, field);
-    
-        if (oldValue === newValue) {
-            setIsEditDialogOpen(false);
-            return;
-        }
-    
+        
         setIsSubmitting(true);
         try {
-            const systemComment = `El administrador ${user.name} ha cambiado el campo '${editingField?.label}' de '${oldValue}' a '${newValue}'.`;
+            const systemComment = `El administrador ${user.name} ha cambiado el campo '${editingField?.label}'.`;
     
             await updateAction(action.id, {
                 [field]: newValue,
@@ -385,16 +377,18 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
     
         setIsSubmitting(true);
         try {
-            // Pass null for masterData as it's not needed for this specific update
+            const actionIndex = action.analysis?.proposedActions.findIndex(pa => pa.id === updatedProposedAction.id) ?? -1;
+            const commentText = `El administrador ${user.name} ha modificado la acción propuesta ${actionIndex + 1}.`;
+
             await updateAction(action.id, {
                 updateProposedAction: updatedProposedAction,
                 newComment: {
                     id: crypto.randomUUID(),
                     author: { id: 'system', name: 'Sistema' },
                     date: new Date().toISOString(),
-                    text: `El administrador ${user.name} ha modificado la acción propuesta: "${updatedProposedAction.description}".`,
+                    text: commentText,
                 }
-            }, null);
+            });
             
             toast({
                 title: "Acción Propuesta Actualizada",

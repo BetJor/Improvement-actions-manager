@@ -23,7 +23,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Loader2 } from "lucide-react";
-import type { ImprovementActionStatus } from "@/lib/types";
+import type { ImprovementActionStatus, User } from "@/lib/types";
 import { Textarea } from "./ui/textarea";
 
 interface AdminEditDialogProps {
@@ -73,6 +73,24 @@ export function AdminEditDialog({
           />
       )
     }
+
+    if (fieldInfo.field === 'analysis.verificationResponsibleUserId') {
+        return (
+             <Select value={currentValue} onValueChange={setCurrentValue}>
+                <SelectTrigger id="field-edit" className="col-span-3">
+                <SelectValue placeholder="Selecciona un responsable" />
+                </SelectTrigger>
+                <SelectContent>
+                {fieldInfo.options?.users?.map((user: User) => (
+                    <SelectItem key={user.id} value={user.id}>
+                    {user.name}
+                    </SelectItem>
+                ))}
+                </SelectContent>
+            </Select>
+        );
+    }
+
 
     switch (fieldInfo.field) {
       case "title":
