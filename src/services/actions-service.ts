@@ -324,6 +324,19 @@ export async function updateAction(actionId: string, data: Partial<ImprovementAc
             );
             
             const updatePayload: any = { "analysis.proposedActions": updatedProposedActions };
+            
+            // Recalculate implementationDueDate
+            const dueDates = updatedProposedActions
+                .map((pa: ProposedAction) => pa.dueDate ? new Date(pa.dueDate as string) : null)
+                .filter((d): d is Date => d !== null && !isNaN(d.getTime()));
+
+            if (dueDates.length > 0) {
+                const maxDueDate = new Date(Math.max.apply(null, dueDates.map(d => d.getTime())));
+                updatePayload.implementationDueDate = maxDueDate.toISOString();
+            } else {
+                 updatePayload.implementationDueDate = '';
+            }
+
             if (data.newComment) {
                 updatePayload.comments = arrayUnion(data.newComment);
             }
@@ -515,3 +528,4 @@ export async function updateActionPermissions(actionId: string, typeId: string, 
     });
     console.log(`[ActionService] Permissions updated successfully for action ${actionId}.`);
 }
+

@@ -373,13 +373,33 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
     };
 
     const handleProposedActionSave = async (updatedProposedAction: ProposedAction) => {
-        if (!action || !user || !isAdmin) return;
-    
+        if (!action || !user || !isAdmin || !editingProposedAction) return;
+
+        const actionIndex = action.analysis?.proposedActions.findIndex(pa => pa.id === updatedProposedAction.id) ?? -1;
+        let changes: string[] = [];
+
+        if (editingProposedAction.description !== updatedProposedAction.description) {
+            changes.push("la descripción");
+        }
+        if (editingProposedAction.responsibleUserId !== updatedProposedAction.responsibleUserId) {
+            changes.push("el responsable");
+        }
+        if (safeParseDate(editingProposedAction.dueDate)?.getTime() !== safeParseDate(updatedProposedAction.dueDate)?.getTime()) {
+            changes.push("la fecha de vencimiento");
+        }
+        if (editingProposedAction.status !== updatedProposedAction.status) {
+            changes.push("el estado");
+        }
+
+        if (changes.length === 0) {
+            setEditingProposedAction(null);
+            return;
+        }
+
+        const commentText = `El administrador ${user.name} ha modificado ${changes.join(', ')} de la acción propuesta ${actionIndex + 1}.`;
+
         setIsSubmitting(true);
         try {
-            const actionIndex = action.analysis?.proposedActions.findIndex(pa => pa.id === updatedProposedAction.id) ?? -1;
-            const commentText = `El administrador ${user.name} ha modificado la acción propuesta ${actionIndex + 1}.`;
-
             await updateAction(action.id, {
                 updateProposedAction: updatedProposedAction,
                 newComment: {
@@ -869,10 +889,10 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
                       >
                         <Star className={cn("h-5 w-5", isFollowing(action.id) ? "text-yellow-400 fill-yellow-400" : "text-muted-foreground")} />
                       </Button>
-                    <div className="flex-1 flex items-start gap-2">
-                         <div className="group relative">
+                    <div className="flex-1">
+                        <div className="group relative">
                             <h1 className="text-3xl font-bold tracking-tight pr-8">{action.actionId}: {action.title}</h1>
-                             {isAdmin && (
+                            {isAdmin && (
                                 <Button variant="ghost" size="icon" className="absolute top-0 right-0 h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => handleEditClick('title', 'Título', action.title)}>
                                     <Pencil className="h-4 w-4" />
                                 </Button>
@@ -1006,7 +1026,7 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
                                         <div className="flex items-center gap-2 mb-2">
                                             <h3 className="font-semibold text-lg">Análisis de las Causas</h3>
                                             {isAdmin && (
-                                                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleEditClick('analysis.causes', 'Análisis de Causas', action.analysis?.causes, {}, 'textarea')}>
+                                                <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => handleEditClick('analysis.causes', 'Análisis de Causas', action.analysis?.causes, {}, 'textarea')}>
                                                     <Pencil className="h-4 w-4" />
                                                 </Button>
                                             )}
@@ -1066,7 +1086,7 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
                                         <div className="flex items-center gap-2 mb-2">
                                             <h3 className="font-semibold text-lg">Responsable de la Verificación</h3>
                                             {isAdmin && (
-                                                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleEditClick('analysis.verificationResponsibleUserId', 'Responsable de Verificación', action.analysis?.verificationResponsibleUserId, { users: users })}>
+                                                <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => handleEditClick('analysis.verificationResponsibleUserId', 'Responsable de Verificación', action.analysis?.verificationResponsibleUserId, { users: users })}>
                                                     <Pencil className="h-4 w-4" />
                                                 </Button>
                                             )}
@@ -1104,13 +1124,15 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
                                 </CardHeader>
                                 <CardContent className="space-y-6">
                                     <div className="group relative">
-                                        <h3 className="font-semibold text-lg mb-2">Observaciones Generales</h3>
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <h3 className="font-semibold text-lg">Observaciones Generales</h3>
+                                             {isAdmin && (
+                                                <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => handleEditClick('verification.notes', 'Observaciones de Verificación', action.verification?.notes, {}, 'textarea')}>
+                                                    <Pencil className="h-4 w-4" />
+                                                </Button>
+                                            )}
+                                        </div>
                                         <p className="text-muted-foreground whitespace-pre-wrap">{action.verification.notes}</p>
-                                         {isAdmin && (
-                                            <Button variant="ghost" size="icon" className="absolute top-0 right-0 h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => handleEditClick('verification.notes', 'Observaciones de Verificación', action.verification?.notes, {}, 'textarea')}>
-                                                <Pencil className="h-4 w-4" />
-                                            </Button>
-                                        )}
                                     </div>
                                     <Separator />
                                     <div>
@@ -1167,13 +1189,15 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
                                     </p>
                                 </div>
                                 <div className="group relative">
-                                    <h3 className="font-semibold text-base mb-2">Observaciones Finales</h3>
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <h3 className="font-semibold text-base">Observaciones Finales</h3>
+                                        {isAdmin && (
+                                            <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => handleEditClick('closure.notes', 'Observaciones Finales', action.closure?.notes, {}, 'textarea')}>
+                                                <Pencil className="h-4 w-4" />
+                                            </Button>
+                                        )}
+                                    </div>
                                     <p className="text-muted-foreground whitespace-pre-wrap">{action.closure.notes}</p>
-                                    {isAdmin && (
-                                        <Button variant="ghost" size="icon" className="absolute top-0 right-0 h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => handleEditClick('closure.notes', 'Observaciones Finales', action.closure?.notes, {}, 'textarea')}>
-                                            <Pencil className="h-4 w-4" />
-                                        </Button>
-                                    )}
                                 </div>
                             </CardContent>
                             </Card>
@@ -1224,3 +1248,4 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
         </div>
     )
 }
+
