@@ -459,31 +459,31 @@ export function ActionForm({
 
 
  const observationsSection = (
-    <div className="space-y-6">
+    <Card>
+      <CardHeader>
+        <div className="flex items-center justify-between">
+            <CardTitle>Observaciones</CardTitle>
+            {isAdmin && mode === 'view' && (
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => onEditField('description', 'Observaciones', initialData?.description, {}, 'textarea')}
+                >
+                    <Pencil className="h-4 w-4" />
+                </Button>
+            )}
+        </div>
+      </CardHeader>
+      <CardContent>
         {mode === 'view' ? (
-             <FormItem>
-                <div className="group flex items-center gap-2">
-                    <Label className="font-semibold text-lg">Observaciones</Label>
-                     {isAdmin && (
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                            onClick={() => onEditField('description', 'Observaciones', initialData?.description, {}, 'textarea')}
-                        >
-                            <Pencil className="h-4 w-4" />
-                        </Button>
-                    )}
-                </div>
-                <p className="text-sm text-muted-foreground whitespace-pre-wrap pt-2">{initialData?.description}</p>
-            </FormItem>
+             <p className="text-sm text-muted-foreground whitespace-pre-wrap">{initialData?.description}</p>
         ) : (
           <FormField
             control={form.control}
             name="description"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Observaciones</FormLabel>
                 <div className="flex items-center rounded-md border border-input focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2">
                     <FormControl>
                         <Textarea placeholder="Describe la no conformidad o el área de mejora..." className="flex-grow resize-y min-h-[120px] border-none focus-visible:ring-0 focus-visible:ring-offset-0" {...field} disabled={disableForm} />
@@ -500,7 +500,8 @@ export function ActionForm({
             )}
           />
         )}
-    </div>
+      </CardContent>
+    </Card>
  );
 
   return (
