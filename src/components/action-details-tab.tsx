@@ -385,6 +385,7 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
     
         setIsSubmitting(true);
         try {
+            // Pass null for masterData as it's not needed for this specific update
             await updateAction(action.id, {
                 updateProposedAction: updatedProposedAction,
                 newComment: {
@@ -393,7 +394,7 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
                     date: new Date().toISOString(),
                     text: `El administrador ${user.name} ha modificado la acción propuesta: "${updatedProposedAction.description}".`,
                 }
-            });
+            }, null);
             
             toast({
                 title: "Acción Propuesta Actualizada",

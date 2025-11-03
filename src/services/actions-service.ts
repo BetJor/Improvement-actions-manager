@@ -287,7 +287,7 @@ export async function updateAction(actionId: string, data: Partial<ImprovementAc
     let dataToUpdate: any = {};
 
     // Case 1: Simple update with a comment (including admin field edits)
-    if (data.newComment) {
+    if (data.newComment && !data.updateProposedAction) {
         const { newComment, ...restOfData } = data;
         dataToUpdate = { ...restOfData, comments: arrayUnion(newComment) };
         await updateDoc(actionDocRef, dataToUpdate);
@@ -323,10 +323,11 @@ export async function updateAction(actionId: string, data: Partial<ImprovementAc
                     : pa
             );
             
-            transaction.update(actionDocRef, { 
-                "analysis.proposedActions": updatedProposedActions,
-                comments: arrayUnion(data.newComment) 
-            });
+            const updatePayload: any = { "analysis.proposedActions": updatedProposedActions };
+            if (data.newComment) {
+                updatePayload.comments = arrayUnion(data.newComment);
+            }
+            transaction.update(actionDocRef, updatePayload);
         });
     // Case 4: Full form update or complex state update (analysis, verification, closure)
     } else {
