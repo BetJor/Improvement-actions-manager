@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/select";
 import { Loader2 } from "lucide-react";
 import type { ImprovementActionStatus } from "@/lib/types";
+import { Textarea } from "./ui/textarea";
 
 interface AdminEditDialogProps {
   isOpen: boolean;
@@ -32,6 +33,7 @@ interface AdminEditDialogProps {
     label: string;
     value: any;
     options?: any;
+    fieldType?: string;
   } | null;
   onSave: (field: string, newValue: any) => Promise<void>;
   isSubmitting: boolean;
@@ -59,6 +61,18 @@ export function AdminEditDialog({
   };
 
   const renderField = () => {
+    if (fieldInfo.fieldType === 'textarea') {
+      return (
+          <Textarea
+            id="field-edit"
+            value={currentValue || ''}
+            onChange={(e) => setCurrentValue(e.target.value)}
+            rows={8}
+            className="col-span-3"
+          />
+      )
+    }
+
     switch (fieldInfo.field) {
       case "title":
         return (
@@ -66,12 +80,13 @@ export function AdminEditDialog({
             id="field-edit"
             value={currentValue}
             onChange={(e) => setCurrentValue(e.target.value)}
+            className="col-span-3"
           />
         );
       case "status":
         return (
           <Select value={currentValue} onValueChange={setCurrentValue}>
-            <SelectTrigger id="field-edit">
+            <SelectTrigger id="field-edit" className="col-span-3">
               <SelectValue placeholder="Selecciona un estado" />
             </SelectTrigger>
             <SelectContent>
@@ -89,6 +104,7 @@ export function AdminEditDialog({
             id="field-edit"
             value={currentValue}
             onChange={(e) => setCurrentValue(e.target.value)}
+            className="col-span-3"
           />
         );
     }
@@ -96,7 +112,7 @@ export function AdminEditDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogContent>
+      <DialogContent className={fieldInfo.fieldType === 'textarea' ? 'sm:max-w-2xl' : 'sm:max-w-md'}>
         <DialogHeader>
           <DialogTitle>Editar {fieldInfo.label}</DialogTitle>
           <DialogDescription>
@@ -104,11 +120,11 @@ export function AdminEditDialog({
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="field-edit" className="text-right">
+          <div className={fieldInfo.fieldType === 'textarea' ? "grid gap-2" : "grid grid-cols-4 items-center gap-4"}>
+            <Label htmlFor="field-edit" className={fieldInfo.fieldType !== 'textarea' ? "text-right" : ""}>
               {fieldInfo.label}
             </Label>
-            <div className="col-span-3">{renderField()}</div>
+            {renderField()}
           </div>
         </div>
         <DialogFooter>
