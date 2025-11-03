@@ -78,7 +78,7 @@ const ReadOnlyField = ({ label, value }: { label: string; value?: string | React
   return (
     <div className="grid gap-1.5">
       <Label className="text-primary">{label}</Label>
-      <div className="text-sm font-medium">
+      <div className="text-sm font-medium break-words">
         {value}
       </div>
     </div>
@@ -293,217 +293,6 @@ export function ActionForm({
 
   const disableForm = isSubmitting || mode === 'view';
 
- const detailsSection = (
-    <div className="space-y-6">
-        {mode === 'view' ? (
-             <div className="space-y-4">
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <ReadOnlyField label="Asunto" value={initialData?.title} />
-                    <ReadOnlyField label="Asignado A (Responsable Análisis)" value={initialData?.assignedTo} />
-                </div>
-                 <div className="space-y-4">
-                     <ReadOnlyField label="Ámbito" value={initialData?.type} />
-                     <ReadOnlyField label="Origen" value={initialData?.category} />
-                     <ReadOnlyField label="Clasificación" value={initialData?.subcategory} />
-                 </div>
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                     <ReadOnlyField label="Centro" value={initialData?.center} />
-                     <ReadOnlyField label="Áreas Funcionales Implicadas" value={initialData?.affectedAreas.join(', ')} />
-                 </div>
-             </div>
-        ) : (
-        <>
-          <FormField
-            control={form.control}
-            name="title"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Asunto</FormLabel>
-                <FormControl>
-                  <Input placeholder="p. ej., Optimización del proceso de facturación" {...field} disabled={disableForm} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <div className="grid md:grid-cols-2 gap-6">
-              <FormField
-                control={form.control}
-                name="typeId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Ámbito</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value} disabled={disableForm || !filteredAmbits || filteredAmbits.length === 0}>
-                      <FormControl><SelectTrigger><SelectValue placeholder="Selecciona un ámbito" /></SelectTrigger></FormControl>
-                      <SelectContent>{filteredAmbits?.map((opt: any) => (<SelectItem key={opt.id} value={opt.id}>{opt.name}</SelectItem>))}</SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            
-              <FormField
-                control={form.control}
-                name="category"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Origen</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value} disabled={disableForm || !filteredCategories || filteredCategories.length === 0}>
-                      <FormControl><SelectTrigger><SelectValue placeholder="Selecciona un origen" /></SelectTrigger></FormControl>
-                      <SelectContent>{filteredCategories?.map((opt: any) => (<SelectItem key={opt.id} value={opt.id}>{opt.name}</SelectItem>))}</SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-          </div>
-          
-             <FormField
-                control={form.control}
-                name="subcategory"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Clasificación</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value} disabled={disableForm || !filteredSubcategories || filteredSubcategories.length === 0}>
-                      <FormControl><SelectTrigger><SelectValue placeholder="Selecciona una clasificación" /></SelectTrigger></FormControl>
-                      <SelectContent>{filteredSubcategories?.map((opt: any) => (<SelectItem key={opt.id} value={opt.id}>{opt.name}</SelectItem>))}</SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-          
-          <div className="grid md:grid-cols-2 gap-6">
-                <FormField
-                    control={form.control}
-                    name="centerId"
-                    render={({ field }) => (
-                    <FormItem className="flex flex-col gap-2">
-                        <FormLabel>Centro</FormLabel>
-                        <Popover open={isCenterPopoverOpen} onOpenChange={setIsCenterPopoverOpen}>
-                        <PopoverTrigger asChild>
-                            <FormControl>
-                            <Button variant="outline" role="combobox" disabled={disableForm} className={cn("w-full justify-between", !field.value && "text-muted-foreground")}>
-                                {field.value && masterData?.centers?.data ? masterData.centers.data.find((center: Center) => center.id === field.value)?.name : "Selecciona un centre"}
-                                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                            </Button>
-                            </FormControl>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-[--radix-popover-trigger-width] max-h-[--radix-popover-content-available-height] p-0">
-                            <Command><CommandInput placeholder="Cerca un centre..." /><CommandEmpty>No se ha trobat cap centre.</CommandEmpty>
-                            <CommandGroup>
-                                {masterData?.centers?.data?.map((center: Center) => (
-                                <CommandItem value={center.name} key={center.id} onSelect={() => { form.setValue("centerId", center.id!); setIsCenterPopoverOpen(false); }}>
-                                    <Check className={cn("mr-2 h-4 w-4", center.id === field.value ? "opacity-100" : "opacity-0")} />
-                                    {center.name}
-                                </CommandItem>
-                                ))}
-                            </CommandGroup>
-                            </Command>
-                        </PopoverContent>
-                        </Popover>
-                        <FormMessage />
-                    </FormItem>
-                    )}
-                />
-
-            <FormField
-              control={form.control}
-              name="affectedAreasIds"
-              render={({ field }) => (
-                <FormItem className="flex flex-col gap-2">
-                  <FormLabel>Áreas Funcionales Implicadas</FormLabel>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <FormControl>
-                         <Button variant="outline" disabled={disableForm} className={cn("w-full justify-start text-left font-normal", !field.value?.length && "text-muted-foreground")}>
-                            <span className="truncate">{field.value?.length > 0 && masterData?.affectedAreas ? field.value.map((id) => masterData.affectedAreas.find((area: AffectedArea) => area.id === id)?.name).filter(Boolean).join(", ") : "Selecciona áreas"}</span>
-                            <ChevronsUpDown className="ml-auto h-4 w-4 shrink-0 opacity-50" />
-                        </Button>
-                      </FormControl>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent className="w-[var(--radix-dropdown-menu-trigger-width)]" align="start">
-                        <DropdownMenuLabel>Áreas Afectadas</DropdownMenuLabel><DropdownMenuSeparator />
-                        {masterData?.affectedAreas?.map((area: AffectedArea) => (
-                             <DropdownMenuCheckboxItem key={area.id} checked={field.value?.includes(area.id!)} onCheckedChange={(checked) => {
-                                return checked ? field.onChange([...(field.value || []), area.id]) : field.onChange((field.value || []).filter((value) => value !== area.id))
-                             }}>{area.name}</DropdownMenuCheckboxItem>
-                        ))}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-          
-            <FormField
-                control={form.control}
-                name="assignedTo"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Asignado A</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value} disabled={disableForm || !responsibleOptions || responsibleOptions.length === 0}>
-                      <FormControl><SelectTrigger><SelectValue placeholder="Selecciona una persona responsable" /></SelectTrigger></FormControl>
-                      <SelectContent>{responsibleOptions?.map((opt: any) => (<SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>))}</SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-            />
-        </>
-        )}
-    </div>
- );
-
-
- const observationsSection = (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-            <CardTitle>Observaciones</CardTitle>
-            {isAdmin && mode === 'view' && (
-                <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8"
-                    onClick={() => onEditField('description', 'Observaciones', initialData?.description, {}, 'textarea')}
-                >
-                    <Pencil className="h-4 w-4" />
-                </Button>
-            )}
-        </div>
-      </CardHeader>
-      <CardContent>
-        {mode === 'view' ? (
-             <p className="text-sm text-muted-foreground whitespace-pre-wrap">{initialData?.description}</p>
-        ) : (
-          <FormField
-            control={form.control}
-            name="description"
-            render={({ field }) => (
-              <FormItem>
-                <div className="flex items-center rounded-md border border-input focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2">
-                    <FormControl>
-                        <Textarea placeholder="Describe la no conformidad o el área de mejora..." className="flex-grow resize-y min-h-[120px] border-none focus-visible:ring-0 focus-visible:ring-offset-0" {...field} disabled={disableForm} />
-                    </FormControl>
-                    {mode !== 'view' && (
-                        <div className="flex flex-col gap-2 p-2 self-start">
-                            <Button type="button" size="icon" variant="ghost" onClick={toggleRecording} disabled={disableForm} className={cn("h-8 w-8", isRecording && "bg-red-500/20 text-red-500 hover:bg-red-500/30 hover:text-red-500")} title="Activar/desactivar el micrófono"><Mic className="h-4 w-4" /><span className="sr-only">{isRecording ? "Detener grabación" : "Iniciar grabación"}</span></Button>
-                            {hasImprovePrompt && (<Button type="button" size="icon" variant="ghost" onClick={handleImproveText} disabled={disableForm || isImprovingText} className="h-8 w-8" title="Mejorar texto con IA">{isImprovingText ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}<span className="sr-only">Mejorar texto con IA</span></Button>)}
-                        </div>
-                    )}
-                 </div>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        )}
-      </CardContent>
-    </Card>
- );
-
   return (
     <>
       <Form {...form}>
@@ -517,14 +306,193 @@ export function ActionForm({
                     {editButton}
                 </CardHeader>
                 <CardContent>
-                    {detailsSection}
+                    {mode === 'view' ? (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+                            <ReadOnlyField label="Ámbito" value={initialData?.type} />
+                            <ReadOnlyField label="Origen" value={initialData?.category} />
+                            <ReadOnlyField label="Clasificación" value={initialData?.subcategory} />
+                            <ReadOnlyField label="Áreas Funcionales Implicadas" value={initialData?.affectedAreas.join(', ')} />
+                            <ReadOnlyField label="Centro" value={initialData?.center} />
+                            <ReadOnlyField label="Asignado A (Responsable Análisis)" value={initialData?.assignedTo} />
+                        </div>
+                    ) : (
+                        <div className="space-y-6">
+                            <FormField
+                                control={form.control}
+                                name="title"
+                                render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Asunto</FormLabel>
+                                    <FormControl>
+                                    <Input placeholder="p. ej., Optimización del proceso de facturación" {...field} disabled={disableForm} />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                                )}
+                            />
+
+                            <div className="grid md:grid-cols-2 gap-6">
+                                <FormField
+                                    control={form.control}
+                                    name="typeId"
+                                    render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Ámbito</FormLabel>
+                                        <Select onValueChange={field.onChange} value={field.value} disabled={disableForm || !filteredAmbits || filteredAmbits.length === 0}>
+                                        <FormControl><SelectTrigger><SelectValue placeholder="Selecciona un ámbito" /></SelectTrigger></FormControl>
+                                        <SelectContent>{filteredAmbits?.map((opt: any) => (<SelectItem key={opt.id} value={opt.id}>{opt.name}</SelectItem>))}</SelectContent>
+                                        </Select>
+                                        <FormMessage />
+                                    </FormItem>
+                                    )}
+                                />
+                                
+                                <FormField
+                                    control={form.control}
+                                    name="category"
+                                    render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Origen</FormLabel>
+                                        <Select onValueChange={field.onChange} value={field.value} disabled={disableForm || !filteredCategories || filteredCategories.length === 0}>
+                                        <FormControl><SelectTrigger><SelectValue placeholder="Selecciona un origen" /></SelectTrigger></FormControl>
+                                        <SelectContent>{filteredCategories?.map((opt: any) => (<SelectItem key={opt.id} value={opt.id}>{opt.name}</SelectItem>))}</SelectContent>
+                                        </Select>
+                                        <FormMessage />
+                                    </FormItem>
+                                    )}
+                                />
+                            </div>
+                            
+                            <FormField
+                                control={form.control}
+                                name="subcategory"
+                                render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Clasificación</FormLabel>
+                                    <Select onValueChange={field.onChange} value={field.value} disabled={disableForm || !filteredSubcategories || filteredSubcategories.length === 0}>
+                                    <FormControl><SelectTrigger><SelectValue placeholder="Selecciona una clasificación" /></SelectTrigger></FormControl>
+                                    <SelectContent>{filteredSubcategories?.map((opt: any) => (<SelectItem key={opt.id} value={opt.id}>{opt.name}</SelectItem>))}</SelectContent>
+                                    </Select>
+                                    <FormMessage />
+                                </FormItem>
+                                )}
+                            />
+                            
+                            <div className="grid md:grid-cols-2 gap-6">
+                                    <FormField
+                                        control={form.control}
+                                        name="centerId"
+                                        render={({ field }) => (
+                                        <FormItem className="flex flex-col gap-2">
+                                            <FormLabel>Centro</FormLabel>
+                                            <Popover open={isCenterPopoverOpen} onOpenChange={setIsCenterPopoverOpen}>
+                                            <PopoverTrigger asChild>
+                                                <FormControl>
+                                                <Button variant="outline" role="combobox" disabled={disableForm} className={cn("w-full justify-between", !field.value && "text-muted-foreground")}>
+                                                    {field.value && masterData?.centers?.data ? masterData.centers.data.find((center: Center) => center.id === field.value)?.name : "Selecciona un centre"}
+                                                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                                </Button>
+                                                </FormControl>
+                                            </PopoverTrigger>
+                                            <PopoverContent className="w-[--radix-popover-trigger-width] max-h-[--radix-popover-content-available-height] p-0">
+                                                <Command><CommandInput placeholder="Cerca un centre..." /><CommandEmpty>No se ha trobat cap centre.</CommandEmpty>
+                                                <CommandGroup>
+                                                    {masterData?.centers?.data?.map((center: Center) => (
+                                                    <CommandItem value={center.name} key={center.id} onSelect={() => { form.setValue("centerId", center.id!); setIsCenterPopoverOpen(false); }}>
+                                                        <Check className={cn("mr-2 h-4 w-4", center.id === field.value ? "opacity-100" : "opacity-0")} />
+                                                        {center.name}
+                                                    </CommandItem>
+                                                    ))}
+                                                </CommandGroup>
+                                                </Command>
+                                            </PopoverContent>
+                                            </Popover>
+                                            <FormMessage />
+                                        </FormItem>
+                                        )}
+                                    />
+
+                                <FormField
+                                control={form.control}
+                                name="affectedAreasIds"
+                                render={({ field }) => (
+                                    <FormItem className="flex flex-col gap-2">
+                                    <FormLabel>Áreas Funcionales Implicadas</FormLabel>
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                        <FormControl>
+                                            <Button variant="outline" disabled={disableForm} className={cn("w-full justify-start text-left font-normal", !field.value?.length && "text-muted-foreground")}>
+                                                <span className="truncate">{field.value?.length > 0 && masterData?.affectedAreas ? field.value.map((id) => masterData.affectedAreas.find((area: AffectedArea) => area.id === id)?.name).filter(Boolean).join(", ") : "Selecciona áreas"}</span>
+                                                <ChevronsUpDown className="ml-auto h-4 w-4 shrink-0 opacity-50" />
+                                            </Button>
+                                        </FormControl>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent className="w-[var(--radix-dropdown-menu-trigger-width)]" align="start">
+                                            <DropdownMenuLabel>Áreas Afectadas</DropdownMenuLabel><DropdownMenuSeparator />
+                                            {masterData?.affectedAreas?.map((area: AffectedArea) => (
+                                                <DropdownMenuCheckboxItem key={area.id} checked={field.value?.includes(area.id!)} onCheckedChange={(checked) => {
+                                                    return checked ? field.onChange([...(field.value || []), area.id]) : field.onChange((field.value || []).filter((value) => value !== area.id))
+                                                }}>{area.name}</DropdownMenuCheckboxItem>
+                                            ))}
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
+                                    <FormMessage />
+                                    </FormItem>
+                                )}
+                                />
+                            </div>
+                            
+                                <FormField
+                                    control={form.control}
+                                    name="assignedTo"
+                                    render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Asignado A (Responsable Análisis)</FormLabel>
+                                        <Select onValueChange={field.onChange} value={field.value} disabled={disableForm || !responsibleOptions || responsibleOptions.length === 0}>
+                                        <FormControl><SelectTrigger><SelectValue placeholder="Selecciona una persona responsable" /></SelectTrigger></FormControl>
+                                        <SelectContent>{responsibleOptions?.map((opt: any) => (<SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>))}</SelectContent>
+                                        </Select>
+                                        <FormMessage />
+                                    </FormItem>
+                                    )}
+                                />
+                        </div>
+                    )}
                 </CardContent>
            </Card>
 
             
-            <div className="space-y-2">
-                {observationsSection}
-            </div>
+           <Card>
+                <CardHeader>
+                    <CardTitle>Observaciones</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    {mode === 'view' ? (
+                        <p className="text-sm text-muted-foreground whitespace-pre-wrap">{initialData?.description}</p>
+                    ) : (
+                    <FormField
+                        control={form.control}
+                        name="description"
+                        render={({ field }) => (
+                        <FormItem>
+                            <div className="flex items-center rounded-md border border-input focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2">
+                                <FormControl>
+                                    <Textarea placeholder="Describe la no conformidad o el área de mejora..." className="flex-grow resize-y min-h-[120px] border-none focus-visible:ring-0 focus-visible:ring-offset-0" {...field} disabled={disableForm} />
+                                </FormControl>
+                                {mode !== 'view' && (
+                                    <div className="flex flex-col gap-2 p-2 self-start">
+                                        <Button type="button" size="icon" variant="ghost" onClick={toggleRecording} disabled={disableForm} className={cn("h-8 w-8", isRecording && "bg-red-500/20 text-red-500 hover:bg-red-500/30 hover:text-red-500")} title="Activar/desactivar el micrófono"><Mic className="h-4 w-4" /><span className="sr-only">{isRecording ? "Detener grabación" : "Iniciar grabación"}</span></Button>
+                                        {hasImprovePrompt && (<Button type="button" size="icon" variant="ghost" onClick={handleImproveText} disabled={disableForm || isImprovingText} className="h-8 w-8" title="Mejorar texto con IA">{isImprovingText ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}<span className="sr-only">Mejorar texto con IA</span></Button>)}
+                                    </div>
+                                )}
+                            </div>
+                            <FormMessage />
+                        </FormItem>
+                        )}
+                    />
+                    )}
+                </CardContent>
+            </Card>
 
           {mode === 'create' && (
               <div className="flex gap-2">
