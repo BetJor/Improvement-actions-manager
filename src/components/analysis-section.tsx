@@ -293,7 +293,7 @@ export function AnalysisSection({ action, user, isAdmin, isSubmitting, onSave, o
                   name="causes"
                   render={({ field }) => (
                     <FormItem>
-                       <div className="flex items-center gap-2 mb-2 group">
+                       <div className="flex items-center gap-2 mb-2">
                             <FormLabel className="text-lg font-semibold">Análisis de las Causas</FormLabel>
                             {isAdmin && (
                                 <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => onEditField('analysis.causes', 'Análisis de Causas', action.analysis?.causes, {}, 'textarea')}>
@@ -504,5 +504,3 @@ export function AnalysisSection({ action, user, isAdmin, isSubmitting, onSave, o
     </>
   )
 }
-
-    
