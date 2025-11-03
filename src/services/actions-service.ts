@@ -275,8 +275,12 @@ async function handleStatusChange(action: ImprovementAction, oldStatus: Improvem
     await updateActionPermissions(action.id, action.typeId, action.status, action);
 }
 
-// This is the refactored function
-export async function updateAction(actionId: string, data: Partial<ImprovementAction> & { newComment?: any, updateProposedActionStatus?: any, updateProposedAction?: ProposedAction }, masterData: any | null = null, statusFromForm?: 'Borrador' | 'Pendiente Análisis'): Promise<ImprovementAction | null> {
+export async function updateAction(
+    actionId: string, 
+    data: Partial<ImprovementAction> & { newComment?: any, updateProposedActionStatus?: any, updateProposedAction?: ProposedAction }, 
+    masterData: any | null = null, 
+    statusFromForm?: 'Borrador' | 'Pendiente Análisis'
+): Promise<{ updatedAction: ImprovementAction, bisActionTitle?: string }> {
     const actionDocRef = doc(db, 'actions', actionId);
     const originalActionSnap = await getDoc(actionDocRef);
     if (!originalActionSnap.exists()) {
@@ -285,12 +289,14 @@ export async function updateAction(actionId: string, data: Partial<ImprovementAc
     const originalAction = { id: originalActionSnap.id, ...originalActionSnap.data() } as ImprovementAction;
     
     let dataToUpdate: any = {};
+    let bisActionTitle: string | undefined = undefined;
 
-    // Case 1: Simple update with a comment (including admin field edits)
+    // Case 1: Simple update with a comment (including admin field edits that don't need masterData)
     if (data.newComment && !data.updateProposedAction) {
         const { newComment, ...restOfData } = data;
         dataToUpdate = { ...restOfData, comments: arrayUnion(newComment) };
         await updateDoc(actionDocRef, dataToUpdate);
+    
     // Case 2: Update status of a proposed action
     } else if (data.updateProposedActionStatus) {
         await runTransaction(db, async (transaction) => {
@@ -325,7 +331,6 @@ export async function updateAction(actionId: string, data: Partial<ImprovementAc
             
             const updatePayload: any = { "analysis.proposedActions": updatedProposedActions };
             
-            // Recalculate implementationDueDate
             const dueDates = updatedProposedActions
                 .map((pa: ProposedAction) => pa.dueDate ? new Date(pa.dueDate as string) : null)
                 .filter((d): d is Date => d !== null && !isNaN(d.getTime()));
@@ -342,34 +347,15 @@ export async function updateAction(actionId: string, data: Partial<ImprovementAc
             }
             transaction.update(actionDocRef, updatePayload);
         });
-    // Case 4: Full form update or complex state update (analysis, verification, closure)
+    // Case 4: Full form update or complex state update (analysis, verification, closure, simple admin edits)
     } else {
         if (masterData) { // This indicates a form submission from ActionForm
-            dataToUpdate = {
-              title: data.title,
-              description: data.description,
-              assignedTo: data.assignedTo,
-              responsibleGroupId: data.assignedTo,
-              category: masterData?.origins?.data?.find((c: any) => c.id === data.categoryId)?.name || data.category || '',
-              categoryId: data.categoryId,
-              subcategory: masterData?.classifications?.data?.find((s: any) => s.id === data.subcategoryId)?.name || data.subcategory || '',
-              subcategoryId: data.subcategoryId,
-              affectedAreas: data.affectedAreasIds.map((id: string) => masterData?.affectedAreas?.find((a: any) => a.id === id)?.name || id),
-              affectedAreasIds: data.affectedAreasIds,
-              center: masterData?.centers?.data?.find((c: any) => c.id === data.centerId)?.name || data.centerId || '',
-              centerId: data.centerId,
-              type: masterData?.ambits?.data?.find((t: any) => t.id === data.typeId)?.name || data.typeId || '',
-              typeId: data.typeId,
-            };
-            if (statusFromForm) {
-                dataToUpdate.status = statusFromForm;
-            }
+            dataToUpdate = { ...data };
         } else {
             // This is for other updates like analysis, verification, closure, or simple admin edits
             dataToUpdate = { ...data };
         }
        
-        // Calculate Implementation Due Date when saving Analysis
         if (data.analysis && Array.isArray(data.analysis.proposedActions)) {
             const dueDates = data.analysis.proposedActions
                 .map((pa: ProposedAction) => pa.dueDate ? new Date(pa.dueDate as string) : null)
@@ -383,24 +369,14 @@ export async function updateAction(actionId: string, data: Partial<ImprovementAc
             }
         }
 
-        // Auto-follow if sent to analysis from draft
         if (dataToUpdate.status === 'Pendiente Análisis' && originalAction.status === 'Borrador' && originalAction.creator?.id) {
             dataToUpdate.followers = arrayUnion(originalAction.creator.id);
         }
 
-        // Handle closure logic for non-compliant actions
-        if (data.closure && !data.closure.isCompliant) {
-            const allMasterData = {
-                origins: { data: await getCategories() },
-                classifications: { data: await getSubcategories() },
-                affectedAreas: await getAffectedAreas(),
-                centers: { data: await getCenters() },
-                ambits: { data: await getActionTypes() },
-                responsibilityRoles: { data: await getResponsibilityRoles() },
-            };
+        if (data.closure && !data.closure.isCompliant && originalAction.status !== 'Finalizada') {
             const bisActionData: CreateActionData = {
                 title: `${originalAction.title} BIS`,
-                description: `${originalAction.description}\n\n--- \nObservaciones de cierre no conforme:\n${data.closure.notes}`,
+                description: `Acción creada automáticamente por el cierre no conforme de la acción ${originalAction.actionId}.\n\nObservaciones de cierre no conforme:\n${data.closure.notes}`,
                 category: originalAction.categoryId,
                 subcategory: originalAction.subcategoryId,
                 affectedAreasIds: originalAction.affectedAreasIds,
@@ -412,7 +388,44 @@ export async function updateAction(actionId: string, data: Partial<ImprovementAc
                 originalActionId: originalAction.id,
                 originalActionTitle: `${originalAction.actionId}: ${originalAction.title}`,
             };
+            const allMasterData = {
+                origins: { data: await getCategories() },
+                classifications: { data: await getSubcategories() },
+                affectedAreas: await getAffectedAreas(),
+                centers: { data: await getCenters() },
+                ambits: { data: await getActionTypes() },
+                responsibilityRoles: { data: await getResponsibilityRoles() },
+            };
             await createAction(bisActionData, allMasterData);
+        }
+
+        // Logic for admin changing closure status
+        if (data['closure.isCompliant'] === false && originalAction.closure?.isCompliant === true) {
+             const bisActionData: CreateActionData = {
+                title: `${originalAction.title} BIS`,
+                description: `Acción creada automáticamente por cambio administrativo a "No Conforme" de la acción ${originalAction.actionId}.\n\nObservaciones del cierre original:\n${originalAction.closure.notes}`,
+                category: originalAction.categoryId, subcategory: originalAction.subcategoryId,
+                affectedAreasIds: originalAction.affectedAreasIds, centerId: originalAction.centerId,
+                assignedTo: originalAction.assignedTo, typeId: originalAction.typeId,
+                creator: originalAction.closure.closureResponsible,
+                status: 'Borrador', originalActionId: originalAction.id,
+                originalActionTitle: `${originalAction.actionId}: ${originalAction.title}`,
+            };
+            const allMasterData = {
+                origins: { data: await getCategories() }, classifications: { data: await getSubcategories() },
+                affectedAreas: await getAffectedAreas(), centers: { data: await getCenters() },
+                ambits: { data: await getActionTypes() }, responsibilityRoles: { data: await getResponsibilityRoles() },
+            };
+            await createAction(bisActionData, allMasterData);
+        }
+        
+        if (data['closure.isCompliant'] === true && originalAction.closure?.isCompliant === false) {
+             const q = query(collection(db, "actions"), where("originalActionId", "==", originalAction.id));
+             const querySnapshot = await getDocs(q);
+             if (!querySnapshot.empty) {
+                 const bisActionDoc = querySnapshot.docs[0];
+                 bisActionTitle = `${bisActionDoc.data().actionId}: ${bisActionDoc.data().title}`;
+             }
         }
         
         if (Object.keys(dataToUpdate).length > 0) {
@@ -427,7 +440,8 @@ export async function updateAction(actionId: string, data: Partial<ImprovementAc
         await handleStatusChange(updatedAction, originalAction.status);
     }
 
-    return await getActionById(actionId);
+    const finalAction = await getActionById(actionId);
+    return { updatedAction: finalAction!, bisActionTitle };
 }
 
 export async function toggleFollowAction(actionId: string, userId: string): Promise<void> {

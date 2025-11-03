@@ -26,6 +26,7 @@ import { Loader2 } from "lucide-react";
 import type { ImprovementActionStatus, User, ProposedActionVerificationStatus } from "@/lib/types";
 import { Textarea } from "./ui/textarea";
 import { RadioGroup, RadioGroupItem } from "./ui/radio-group";
+import { Switch } from "./ui/switch";
 
 interface AdminEditDialogProps {
   isOpen: boolean;
@@ -91,6 +92,19 @@ export function AdminEditDialog({
                 <Label htmlFor="r-not-verified">No Verificada</Label>
               </div>
             </RadioGroup>
+        )
+    }
+    
+    if (fieldInfo.fieldType === 'isCompliant') {
+        return (
+             <div className="col-span-3 flex items-center space-x-2">
+                <Switch
+                    id="isCompliant-switch"
+                    checked={currentValue}
+                    onCheckedChange={setCurrentValue}
+                />
+                 <Label htmlFor="isCompliant-switch">{currentValue ? "Conforme" : "No Conforme"}</Label>
+            </div>
         )
     }
 

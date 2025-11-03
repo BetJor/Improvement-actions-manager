@@ -184,22 +184,22 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
         
         setIsSubmitting(true);
         try {
-            const systemComment = `El administrador ${user.name} ha cambiado el campo '${editingField?.label}'.`;
-    
-            await updateAction(action.id, {
-                [field]: newValue,
-                newComment: {
-                    id: crypto.randomUUID(),
-                    author: { id: 'system', name: 'Sistema' },
-                    date: new Date().toISOString(),
-                    text: systemComment,
-                },
-            });
-    
+            const oldValue = field.split('.').reduce((o, i) => o?.[i], action);
+
+            const { updatedAction: returnedAction, bisActionTitle } = await updateAction(action.id, { [field]: newValue });
+            
             toast({
                 title: "Campo actualizado",
                 description: "El cambio se ha guardado correctamente.",
             });
+
+            if (field === 'closure.isCompliant' && oldValue === false && newValue === true && bisActionTitle) {
+                toast({
+                    title: "Aviso: Acción BIS existente",
+                    description: `El resultado se ha cambiado a 'Conforme'. Por favor, revise la acción BIS que se generó anteriormente (${bisActionTitle}) y anúlela si lo considera necesario.`,
+                    duration: 10000,
+                });
+            }
     
             await handleActionUpdate();
     
@@ -378,19 +378,11 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
         const actionIndex = action.analysis?.proposedActions.findIndex(pa => pa.id === updatedProposedAction.id) ?? -1;
         let changes: string[] = [];
 
-        if (editingProposedAction.description !== updatedProposedAction.description) {
-            changes.push("la descripción");
-        }
-        if (editingProposedAction.responsibleUserId !== updatedProposedAction.responsibleUserId) {
-            changes.push("el responsable");
-        }
-        if (safeParseDate(editingProposedAction.dueDate)?.getTime() !== safeParseDate(updatedProposedAction.dueDate)?.getTime()) {
-            changes.push("la fecha de vencimiento");
-        }
-        if (editingProposedAction.status !== updatedProposedAction.status) {
-            changes.push("el estado");
-        }
-
+        if (editingProposedAction.description !== updatedProposedAction.description) changes.push("la descripción");
+        if (editingProposedAction.responsibleUserId !== updatedProposedAction.responsibleUserId) changes.push("el responsable");
+        if (safeParseDate(editingProposedAction.dueDate)?.getTime() !== safeParseDate(updatedProposedAction.dueDate)?.getTime()) changes.push("la fecha de vencimiento");
+        if (editingProposedAction.status !== updatedProposedAction.status) changes.push("el estado");
+        
         if (changes.length === 0) {
             setEditingProposedAction(null);
             return;
@@ -1189,11 +1181,18 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
                                 </CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-4">
-                                <div>
+                                <div className="group relative">
                                     <h3 className="font-semibold text-base mb-2">Resultado del Cierre</h3>
-                                    <p className={cn("font-medium", action.closure.isCompliant ? "text-green-600" : "text-red-600")}>
-                                        {action.closure.isCompliant ? "Conforme" : "No Conforme"}
-                                    </p>
+                                    <div className="flex items-center gap-2">
+                                        <p className={cn("font-medium", action.closure.isCompliant ? "text-green-600" : "text-red-600")}>
+                                            {action.closure.isCompliant ? "Conforme" : "No Conforme"}
+                                        </p>
+                                         {isAdmin && (
+                                            <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => handleEditClick('closure.isCompliant', 'Resultado del Cierre', action.closure?.isCompliant, {}, 'isCompliant')}>
+                                                <Pencil className="h-4 w-4" />
+                                            </Button>
+                                        )}
+                                    </div>
                                 </div>
                                 <div className="group relative">
                                     <div className="flex items-center gap-2 mb-2">
