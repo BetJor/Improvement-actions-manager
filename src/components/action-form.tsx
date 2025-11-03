@@ -475,7 +475,7 @@ export function ActionForm({
                         </Button>
                     )}
                 </div>
-                <p className="text-sm text-muted-foreground whitespace-pre-wrap">{initialData?.description}</p>
+                <p className="text-sm text-muted-foreground whitespace-pre-wrap pt-2">{initialData?.description}</p>
             </FormItem>
         ) : (
           <FormField
@@ -520,15 +520,10 @@ export function ActionForm({
                 </CardContent>
            </Card>
 
-            <Card>
-                <CardHeader>
-                    {/* The title is inside the observationsSection now for view mode */}
-                    {mode !== 'view' && <CardTitle>Observaciones</CardTitle>}
-                </CardHeader>
-                <CardContent>
-                    {observationsSection}
-                </CardContent>
-            </Card>
+            
+            <div className="space-y-2">
+                {observationsSection}
+            </div>
 
           {mode === 'create' && (
               <div className="flex gap-2">
