@@ -14,7 +14,7 @@ import { AnalysisSection } from "@/components/analysis-section"
 import { VerificationSection } from "@/components/verification-section"
 import { ClosureSection } from "@/components/closure-section"
 import { ActionDetailsPanel } from "@/components/action-details-panel"
-import { Loader2, FileEdit, Edit, Star, Printer, FileSpreadsheet, ChevronDown, CheckCircle2, Ban, MoreVertical } from "lucide-react"
+import { Loader2, FileEdit, Edit, Star, Printer, FileSpreadsheet, ChevronDown, CheckCircle2, Ban, MoreVertical, Pencil } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Separator } from "@/components/ui/separator"
@@ -54,6 +54,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { AdminEditDialog } from "./admin-edit-dialog"
 
 
 interface jsPDFWithAutoTable extends jsPDF {
@@ -84,6 +85,9 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
     const [isLoadingMasterData, setIsLoadingMasterData] = useState(true);
     const [cancellationReason, setCancellationReason] = useState("");
     const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
+    const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+    const [editingField, setEditingField] = useState<{ field: string; label: string; value: any; options?: any } | null>(null);
+
     
     const { handleToggleFollow, isFollowing } = useFollowAction();
 
@@ -172,6 +176,53 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
             setIsSubmitting(false);
         }
     }
+
+    const handleAdminEditSave = async (field: string, newValue: any) => {
+        if (!action || !user || !isAdmin) return;
+    
+        const oldValue = (action as any)[field];
+    
+        // No fer res si el valor no ha canviat
+        if (oldValue === newValue) {
+            setIsEditDialogOpen(false);
+            return;
+        }
+    
+        setIsSubmitting(true);
+        try {
+            // Prepara el comentari per al sistema
+            const systemComment = `El administrador ${user.name} ha cambiado el campo '${editingField?.label}' de '${oldValue}' a '${newValue}'.`;
+    
+            await updateAction(action.id, {
+                [field]: newValue,
+                newComment: {
+                    id: crypto.randomUUID(),
+                    author: { id: 'system', name: 'Sistema' },
+                    date: new Date().toISOString(),
+                    text: systemComment,
+                },
+            });
+    
+            toast({
+                title: "Campo actualizado",
+                description: "El cambio se ha guardado correctamente.",
+            });
+    
+            await handleActionUpdate(); // Recarrega les dades de l'acció
+    
+        } catch (error) {
+            console.error(`Error updating field ${field}:`, error);
+            toast({
+                variant: "destructive",
+                title: "Error al actualizar",
+                description: "No se ha podido guardar el cambio.",
+            });
+        } finally {
+            setIsSubmitting(false);
+            setIsEditDialogOpen(false);
+        }
+    };
+    
 
     const handleAnalysisSave = async (analysisData: any) => {
         if (!action) return;
@@ -765,22 +816,44 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
       }
     };
 
+    const handleEditClick = (field: string, label: string, value: any, options?: any) => {
+        setEditingField({ field, label, value, options });
+        setIsEditDialogOpen(true);
+    };
+
+    const ALL_STATUSES: ImprovementAction['status'][] = ['Borrador', 'Pendiente Análisis', 'Pendiente Comprobación', 'Pendiente de Cierre', 'Finalizada', 'Anulada'];
+
+
     return (
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
       
             <div className="lg:col-span-3 flex flex-col gap-6">
-                <header className="flex items-center gap-4">
+                <header className="flex items-start gap-4">
                      <Button
                         variant="ghost"
                         size="icon"
                         onClick={(e) => handleToggleFollow(action.id, e)}
                         title={isFollowing(action.id) ? "Dejar de seguir" : "Seguir acción"}
-                        className="h-8 w-8"
+                        className="h-8 w-8 mt-1"
                       >
                         <Star className={cn("h-5 w-5", isFollowing(action.id) ? "text-yellow-400 fill-yellow-400" : "text-muted-foreground")} />
                       </Button>
-                    <h1 className="text-3xl font-bold tracking-tight">{action.actionId}: {action.title}</h1>
-                    <ActionStatusBadge status={action.status} isCompliant={action.closure?.isCompliant} />
+                    <div className="flex-1 flex items-start gap-2">
+                        <h1 className="text-3xl font-bold tracking-tight">{action.actionId}: {action.title}</h1>
+                        {isAdmin && (
+                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEditClick('title', 'Título', action.title)}>
+                                <Pencil className="h-4 w-4" />
+                            </Button>
+                        )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <ActionStatusBadge status={action.status} isCompliant={action.closure?.isCompliant} />
+                        {isAdmin && (
+                             <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEditClick('status', 'Estado', action.status, { statuses: ALL_STATUSES })}>
+                                <Pencil className="h-4 w-4" />
+                            </Button>
+                        )}
+                    </div>
                     <div className="ml-auto flex items-center gap-2">
                         {showCancelButton ? (
                             <DropdownMenu>
@@ -1047,6 +1120,16 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
                     setIsOpen={setIsStatusDialogOpen}
                     proposedAction={selectedProposedAction}
                     onSave={handleUpdateProposedActionStatus}
+                    isSubmitting={isSubmitting}
+                />
+            )}
+
+            {isEditDialogOpen && editingField && (
+                 <AdminEditDialog
+                    isOpen={isEditDialogOpen}
+                    setIsOpen={setIsEditDialogOpen}
+                    fieldInfo={editingField}
+                    onSave={handleAdminEditSave}
                     isSubmitting={isSubmitting}
                 />
             )}

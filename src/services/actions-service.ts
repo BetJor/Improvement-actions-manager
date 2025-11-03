@@ -286,15 +286,12 @@ export async function updateAction(actionId: string, data: Partial<ImprovementAc
     
     let dataToUpdate: any = {};
 
-    // Case 1: Simple update with a comment
+    // Case 1: Simple update with a comment (including admin field edits)
     if (data.newComment) {
-        await updateDoc(actionDocRef, { comments: arrayUnion(data.newComment) });
-        // If a status update is also present (e.g., from cancellation)
-        if (data.status && data.status !== originalAction.status) {
-            await updateDoc(actionDocRef, { status: data.status });
-            const freshAction = await getActionById(actionId);
-            await handleStatusChange(freshAction!, originalAction.status);
-        }
+        // Remove newComment from the main data object so it's not written directly
+        const { newComment, ...restOfData } = data;
+        dataToUpdate = { ...restOfData, comments: arrayUnion(newComment) };
+        await updateDoc(actionDocRef, dataToUpdate);
     // Case 2: Update status of a proposed action
     } else if (data.updateProposedActionStatus) {
         await runTransaction(db, async (transaction) => {
