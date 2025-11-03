@@ -276,7 +276,7 @@ async function handleStatusChange(action: ImprovementAction, oldStatus: Improvem
 }
 
 // This is the refactored function
-export async function updateAction(actionId: string, data: Partial<ImprovementAction> & { newComment?: any, updateProposedActionStatus?: any }, masterData: any | null = null, statusFromForm?: 'Borrador' | 'Pendiente Análisis'): Promise<ImprovementAction | null> {
+export async function updateAction(actionId: string, data: Partial<ImprovementAction> & { newComment?: any, updateProposedActionStatus?: any, updateProposedAction?: ProposedAction }, masterData: any | null = null, statusFromForm?: 'Borrador' | 'Pendiente Análisis'): Promise<ImprovementAction | null> {
     const actionDocRef = doc(db, 'actions', actionId);
     const originalActionSnap = await getDoc(actionDocRef);
     if (!originalActionSnap.exists()) {
@@ -288,7 +288,6 @@ export async function updateAction(actionId: string, data: Partial<ImprovementAc
 
     // Case 1: Simple update with a comment (including admin field edits)
     if (data.newComment) {
-        // Remove newComment from the main data object so it's not written directly
         const { newComment, ...restOfData } = data;
         dataToUpdate = { ...restOfData, comments: arrayUnion(newComment) };
         await updateDoc(actionDocRef, dataToUpdate);
@@ -309,7 +308,27 @@ export async function updateAction(actionId: string, data: Partial<ImprovementAc
             
             transaction.update(actionDocRef, { "analysis.proposedActions": updatedProposedActions });
         });
-    // Case 3: Full form update or complex state update (analysis, verification, closure)
+    // Case 3: Admin updates a full proposed action
+    } else if (data.updateProposedAction) {
+        await runTransaction(db, async (transaction) => {
+            const actionDoc = await transaction.get(actionDocRef);
+            if (!actionDoc.exists()) throw "Document does not exist!";
+
+            const currentAction = actionDoc.data() as ImprovementAction;
+            const proposedActions = currentAction.analysis?.proposedActions || [];
+
+            const updatedProposedActions = proposedActions.map(pa =>
+                pa.id === data.updateProposedAction!.id
+                    ? { ...data.updateProposedAction, dueDate: new Date(data.updateProposedAction!.dueDate).toISOString() }
+                    : pa
+            );
+            
+            transaction.update(actionDocRef, { 
+                "analysis.proposedActions": updatedProposedActions,
+                comments: arrayUnion(data.newComment) 
+            });
+        });
+    // Case 4: Full form update or complex state update (analysis, verification, closure)
     } else {
         if (masterData) { // This indicates a form submission from ActionForm
             dataToUpdate = {

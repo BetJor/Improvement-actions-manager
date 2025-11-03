@@ -7,7 +7,7 @@ import { useForm } from "react-hook-form"
 import * as z from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { getActionById, updateAction, getUsers, getActionTypes, getCategories, getSubcategories, getAffectedAreas, getCenters, getResponsibilityRoles } from "@/lib/data"
-import type { ImprovementAction, ProposedActionVerificationStatus, User } from "@/lib/types"
+import type { ImprovementAction, ProposedActionVerificationStatus, User, ProposedAction } from "@/lib/types"
 import { ActionForm } from "@/components/action-form"
 import { Button } from "@/components/ui/button"
 import { AnalysisSection } from "@/components/analysis-section"
@@ -55,6 +55,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { AdminEditDialog } from "./admin-edit-dialog"
+import { ProposedActionEditDialog } from "./proposed-action-edit-dialog"
 
 
 interface jsPDFWithAutoTable extends jsPDF {
@@ -81,6 +82,7 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
     const [users, setUsers] = useState<User[]>([]);
     const [isStatusDialogOpen, setIsStatusDialogOpen] = useState(false);
     const [selectedProposedAction, setSelectedProposedAction] = useState<any>(null);
+    const [editingProposedAction, setEditingProposedAction] = useState<ProposedAction | null>(null);
     const [masterData, setMasterData] = useState<any>(null);
     const [isLoadingMasterData, setIsLoadingMasterData] = useState(true);
     const [cancellationReason, setCancellationReason] = useState("");
@@ -178,11 +180,11 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
     }
 
     const handleAdminEditSave = async (field: string, newValue: any) => {
-        if (!action || !user || !isAdmin || !editingField) return;
+        if (!action || !user || !isAdmin) return;
     
-        const oldValue = (action as any)[field];
+        const getNestedValue = (obj: any, path: string) => path.split('.').reduce((acc, part) => acc && acc[part], obj);
+        const oldValue = getNestedValue(action, field);
     
-        // No fer res si el valor no ha canviat
         if (oldValue === newValue) {
             setIsEditDialogOpen(false);
             return;
@@ -190,8 +192,7 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
     
         setIsSubmitting(true);
         try {
-            // Prepara el comentari per al sistema
-            const systemComment = `El administrador ${user.name} ha cambiado el campo '${editingField.label}' de '${oldValue}' a '${newValue}'.`;
+            const systemComment = `El administrador ${user.name} ha cambiado el campo '${editingField?.label}' de '${oldValue}' a '${newValue}'.`;
     
             await updateAction(action.id, {
                 [field]: newValue,
@@ -208,7 +209,7 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
                 description: "El cambio se ha guardado correctamente.",
             });
     
-            await handleActionUpdate(); // Recarrega les dades de l'acció
+            await handleActionUpdate();
     
         } catch (error) {
             console.error(`Error updating field ${field}:`, error);
@@ -220,6 +221,7 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
         } finally {
             setIsSubmitting(false);
             setIsEditDialogOpen(false);
+            setEditingField(null);
         }
     };
     
@@ -375,6 +377,40 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
             });
         } finally {
             setIsSubmitting(false);
+        }
+    };
+
+    const handleProposedActionSave = async (updatedProposedAction: ProposedAction) => {
+        if (!action || !user || !isAdmin) return;
+    
+        setIsSubmitting(true);
+        try {
+            await updateAction(action.id, {
+                updateProposedAction: updatedProposedAction,
+                newComment: {
+                    id: crypto.randomUUID(),
+                    author: { id: 'system', name: 'Sistema' },
+                    date: new Date().toISOString(),
+                    text: `El administrador ${user.name} ha modificado la acción propuesta: "${updatedProposedAction.description}".`,
+                }
+            });
+            
+            toast({
+                title: "Acción Propuesta Actualizada",
+                description: "Los cambios se han guardado correctamente.",
+            });
+    
+            await handleActionUpdate();
+        } catch (error) {
+            console.error("Error updating proposed action:", error);
+            toast({
+                variant: "destructive",
+                title: "Error al Guardar",
+                description: "No se ha podido actualizar la acción propuesta.",
+            });
+        } finally {
+            setIsSubmitting(false);
+            setEditingProposedAction(null);
         }
     };
 
@@ -946,6 +982,8 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
                                         </Button>
                                     )
                                 }
+                                isAdmin={isAdmin}
+                                onEditField={handleEditClick}
                             />
                         </div>
                     </TabsContent>
@@ -970,13 +1008,15 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
                                 </CardHeader>
                                 <CardContent className="space-y-6">
                                     <div className="group relative">
-                                        <h3 className="font-semibold text-lg mb-2">Análisis de las Causas</h3>
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <h3 className="font-semibold text-lg">Análisis de las Causas</h3>
+                                            {isAdmin && (
+                                                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleEditClick('analysis.causes', 'Análisis de Causas', action.analysis?.causes, {}, 'textarea')}>
+                                                    <Pencil className="h-4 w-4" />
+                                                </Button>
+                                            )}
+                                        </div>
                                         <p className="text-muted-foreground whitespace-pre-wrap">{action.analysis.causes}</p>
-                                        {isAdmin && (
-                                            <Button variant="ghost" size="icon" className="absolute top-0 right-0 h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => handleEditClick('analysis.causes', 'Análisis de Causas', action.analysis?.causes, {}, 'textarea')}>
-                                                <Pencil className="h-4 w-4" />
-                                            </Button>
-                                        )}
                                     </div>
                                     <Separator />
                                     <div>
@@ -996,27 +1036,46 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
                                                               </p>
                                                             </div>
                                                         </div>
-                                                        {user?.id === pa.responsibleUserId && action.status !== 'Finalizada' && (
-                                                          <Button
-                                                            variant="outline"
-                                                            size="sm"
-                                                            onClick={() => {
-                                                              setSelectedProposedAction(pa);
-                                                              setIsStatusDialogOpen(true);
-                                                            }}
-                                                          >
-                                                            <Edit className="mr-2 h-3 w-3" />
-                                                            Actualizar Estado
-                                                          </Button>
-                                                        )}
+                                                        <div className="flex flex-col gap-2">
+                                                            {user?.id === pa.responsibleUserId && action.status !== 'Finalizada' && (
+                                                            <Button
+                                                                variant="outline"
+                                                                size="sm"
+                                                                onClick={() => {
+                                                                setSelectedProposedAction(pa);
+                                                                setIsStatusDialogOpen(true);
+                                                                }}
+                                                            >
+                                                                <Edit className="mr-2 h-3 w-3" />
+                                                                Actualizar Estado
+                                                            </Button>
+                                                            )}
+                                                            {isAdmin && (
+                                                                <Button
+                                                                    variant="secondary"
+                                                                    size="sm"
+                                                                    onClick={() => setEditingProposedAction(pa)}
+                                                                >
+                                                                    <Pencil className="mr-2 h-3 w-3" />
+                                                                    Editar Acción
+                                                                </Button>
+                                                            )}
+                                                        </div>
                                                     </div>
                                                 </div>
                                             ))}
                                         </div>
                                     </div>
                                      <Separator />
-                                    <div>
-                                        <h3 className="font-semibold text-lg mb-2">Responsable de la Verificación</h3>
+                                     <div className="group relative">
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <h3 className="font-semibold text-lg">Responsable de la Verificación</h3>
+                                            {isAdmin && (
+                                                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleEditClick('analysis.verificationResponsibleUserId', 'Responsable de Verificación', action.analysis?.verificationResponsibleUserId, { users: users })}>
+                                                    <Pencil className="h-4 w-4" />
+                                                </Button>
+                                            )}
+                                        </div>
                                         <p className="text-muted-foreground">
                                             {users.find(u => u.id === action.analysis?.verificationResponsibleUserId)?.name || action.analysis?.verificationResponsibleUserId || 'No asignado'}
                                         </p>
@@ -1153,6 +1212,17 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
                     setIsOpen={setIsEditDialogOpen}
                     fieldInfo={editingField}
                     onSave={handleAdminEditSave}
+                    isSubmitting={isSubmitting}
+                />
+            )}
+
+            {editingProposedAction && (
+                <ProposedActionEditDialog
+                    isOpen={!!editingProposedAction}
+                    setIsOpen={() => setEditingProposedAction(null)}
+                    proposedAction={editingProposedAction}
+                    users={users}
+                    onSave={handleProposedActionSave}
                     isSubmitting={isSubmitting}
                 />
             )}
