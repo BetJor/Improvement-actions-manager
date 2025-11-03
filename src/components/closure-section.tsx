@@ -144,46 +144,44 @@ export function ClosureSection({ isSubmitting, onSave, isAdmin, onEditField }: C
   return (
     <>
       <Card>
-        <CardHeader>
-          <CardTitle>Cierre de la Acción</CardTitle>
+        <CardHeader className="group relative">
+          <CardTitle className="flex items-center gap-2">
+            Cierre de la Acción
+            {isAdmin && (
+                <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => onEditField('closure.notes', 'Observaciones Finales', form.getValues('notes'), {}, 'textarea')}>
+                    <Pencil className="h-4 w-4" />
+                </Button>
+            )}
+          </CardTitle>
           <CardDescription>Finaliza la acción de mejora registrando las conclusiones finales.</CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSave)} className="space-y-8">
-              <div className="group relative">
-                <FormField
-                  control={form.control}
-                  name="notes"
-                  render={({ field }) => (
-                    <FormItem>
-                      <div className="flex items-center gap-2 mb-2">
-                            <FormLabel className="text-lg font-semibold">Observaciones del Cierre</FormLabel>
-                             {isAdmin && (
-                                <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => onEditField('closure.notes', 'Observaciones Finales', form.getValues('notes'), {}, 'textarea')}>
-                                    <Pencil className="h-4 w-4" />
-                                </Button>
-                            )}
-                       </div>
-                       <div className="flex items-center rounded-md border border-input focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2">
-                          <FormControl>
-                            <Textarea
-                              rows={6}
-                              placeholder="Describe el resultado final, lecciones aprendidas, etc."
-                              className="flex-grow resize-y border-none focus-visible:ring-0 focus-visible:ring-offset-0"
-                              {...field}
-                            />
-                          </FormControl>
-                          <div className="flex flex-col gap-2 p-2 self-start">
-                            <Button type="button" size="icon" variant="ghost" onClick={toggleRecording} className={cn("h-8 w-8", isRecording && "bg-red-500/20 text-red-500 hover:bg-red-500/30 hover:text-red-500")} title="Micrófono"><Mic className="h-4 w-4" /></Button>
-                            {hasImprovePrompt && <Button type="button" size="icon" variant="ghost" onClick={handleImproveText} disabled={isImprovingText} className="h-8 w-8" title="Mejorar con IA">{isImprovingText ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}</Button>}
-                          </div>
+              <FormField
+                control={form.control}
+                name="notes"
+                render={({ field }) => (
+                  <FormItem>
+                      <FormLabel className="text-lg font-semibold">Observaciones del Cierre</FormLabel>
+                     <div className="flex items-center rounded-md border border-input focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2">
+                        <FormControl>
+                          <Textarea
+                            rows={6}
+                            placeholder="Describe el resultado final, lecciones aprendidas, etc."
+                            className="flex-grow resize-y border-none focus-visible:ring-0 focus-visible:ring-offset-0"
+                            {...field}
+                          />
+                        </FormControl>
+                        <div className="flex flex-col gap-2 p-2 self-start">
+                          <Button type="button" size="icon" variant="ghost" onClick={toggleRecording} className={cn("h-8 w-8", isRecording && "bg-red-500/20 text-red-500 hover:bg-red-500/30 hover:text-red-500")} title="Micrófono"><Mic className="h-4 w-4" /></Button>
+                          {hasImprovePrompt && <Button type="button" size="icon" variant="ghost" onClick={handleImproveText} disabled={isImprovingText} className="h-8 w-8" title="Mejorar con IA">{isImprovingText ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}</Button>}
                         </div>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
+                      </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
               <FormField
                 control={form.control}
@@ -234,3 +232,5 @@ export function ClosureSection({ isSubmitting, onSave, isAdmin, onEditField }: C
     </>
   )
 }
+
+    

@@ -287,39 +287,37 @@ export function AnalysisSection({ action, user, isAdmin, isSubmitting, onSave, o
       <CardContent>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-            <div className="group relative">
-                <FormField
-                  control={form.control}
-                  name="causes"
-                  render={({ field }) => (
-                    <FormItem>
-                       <div className="flex items-center gap-2 mb-2">
-                            <FormLabel className="text-lg font-semibold">Análisis de las Causas</FormLabel>
-                            {isAdmin && (
-                                <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => onEditField('analysis.causes', 'Análisis de Causas', action.analysis?.causes, {}, 'textarea')}>
-                                    <Pencil className="h-4 w-4" />
-                                </Button>
-                            )}
-                        </div>
-                       <div className="flex items-center rounded-md border border-input focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2">
-                        <FormControl>
-                          <Textarea
-                            rows={6}
-                            placeholder="Describe el análisis realizado para identificar las causas raíz del problema..."
-                            className="flex-grow resize-y border-none focus-visible:ring-0 focus-visible:ring-offset-0"
-                            {...field}
-                          />
-                        </FormControl>
-                        <div className="flex flex-col gap-2 p-2 self-start">
-                          <Button type="button" size="icon" variant="ghost" onClick={() => toggleRecording('causes')} className={cn("h-8 w-8", isRecording && activeMicField === 'causes' && "bg-red-500/20 text-red-500 hover:bg-red-500/30 hover:text-red-500")} title="Micrófono para análisis de causas"><Mic className="h-4 w-4" /></Button>
-                          {hasImprovePrompt && <Button type="button" size="icon" variant="ghost" onClick={() => handleImproveText('causes')} disabled={isImprovingText && activeImproveField === 'causes'} className="h-8 w-8" title="Mejorar análisis de causas con IA">{isImprovingText && activeImproveField === 'causes' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}</Button>}
-                        </div>
-                      </div>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-            </div>
+            <FormField
+              control={form.control}
+              name="causes"
+              render={({ field }) => (
+                <FormItem>
+                   <div className="flex items-center gap-2 mb-2 group">
+                        <FormLabel className="text-lg font-semibold">Análisis de las Causas</FormLabel>
+                        {isAdmin && (
+                            <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => onEditField('analysis.causes', 'Análisis de Causas', action.analysis?.causes, {}, 'textarea')}>
+                                <Pencil className="h-4 w-4" />
+                            </Button>
+                        )}
+                    </div>
+                   <div className="flex items-center rounded-md border border-input focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2">
+                    <FormControl>
+                      <Textarea
+                        rows={6}
+                        placeholder="Describe el análisis realizado para identificar las causas raíz del problema..."
+                        className="flex-grow resize-y border-none focus-visible:ring-0 focus-visible:ring-offset-0"
+                        {...field}
+                      />
+                    </FormControl>
+                    <div className="flex flex-col gap-2 p-2 self-start">
+                      <Button type="button" size="icon" variant="ghost" onClick={() => toggleRecording('causes')} className={cn("h-8 w-8", isRecording && activeMicField === 'causes' && "bg-red-500/20 text-red-500 hover:bg-red-500/30 hover:text-red-500")} title="Micrófono para análisis de causas"><Mic className="h-4 w-4" /></Button>
+                      {hasImprovePrompt && <Button type="button" size="icon" variant="ghost" onClick={() => handleImproveText('causes')} disabled={isImprovingText && activeImproveField === 'causes'} className="h-8 w-8" title="Mejorar análisis de causas con IA">{isImprovingText && activeImproveField === 'causes' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}</Button>}
+                    </div>
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             
             <div className="space-y-4">
               <h3 className="text-lg font-semibold">Acciones Propuestas</h3>
@@ -504,3 +502,5 @@ export function AnalysisSection({ action, user, isAdmin, isSubmitting, onSave, o
     </>
   )
 }
+
+    

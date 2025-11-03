@@ -188,39 +188,37 @@ export function VerificationSection({ action, user, isSubmitting, onSave, isAdmi
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-              <div className="group relative">
-                <FormField
-                  control={form.control}
-                  name="notes"
-                  render={({ field }) => (
-                    <FormItem>
-                       <div className="flex items-center gap-2 mb-2">
-                            <FormLabel className="text-lg font-semibold">Observaciones Generales</FormLabel>
-                            {isAdmin && (
-                                <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => onEditField('verification.notes', 'Observaciones de Verificación', action.verification?.notes, {}, 'textarea')}>
-                                    <Pencil className="h-4 w-4" />
-                                </Button>
-                            )}
-                        </div>
-                      <div className="flex items-center rounded-md border border-input focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2">
-                          <FormControl>
-                             <Textarea
-                              rows={4}
-                              placeholder="Añade aquí tus observaciones sobre el proceso de verificación..."
-                              className="flex-grow resize-y border-none focus-visible:ring-0 focus-visible:ring-offset-0"
-                              {...field}
-                            />
-                          </FormControl>
-                          <div className="flex flex-col gap-2 p-2 self-start">
-                            <Button type="button" size="icon" variant="ghost" onClick={toggleRecording} className={cn("h-8 w-8", isRecording && "bg-red-500/20 text-red-500 hover:bg-red-500/30 hover:text-red-500")} title="Micrófono"><Mic className="h-4 w-4" /></Button>
-                            {hasImprovePrompt && <Button type="button" size="icon" variant="ghost" onClick={handleImproveText} disabled={isImprovingText} className="h-8 w-8" title="Mejorar con IA">{isImprovingText ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}</Button>}
-                          </div>
+              <FormField
+                control={form.control}
+                name="notes"
+                render={({ field }) => (
+                  <FormItem>
+                     <div className="flex items-center gap-2 mb-2 group">
+                          <FormLabel className="text-lg font-semibold">Observaciones Generales</FormLabel>
+                          {isAdmin && (
+                              <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => onEditField('verification.notes', 'Observaciones de Verificación', action.verification?.notes, {}, 'textarea')}>
+                                  <Pencil className="h-4 w-4" />
+                              </Button>
+                          )}
                       </div>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
+                    <div className="flex items-center rounded-md border border-input focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2">
+                        <FormControl>
+                           <Textarea
+                            rows={4}
+                            placeholder="Añade aquí tus observaciones sobre el proceso de verificación..."
+                            className="flex-grow resize-y border-none focus-visible:ring-0 focus-visible:ring-offset-0"
+                            {...field}
+                          />
+                        </FormControl>
+                        <div className="flex flex-col gap-2 p-2 self-start">
+                          <Button type="button" size="icon" variant="ghost" onClick={toggleRecording} className={cn("h-8 w-8", isRecording && "bg-red-500/20 text-red-500 hover:bg-red-500/30 hover:text-red-500")} title="Micrófono"><Mic className="h-4 w-4" /></Button>
+                          {hasImprovePrompt && <Button type="button" size="icon" variant="ghost" onClick={handleImproveText} disabled={isImprovingText} className="h-8 w-8" title="Mejorar con IA">{isImprovingText ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}</Button>}
+                        </div>
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold">Estado de las Acciones Propuestas</h3>
@@ -289,3 +287,5 @@ export function VerificationSection({ action, user, isSubmitting, onSave, isAdmi
     </>
   )
 }
+
+    

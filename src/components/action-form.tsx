@@ -298,7 +298,7 @@ export function ActionForm({
         {mode === 'view' ? (
              <div className="space-y-4">
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <ReadOnlyField label="Título" value={initialData?.title} />
+                    <ReadOnlyField label="Asunto" value={initialData?.title} />
                     <ReadOnlyField label="Asignado A (Responsable Análisis)" value={initialData?.assignedTo} />
                 </div>
                  <div className="space-y-4">
@@ -480,6 +480,7 @@ export function ActionForm({
             name="description"
             render={({ field }) => (
               <FormItem>
+                <FormLabel>Observaciones</FormLabel>
                 <div className="flex items-center rounded-md border border-input focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2">
                     <FormControl>
                         <Textarea placeholder="Describe la no conformidad o el área de mejora..." className="flex-grow resize-y min-h-[120px] border-none focus-visible:ring-0 focus-visible:ring-offset-0" {...field} disabled={disableForm} />
@@ -569,3 +570,5 @@ export function ActionForm({
     </>
   )
 }
+
+    
