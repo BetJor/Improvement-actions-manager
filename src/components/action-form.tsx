@@ -68,6 +68,8 @@ interface ActionFormProps {
     onCancel?: () => void;
     editButton?: React.ReactNode;
     key?: string;
+    isAdmin: boolean;
+    onEditField: (field: string, label: string, value: any, options?: any, fieldType?: string) => void;
 }
 
 
@@ -91,10 +93,12 @@ export function ActionForm({
     isSubmitting,
     onSubmit,
     onCancel,
-    editButton
+    editButton,
+    isAdmin,
+    onEditField
 }: ActionFormProps) {
   const { toast } = useToast()
-  const { user, isAdmin, userRoles } = useAuth()
+  const { user, userRoles } = useAuth()
   
   const [isRecording, setIsRecording] = useState(false);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
@@ -451,12 +455,15 @@ export function ActionForm({
     <div className="space-y-6">
         {mode === 'view' ? (
             <div className="group relative">
+                <div className="flex items-center gap-2 mb-2">
+                    <Label className="text-primary font-bold">Observaciones</Label>
+                    {isAdmin && (
+                        <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => onEditField('description', 'Observaciones', initialData?.description, {}, 'textarea')}>
+                            <Pencil className="h-4 w-4" />
+                        </Button>
+                    )}
+                </div>
                 <p className="text-muted-foreground whitespace-pre-wrap">{initialData?.description}</p>
-                 {isAdmin && mode === 'view' && (
-                    <Button variant="ghost" size="icon" className="absolute top-0 right-0 h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => { /* Implementar onEditField */ }}>
-                        <Pencil className="h-4 w-4" />
-                    </Button>
-                )}
             </div>
         ) : (
           <FormField
@@ -464,6 +471,7 @@ export function ActionForm({
             name="description"
             render={({ field }) => (
               <FormItem>
+                <FormLabel>Observaciones</FormLabel>
                 <div className="flex items-center rounded-md border border-input focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2">
                     <FormControl>
                         <Textarea placeholder="Describe la no conformidad o el área de mejora..." className="flex-grow resize-y min-h-[120px] border-none focus-visible:ring-0 focus-visible:ring-offset-0" {...field} disabled={disableForm} />
@@ -553,3 +561,5 @@ export function ActionForm({
     </>
   )
 }
+
+    
