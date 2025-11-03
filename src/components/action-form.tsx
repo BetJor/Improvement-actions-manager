@@ -463,8 +463,8 @@ export function ActionForm({
         {mode === 'view' ? (
              <FormItem>
                 <div className="group flex items-center gap-2">
-                    <Label className="text-lg font-semibold">Observaciones</Label>
-                    {isAdmin && (
+                    <Label className="font-semibold text-lg">Observaciones</Label>
+                     {isAdmin && (
                         <Button
                             variant="ghost"
                             size="icon"
