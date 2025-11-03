@@ -1148,9 +1148,16 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
                                                         <p className="text-sm text-muted-foreground">
                                                             Estado: <span className="font-semibold">{pa.status}</span> (act. el {statusUpdateDate})
                                                         </p>
-                                                        <p className="text-sm text-muted-foreground">
-                                                            Verificación: <span className="font-semibold">{verificationStatus}</span>
-                                                        </p>
+                                                        <div className="flex items-center gap-2 group relative">
+                                                          <p className="text-sm text-muted-foreground">
+                                                              Verificación: <span className="font-semibold">{verificationStatus}</span>
+                                                          </p>
+                                                          {isAdmin && (
+                                                            <Button variant="ghost" size="icon" className="h-5 w-5 opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => handleEditClick(`verification.proposedActionsVerificationStatus.${pa.id}`, `Verificación de acción ${index + 1}`, verificationStatus, {}, 'verificationStatus')}>
+                                                                <Pencil className="h-3 w-3" />
+                                                            </Button>
+                                                          )}
+                                                        </div>
                                                     </div>
                                                 );
                                             })}
@@ -1248,4 +1255,3 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
         </div>
     )
 }
-

@@ -23,8 +23,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Loader2 } from "lucide-react";
-import type { ImprovementActionStatus, User } from "@/lib/types";
+import type { ImprovementActionStatus, User, ProposedActionVerificationStatus } from "@/lib/types";
 import { Textarea } from "./ui/textarea";
+import { RadioGroup, RadioGroupItem } from "./ui/radio-group";
 
 interface AdminEditDialogProps {
   isOpen: boolean;
@@ -72,6 +73,25 @@ export function AdminEditDialog({
             className="col-span-3"
           />
       )
+    }
+
+    if (fieldInfo.fieldType === 'verificationStatus') {
+        return (
+            <RadioGroup
+              value={currentValue}
+              onValueChange={(value) => setCurrentValue(value)}
+              className="col-span-3"
+            >
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="Verificada" id="r-verified" />
+                <Label htmlFor="r-verified">Verificada</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="No Verificada" id="r-not-verified" />
+                <Label htmlFor="r-not-verified">No Verificada</Label>
+              </div>
+            </RadioGroup>
+        )
     }
 
     if (fieldInfo.field === 'analysis.verificationResponsibleUserId') {

@@ -192,5 +192,3 @@ export interface ImprovementAction {
   comments?: ActionComment[];
   attachments?: ActionAttachment[];
 };
-
-    

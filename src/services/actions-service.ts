@@ -365,7 +365,7 @@ export async function updateAction(actionId: string, data: Partial<ImprovementAc
                 dataToUpdate.status = statusFromForm;
             }
         } else {
-            // This is for other updates like analysis, verification, closure
+            // This is for other updates like analysis, verification, closure, or simple admin edits
             dataToUpdate = { ...data };
         }
        
@@ -528,4 +528,3 @@ export async function updateActionPermissions(actionId: string, typeId: string, 
     });
     console.log(`[ActionService] Permissions updated successfully for action ${actionId}.`);
 }
-
