@@ -450,8 +450,13 @@ export function ActionForm({
  const observationsSection = (
     <div className="space-y-6">
         {mode === 'view' ? (
-            <div className="space-y-2">
+            <div className="group relative">
                 <p className="text-muted-foreground whitespace-pre-wrap">{initialData?.description}</p>
+                 {isAdmin && mode === 'view' && (
+                    <Button variant="ghost" size="icon" className="absolute top-0 right-0 h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => { /* Implementar onEditField */ }}>
+                        <Pencil className="h-4 w-4" />
+                    </Button>
+                )}
             </div>
         ) : (
           <FormField

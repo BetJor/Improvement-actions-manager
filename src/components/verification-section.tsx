@@ -1,4 +1,5 @@
 
+
 "use client"
 
 import { useForm } from "react-hook-form"
@@ -10,7 +11,7 @@ import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import type { ImprovementAction, User, ProposedActionVerificationStatus } from "@/lib/types"
-import { Loader2, Save, Mic, Wand2 } from "lucide-react"
+import { Loader2, Save, Mic, Wand2, Pencil } from "lucide-react"
 import { useState, useEffect, useRef } from "react"
 import { improveWriting } from "@/ai/flows/improveWriting"
 import { useToast } from "@/hooks/use-toast"
@@ -41,7 +42,9 @@ interface VerificationSectionProps {
   action: ImprovementAction
   user: User
   isSubmitting: boolean
-  onSave: (data: any) => void
+  onSave: (data: any) => void;
+  isAdmin: boolean;
+  onEditField: (field: string, label: string, value: any, options?: any, fieldType?: string) => void;
 }
 
 // Componente dedicado para mostrar la descripción con el formato correcto
@@ -57,7 +60,7 @@ const FormattedDescription = ({ text, status, statusUpdateDate }: { text: string
   );
 };
 
-export function VerificationSection({ action, user, isSubmitting, onSave }: VerificationSectionProps) {
+export function VerificationSection({ action, user, isSubmitting, onSave, isAdmin, onEditField }: VerificationSectionProps) {
   const { toast } = useToast();
   const [isRecording, setIsRecording] = useState(false);
   const [isImprovingText, setIsImprovingText] = useState(false);
@@ -185,30 +188,32 @@ export function VerificationSection({ action, user, isSubmitting, onSave }: Veri
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-              <FormField
-                control={form.control}
-                name="notes"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-lg font-semibold">Observaciones Generales</FormLabel>
-                    <div className="flex items-center rounded-md border border-input focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2">
-                        <FormControl>
-                           <Textarea
-                            rows={4}
-                            placeholder="Añade aquí tus observaciones sobre el proceso de verificación..."
-                            className="flex-grow resize-y border-none focus-visible:ring-0 focus-visible:ring-offset-0"
-                            {...field}
-                          />
-                        </FormControl>
-                        <div className="flex flex-col gap-2 p-2 self-start">
-                          <Button type="button" size="icon" variant="ghost" onClick={toggleRecording} className={cn("h-8 w-8", isRecording && "bg-red-500/20 text-red-500 hover:bg-red-500/30 hover:text-red-500")} title="Micrófono"><Mic className="h-4 w-4" /></Button>
-                          {hasImprovePrompt && <Button type="button" size="icon" variant="ghost" onClick={handleImproveText} disabled={isImprovingText} className="h-8 w-8" title="Mejorar con IA">{isImprovingText ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}</Button>}
-                        </div>
-                    </div>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <div className="group relative">
+                <FormField
+                  control={form.control}
+                  name="notes"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-lg font-semibold">Observaciones Generales</FormLabel>
+                      <div className="flex items-center rounded-md border border-input focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2">
+                          <FormControl>
+                             <Textarea
+                              rows={4}
+                              placeholder="Añade aquí tus observaciones sobre el proceso de verificación..."
+                              className="flex-grow resize-y border-none focus-visible:ring-0 focus-visible:ring-offset-0"
+                              {...field}
+                            />
+                          </FormControl>
+                          <div className="flex flex-col gap-2 p-2 self-start">
+                            <Button type="button" size="icon" variant="ghost" onClick={toggleRecording} className={cn("h-8 w-8", isRecording && "bg-red-500/20 text-red-500 hover:bg-red-500/30 hover:text-red-500")} title="Micrófono"><Mic className="h-4 w-4" /></Button>
+                            {hasImprovePrompt && <Button type="button" size="icon" variant="ghost" onClick={handleImproveText} disabled={isImprovingText} className="h-8 w-8" title="Mejorar con IA">{isImprovingText ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}</Button>}
+                          </div>
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
 
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold">Estado de las Acciones Propuestas</h3>

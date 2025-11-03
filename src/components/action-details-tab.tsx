@@ -86,7 +86,7 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
     const [cancellationReason, setCancellationReason] = useState("");
     const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
     const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-    const [editingField, setEditingField] = useState<{ field: string; label: string; value: any; options?: any } | null>(null);
+    const [editingField, setEditingField] = useState<{ field: string; label: string; value: any; options?: any, fieldType?: string } | null>(null);
 
     
     const { handleToggleFollow, isFollowing } = useFollowAction();
@@ -178,7 +178,7 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
     }
 
     const handleAdminEditSave = async (field: string, newValue: any) => {
-        if (!action || !user || !isAdmin) return;
+        if (!action || !user || !isAdmin || !editingField) return;
     
         const oldValue = (action as any)[field];
     
@@ -191,7 +191,7 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
         setIsSubmitting(true);
         try {
             // Prepara el comentari per al sistema
-            const systemComment = `El administrador ${user.name} ha cambiado el campo '${editingField?.label}' de '${oldValue}' a '${newValue}'.`;
+            const systemComment = `El administrador ${user.name} ha cambiado el campo '${editingField.label}' de '${oldValue}' a '${newValue}'.`;
     
             await updateAction(action.id, {
                 [field]: newValue,
@@ -816,8 +816,8 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
       }
     };
 
-    const handleEditClick = (field: string, label: string, value: any, options?: any) => {
-        setEditingField({ field, label, value, options });
+    const handleEditClick = (field: string, label: string, value: any, options?: any, fieldType?: string) => {
+        setEditingField({ field, label, value, options, fieldType });
         setIsEditDialogOpen(true);
     };
 
@@ -842,7 +842,7 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
                          <div className="group relative">
                             <h1 className="text-3xl font-bold tracking-tight pr-8">{action.actionId}: {action.title}</h1>
                              {isAdmin && (
-                                <Button variant="ghost" size="icon" className="absolute top-0 -right-2 h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => handleEditClick('title', 'Título', action.title)}>
+                                <Button variant="ghost" size="icon" className="absolute top-0 right-0 h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => handleEditClick('title', 'Título', action.title)}>
                                     <Pencil className="h-4 w-4" />
                                 </Button>
                             )}
@@ -955,8 +955,10 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
                             <AnalysisSection
                                 action={action}
                                 user={user}
+                                isAdmin={isAdmin}
                                 isSubmitting={isSubmitting}
                                 onSave={handleAnalysisSave}
+                                onEditField={handleEditClick}
                             />
                         ) : action.analysis ? (
                             <Card>
@@ -967,9 +969,14 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
                                     </CardDescription>
                                 </CardHeader>
                                 <CardContent className="space-y-6">
-                                    <div>
+                                    <div className="group relative">
                                         <h3 className="font-semibold text-lg mb-2">Análisis de las Causas</h3>
                                         <p className="text-muted-foreground whitespace-pre-wrap">{action.analysis.causes}</p>
+                                        {isAdmin && (
+                                            <Button variant="ghost" size="icon" className="absolute top-0 right-0 h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => handleEditClick('analysis.causes', 'Análisis de Causas', action.analysis?.causes, {}, 'textarea')}>
+                                                <Pencil className="h-4 w-4" />
+                                            </Button>
+                                        )}
                                     </div>
                                     <Separator />
                                     <div>
@@ -1030,6 +1037,8 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
                                 user={user}
                                 isSubmitting={isSubmitting}
                                 onSave={handleVerificationSave}
+                                isAdmin={isAdmin}
+                                onEditField={handleEditClick}
                             />
                         ) : action.verification ? (
                             <Card>
@@ -1040,9 +1049,14 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
                                     </CardDescription>
                                 </CardHeader>
                                 <CardContent className="space-y-6">
-                                    <div>
+                                    <div className="group relative">
                                         <h3 className="font-semibold text-lg mb-2">Observaciones Generales</h3>
                                         <p className="text-muted-foreground whitespace-pre-wrap">{action.verification.notes}</p>
+                                         {isAdmin && (
+                                            <Button variant="ghost" size="icon" className="absolute top-0 right-0 h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => handleEditClick('verification.notes', 'Observaciones de Verificación', action.verification?.notes, {}, 'textarea')}>
+                                                <Pencil className="h-4 w-4" />
+                                            </Button>
+                                        )}
                                     </div>
                                     <Separator />
                                     <div>
@@ -1078,8 +1092,10 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
                     <TabsContent value="closure" className="mt-4">
                         {action.status === 'Pendiente de Cierre' && isUserAuthorizedForCurrentStep && user ? (
                             <ClosureSection
-                            isSubmitting={isSubmitting}
-                            onSave={handleClosureSave}
+                                isSubmitting={isSubmitting}
+                                onSave={handleClosureSave}
+                                isAdmin={isAdmin}
+                                onEditField={handleEditClick}
                             />
                         ) : action.closure ? (
                             <Card>
@@ -1096,9 +1112,14 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
                                         {action.closure.isCompliant ? "Conforme" : "No Conforme"}
                                     </p>
                                 </div>
-                                <div>
+                                <div className="group relative">
                                     <h3 className="font-semibold text-base mb-2">Observaciones Finales</h3>
                                     <p className="text-muted-foreground whitespace-pre-wrap">{action.closure.notes}</p>
+                                    {isAdmin && (
+                                        <Button variant="ghost" size="icon" className="absolute top-0 right-0 h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => handleEditClick('closure.notes', 'Observaciones Finales', action.closure?.notes, {}, 'textarea')}>
+                                            <Pencil className="h-4 w-4" />
+                                        </Button>
+                                    )}
                                 </div>
                             </CardContent>
                             </Card>
