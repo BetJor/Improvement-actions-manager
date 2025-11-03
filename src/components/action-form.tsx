@@ -296,14 +296,20 @@ export function ActionForm({
  const detailsSection = (
     <div className="space-y-6">
         {mode === 'view' ? (
-             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <ReadOnlyField label="Título" value={initialData?.title} />
-                <ReadOnlyField label="Asignado A (Responsable Análisis)" value={initialData?.assignedTo} />
-                <ReadOnlyField label="Ámbito" value={initialData?.type} />
-                <ReadOnlyField label="Origen" value={initialData?.category} />
-                <ReadOnlyField label="Clasificación" value={initialData?.subcategory} />
-                <ReadOnlyField label="Centro" value={initialData?.center} />
-                <ReadOnlyField label="Áreas Funcionales Implicadas" value={initialData?.affectedAreas.join(', ')} />
+             <div className="space-y-4">
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <ReadOnlyField label="Título" value={initialData?.title} />
+                    <ReadOnlyField label="Asignado A (Responsable Análisis)" value={initialData?.assignedTo} />
+                </div>
+                 <div className="space-y-4">
+                     <ReadOnlyField label="Ámbito" value={initialData?.type} />
+                     <ReadOnlyField label="Origen" value={initialData?.category} />
+                     <ReadOnlyField label="Clasificación" value={initialData?.subcategory} />
+                 </div>
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                     <ReadOnlyField label="Centro" value={initialData?.center} />
+                     <ReadOnlyField label="Áreas Funcionales Implicadas" value={initialData?.affectedAreas.join(', ')} />
+                 </div>
              </div>
         ) : (
         <>
@@ -455,7 +461,19 @@ export function ActionForm({
  const observationsSection = (
     <div className="space-y-6">
         {mode === 'view' ? (
-            <p className="text-muted-foreground whitespace-pre-wrap">{initialData?.description}</p>
+            <div className="group relative">
+                <p className="text-muted-foreground whitespace-pre-wrap p-3 border rounded-md min-h-[100px] bg-muted/30">{initialData?.description}</p>
+                {isAdmin && (
+                    <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="absolute top-2 right-2 h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity" 
+                        onClick={() => onEditField('description', 'Observaciones', initialData?.description, {}, 'textarea')}
+                    >
+                        <Pencil className="h-4 w-4" />
+                    </Button>
+                )}
+            </div>
         ) : (
           <FormField
             control={form.control}
@@ -499,15 +517,8 @@ export function ActionForm({
            </Card>
 
             <Card>
-                <CardHeader className="group relative">
-                    <div className="flex items-center gap-2">
-                        <CardTitle>Observaciones</CardTitle>
-                        {isAdmin && mode === 'view' && (
-                            <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => onEditField('description', 'Observaciones', initialData?.description, {}, 'textarea')}>
-                                <Pencil className="h-4 w-4" />
-                            </Button>
-                        )}
-                    </div>
+                <CardHeader>
+                    <CardTitle>Observaciones</CardTitle>
                 </CardHeader>
                 <CardContent>
                     {observationsSection}
