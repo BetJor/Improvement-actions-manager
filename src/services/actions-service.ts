@@ -295,12 +295,12 @@ export async function updateAction(
 
     // --- Admin Edit Comment Logic ---
     if (data.adminEdit) {
-        const { field, label, user, overrideComment, isProposedAction } = data.adminEdit;
+        const { field, label, user, overrideComment, isProposedAction, proposedActionField } = data.adminEdit;
         let commentText;
         if (overrideComment) {
             commentText = overrideComment;
         } else if (isProposedAction) {
-             commentText = `El administrador ${user} ha modificado ${label} de la ${field}.`;
+             commentText = `El administrador ${user} ha modificado ${proposedActionField} de la ${field}.`;
         } else {
             commentText = `El administrador ${user} ha modificado el campo '${label}'.`;
         }
@@ -557,5 +557,3 @@ export async function updateActionPermissions(actionId: string, typeId: string, 
     });
     console.log(`[ActionService] Permissions updated successfully for action ${actionId}.`);
 }
-
-

@@ -388,27 +388,40 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
         if (!action || !user || !isAdmin || !editingProposedAction) return;
 
         const actionIndex = action.analysis?.proposedActions.findIndex(pa => pa.id === updatedProposedAction.id) ?? -1;
+        if (actionIndex === -1) return;
+    
+        let changedFieldKey = "";
+        let changedFieldLabel = "";
         
-        let changes: string[] = [];
-        if (editingProposedAction.description !== updatedProposedAction.description) changes.push("la descripción");
-        if (editingProposedAction.responsibleUserId !== updatedProposedAction.responsibleUserId) changes.push("el responsable");
-        if (safeParseDate(editingProposedAction.dueDate)?.getTime() !== safeParseDate(updatedProposedAction.dueDate)?.getTime()) changes.push("la fecha de vencimiento");
-        if (editingProposedAction.status !== updatedProposedAction.status) changes.push("el estado");
+        if (editingProposedAction.description !== updatedProposedAction.description) {
+            changedFieldKey = "description";
+            changedFieldLabel = "la descripción";
+        } else if (editingProposedAction.responsibleUserId !== updatedProposedAction.responsibleUserId) {
+            changedFieldKey = "responsible";
+            changedFieldLabel = "el responsable";
+        } else if (safeParseDate(editingProposedAction.dueDate)?.getTime() !== safeParseDate(updatedProposedAction.dueDate)?.getTime()) {
+            changedFieldKey = "dueDate";
+            changedFieldLabel = "la fecha de vencimiento";
+        } else if (editingProposedAction.status !== updatedProposedAction.status) {
+            changedFieldKey = "status";
+            changedFieldLabel = "el estado";
+        }
         
-        if (changes.length === 0) {
+        if (!changedFieldKey) {
             setEditingProposedAction(null);
             return;
         }
 
         setIsSubmitting(true);
         try {
-             await updateAction(action.id, {
+            await updateAction(action.id, {
                 updateProposedAction: updatedProposedAction,
                 adminEdit: {
-                    field: `acción propuesta ${actionIndex + 1}`,
-                    label: changes.join(', '),
+                    field: `acción-propuesta-${actionIndex + 1}`,
+                    label: `de la acción propuesta ${actionIndex + 1}: ${changedFieldLabel}`,
                     user: user.name || 'Admin',
-                    isProposedAction: true
+                    isProposedAction: true,
+                    proposedActionField: changedFieldKey
                 }
             });
             
