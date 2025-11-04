@@ -385,7 +385,7 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
 
     const handleProposedActionSave = async (updatedProposedAction: ProposedAction) => {
         if (!action || !user || !isAdmin || !editingProposedAction) return;
-
+    
         const actionIndex = action.analysis?.proposedActions.findIndex(pa => pa.id === updatedProposedAction.id) ?? -1;
         if (actionIndex === -1) return;
     
@@ -405,18 +405,21 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
             setEditingProposedAction(null);
             return;
         }
-
+    
         setIsSubmitting(true);
         try {
-            await updateAction(action.id, {
+            // Send both updateProposedAction and adminEdit at the same level
+            const payload = {
                 updateProposedAction: updatedProposedAction,
                 adminEdit: {
                     field: `acción-propuesta-${actionIndex + 1}`,
-                    label: changedFieldKey, // Pass the detected change label
+                    label: changedFieldKey,
                     user: user.name || 'Admin',
                     isProposedAction: true
                 }
-            });
+            };
+    
+            await updateAction(action.id, payload);
             
             toast({
                 title: "Acción Propuesta Actualizada",
@@ -436,6 +439,7 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
             setEditingProposedAction(null);
         }
     };
+    
 
     const generatePdf = async () => {
         if (!action) return;

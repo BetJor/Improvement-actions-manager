@@ -294,8 +294,9 @@ export async function updateAction(
     let bisCreationResult: { createdBisTitle?: string, foundBisTitle?: string } = {};
 
     // --- Admin Edit Comment Logic ---
-    if (data.adminEdit) {
-        const { field, label, user, overrideComment, isProposedAction } = data.adminEdit;
+    const adminEditInfo = data.adminEdit || data.updateProposedAction?.adminEdit; // Check both locations for backward compatibility
+    if (adminEditInfo) {
+        const { field, label, user, overrideComment, isProposedAction } = adminEditInfo;
         let commentText;
         if (overrideComment) {
             commentText = overrideComment;
@@ -367,8 +368,9 @@ export async function updateAction(
                      updatePayload.implementationDueDate = '';
                 }
 
-                if (data.comments) {
-                    updatePayload.comments = data.comments;
+                // If a comment was also generated, add it in the same transaction
+                if (dataToUpdate.comments) {
+                    updatePayload.comments = dataToUpdate.comments;
                 }
                 transaction.update(actionDocRef, updatePayload);
             });
