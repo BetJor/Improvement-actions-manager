@@ -184,7 +184,6 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
         
         setIsSubmitting(true);
         try {
-            // Let the service generate the comment text
             const { bisCreationResult } = await updateAction(action.id, { 
                 adminEdit: { field, label: editingField?.label || field, user: user.name || 'Admin' },
                 [field]: newValue 
@@ -391,20 +390,15 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
         if (actionIndex === -1) return;
     
         let changedFieldKey = "";
-        let changedFieldLabel = "";
         
         if (editingProposedAction.description !== updatedProposedAction.description) {
-            changedFieldKey = "description";
-            changedFieldLabel = "la descripción";
+            changedFieldKey = "la descripción";
         } else if (editingProposedAction.responsibleUserId !== updatedProposedAction.responsibleUserId) {
-            changedFieldKey = "responsible";
-            changedFieldLabel = "el responsable";
+            changedFieldKey = "el responsable";
         } else if (safeParseDate(editingProposedAction.dueDate)?.getTime() !== safeParseDate(updatedProposedAction.dueDate)?.getTime()) {
-            changedFieldKey = "dueDate";
-            changedFieldLabel = "la fecha de vencimiento";
+            changedFieldKey = "la fecha de vencimiento";
         } else if (editingProposedAction.status !== updatedProposedAction.status) {
-            changedFieldKey = "status";
-            changedFieldLabel = "el estado";
+            changedFieldKey = "el estado";
         }
         
         if (!changedFieldKey) {
@@ -418,10 +412,9 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
                 updateProposedAction: updatedProposedAction,
                 adminEdit: {
                     field: `acción-propuesta-${actionIndex + 1}`,
-                    label: `de la acción propuesta ${actionIndex + 1}: ${changedFieldLabel}`,
+                    label: changedFieldKey, // Pass the detected change label
                     user: user.name || 'Admin',
-                    isProposedAction: true,
-                    proposedActionField: changedFieldKey
+                    isProposedAction: true
                 }
             });
             

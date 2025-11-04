@@ -279,7 +279,7 @@ async function handleStatusChange(action: ImprovementAction, oldStatus: Improvem
 
 export async function updateAction(
     actionId: string, 
-    data: Partial<ImprovementAction> & { newComment?: any, adminEdit?: any, updateProposedActionStatus?: any, updateProposedAction?: ProposedAction }, 
+    data: Partial<ImprovementAction> & { newComment?: any; adminEdit?: any; updateProposedActionStatus?: any; updateProposedAction?: ProposedAction }, 
     masterData: any | null = null, 
     statusFromForm?: 'Borrador' | 'Pendiente Análisis'
 ): Promise<{ updatedAction: ImprovementAction, bisCreationResult?: { createdBisTitle?: string, foundBisTitle?: string } }> {
@@ -295,12 +295,13 @@ export async function updateAction(
 
     // --- Admin Edit Comment Logic ---
     if (data.adminEdit) {
-        const { field, label, user, overrideComment, isProposedAction, proposedActionField } = data.adminEdit;
+        const { field, label, user, overrideComment, isProposedAction } = data.adminEdit;
         let commentText;
         if (overrideComment) {
             commentText = overrideComment;
         } else if (isProposedAction) {
-             commentText = `El administrador ${user} ha modificado ${proposedActionField} de la ${field}.`;
+             const actionNumber = field.split('-').pop();
+             commentText = `El administrador ${user} ha modificado ${label} de la acción propuesta ${actionNumber}.`;
         } else {
             commentText = `El administrador ${user} ha modificado el campo '${label}'.`;
         }
