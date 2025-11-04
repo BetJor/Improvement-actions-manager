@@ -1046,7 +1046,12 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
                                         <h3 className="font-semibold text-lg mb-4">Acción Propuesta</h3>
                                         <div className="space-y-4">
                                             {action.analysis.proposedActions.map((pa) => (
-                                                <div key={pa.id} className={cn("p-4 border-l-4 rounded-lg bg-muted/30", getStatusColorClass(pa.status))}>
+                                                <div key={pa.id} className={cn("p-4 border-l-4 rounded-lg bg-muted/30 group relative", getStatusColorClass(pa.status))}>
+                                                    {isAdmin && (
+                                                        <Button variant="ghost" size="icon" className="absolute top-2 right-2 h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => setEditingProposedAction(pa)}>
+                                                            <Pencil className="h-4 w-4" />
+                                                        </Button>
+                                                    )}
                                                     <div className="flex justify-between items-start gap-4">
                                                         <div className="flex-1 space-y-3">
                                                             <p className="font-medium whitespace-pre-wrap">{pa.description}</p>
@@ -1072,16 +1077,6 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
                                                                 <Edit className="mr-2 h-3 w-3" />
                                                                 Actualizar Estado
                                                             </Button>
-                                                            )}
-                                                            {isAdmin && (
-                                                                <Button
-                                                                    variant="secondary"
-                                                                    size="sm"
-                                                                    onClick={() => setEditingProposedAction(pa)}
-                                                                >
-                                                                    <Pencil className="mr-2 h-3 w-3" />
-                                                                    Editar Acción
-                                                                </Button>
                                                             )}
                                                         </div>
                                                     </div>
