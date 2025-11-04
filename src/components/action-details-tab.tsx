@@ -192,8 +192,17 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
                 title: "Campo actualizado",
                 description: "El cambio se ha guardado correctamente.",
             });
+    
+            // DEBUGGING TOAST
+            toast({
+                title: "Comprobación BIS",
+                description: bisActionTitle 
+                    ? `Se ha encontrado un BIS: ${bisActionTitle}` 
+                    : "No se ha encontrado ningún BIS.",
+                duration: 10000,
+            });
 
-            if (field === 'closure.isCompliant' && oldValue === false && newValue === true && bisActionTitle) {
+            if (bisActionTitle) {
                 toast({
                     title: "Aviso: Acción BIS existente",
                     description: `El resultado se ha cambiado a 'Conforme'. Por favor, revise la acción BIS que se generó anteriormente (${bisActionTitle}) y anúlela si lo considera necesario.`,
