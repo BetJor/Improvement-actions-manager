@@ -184,28 +184,23 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
         
         setIsSubmitting(true);
         try {
-            const oldValue = field.split('.').reduce((o, i) => o?.[i], action);
-
-            const { bisActionTitle } = await updateAction(action.id, { [field]: newValue });
+            const { bisCreationResult } = await updateAction(action.id, { [field]: newValue });
             
             toast({
                 title: "Campo actualizado",
                 description: "El cambio se ha guardado correctamente.",
             });
     
-            // DEBUGGING TOAST
-            toast({
-                title: "Comprobación BIS",
-                description: bisActionTitle 
-                    ? `Se ha encontrado un BIS: ${bisActionTitle}` 
-                    : "No se ha encontrado ningún BIS.",
-                duration: 10000,
-            });
-
-            if (bisActionTitle) {
+            if (bisCreationResult?.foundBisTitle) {
                 toast({
                     title: "Aviso: Acción BIS existente",
-                    description: `El resultado se ha cambiado a 'Conforme'. Por favor, revise la acción BIS que se generó anteriormente (${bisActionTitle}) y anúlela si lo considera necesario.`,
+                    description: `El resultado se ha cambiado a 'Conforme'. Por favor, revise la acción BIS que se generó anteriormente (${bisCreationResult.foundBisTitle}) y anúlela si lo considera necesario.`,
+                    duration: 10000,
+                });
+            } else if (bisCreationResult?.createdBisTitle) {
+                 toast({
+                    title: "Acción BIS Creada",
+                    description: `Se ha creado la acción ${bisCreationResult.createdBisTitle} a partir de este cierre no conforme.`,
                     duration: 10000,
                 });
             }
@@ -287,7 +282,7 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
         if (!action || !user) return;
         setIsSubmitting(true);
         try {
-            await updateAction(action.id, {
+            const { bisCreationResult } = await updateAction(action.id, {
                 closure: {
                     ...closureData,
                     closureResponsible: {
@@ -304,6 +299,15 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
                 title: "Acción cerrada",
                 description: "La acción de mejora se ha cerrado correctamente.",
             });
+
+            if (bisCreationResult?.createdBisTitle) {
+                toast({
+                    title: "Acción BIS Creada",
+                    description: `Se ha creado la acción ${bisCreationResult.createdBisTitle} a partir de este cierre no conforme.`,
+                    duration: 10000,
+                });
+            }
+
             closeCurrentTab();
             router.push("/actions");
             router.refresh();

@@ -282,7 +282,7 @@ export async function updateAction(
     data: Partial<ImprovementAction> & { newComment?: any, updateProposedActionStatus?: any, updateProposedAction?: ProposedAction }, 
     masterData: any | null = null, 
     statusFromForm?: 'Borrador' | 'Pendiente Análisis'
-): Promise<{ updatedAction: ImprovementAction, bisActionTitle?: string }> {
+): Promise<{ updatedAction: ImprovementAction, bisCreationResult?: { createdBisTitle?: string, foundBisTitle?: string } }> {
     const actionDocRef = doc(db, 'actions', actionId);
     const originalActionSnap = await getDoc(actionDocRef);
     if (!originalActionSnap.exists()) {
@@ -290,149 +290,140 @@ export async function updateAction(
     }
     const originalAction = { id: originalActionSnap.id, ...originalActionSnap.data() } as ImprovementAction;
     
-    let dataToUpdate: any = {};
-    let bisActionTitle: string | undefined = undefined;
+    let dataToUpdate: any = { ...data };
+    let bisCreationResult: { createdBisTitle?: string, foundBisTitle?: string } = {};
 
-    // Case 1: Simple update with a comment (including admin field edits that don't need masterData)
-    if (data.newComment && !data.updateProposedAction) {
-        const { newComment, ...restOfData } = data;
-        dataToUpdate = { ...restOfData, comments: arrayUnion(newComment) };
-        await updateDoc(actionDocRef, dataToUpdate);
-    
-    // Case 2: Update status of a proposed action
-    } else if (data.updateProposedActionStatus) {
-        await runTransaction(db, async (transaction) => {
-            const actionDoc = await transaction.get(actionDocRef);
-            if (!actionDoc.exists()) throw "Document does not exist!";
-            
-            const currentAction = actionDoc.data() as ImprovementAction;
-            const proposedActions = currentAction.analysis?.proposedActions || [];
-            
-            const updatedProposedActions = proposedActions.map(pa => 
-                pa.id === data.updateProposedActionStatus.proposedActionId 
-                    ? { ...pa, status: data.updateProposedActionStatus.status, statusUpdateDate: new Date().toISOString() } 
-                    : pa
-            );
-            
-            transaction.update(actionDocRef, { "analysis.proposedActions": updatedProposedActions });
-        });
-    // Case 3: Admin updates a full proposed action
-    } else if (data.updateProposedAction) {
-        await runTransaction(db, async (transaction) => {
-            const actionDoc = await transaction.get(actionDocRef);
-            if (!actionDoc.exists()) throw "Document does not exist!";
+    // Determine if it's a full form update or a partial one
+    const isFullFormUpdate = !!masterData;
 
-            const currentAction = actionDoc.data() as ImprovementAction;
-            const proposedActions = currentAction.analysis?.proposedActions || [];
-
-            const updatedProposedActions = proposedActions.map(pa =>
-                pa.id === data.updateProposedAction!.id
-                    ? { ...data.updateProposedAction, dueDate: new Date(data.updateProposedAction!.dueDate).toISOString() }
-                    : pa
-            );
-            
-            const updatePayload: any = { "analysis.proposedActions": updatedProposedActions };
-            
-            const dueDates = updatedProposedActions
-                .map((pa: ProposedAction) => pa.dueDate ? new Date(pa.dueDate as string) : null)
-                .filter((d): d is Date => d !== null && !isNaN(d.getTime()));
-
-            if (dueDates.length > 0) {
-                const maxDueDate = new Date(Math.max.apply(null, dueDates.map(d => d.getTime())));
-                updatePayload.implementationDueDate = maxDueDate.toISOString();
-            } else {
-                 updatePayload.implementationDueDate = '';
-            }
-
-            if (data.newComment) {
-                updatePayload.comments = arrayUnion(data.newComment);
-            }
-            transaction.update(actionDocRef, updatePayload);
-        });
-    // Case 4: Full form update or complex state update (analysis, verification, closure, simple admin edits)
+    if (isFullFormUpdate) {
+        // Handle full form update from ActionForm
+        // This part remains as it was, converting IDs to names etc.
     } else {
-        if (masterData) { // This indicates a form submission from ActionForm
-            dataToUpdate = { ...data };
-        } else {
-            // This is for other updates like analysis, verification, closure, or simple admin edits
-            dataToUpdate = { ...data };
-        }
-       
-        if (data.analysis && Array.isArray(data.analysis.proposedActions)) {
-            const dueDates = data.analysis.proposedActions
-                .map((pa: ProposedAction) => pa.dueDate ? new Date(pa.dueDate as string) : null)
-                .filter((d): d is Date => d !== null && !isNaN(d.getTime()));
+        // Handle partial updates (admin edits, status changes, etc.)
+        if (data.updateProposedActionStatus) {
+            await runTransaction(db, async (transaction) => {
+                const actionDoc = await transaction.get(actionDocRef);
+                if (!actionDoc.exists()) throw "Document does not exist!";
+                
+                const currentAction = actionDoc.data() as ImprovementAction;
+                const proposedActions = currentAction.analysis?.proposedActions || [];
+                
+                const updatedProposedActions = proposedActions.map(pa => 
+                    pa.id === data.updateProposedActionStatus!.proposedActionId 
+                        ? { ...pa, status: data.updateProposedActionStatus!.status, statusUpdateDate: new Date().toISOString() } 
+                        : pa
+                );
+                
+                transaction.update(actionDocRef, { "analysis.proposedActions": updatedProposedActions });
+            });
+            dataToUpdate = {}; // Reset since transaction handles it
+        } else if (data.updateProposedAction) {
+             await runTransaction(db, async (transaction) => {
+                const actionDoc = await transaction.get(actionDocRef);
+                if (!actionDoc.exists()) throw "Document does not exist!";
 
-            if (dueDates.length > 0) {
-                const maxDueDate = new Date(Math.max.apply(null, dueDates.map(d => d.getTime())));
-                dataToUpdate.implementationDueDate = maxDueDate.toISOString();
-            } else {
-                 dataToUpdate.implementationDueDate = '';
+                const currentAction = actionDoc.data() as ImprovementAction;
+                const proposedActions = currentAction.analysis?.proposedActions || [];
+
+                const updatedProposedActions = proposedActions.map(pa =>
+                    pa.id === data.updateProposedAction!.id
+                        ? { ...data.updateProposedAction, dueDate: new Date(data.updateProposedAction!.dueDate).toISOString() }
+                        : pa
+                );
+                
+                const updatePayload: any = { "analysis.proposedActions": updatedProposedActions };
+                
+                const dueDates = updatedProposedActions
+                    .map((pa: ProposedAction) => pa.dueDate ? new Date(pa.dueDate as string) : null)
+                    .filter((d): d is Date => d !== null && !isNaN(d.getTime()));
+
+                if (dueDates.length > 0) {
+                    const maxDueDate = new Date(Math.max.apply(null, dueDates.map(d => d.getTime())));
+                    updatePayload.implementationDueDate = maxDueDate.toISOString();
+                } else {
+                     updatePayload.implementationDueDate = '';
+                }
+
+                if (data.newComment) {
+                    updatePayload.comments = arrayUnion(data.newComment);
+                }
+                transaction.update(actionDocRef, updatePayload);
+            });
+            dataToUpdate = {}; // Reset
+        } else {
+            // This is for other updates like analysis, verification, closure, simple admin edits
+            // or new comments without other data.
+            if (data.newComment) {
+                dataToUpdate.comments = arrayUnion(data.newComment);
+                delete dataToUpdate.newComment;
+            }
+
+            if (data.analysis && Array.isArray(data.analysis.proposedActions)) {
+                const dueDates = data.analysis.proposedActions
+                    .map((pa: ProposedAction) => pa.dueDate ? new Date(pa.dueDate as string) : null)
+                    .filter((d): d is Date => d !== null && !isNaN(d.getTime()));
+
+                if (dueDates.length > 0) {
+                    const maxDueDate = new Date(Math.max.apply(null, dueDates.map(d => d.getTime())));
+                    dataToUpdate.implementationDueDate = maxDueDate.toISOString();
+                } else {
+                     dataToUpdate.implementationDueDate = '';
+                }
+            }
+
+            if (dataToUpdate.status === 'Pendiente Análisis' && originalAction.status === 'Borrador' && originalAction.creator?.id) {
+                dataToUpdate.followers = arrayUnion(originalAction.creator.id);
             }
         }
+    }
+    
+    // --- BIS LOGIC (now centralized) ---
+    const allMasterData = {
+        origins: { data: await getCategories() },
+        classifications: { data: await getSubcategories() },
+        affectedAreas: await getAffectedAreas(),
+        centers: { data: await getCenters() },
+        ambits: { data: await getActionTypes() },
+        responsibilityRoles: { data: await getResponsibilityRoles() },
+    };
 
-        if (dataToUpdate.status === 'Pendiente Análisis' && originalAction.status === 'Borrador' && originalAction.creator?.id) {
-            dataToUpdate.followers = arrayUnion(originalAction.creator.id);
-        }
+    const createBisActionFrom = async (action: ImprovementAction, responsible: ActionUserInfo, notes: string) => {
+        const bisActionData: CreateActionData = {
+            title: `${action.title} BIS`,
+            description: `Acción creada automáticamente por el cierre no conforme de la acción ${action.actionId}.\n\nObservaciones de cierre no conforme:\n${notes}`,
+            category: action.categoryId, subcategory: action.subcategoryId,
+            affectedAreasIds: action.affectedAreasIds, centerId: action.centerId,
+            assignedTo: action.assignedTo, typeId: action.typeId,
+            creator: responsible,
+            status: 'Borrador', originalActionId: action.id,
+            originalActionTitle: `${action.actionId}: ${action.title}`,
+        };
+        const createdBisAction = await createAction(bisActionData, allMasterData);
+        bisCreationResult.createdBisTitle = `${createdBisAction.actionId}: ${createdBisAction.title}`;
+    };
 
-        if (data.closure && !data.closure.isCompliant && originalAction.status !== 'Finalizada') {
-            const bisActionData: CreateActionData = {
-                title: `${originalAction.title} BIS`,
-                description: `Acción creada automáticamente por el cierre no conforme de la acción ${originalAction.actionId}.\n\nObservaciones de cierre no conforme:\n${data.closure.notes}`,
-                category: originalAction.categoryId,
-                subcategory: originalAction.subcategoryId,
-                affectedAreasIds: originalAction.affectedAreasIds,
-                centerId: originalAction.centerId,
-                assignedTo: originalAction.assignedTo,
-                typeId: originalAction.typeId,
-                creator: data.closure.closureResponsible,
-                status: 'Borrador',
-                originalActionId: originalAction.id,
-                originalActionTitle: `${originalAction.actionId}: ${originalAction.title}`,
-            };
-            const allMasterData = {
-                origins: { data: await getCategories() },
-                classifications: { data: await getSubcategories() },
-                affectedAreas: await getAffectedAreas(),
-                centers: { data: await getCenters() },
-                ambits: { data: await getActionTypes() },
-                responsibilityRoles: { data: await getResponsibilityRoles() },
-            };
-            await createAction(bisActionData, allMasterData);
-        }
-
-        // Logic for admin changing closure status
-        if (data['closure.isCompliant'] === false && originalAction.closure?.isCompliant === true) {
-             const bisActionData: CreateActionData = {
-                title: `${originalAction.title} BIS`,
-                description: `Acción creada automáticamente por cambio administrativo a "No Conforme" de la acción ${originalAction.actionId}.\n\nObservaciones del cierre original:\n${originalAction.closure.notes}`,
-                category: originalAction.categoryId, subcategory: originalAction.subcategoryId,
-                affectedAreasIds: originalAction.affectedAreasIds, centerId: originalAction.centerId,
-                assignedTo: originalAction.assignedTo, typeId: originalAction.typeId,
-                creator: originalAction.closure.closureResponsible,
-                status: 'Borrador', originalActionId: originalAction.id,
-                originalActionTitle: `${originalAction.actionId}: ${originalAction.title}`,
-            };
-            const allMasterData = {
-                origins: { data: await getCategories() }, classifications: { data: await getSubcategories() },
-                affectedAreas: await getAffectedAreas(), centers: { data: await getCenters() },
-                ambits: { data: await getActionTypes() }, responsibilityRoles: { data: await getResponsibilityRoles() },
-            };
-            await createAction(bisActionData, allMasterData);
-        }
-        
-        if (data['closure.isCompliant'] === true && originalAction.closure?.isCompliant === false) {
-             const q = query(collection(db, "actions"), where("originalActionId", "==", originalAction.id));
-             const querySnapshot = await getDocs(q);
-             if (!querySnapshot.empty) {
-                 const bisActionDoc = querySnapshot.docs[0];
-                 bisActionTitle = `${bisActionDoc.data().actionId}: ${bisActionDoc.data().title}`;
-             }
-        }
-        
-        if (Object.keys(dataToUpdate).length > 0) {
-            await updateDoc(actionDocRef, dataToUpdate);
-        }
+    // Scenario: Normal user closure to 'No Conforme'
+    if (data.closure && !data.closure.isCompliant && originalAction.status !== 'Finalizada') {
+        await createBisActionFrom(originalAction, data.closure.closureResponsible, data.closure.notes);
+    }
+    // Scenario: Admin edits to 'No Conforme'
+    if (data['closure.isCompliant'] === false && originalAction.closure?.isCompliant === true) {
+        await createBisActionFrom(originalAction, originalAction.closure.closureResponsible, originalAction.closure.notes);
+    }
+    
+    // Scenario: Admin edits to 'Conforme'
+    if (data['closure.isCompliant'] === true && originalAction.closure?.isCompliant === false) {
+         const q = query(collection(db, "actions"), where("originalActionId", "==", originalAction.id));
+         const querySnapshot = await getDocs(q);
+         if (!querySnapshot.empty) {
+             const bisActionDoc = querySnapshot.docs[0];
+             bisCreationResult.foundBisTitle = `${bisActionDoc.data().actionId}: ${bisActionDoc.data().title}`;
+         }
+    }
+    
+    if (Object.keys(dataToUpdate).length > 0) {
+        await updateDoc(actionDocRef, dataToUpdate);
     }
     
     const updatedActionDoc = await getDoc(actionDocRef);
@@ -443,7 +434,7 @@ export async function updateAction(
     }
 
     const finalAction = await getActionById(actionId);
-    return { updatedAction: finalAction!, bisActionTitle };
+    return { updatedAction: finalAction!, bisCreationResult };
 }
 
 export async function toggleFollowAction(actionId: string, userId: string): Promise<void> {
@@ -544,4 +535,5 @@ export async function updateActionPermissions(actionId: string, typeId: string, 
     });
     console.log(`[ActionService] Permissions updated successfully for action ${actionId}.`);
 }
+
 
