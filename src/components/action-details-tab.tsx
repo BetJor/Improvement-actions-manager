@@ -184,7 +184,11 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
         
         setIsSubmitting(true);
         try {
-            const { bisCreationResult } = await updateAction(action.id, { [field]: newValue });
+            // Let the service generate the comment text
+            const { bisCreationResult } = await updateAction(action.id, { 
+                adminEdit: { field, label: editingField?.label || field, user: user.name || 'Admin' },
+                [field]: newValue 
+            });
             
             toast({
                 title: "Campo actualizado",
@@ -192,7 +196,7 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
             });
     
             if (bisCreationResult?.foundBisTitle) {
-                toast({
+                 toast({
                     title: "Aviso: Acción BIS existente",
                     description: `El resultado se ha cambiado a 'Conforme'. Por favor, revise la acción BIS que se generó anteriormente (${bisCreationResult.foundBisTitle}) y anúlela si lo considera necesario.`,
                     duration: 10000,
@@ -352,16 +356,11 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
         
         setIsSubmitting(true);
         try {
-            const cancellationComment = `Acción anulada por ${user.name} el ${new Date().toLocaleDateString()}. Motivo: ${cancellationReason}`;
+            const cancellationComment = `Acción anulada por ${user.name}. Motivo: ${cancellationReason}`;
             
             await updateAction(action.id, {
                 status: 'Anulada',
-                newComment: {
-                    id: crypto.randomUUID(),
-                    author: { id: 'system', name: 'Sistema' },
-                    date: new Date().toISOString(),
-                    text: cancellationComment,
-                },
+                adminEdit: { field: 'status', label: 'Estado', user: user.name, overrideComment: cancellationComment }
             });
 
             toast({
@@ -401,17 +400,15 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
             return;
         }
 
-        const commentText = `El administrador ${user.name} ha modificado ${changes.join(', ')} de la acción propuesta ${actionIndex + 1}.`;
-
         setIsSubmitting(true);
         try {
-            await updateAction(action.id, {
+             await updateAction(action.id, {
                 updateProposedAction: updatedProposedAction,
-                newComment: {
-                    id: crypto.randomUUID(),
-                    author: { id: 'system', name: 'Sistema' },
-                    date: new Date().toISOString(),
-                    text: commentText,
+                adminEdit: {
+                    field: `acción propuesta ${actionIndex + 1}`,
+                    label: changes.join(', '),
+                    user: user.name || 'Admin',
+                    isProposedAction: true
                 }
             });
             

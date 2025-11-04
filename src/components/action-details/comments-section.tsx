@@ -13,9 +13,9 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { MessageSquare, Send, Loader2, ChevronRight, Info } from "lucide-react"
-import { formatDistanceToNow } from "date-fns"
+import { format } from "date-fns"
 import { es } from "date-fns/locale"
-import { cn } from "@/lib/utils"
+import { cn, safeParseDate } from "@/lib/utils"
 
 interface CommentsSectionProps {
   action: ImprovementAction
@@ -73,7 +73,7 @@ export function CommentsSection({ action, onActionUpdate }: CommentsSectionProps
         <div className="flex-1">
             <p className="text-sm text-blue-800 whitespace-pre-wrap">{comment.text}</p>
             <p className="text-xs text-blue-500 mt-1">
-                {formatDistanceToNow(new Date(comment.date), { addSuffix: true, locale: es })}
+                {safeParseDate(comment.date) ? format(safeParseDate(comment.date)!, 'dd/MM/yyyy HH:mm') : ''}
             </p>
         </div>
     </div>
@@ -89,7 +89,7 @@ export function CommentsSection({ action, onActionUpdate }: CommentsSectionProps
           <div className="flex justify-between items-center">
             <p className="font-semibold text-sm">{comment.author.name}</p>
             <p className="text-xs text-muted-foreground">
-              {formatDistanceToNow(new Date(comment.date), { addSuffix: true, locale: es })}
+              {safeParseDate(comment.date) ? format(safeParseDate(comment.date)!, 'dd/MM/yyyy HH:mm') : ''}
             </p>
           </div>
           <p className="text-sm text-muted-foreground bg-muted p-2 rounded-md mt-1 whitespace-pre-wrap">{comment.text}</p>

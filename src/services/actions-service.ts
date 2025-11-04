@@ -279,7 +279,7 @@ async function handleStatusChange(action: ImprovementAction, oldStatus: Improvem
 
 export async function updateAction(
     actionId: string, 
-    data: Partial<ImprovementAction> & { newComment?: any, updateProposedActionStatus?: any, updateProposedAction?: ProposedAction }, 
+    data: Partial<ImprovementAction> & { newComment?: any, adminEdit?: any, updateProposedActionStatus?: any, updateProposedAction?: ProposedAction }, 
     masterData: any | null = null, 
     statusFromForm?: 'Borrador' | 'Pendiente Análisis'
 ): Promise<{ updatedAction: ImprovementAction, bisCreationResult?: { createdBisTitle?: string, foundBisTitle?: string } }> {
@@ -293,6 +293,27 @@ export async function updateAction(
     let dataToUpdate: any = { ...data };
     let bisCreationResult: { createdBisTitle?: string, foundBisTitle?: string } = {};
 
+    // --- Admin Edit Comment Logic ---
+    if (data.adminEdit) {
+        const { field, label, user, overrideComment, isProposedAction } = data.adminEdit;
+        let commentText;
+        if (overrideComment) {
+            commentText = overrideComment;
+        } else if (isProposedAction) {
+             commentText = `El administrador ${user} ha modificado ${label} de la ${field}.`;
+        } else {
+            commentText = `El administrador ${user} ha modificado el campo '${label}'.`;
+        }
+        
+        dataToUpdate.comments = arrayUnion({
+            id: crypto.randomUUID(),
+            author: { id: 'system', name: 'Sistema' },
+            date: new Date().toISOString(),
+            text: commentText
+        });
+        delete dataToUpdate.adminEdit;
+    }
+    
     // Determine if it's a full form update or a partial one
     const isFullFormUpdate = !!masterData;
 
@@ -345,12 +366,13 @@ export async function updateAction(
                      updatePayload.implementationDueDate = '';
                 }
 
-                if (data.newComment) {
-                    updatePayload.comments = arrayUnion(data.newComment);
+                if (data.comments) {
+                    updatePayload.comments = data.comments;
                 }
                 transaction.update(actionDocRef, updatePayload);
             });
-            dataToUpdate = {}; // Reset
+            delete dataToUpdate.updateProposedAction;
+            delete dataToUpdate.comments; // Handled in transaction
         } else {
             // This is for other updates like analysis, verification, closure, simple admin edits
             // or new comments without other data.
