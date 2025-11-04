@@ -222,6 +222,8 @@ export async function createAction(data: CreateActionData, masterData: any): Pro
       followers: [],
       readers: [],
       authors: [],
+      originalActionId: data.originalActionId,
+      originalActionTitle: data.originalActionTitle,
     };
   
     // 3. Apply initial permissions for 'Borrador' state
@@ -542,3 +544,4 @@ export async function updateActionPermissions(actionId: string, typeId: string, 
     });
     console.log(`[ActionService] Permissions updated successfully for action ${actionId}.`);
 }
+
