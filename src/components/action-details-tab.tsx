@@ -543,7 +543,7 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
         };
 
         const addTwoColumnList = (label1: string, list1: string[] | undefined, label2: string, list2: string[] | undefined) => {
-            if (!list1?.length && !list2?.length) return;
+            if ((!list1 || list1.length === 0) && (!list2 || list2.length === 0)) return;
             if (y > pageHeight - 20) { doc.addPage(); y = 20; }
 
             const col1X = margin;
@@ -553,22 +553,22 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
             doc.setFontSize(9);
             doc.setTextColor(blackColor);
             doc.text(label1, col1X, y);
-            if (label2) doc.text(label2, col2X, y);
-            y += 5;
+            doc.text(label2, col2X, y);
+            y += 6;
 
             doc.setFont('helvetica', 'normal');
             doc.setTextColor(grayColor);
             
-            const list1Text = list1?.join('\n') || '';
-            const list2Text = list2?.join('\n') || '';
+            const list1Text = list1?.map(item => `- ${item}`).join('\n') || 'N/A';
+            const list2Text = list2?.map(item => `- ${item}`).join('\n') || 'N/A';
 
-            const list1Height = list1Text ? doc.getTextDimensions(list1Text, { maxWidth: (pageWidth / 2.5) - 30 }).h : 0;
-            if(list1Text) doc.text(list1Text, col1X, y);
+            const list1Height = doc.getTextDimensions(list1Text, { maxWidth: (pageWidth / 2.5) - 30 }).h;
+            doc.text(list1Text, col1X, y);
 
-            const list2Height = list2Text ? doc.getTextDimensions(list2Text, { maxWidth: (pageWidth - col2X - margin) }).h : 0;
-            if(list2Text) doc.text(list2Text, col2X, y);
+            const list2Height = doc.getTextDimensions(list2Text, { maxWidth: (pageWidth - col2X - margin) }).h;
+            doc.text(list2Text, col2X, y);
             
-            y += Math.max(list1Height, list2Height) + 6;
+            y += Math.max(list1Height, list2Height) + 8;
         };
 
 

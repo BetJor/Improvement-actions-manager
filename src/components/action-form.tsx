@@ -332,9 +332,9 @@ export function ActionForm({
                                 label="Centros afectados" 
                                 value={
                                     initialData?.affectedCenters && initialData.affectedCenters.length > 0 ? (
-                                        <ul className="list-disc pl-5">
-                                            {initialData.affectedCenters.map(center => <li key={center}>{center}</li>)}
-                                        </ul>
+                                        <div className="p-2 border rounded-md text-sm text-muted-foreground space-y-1">
+                                            {initialData.affectedCenters.map(center => <div key={center}>{center}</div>)}
+                                        </div>
                                     ) : "N/A"
                                 } 
                             />
@@ -422,7 +422,7 @@ export function ActionForm({
                                         <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
                                             <Command>
                                                 <CommandInput placeholder="Cerca un centre..." />
-                                                <CommandList className="max-h-[24rem]">
+                                                <CommandList className="max-h-36">
                                                     <CommandEmpty>No se ha trobat cap centre.</CommandEmpty>
                                                     <CommandGroup>
                                                         {masterData?.centers?.data?.map((center: Center) => (
@@ -447,7 +447,7 @@ export function ActionForm({
                                 render={({ field }) => (
                                     <FormItem className="flex flex-col gap-2">
                                     <FormLabel>Áreas Funcionales Implicadas</FormLabel>
-                                    <DropdownMenu>
+                                    <DropdownMenu onOpenChange={(open) => { if (!open) field.onBlur(); }}>
                                         <DropdownMenuTrigger asChild>
                                         <FormControl>
                                             <Button variant="outline" disabled={disableForm} className={cn("w-full justify-start text-left font-normal", !field.value?.length && "text-muted-foreground")}>
@@ -497,7 +497,7 @@ export function ActionForm({
                                             <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
                                                 <Command>
                                                     <CommandInput placeholder="Busca un centro..." />
-                                                    <CommandList className="max-h-[24rem]">
+                                                    <CommandList className="max-h-36">
                                                         <CommandEmpty>No se encontraron centros.</CommandEmpty>
                                                         <CommandGroup>
                                                             {masterData?.centers?.data?.map((center: Center) => (
@@ -601,8 +601,8 @@ export function ActionForm({
           {mode === 'edit' && (
             <div className="flex gap-2">
                 <Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting}><Ban className="mr-2 h-4 w-4" />Cancelar</Button>
-                <Button type="button" onClick={() => onSubmit(form.getValues(), 'Borrador')} disabled={isSubmitting}>{isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}Guardar Borrador</Button>
-                 <Button type="button" onClick={() => onSubmit(form.getValues(), 'Pendiente Análisis')} disabled={isSubmitting}>{isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}Enviar para Análisis</Button>
+                <Button type="button" onClick={() => handleFormSubmit('Borrador')} disabled={isSubmitting}>{isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}Guardar Borrador</Button>
+                <Button type="button" onClick={() => handleFormSubmit('Pendiente Análisis')} disabled={isSubmitting}>{isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}Enviar para Análisis</Button>
             </div>
           )}
         </form>

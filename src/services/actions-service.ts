@@ -297,6 +297,12 @@ export async function updateAction(
     let dataToUpdate: any = { ...data };
     let bisCreationResult: { createdBisTitle?: string, foundBisTitle?: string } = {};
 
+    // --- Status Change Logic (for form edits) ---
+    if (statusFromForm && statusFromForm !== originalAction.status) {
+        dataToUpdate.status = statusFromForm;
+    }
+
+
     // --- Admin Edit Comment Logic ---
     const adminEditInfo = data.adminEdit;
     if (adminEditInfo) {
