@@ -12,8 +12,8 @@ import { sendStateChangeEmail } from './notification-service';
 
 interface CreateActionData extends Omit<ImprovementAction, 'id' | 'actionId' | 'status' | 'creationDate' | 'category' | 'subcategory' | 'type' | 'affectedAreas' | 'affectedCenters' | 'center' | 'analysisDueDate' | 'implementationDueDate' | 'closureDueDate' | 'readers' | 'authors' | 'verificationDueDate' > {
   status: 'Borrador' | 'Pendiente Análisis';
-  category: string; // ID
-  subcategory: string; // ID
+  categoryId: string; 
+  subcategoryId: string; 
   typeId: string;
   affectedAreasIds: string[];
   affectedCentersIds?: string[];
@@ -183,8 +183,8 @@ export async function createAction(data: CreateActionData, masterData: any): Pro
     const creatorDetails = await getUserById(data.creator.id);
 
     // Find names from IDs
-    const categoryName = masterData.origins.data.find((c: any) => c.id === data.category)?.name || data.category || '';
-    const subcategoryName = masterData.classifications.data.find((s: any) => s.id === data.subcategory)?.name || data.subcategory || '';
+    const categoryName = masterData.origins.data.find((c: any) => c.id === data.categoryId)?.name || data.categoryId || '';
+    const subcategoryName = masterData.classifications.data.find((s: any) => s.id === data.subcategoryId)?.name || data.subcategoryId || '';
     const affectedAreasNames = data.affectedAreasIds.map(id => masterData.affectedAreas.find((a: any) => a.id === id)?.name || id);
     const centerName = masterData.centers.data.find((c: any) => c.id === data.centerId)?.name || data.centerId || '';
     const affectedCentersNames = data.affectedCentersIds?.map(id => masterData.centers.data.find((c: any) => c.id === id)?.name || id);
@@ -197,9 +197,9 @@ export async function createAction(data: CreateActionData, masterData: any): Pro
       actionId: newActionId,
       title: data.title,
       category: categoryName,
-      categoryId: data.category,
+      categoryId: data.categoryId,
       subcategory: subcategoryName,
-      subcategoryId: data.subcategory,
+      subcategoryId: data.subcategoryId,
       description: data.description,
       type: typeName,
       typeId: data.typeId,
@@ -422,7 +422,8 @@ export async function updateAction(
         const bisActionData: CreateActionData = {
             title: `${action.title} BIS`,
             description: `Acción creada automáticamente por el cierre no conforme de la acción ${action.actionId}.\n\nObservaciones de cierre no conforme:\n${notes}`,
-            category: action.categoryId, subcategory: action.subcategoryId,
+            categoryId: action.categoryId, 
+            subcategoryId: action.subcategoryId,
             affectedAreasIds: action.affectedAreasIds, centerId: action.centerId,
             affectedCentersIds: action.affectedCentersIds,
             assignedTo: action.assignedTo, typeId: action.typeId,
@@ -566,3 +567,4 @@ export async function updateActionPermissions(actionId: string, typeId: string, 
     });
     console.log(`[ActionService] Permissions updated successfully for action ${actionId}.`);
 }
+
