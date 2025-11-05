@@ -13,7 +13,7 @@ import { sendStateChangeEmail } from './notification-service';
 interface CreateActionData extends Omit<ImprovementAction, 'id' | 'actionId' | 'status' | 'creationDate' | 'category' | 'subcategory' | 'type' | 'affectedAreas' | 'affectedCenters' | 'center' | 'analysisDueDate' | 'implementationDueDate' | 'closureDueDate' | 'readers' | 'authors' | 'verificationDueDate' > {
   status: 'Borrador' | 'Pendiente Análisis';
   categoryId: string; 
-  subcategoryId: string; 
+  subcategoryId?: string; 
   typeId: string;
   affectedAreasIds: string[];
   affectedCentersIds?: string[];
@@ -304,9 +304,8 @@ export async function updateAction(
 
 
     // --- Admin Edit Comment Logic ---
-    const adminEditInfo = data.adminEdit;
-    if (adminEditInfo) {
-        const { field, label, user, overrideComment, actionIndex } = adminEditInfo;
+    if (data.adminEdit) {
+        const { field, label, user, overrideComment, actionIndex } = data.adminEdit;
         let commentText;
         if (overrideComment) {
             commentText = overrideComment;
@@ -424,7 +423,6 @@ export async function updateAction(
     };
 
     const createBisActionFrom = async (action: ImprovementAction, responsible: ActionUserInfo, notes: string) => {
-        // **FIX**: Validation now checks the correct ID fields from the original action.
         if (!action.typeId || !action.categoryId) {
             const errorMessage = `No se pudo crear la acción BIS para ${action.actionId}. Razón: El 'ámbito' (typeId) o el 'origen' (categoryId) de la acción original faltan o son inválidos.`;
             console.error(errorMessage, { typeId: action.typeId, categoryId: action.categoryId });
@@ -434,7 +432,6 @@ export async function updateAction(
         const bisActionData: CreateActionData = {
             title: `${action.title} BIS`,
             description: `Acción creada automáticamente por el cierre no conforme de la acción ${action.actionId}.\n\nObservaciones de cierre no conforme:\n${notes}`,
-            // **FIX**: Directly use the reliable IDs from the original action.
             typeId: action.typeId,
             categoryId: action.categoryId,
             subcategoryId: action.subcategoryId,
@@ -583,6 +580,7 @@ export async function updateActionPermissions(actionId: string, typeId: string, 
     });
     console.log(`[ActionService] Permissions updated successfully for action ${actionId}.`);
 }
+
 
 
 

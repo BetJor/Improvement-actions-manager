@@ -50,8 +50,8 @@ import { Badge } from "./ui/badge"
 
 const formSchema = z.object({
   title: z.string().min(1, "El título es requerido."),
-  category: z.string().min(1, "El origen es requerido."),
-  subcategory: z.string().optional(),
+  categoryId: z.string().min(1, "El origen es requerido."),
+  subcategoryId: z.string().optional(),
   affectedAreasIds: z.array(z.string()).min(1, "Debes seleccionar al menos un área implicada."),
   affectedCentersIds: z.array(z.string()).optional(),
   centerId: z.string().optional(),
@@ -119,8 +119,8 @@ export function ActionForm({
         title: initialData.title || "",
         description: initialData.description || "",
         assignedTo: initialData.assignedTo || "",
-        category: initialData.categoryId || "",
-        subcategory: initialData.subcategoryId || "",
+        categoryId: initialData.categoryId || "",
+        subcategoryId: initialData.subcategoryId || "",
         affectedAreasIds: initialData.affectedAreasIds || [],
         affectedCentersIds: initialData.affectedCentersIds || [],
         centerId: initialData.centerId || "",
@@ -129,8 +129,8 @@ export function ActionForm({
     }
     return {
       title: "",
-      category: "",
-      subcategory: "",
+      categoryId: "",
+      subcategoryId: "",
       affectedAreasIds: [],
       affectedCentersIds: [],
       centerId: "",
@@ -153,7 +153,7 @@ export function ActionForm({
 
   
   const selectedActionTypeId = form.watch("typeId");
-  const selectedCategoryId = form.watch("category");
+  const selectedCategoryId = form.watch("categoryId");
   const selectedCenterId = form.watch("centerId");
   const selectedAffectedAreasIds = form.watch("affectedAreasIds");
   const selectedAffectedCentersIds = form.watch("affectedCentersIds");
@@ -331,7 +331,7 @@ export function ActionForm({
                                 label="Centros afectados" 
                                 value={
                                     initialData?.affectedCenters && initialData.affectedCenters.length > 0 ? (
-                                        <ul className="list-disc pl-5">
+                                       <ul className="list-disc pl-5">
                                             {initialData.affectedCenters.map(center => <li key={center}>{center}</li>)}
                                         </ul>
                                     ) : "N/A"
@@ -373,7 +373,7 @@ export function ActionForm({
                                 
                                 <FormField
                                     control={form.control}
-                                    name="category"
+                                    name="categoryId"
                                     render={({ field }) => (
                                     <FormItem>
                                         <FormLabel>Origen</FormLabel>
@@ -389,7 +389,7 @@ export function ActionForm({
                             
                             <FormField
                                 control={form.control}
-                                name="subcategory"
+                                name="subcategoryId"
                                 render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>Clasificación</FormLabel>
@@ -446,7 +446,7 @@ export function ActionForm({
                                 render={({ field }) => (
                                     <FormItem className="flex flex-col gap-2">
                                         <FormLabel>Áreas Funcionales Implicadas</FormLabel>
-                                        <DropdownMenu onOpenChange={(open) => { if (!open) field.onBlur(); }}>
+                                        <DropdownMenu>
                                             <DropdownMenuTrigger asChild>
                                                 <FormControl>
                                                     <Button variant="outline" disabled={disableForm} className={cn("w-full justify-start text-left font-normal", !field.value?.length && "text-muted-foreground")}>
