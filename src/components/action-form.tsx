@@ -39,7 +39,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog"
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover"
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "./ui/command"
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "./ui/command"
 import { Label } from "@/components/ui/label"
 import type { ImprovementAction, ImprovementActionType, ResponsibilityRole, AffectedArea, Center, ActionCategory, ActionSubcategory } from "@/lib/types"
 import { useAuth } from "@/hooks/use-auth"
@@ -112,6 +112,7 @@ export function ActionForm({
   const [hasImprovePrompt, setHasImprovePrompt] = useState(false);
   
   const [isCenterPopoverOpen, setIsCenterPopoverOpen] = useState(false);
+  const [isAffectedCentersPopoverOpen, setIsAffectedCentersPopoverOpen] = useState(false);
 
  const initialFormValues = useMemo(() => {
     if (initialData) {
@@ -316,7 +317,16 @@ export function ActionForm({
                             <ReadOnlyField label="Ámbito" value={initialData?.type} />
                             <ReadOnlyField label="Origen" value={initialData?.category} />
                             <ReadOnlyField label="Clasificación" value={initialData?.subcategory} />
-                            <ReadOnlyField label="Áreas Funcionales Implicadas" value={initialData?.affectedAreas.join(', ')} />
+                            <ReadOnlyField 
+                                label="Áreas Funcionales Implicadas" 
+                                value={
+                                    initialData?.affectedAreas && initialData.affectedAreas.length > 0 ? (
+                                        <ul className="list-disc pl-5">
+                                            {initialData.affectedAreas.map(area => <li key={area}>{area}</li>)}
+                                        </ul>
+                                    ) : "N/A"
+                                }
+                            />
                             <ReadOnlyField label="Centro Principal" value={initialData?.center} />
                             <ReadOnlyField 
                                 label="Centros afectados" 
@@ -394,38 +404,38 @@ export function ActionForm({
                             />
                             
                             <div className="grid md:grid-cols-2 gap-6">
-                                    <FormField
-                                        control={form.control}
-                                        name="centerId"
-                                        render={({ field }) => (
-                                        <FormItem className="flex flex-col gap-2">
-                                            <FormLabel>Centro Principal</FormLabel>
-                                            <Popover open={isCenterPopoverOpen} onOpenChange={setIsCenterPopoverOpen}>
-                                            <PopoverTrigger asChild>
-                                                <FormControl>
-                                                <Button variant="outline" role="combobox" disabled={disableForm} className={cn("w-full justify-between", !field.value && "text-muted-foreground")}>
-                                                    {field.value && masterData?.centers?.data ? masterData.centers.data.find((center: Center) => center.id === field.value)?.name : "Selecciona un centre"}
-                                                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                                                </Button>
-                                                </FormControl>
-                                            </PopoverTrigger>
-                                            <PopoverContent className="w-[--radix-popover-trigger-width] max-h-[--radix-popover-content-available-height] p-0">
-                                                <Command><CommandInput placeholder="Cerca un centre..." /><CommandEmpty>No se ha trobat cap centre.</CommandEmpty>
-                                                <CommandGroup>
-                                                    {masterData?.centers?.data?.map((center: Center) => (
-                                                    <CommandItem value={center.name} key={center.id} onSelect={() => { form.setValue("centerId", center.id!); setIsCenterPopoverOpen(false); }}>
-                                                        <Check className={cn("mr-2 h-4 w-4", center.id === field.value ? "opacity-100" : "opacity-0")} />
-                                                        {center.name}
-                                                    </CommandItem>
-                                                    ))}
-                                                </CommandGroup>
-                                                </Command>
-                                            </PopoverContent>
-                                            </Popover>
-                                            <FormMessage />
-                                        </FormItem>
-                                        )}
-                                    />
+                                <FormField
+                                    control={form.control}
+                                    name="centerId"
+                                    render={({ field }) => (
+                                    <FormItem className="flex flex-col gap-2">
+                                        <FormLabel>Centro Principal</FormLabel>
+                                        <Popover open={isCenterPopoverOpen} onOpenChange={setIsCenterPopoverOpen}>
+                                        <PopoverTrigger asChild>
+                                            <FormControl>
+                                            <Button variant="outline" role="combobox" disabled={disableForm} className={cn("w-full justify-between", !field.value && "text-muted-foreground")}>
+                                                {field.value && masterData?.centers?.data ? masterData.centers.data.find((center: Center) => center.id === field.value)?.name : "Selecciona un centre"}
+                                                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                            </Button>
+                                            </FormControl>
+                                        </PopoverTrigger>
+                                        <PopoverContent className="w-[--radix-popover-trigger-width] max-h-[--radix-popover-content-available-height] p-0">
+                                            <Command><CommandInput placeholder="Cerca un centre..." /><CommandEmpty>No se ha trobat cap centre.</CommandEmpty>
+                                            <CommandGroup>
+                                                {masterData?.centers?.data?.map((center: Center) => (
+                                                <CommandItem value={center.name} key={center.id} onSelect={() => { form.setValue("centerId", center.id!); setIsCenterPopoverOpen(false); }}>
+                                                    <Check className={cn("mr-2 h-4 w-4", center.id === field.value ? "opacity-100" : "opacity-0")} />
+                                                    {center.name}
+                                                </CommandItem>
+                                                ))}
+                                            </CommandGroup>
+                                            </Command>
+                                        </PopoverContent>
+                                        </Popover>
+                                        <FormMessage />
+                                    </FormItem>
+                                    )}
+                                />
 
                                 <FormField
                                 control={form.control}
@@ -437,7 +447,7 @@ export function ActionForm({
                                         <DropdownMenuTrigger asChild>
                                         <FormControl>
                                             <Button variant="outline" disabled={disableForm} className={cn("w-full justify-start text-left font-normal", !field.value?.length && "text-muted-foreground")}>
-                                                <span className="truncate">{field.value?.length > 0 && masterData?.affectedAreas ? field.value.map((id) => masterData.affectedAreas.find((area: AffectedArea) => area.id === id)?.name).filter(Boolean).join(", ") : "Selecciona áreas"}</span>
+                                                <span className="truncate">{field.value?.length > 0 ? `${field.value.length} área(s) seleccionada(s)` : "Selecciona áreas"}</span>
                                                 <ChevronsUpDown className="ml-auto h-4 w-4 shrink-0 opacity-50" />
                                             </Button>
                                         </FormControl>
@@ -451,43 +461,10 @@ export function ActionForm({
                                             ))}
                                         </DropdownMenuContent>
                                     </DropdownMenu>
-                                    <FormMessage />
-                                    </FormItem>
-                                )}
-                                />
-                            </div>
-                             <FormField
-                                control={form.control}
-                                name="affectedCentersIds"
-                                render={({ field }) => (
-                                    <FormItem className="flex flex-col gap-2">
-                                    <FormLabel>Centros afectados</FormLabel>
-                                    <DropdownMenu>
-                                        <DropdownMenuTrigger asChild>
-                                        <FormControl>
-                                            <Button variant="outline" disabled={disableForm} className={cn("w-full justify-start text-left font-normal", !field.value?.length && "text-muted-foreground")}>
-                                                <span className="truncate">
-                                                    {field.value?.length > 0
-                                                        ? `${field.value.length} centro(s) seleccionado(s)`
-                                                        : "Selecciona centros"}
-                                                </span>
-                                                <ChevronsUpDown className="ml-auto h-4 w-4 shrink-0 opacity-50" />
-                                            </Button>
-                                        </FormControl>
-                                        </DropdownMenuTrigger>
-                                        <DropdownMenuContent className="w-[var(--radix-dropdown-menu-trigger-width)]" align="start">
-                                            <DropdownMenuLabel>Centros Afectados</DropdownMenuLabel><DropdownMenuSeparator />
-                                            {masterData?.centers?.data?.map((center: Center) => (
-                                                <DropdownMenuCheckboxItem key={center.id} checked={field.value?.includes(center.id!)} onCheckedChange={(checked) => {
-                                                    return checked ? field.onChange([...(field.value || []), center.id]) : field.onChange((field.value || []).filter((value) => value !== center.id))
-                                                }}>{center.name}</DropdownMenuCheckboxItem>
-                                            ))}
-                                        </DropdownMenuContent>
-                                    </DropdownMenu>
-                                     {selectedAffectedCentersIds && selectedAffectedCentersIds.length > 0 && (
+                                    {selectedAffectedAreasIds && selectedAffectedAreasIds.length > 0 && (
                                         <div className="p-2 border rounded-md text-sm text-muted-foreground space-y-1">
-                                            {selectedAffectedCentersIds.map(id => (
-                                                <div key={id}>{masterData.centers.data.find((c: Center) => c.id === id)?.name}</div>
+                                            {selectedAffectedAreasIds.map(id => (
+                                                <div key={id}>{masterData.affectedAreas.find((a: AffectedArea) => a.id === id)?.name}</div>
                                             ))}
                                         </div>
                                     )}
@@ -495,6 +472,62 @@ export function ActionForm({
                                     </FormItem>
                                 )}
                                 />
+                            </div>
+                            <FormField
+                                control={form.control}
+                                name="affectedCentersIds"
+                                render={({ field }) => (
+                                    <FormItem className="flex flex-col gap-2">
+                                        <FormLabel>Centros afectados</FormLabel>
+                                        <Popover open={isAffectedCentersPopoverOpen} onOpenChange={setIsAffectedCentersPopoverOpen}>
+                                            <PopoverTrigger asChild>
+                                                <FormControl>
+                                                    <Button variant="outline" disabled={disableForm} className={cn("w-full justify-start text-left font-normal", !field.value?.length && "text-muted-foreground")}>
+                                                        <span className="truncate">
+                                                            {field.value?.length > 0 ? `${field.value.length} centro(s) seleccionado(s)` : "Selecciona centros"}
+                                                        </span>
+                                                        <ChevronsUpDown className="ml-auto h-4 w-4 shrink-0 opacity-50" />
+                                                    </Button>
+                                                </FormControl>
+                                            </PopoverTrigger>
+                                            <PopoverContent className="w-[var(--radix-popover-trigger-width)] max-h-[var(--radix-popover-content-available-height)] p-0">
+                                                <Command>
+                                                    <CommandInput placeholder="Busca un centro..." />
+                                                    <CommandList>
+                                                        <CommandEmpty>No se encontraron centros.</CommandEmpty>
+                                                        <CommandGroup>
+                                                            {masterData?.centers?.data?.map((center: Center) => (
+                                                                <CommandItem
+                                                                    key={center.id}
+                                                                    value={center.name}
+                                                                    onSelect={() => {
+                                                                        const currentSelection = field.value || [];
+                                                                        const newSelection = currentSelection.includes(center.id!)
+                                                                            ? currentSelection.filter(id => id !== center.id)
+                                                                            : [...currentSelection, center.id!];
+                                                                        field.onChange(newSelection);
+                                                                    }}
+                                                                >
+                                                                    <Check className={cn("mr-2 h-4 w-4", field.value?.includes(center.id!) ? "opacity-100" : "opacity-0")} />
+                                                                    {center.name}
+                                                                </CommandItem>
+                                                            ))}
+                                                        </CommandGroup>
+                                                    </CommandList>
+                                                </Command>
+                                            </PopoverContent>
+                                        </Popover>
+                                        {selectedAffectedCentersIds && selectedAffectedCentersIds.length > 0 && (
+                                            <div className="p-2 border rounded-md text-sm text-muted-foreground space-y-1 max-h-32 overflow-y-auto">
+                                                {selectedAffectedCentersIds.map(id => (
+                                                    <div key={id}>{masterData.centers.data.find((c: Center) => c.id === id)?.name}</div>
+                                                ))}
+                                            </div>
+                                        )}
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
                             
                                 <FormField
                                     control={form.control}
