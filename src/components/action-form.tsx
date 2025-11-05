@@ -331,9 +331,9 @@ export function ActionForm({
                                 label="Centros afectados" 
                                 value={
                                     initialData?.affectedCenters && initialData.affectedCenters.length > 0 ? (
-                                        <div className="p-2 border rounded-md text-sm text-muted-foreground space-y-1">
-                                            {initialData.affectedCenters.map(center => <div key={center}>{center}</div>)}
-                                        </div>
+                                        <ul className="list-disc pl-5">
+                                            {initialData.affectedCenters.map(center => <li key={center}>{center}</li>)}
+                                        </ul>
                                     ) : "N/A"
                                 } 
                             />
@@ -613,7 +613,7 @@ export function ActionForm({
             <div className="flex gap-2">
                 <Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting}><Ban className="mr-2 h-4 w-4" />Cancelar</Button>
                 <Button type="button" onClick={() => handleFormSubmit('Borrador')} disabled={isSubmitting}>{isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}Guardar Borrador</Button>
-                <Button type="button" onClick={() => handleFormSubmit('Pendiente Análisis')} disabled={isSubmitting}>{isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}Enviar para Análisis</Button>
+                <Button type="button" onClick={() => onSubmit(form.getValues(), 'Pendiente Análisis')} disabled={isSubmitting}>{isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}Enviar para Análisis</Button>
             </div>
           )}
         </form>
