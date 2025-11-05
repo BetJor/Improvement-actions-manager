@@ -544,6 +544,36 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
             y += Math.max(value1Height, value2Height) + 6;
         };
 
+        const addTwoColumnList = (label1: string, list1: string[] | undefined, label2: string, list2: string[] | undefined) => {
+            if (!list1?.length && !list2?.length) return;
+            if (y > pageHeight - 20) { doc.addPage(); y = 20; }
+
+            const col1X = margin;
+            const col2X = margin + (pageWidth / 2.5);
+
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(9);
+            doc.setTextColor(blackColor);
+            doc.text(label1, col1X, y);
+            if (label2) doc.text(label2, col2X, y);
+            y += 5;
+
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(grayColor);
+            
+            const list1Text = list1?.join('\n') || '';
+            const list2Text = list2?.join('\n') || '';
+
+            const list1Height = list1Text ? doc.getTextDimensions(list1Text, { maxWidth: (pageWidth / 2.5) - 30 }).h : 0;
+            if(list1Text) doc.text(list1Text, col1X, y);
+
+            const list2Height = list2Text ? doc.getTextDimensions(list2Text, { maxWidth: (pageWidth - col2X - margin) }).h : 0;
+            if(list2Text) doc.text(list2Text, col2X, y);
+            
+            y += Math.max(list1Height, list2Height) + 6;
+        };
+
+
         const addProposedActionBlock = (pa: any, index: number) => {
             const paTitle = `Acción Propuesta ${index + 1}`;
             const paDescription = pa.description;
@@ -621,9 +651,10 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
         addSectionTitle('Detalles de la Acción', 1);
         addAuditInfo(`Creado por ${action.creator.name} el ${safeParseDate(action.creationDate) ? format(safeParseDate(action.creationDate)!, 'dd/MM/yyyy HH:mm') : 'N/D'}`);
         addTwoColumnRow('Título:', action.title, 'Ámbito:', action.type);
-        addTwoColumnRow('Centro Principal:', action.center, 'Centros Afectados:', action.affectedCenters?.join(', '));
-        addTwoColumnRow('Origen:', action.category, 'Áreas Implicadas:', action.affectedAreas.join(', '));
-        addTwoColumnRow('Clasificación:', action.subcategory, undefined, undefined);
+        addTwoColumnRow('Origen:', action.category, 'Clasificación:', action.subcategory);
+        addTwoColumnRow('Centro Principal:', action.center, 'Responsable Análisis:', action.assignedTo);
+        y += 2;
+        addTwoColumnList('Centros Afectados:', action.affectedCenters, 'Áreas Implicadas:', action.affectedAreas);
 
         y += 2;
         addTextBlock('Observaciones:', action.description);
