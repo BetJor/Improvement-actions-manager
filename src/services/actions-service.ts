@@ -300,13 +300,12 @@ export async function updateAction(
     // --- Admin Edit Comment Logic ---
     const adminEditInfo = data.adminEdit;
     if (adminEditInfo) {
-        const { field, label, user, overrideComment, isProposedAction } = adminEditInfo;
+        const { field, label, user, overrideComment, actionIndex } = adminEditInfo;
         let commentText;
         if (overrideComment) {
             commentText = overrideComment;
-        } else if (isProposedAction) {
-             const actionNumber = field.split('-').pop();
-             commentText = `El administrador ${user} ha modificado ${label} de la acción propuesta ${actionNumber}.`;
+        } else if (actionIndex !== undefined) {
+             commentText = `El administrador ${user} ha modificado el campo '${label}' de la acción propuesta ${actionIndex + 1}.`;
         } else {
             commentText = `El administrador ${user} ha modificado el campo '${label}'.`;
         }
@@ -424,6 +423,7 @@ export async function updateAction(
             description: `Acción creada automáticamente por el cierre no conforme de la acción ${action.actionId}.\n\nObservaciones de cierre no conforme:\n${notes}`,
             category: action.categoryId, subcategory: action.subcategoryId,
             affectedAreasIds: action.affectedAreasIds, centerId: action.centerId,
+            affectedCentersIds: action.affectedCentersIds,
             assignedTo: action.assignedTo, typeId: action.typeId,
             creator: responsible,
             status: 'Borrador', originalActionId: action.id,

@@ -392,13 +392,13 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
         let changedFieldKey = "";
         
         if (editingProposedAction.description !== updatedProposedAction.description) {
-            changedFieldKey = "la descripción";
+            changedFieldKey = "descripción";
         } else if (editingProposedAction.responsibleUserId !== updatedProposedAction.responsibleUserId) {
-            changedFieldKey = "el responsable";
+            changedFieldKey = "responsable";
         } else if (safeParseDate(editingProposedAction.dueDate)?.getTime() !== safeParseDate(updatedProposedAction.dueDate)?.getTime()) {
-            changedFieldKey = "la fecha de vencimiento";
+            changedFieldKey = "fecha de vencimiento";
         } else if (editingProposedAction.status !== updatedProposedAction.status) {
-            changedFieldKey = "el estado";
+            changedFieldKey = "estado";
         }
         
         if (!changedFieldKey) {
@@ -408,16 +408,14 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
     
         setIsSubmitting(true);
         try {
-            const payload = {
+            await updateAction(action.id, {
                 updateProposedAction: updatedProposedAction,
                 adminEdit: {
-                    field: `acción-propuesta-${actionIndex + 1}`,
+                    actionIndex: actionIndex,
                     label: changedFieldKey,
                     user: user.name || 'Admin',
                 }
-            };
-    
-            await updateAction(action.id, payload);
+            });
             
             toast({
                 title: "Acción Propuesta Actualizada",
@@ -1079,7 +1077,7 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
                                     <div>
                                         <h3 className="font-semibold text-lg mb-4">Acción Propuesta</h3>
                                         <div className="space-y-4">
-                                            {action.analysis.proposedActions.map((pa) => (
+                                            {action.analysis.proposedActions.map((pa, index) => (
                                                 <div key={pa.id} className={cn("p-4 border-l-4 rounded-lg bg-muted/30 group relative", getStatusColorClass(pa.status))}>
                                                     {isAdmin && (
                                                         <Button variant="ghost" size="icon" className="absolute top-2 right-2 h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => setEditingProposedAction(pa)}>
