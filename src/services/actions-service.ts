@@ -3,7 +3,7 @@
 import { collection, doc, getDoc, getDocs, addDoc, updateDoc, query, orderBy, limit, arrayUnion, Timestamp, runTransaction, arrayRemove, where, writeBatch, setDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { format, parse, subDays, addDays } from 'date-fns';
-import type { ImprovementAction, ImprovementActionStatus, ActionUserInfo, ProposedAction } from '@/lib/types';
+import type { ImprovementAction, ImprovementActionStatus, ActionUserInfo, ProposedAction, ActionSubcategory } from '@/lib/types';
 import { planTraditionalActionWorkflow, getWorkflowSettings } from './workflow-service';
 import { getUsers, getUserById } from './users-service';
 import { getCategories, getSubcategories, getAffectedAreas, getCenters, getActionTypes, getResponsibilityRoles } from './master-data-service';
@@ -306,7 +306,7 @@ export async function updateAction(
         if (overrideComment) {
             commentText = overrideComment;
         } else if (actionIndex !== undefined) {
-             commentText = `El administrador ${user} ha modificado el campo '${label}' de la acción propuesta ${actionIndex + 1}.`;
+             commentText = `El administrador ${user} ha modificado el campo '${label}' de l'acció proposada ${actionIndex + 1}.`;
         } else {
             commentText = `El administrador ${user} ha modificado el campo '${label}'.`;
         }
@@ -419,16 +419,28 @@ export async function updateAction(
     };
 
     const createBisActionFrom = async (action: ImprovementAction, responsible: ActionUserInfo, notes: string) => {
+        // Robust way to find the categoryId from the subcategory
+        const subcategory: ActionSubcategory | undefined = allMasterData.classifications.data.find((sc: any) => sc.id === action.subcategoryId);
+        const derivedCategoryId = subcategory?.categoryId;
+        
+        if (!derivedCategoryId) {
+            console.error(`Could not create BIS action for ${action.id}. Reason: Could not derive categoryId from subcategoryId ${action.subcategoryId}.`);
+            throw new Error("No se pudo determinar el origen de la acción original para crear la acción BIS.");
+        }
+        
         const bisActionData: CreateActionData = {
             title: `${action.title} BIS`,
             description: `Acción creada automáticamente por el cierre no conforme de la acción ${action.actionId}.\n\nObservaciones de cierre no conforme:\n${notes}`,
-            categoryId: action.categoryId, 
+            categoryId: derivedCategoryId,
             subcategoryId: action.subcategoryId,
-            affectedAreasIds: action.affectedAreasIds, centerId: action.centerId,
+            affectedAreasIds: action.affectedAreasIds, 
+            centerId: action.centerId,
             affectedCentersIds: action.affectedCentersIds,
-            assignedTo: action.assignedTo, typeId: action.typeId,
+            assignedTo: action.assignedTo, 
+            typeId: action.typeId,
             creator: responsible,
-            status: 'Borrador', originalActionId: action.id,
+            status: 'Borrador', 
+            originalActionId: action.id,
             originalActionTitle: `${action.actionId}: ${action.title}`,
         };
         const createdBisAction = await createAction(bisActionData, allMasterData);
@@ -567,4 +579,5 @@ export async function updateActionPermissions(actionId: string, typeId: string, 
     });
     console.log(`[ActionService] Permissions updated successfully for action ${actionId}.`);
 }
+
 
