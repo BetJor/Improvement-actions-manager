@@ -1,5 +1,4 @@
 
-
 "use client"
 
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -422,7 +421,7 @@ export function ActionForm({
                                         <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
                                             <Command>
                                                 <CommandInput placeholder="Cerca un centre..." />
-                                                <CommandList className="max-h-36">
+                                                <CommandList className="max-h-72">
                                                     <CommandEmpty>No se ha trobat cap centre.</CommandEmpty>
                                                     <CommandGroup>
                                                         {masterData?.centers?.data?.map((center: Center) => (
@@ -446,33 +445,45 @@ export function ActionForm({
                                 name="affectedAreasIds"
                                 render={({ field }) => (
                                     <FormItem className="flex flex-col gap-2">
-                                    <FormLabel>Áreas Funcionales Implicadas</FormLabel>
-                                    <DropdownMenu onOpenChange={(open) => { if (!open) field.onBlur(); }}>
-                                        <DropdownMenuTrigger asChild>
-                                        <FormControl>
-                                            <Button variant="outline" disabled={disableForm} className={cn("w-full justify-start text-left font-normal", !field.value?.length && "text-muted-foreground")}>
-                                                <span className="truncate">{field.value?.length > 0 ? `${field.value.length} área(s) seleccionada(s)` : "Selecciona áreas"}</span>
-                                                <ChevronsUpDown className="ml-auto h-4 w-4 shrink-0 opacity-50" />
-                                            </Button>
-                                        </FormControl>
-                                        </DropdownMenuTrigger>
-                                        <DropdownMenuContent className="w-[var(--radix-dropdown-menu-trigger-width)]" align="start">
-                                            <DropdownMenuLabel>Áreas Afectadas</DropdownMenuLabel><DropdownMenuSeparator />
-                                            {masterData?.affectedAreas?.map((area: AffectedArea) => (
-                                                <DropdownMenuCheckboxItem key={area.id} checked={field.value?.includes(area.id!)} onSelect={(e) => e.preventDefault()} onCheckedChange={(checked) => {
-                                                    return checked ? field.onChange([...(field.value || []), area.id]) : field.onChange((field.value || []).filter((value) => value !== area.id))
-                                                }}>{area.name}</DropdownMenuCheckboxItem>
-                                            ))}
-                                        </DropdownMenuContent>
-                                    </DropdownMenu>
-                                    {selectedAffectedAreasIds && selectedAffectedAreasIds.length > 0 && (
-                                        <div className="p-2 border rounded-md text-sm text-muted-foreground space-y-1">
-                                            {selectedAffectedAreasIds.map(id => (
-                                                <div key={id}>{masterData.affectedAreas.find((a: AffectedArea) => a.id === id)?.name}</div>
-                                            ))}
-                                        </div>
-                                    )}
-                                    <FormMessage />
+                                        <FormLabel>Áreas Funcionales Implicadas</FormLabel>
+                                        <DropdownMenu onOpenChange={(open) => { if (!open) field.onBlur(); }}>
+                                            <DropdownMenuTrigger asChild>
+                                                <FormControl>
+                                                    <Button variant="outline" disabled={disableForm} className={cn("w-full justify-start text-left font-normal", !field.value?.length && "text-muted-foreground")}>
+                                                        <span className="truncate">{field.value?.length > 0 ? `${field.value.length} área(s) seleccionada(s)` : "Selecciona áreas"}</span>
+                                                        <ChevronsUpDown className="ml-auto h-4 w-4 shrink-0 opacity-50" />
+                                                    </Button>
+                                                </FormControl>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent className="w-[var(--radix-dropdown-menu-trigger-width)]" align="start">
+                                                <DropdownMenuLabel>Áreas Afectadas</DropdownMenuLabel>
+                                                <DropdownMenuSeparator />
+                                                {masterData?.affectedAreas?.map((area: AffectedArea) => (
+                                                    <DropdownMenuCheckboxItem
+                                                        key={area.id}
+                                                        checked={field.value?.includes(area.id!)}
+                                                        onSelect={(e) => e.preventDefault()}
+                                                        onCheckedChange={(checked) => {
+                                                            const currentSelection = field.value || [];
+                                                            const newSelection = checked
+                                                                ? [...currentSelection, area.id!]
+                                                                : currentSelection.filter(id => id !== area.id);
+                                                            field.onChange(newSelection);
+                                                        }}
+                                                    >
+                                                        {area.name}
+                                                    </DropdownMenuCheckboxItem>
+                                                ))}
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
+                                        {selectedAffectedAreasIds && selectedAffectedAreasIds.length > 0 && (
+                                            <div className="p-2 border rounded-md text-sm text-muted-foreground space-y-1">
+                                                {selectedAffectedAreasIds.map(id => (
+                                                    <div key={id}>{masterData.affectedAreas.find((a: AffectedArea) => a.id === id)?.name}</div>
+                                                ))}
+                                            </div>
+                                        )}
+                                        <FormMessage />
                                     </FormItem>
                                 )}
                                 />
@@ -497,7 +508,7 @@ export function ActionForm({
                                             <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
                                                 <Command>
                                                     <CommandInput placeholder="Busca un centro..." />
-                                                    <CommandList className="max-h-36">
+                                                    <CommandList className="max-h-72">
                                                         <CommandEmpty>No se encontraron centros.</CommandEmpty>
                                                         <CommandGroup>
                                                             {masterData?.centers?.data?.map((center: Center) => (

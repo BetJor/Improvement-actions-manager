@@ -223,7 +223,7 @@ export async function createAction(data: CreateActionData, masterData: any): Pro
       verificationDueDate: '',
       implementationDueDate: '', 
       closureDueDate: '',
-      followers: [],
+      followers: [data.creator.id], // Automatically follow created actions
       readers: [],
       authors: [],
       ...(data.originalActionId && { originalActionId: data.originalActionId }),
@@ -234,11 +234,6 @@ export async function createAction(data: CreateActionData, masterData: any): Pro
     if (newActionData.status === 'Borrador' && newActionData.creator.email) {
         newActionData.readers = [newActionData.creator.email];
         newActionData.authors = [newActionData.creator.email];
-    }
-    
-    // 4. Add user as follower if sending for analysis right away
-    if (newActionData.status === 'Pendiente Análisis') {
-      newActionData.followers = [newActionData.creator.id];
     }
 
     // 5. Add the new document to Firestore
