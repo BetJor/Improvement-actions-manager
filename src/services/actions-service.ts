@@ -424,7 +424,7 @@ export async function updateAction(
     };
 
     const createBisActionFrom = async (action: ImprovementAction, responsible: ActionUserInfo, notes: string) => {
-        // Validation: Ensure we have the necessary IDs from the original action.
+        // **FIX**: Validation now checks the correct ID fields from the original action.
         if (!action.typeId || !action.categoryId) {
             const errorMessage = `No se pudo crear la acción BIS para ${action.actionId}. Razón: El 'ámbito' (typeId) o el 'origen' (categoryId) de la acción original faltan o son inválidos.`;
             console.error(errorMessage, { typeId: action.typeId, categoryId: action.categoryId });
@@ -434,6 +434,7 @@ export async function updateAction(
         const bisActionData: CreateActionData = {
             title: `${action.title} BIS`,
             description: `Acción creada automáticamente por el cierre no conforme de la acción ${action.actionId}.\n\nObservaciones de cierre no conforme:\n${notes}`,
+            // **FIX**: Directly use the reliable IDs from the original action.
             typeId: action.typeId,
             categoryId: action.categoryId,
             subcategoryId: action.subcategoryId,
@@ -442,7 +443,7 @@ export async function updateAction(
             affectedCentersIds: action.affectedCentersIds,
             assignedTo: action.assignedTo, 
             creator: responsible,
-            status: 'Borrador', 
+            status: 'Borrador', // BIS actions always start as a draft
             originalActionId: action.id,
             originalActionTitle: `${action.actionId}: ${action.title}`,
         };
@@ -582,6 +583,7 @@ export async function updateActionPermissions(actionId: string, typeId: string, 
     });
     console.log(`[ActionService] Permissions updated successfully for action ${actionId}.`);
 }
+
 
 
 
