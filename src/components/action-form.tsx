@@ -46,6 +46,7 @@ import { useAuth } from "@/hooks/use-auth"
 import { evaluatePattern } from "@/lib/pattern-evaluator"
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "./ui/dropdown-menu"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "./ui/card"
+import { Badge } from "./ui/badge"
 
 
 const formSchema = z.object({
@@ -155,6 +156,7 @@ export function ActionForm({
   const selectedCategoryId = form.watch("category");
   const selectedCenterId = form.watch("centerId");
   const selectedAffectedAreasIds = form.watch("affectedAreasIds");
+  const selectedAffectedCentersIds = form.watch("affectedCentersIds");
 
   const filteredAmbits = useMemo(() => {
     if (!masterData?.ambits?.data) return [];
@@ -316,7 +318,16 @@ export function ActionForm({
                             <ReadOnlyField label="Clasificación" value={initialData?.subcategory} />
                             <ReadOnlyField label="Áreas Funcionales Implicadas" value={initialData?.affectedAreas.join(', ')} />
                             <ReadOnlyField label="Centro Principal" value={initialData?.center} />
-                            <ReadOnlyField label="Centros afectados" value={initialData?.affectedCenters?.join(', ')} />
+                            <ReadOnlyField 
+                                label="Centros afectados" 
+                                value={
+                                    initialData?.affectedCenters && initialData.affectedCenters.length > 0 ? (
+                                        <ul className="list-disc pl-5">
+                                            {initialData.affectedCenters.map(center => <li key={center}>{center}</li>)}
+                                        </ul>
+                                    ) : "N/A"
+                                } 
+                            />
                             <ReadOnlyField label="Asignado A (Responsable Análisis)" value={initialData?.assignedTo} />
                         </div>
                     ) : (
@@ -455,7 +466,11 @@ export function ActionForm({
                                         <DropdownMenuTrigger asChild>
                                         <FormControl>
                                             <Button variant="outline" disabled={disableForm} className={cn("w-full justify-start text-left font-normal", !field.value?.length && "text-muted-foreground")}>
-                                                <span className="truncate">{field.value?.length > 0 && masterData?.centers?.data ? field.value.map((id) => masterData.centers.data.find((center: Center) => center.id === id)?.name).filter(Boolean).join(", ") : "Selecciona centros"}</span>
+                                                <span className="truncate">
+                                                    {field.value?.length > 0
+                                                        ? `${field.value.length} centro(s) seleccionado(s)`
+                                                        : "Selecciona centros"}
+                                                </span>
                                                 <ChevronsUpDown className="ml-auto h-4 w-4 shrink-0 opacity-50" />
                                             </Button>
                                         </FormControl>
@@ -469,6 +484,13 @@ export function ActionForm({
                                             ))}
                                         </DropdownMenuContent>
                                     </DropdownMenu>
+                                     {selectedAffectedCentersIds && selectedAffectedCentersIds.length > 0 && (
+                                        <div className="p-2 border rounded-md text-sm text-muted-foreground space-y-1">
+                                            {selectedAffectedCentersIds.map(id => (
+                                                <div key={id}>{masterData.centers.data.find((c: Center) => c.id === id)?.name}</div>
+                                            ))}
+                                        </div>
+                                    )}
                                     <FormMessage />
                                     </FormItem>
                                 )}
