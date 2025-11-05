@@ -408,14 +408,12 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
     
         setIsSubmitting(true);
         try {
-            // Send both updateProposedAction and adminEdit at the same level
             const payload = {
                 updateProposedAction: updatedProposedAction,
                 adminEdit: {
                     field: `acción-propuesta-${actionIndex + 1}`,
                     label: changedFieldKey,
                     user: user.name || 'Admin',
-                    isProposedAction: true
                 }
             };
     
@@ -622,9 +620,9 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
         // --- SECTION 1: DETALLES DE LA ACCIÓN ---
         addSectionTitle('Detalles de la Acción', 1);
         addAuditInfo(`Creado por ${action.creator.name} el ${safeParseDate(action.creationDate) ? format(safeParseDate(action.creationDate)!, 'dd/MM/yyyy HH:mm') : 'N/D'}`);
-        addTwoColumnRow('Título:', action.title, 'Centro:', action.center);
-        addTwoColumnRow('Ámbito:', action.type, 'Áreas Implicadas:', action.affectedAreas.join(', '));
-        addTwoColumnRow('Origen:', action.category, undefined, undefined);
+        addTwoColumnRow('Título:', action.title, 'Ámbito:', action.type);
+        addTwoColumnRow('Centro Principal:', action.center, 'Centros Afectados:', action.affectedCenters?.join(', '));
+        addTwoColumnRow('Origen:', action.category, 'Áreas Implicadas:', action.affectedAreas.join(', '));
         addTwoColumnRow('Clasificación:', action.subcategory, undefined, undefined);
 
         y += 2;
@@ -746,7 +744,8 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
             ["Ámbito", action.type],
             ["Origen", action.category],
             ["Clasificación", action.subcategory],
-            ["Centro", action.center],
+            ["Centro Principal", action.center],
+            ["Centros Afectados", action.affectedCenters?.join(', ')],
             ["Áreas Afectadas", action.affectedAreas.join(', ')],
             ["Responsable Análisis", action.assignedTo],
             ["Fecha Vto. Análisis", safeParseDate(action.analysisDueDate) ? format(safeParseDate(action.analysisDueDate)!, 'dd/MM/yyyy') : 'N/D'],
