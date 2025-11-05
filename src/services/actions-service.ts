@@ -3,7 +3,7 @@
 import { collection, doc, getDoc, getDocs, addDoc, updateDoc, query, orderBy, limit, arrayUnion, Timestamp, runTransaction, arrayRemove, where, writeBatch, setDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { format, parse, subDays, addDays } from 'date-fns';
-import type { ImprovementAction, ImprovementActionStatus, ActionUserInfo, ProposedAction, ActionSubcategory, ActionCategory } from '@/lib/types';
+import type { ImprovementAction, ImprovementActionStatus, ActionUserInfo, ProposedAction, ActionSubcategory, ActionCategory, ImprovementActionType } from '@/lib/types';
 import { planTraditionalActionWorkflow, getWorkflowSettings } from './workflow-service';
 import { getUsers, getUserById } from './users-service';
 import { getCategories, getSubcategories, getAffectedAreas, getCenters, getActionTypes, getResponsibilityRoles } from './master-data-service';
@@ -424,37 +424,23 @@ export async function updateAction(
     };
 
     const createBisActionFrom = async (action: ImprovementAction, responsible: ActionUserInfo, notes: string) => {
-        let derivedCategoryId = action.categoryId;
-        
-        // Fallback: If categoryId is missing, try to find it via subcategory
-        if (!derivedCategoryId) {
-            const subcategory: ActionSubcategory | undefined = allMasterData.classifications.data.find((sc: any) => sc.id === action.subcategoryId);
-            if (subcategory?.categoryId) {
-                derivedCategoryId = subcategory.categoryId;
-            } else {
-                // Fallback 2: Find category by name if ID is missing on subcategory too
-                const category: ActionCategory | undefined = allMasterData.origins.data.find((c: any) => c.name === action.category);
-                if (category?.id) {
-                    derivedCategoryId = category.id;
-                }
-            }
+        // Validation: Ensure we have the necessary IDs from the original action.
+        if (!action.typeId || !action.categoryId) {
+            const errorMessage = `No se pudo crear la acción BIS para ${action.actionId}. Razón: El 'ámbito' (typeId) o el 'origen' (categoryId) de la acción original faltan o son inválidos.`;
+            console.error(errorMessage, { typeId: action.typeId, categoryId: action.categoryId });
+            throw new Error(errorMessage);
         }
 
-        if (!derivedCategoryId) {
-            console.error(`Could not create BIS action for ${action.id}. Reason: Could not derive categoryId.`);
-            throw new Error("No se pudo determinar el origen de la acción original para crear la acción BIS.");
-        }
-        
         const bisActionData: CreateActionData = {
             title: `${action.title} BIS`,
             description: `Acción creada automáticamente por el cierre no conforme de la acción ${action.actionId}.\n\nObservaciones de cierre no conforme:\n${notes}`,
-            categoryId: derivedCategoryId, // Use the reliably found categoryId
+            typeId: action.typeId,
+            categoryId: action.categoryId,
             subcategoryId: action.subcategoryId,
             affectedAreasIds: action.affectedAreasIds, 
             centerId: action.centerId,
             affectedCentersIds: action.affectedCentersIds,
             assignedTo: action.assignedTo, 
-            typeId: action.typeId,
             creator: responsible,
             status: 'Borrador', 
             originalActionId: action.id,
@@ -596,6 +582,7 @@ export async function updateActionPermissions(actionId: string, typeId: string, 
     });
     console.log(`[ActionService] Permissions updated successfully for action ${actionId}.`);
 }
+
 
 
 
