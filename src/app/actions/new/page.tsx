@@ -16,7 +16,7 @@ import { useActionState } from "@/hooks/use-action-state"
 export default function NewActionPage() {
   const { toast } = useToast()
   const router = useRouter()
-  const { user } = useAuth()
+  const { user, isAdmin } = useAuth()
   const { closeCurrentTab } = useTabs();
   const { setActions } = useActionState();
   
@@ -122,6 +122,8 @@ export default function NewActionPage() {
                 masterData={masterData}
                 isSubmitting={isSubmitting}
                 onSubmit={onSubmit}
+                isAdmin={isAdmin}
+                onEditField={() => {}} // Not used in create mode
             />
            )}
         </CardContent>
