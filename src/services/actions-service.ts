@@ -10,12 +10,13 @@ import { getCategories, getSubcategories, getAffectedAreas, getCenters, getActio
 import { getPermissionRuleForState, resolveRoles } from './permissions-service';
 import { sendStateChangeEmail } from './notification-service';
 
-interface CreateActionData extends Omit<ImprovementAction, 'id' | 'actionId' | 'status' | 'creationDate' | 'category' | 'subcategory' | 'type' | 'affectedAreas' | 'center' | 'analysisDueDate' | 'implementationDueDate' | 'closureDueDate' | 'readers' | 'authors' | 'verificationDueDate' > {
+interface CreateActionData extends Omit<ImprovementAction, 'id' | 'actionId' | 'status' | 'creationDate' | 'category' | 'subcategory' | 'type' | 'affectedAreas' | 'affectedCenters' | 'center' | 'analysisDueDate' | 'implementationDueDate' | 'closureDueDate' | 'readers' | 'authors' | 'verificationDueDate' > {
   status: 'Borrador' | 'Pendiente Análisis';
   category: string; // ID
   subcategory: string; // ID
   typeId: string;
   affectedAreasIds: string[];
+  affectedCentersIds?: string[];
   centerId?: string;
   locale?: string;
 }
@@ -186,6 +187,7 @@ export async function createAction(data: CreateActionData, masterData: any): Pro
     const subcategoryName = masterData.classifications.data.find((s: any) => s.id === data.subcategory)?.name || data.subcategory || '';
     const affectedAreasNames = data.affectedAreasIds.map(id => masterData.affectedAreas.find((a: any) => a.id === id)?.name || id);
     const centerName = masterData.centers.data.find((c: any) => c.id === data.centerId)?.name || data.centerId || '';
+    const affectedCentersNames = data.affectedCentersIds?.map(id => masterData.centers.data.find((c: any) => c.id === id)?.name || id);
     const typeName = masterData.ambits.data.find((t: any) => t.id === data.typeId)?.name || data.typeId || '';
 
     // Get the global workflow settings for due dates
@@ -204,6 +206,8 @@ export async function createAction(data: CreateActionData, masterData: any): Pro
       status: data.status || 'Borrador',
       affectedAreas: affectedAreasNames,
       affectedAreasIds: data.affectedAreasIds,
+      affectedCenters: affectedCentersNames,
+      affectedCentersIds: data.affectedCentersIds,
       center: centerName,
       centerId: data.centerId,
       assignedTo: data.assignedTo,
@@ -294,7 +298,7 @@ export async function updateAction(
     let bisCreationResult: { createdBisTitle?: string, foundBisTitle?: string } = {};
 
     // --- Admin Edit Comment Logic ---
-    const adminEditInfo = data.adminEdit || data.updateProposedAction?.adminEdit; // Check both locations for backward compatibility
+    const adminEditInfo = data.adminEdit;
     if (adminEditInfo) {
         const { field, label, user, overrideComment, isProposedAction } = adminEditInfo;
         let commentText;
@@ -320,8 +324,9 @@ export async function updateAction(
     const isFullFormUpdate = !!masterData;
 
     if (isFullFormUpdate) {
-        // Handle full form update from ActionForm
-        // This part remains as it was, converting IDs to names etc.
+        if(data.affectedCentersIds){
+            dataToUpdate.affectedCenters = data.affectedCentersIds.map((id:string) => masterData.centers.data.find((c:any) => c.id === id)?.name || id);
+        }
     } else {
         // Handle partial updates (admin edits, status changes, etc.)
         if (data.updateProposedActionStatus) {

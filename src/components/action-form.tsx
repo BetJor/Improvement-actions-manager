@@ -53,6 +53,7 @@ const formSchema = z.object({
   category: z.string().min(1, "El origen es requerido."),
   subcategory: z.string().optional(),
   affectedAreasIds: z.array(z.string()).min(1, "Debes seleccionar al menos un área implicada."),
+  affectedCentersIds: z.array(z.string()).optional(),
   centerId: z.string().optional(),
   assignedTo: z.string({ required_error: "Debes seleccionar un grupo responsable." }).min(1, "Debes seleccionar un grupo responsable."),
   description: z.string().min(1, "Las observaciones son requeridas."),
@@ -120,6 +121,7 @@ export function ActionForm({
         category: initialData.categoryId || "",
         subcategory: initialData.subcategoryId || "",
         affectedAreasIds: initialData.affectedAreasIds || [],
+        affectedCentersIds: initialData.affectedCentersIds || [],
         centerId: initialData.centerId || "",
         typeId: initialData.typeId || "",
       };
@@ -129,6 +131,7 @@ export function ActionForm({
       category: "",
       subcategory: "",
       affectedAreasIds: [],
+      affectedCentersIds: [],
       centerId: "",
       assignedTo: "",
       description: "",
@@ -312,7 +315,8 @@ export function ActionForm({
                             <ReadOnlyField label="Origen" value={initialData?.category} />
                             <ReadOnlyField label="Clasificación" value={initialData?.subcategory} />
                             <ReadOnlyField label="Áreas Funcionales Implicadas" value={initialData?.affectedAreas.join(', ')} />
-                            <ReadOnlyField label="Centro" value={initialData?.center} />
+                            <ReadOnlyField label="Centro Principal" value={initialData?.center} />
+                            <ReadOnlyField label="Centros afectados" value={initialData?.affectedCenters?.join(', ')} />
                             <ReadOnlyField label="Asignado A (Responsable Análisis)" value={initialData?.assignedTo} />
                         </div>
                     ) : (
@@ -384,7 +388,7 @@ export function ActionForm({
                                         name="centerId"
                                         render={({ field }) => (
                                         <FormItem className="flex flex-col gap-2">
-                                            <FormLabel>Centro</FormLabel>
+                                            <FormLabel>Centro Principal</FormLabel>
                                             <Popover open={isCenterPopoverOpen} onOpenChange={setIsCenterPopoverOpen}>
                                             <PopoverTrigger asChild>
                                                 <FormControl>
@@ -441,6 +445,34 @@ export function ActionForm({
                                 )}
                                 />
                             </div>
+                             <FormField
+                                control={form.control}
+                                name="affectedCentersIds"
+                                render={({ field }) => (
+                                    <FormItem className="flex flex-col gap-2">
+                                    <FormLabel>Centros afectados</FormLabel>
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                        <FormControl>
+                                            <Button variant="outline" disabled={disableForm} className={cn("w-full justify-start text-left font-normal", !field.value?.length && "text-muted-foreground")}>
+                                                <span className="truncate">{field.value?.length > 0 && masterData?.centers?.data ? field.value.map((id) => masterData.centers.data.find((center: Center) => center.id === id)?.name).filter(Boolean).join(", ") : "Selecciona centros"}</span>
+                                                <ChevronsUpDown className="ml-auto h-4 w-4 shrink-0 opacity-50" />
+                                            </Button>
+                                        </FormControl>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent className="w-[var(--radix-dropdown-menu-trigger-width)]" align="start">
+                                            <DropdownMenuLabel>Centros Afectados</DropdownMenuLabel><DropdownMenuSeparator />
+                                            {masterData?.centers?.data?.map((center: Center) => (
+                                                <DropdownMenuCheckboxItem key={center.id} checked={field.value?.includes(center.id!)} onCheckedChange={(checked) => {
+                                                    return checked ? field.onChange([...(field.value || []), center.id]) : field.onChange((field.value || []).filter((value) => value !== center.id))
+                                                }}>{center.name}</DropdownMenuCheckboxItem>
+                                            ))}
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
+                                    <FormMessage />
+                                    </FormItem>
+                                )}
+                                />
                             
                                 <FormField
                                     control={form.control}

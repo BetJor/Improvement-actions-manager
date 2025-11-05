@@ -144,6 +144,8 @@ export interface ImprovementAction {
   typeId: string;
   affectedAreas: string[]; 
   affectedAreasIds: string[];
+  affectedCenters?: string[];
+  affectedCentersIds?: string[];
   center?: string;
   centerId?: string;
   assignedTo: string;

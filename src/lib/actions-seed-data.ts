@@ -15,6 +15,7 @@ interface SeedAction extends Partial<Omit<ImprovementAction, 'id'>> {
     categoryId: string;
     subcategoryId: string;
     affectedAreasIds: string[];
+    affectedCentersIds?: string[];
     centerId: string;
     creator: { id: string; name: string; email: string; };
     assignedTo: string;
@@ -36,6 +37,7 @@ export const seedActionsData: SeedAction[] = [
         subcategoryId: "sub-5-1", // Placeholder
         affectedAreasIds: ["area-10", "area-3"],
         centerId: "0885",
+        affectedCentersIds: ["0885"],
         creator: { id: "user-8", name: "Miguel Perez", email: "miguel.perez@example.com" },
         assignedTo: "it-legacy-systems@example.com",
     },
@@ -49,6 +51,7 @@ export const seedActionsData: SeedAction[] = [
         categoryId: "origin-2",
         subcategoryId: "sub-6-1", // Placeholder
         affectedAreasIds: ["area-3", "area-8"],
+        affectedCentersIds: ["0101"],
         centerId: "0101",
         creator: { id: "user-4", name: "Javier López", email: "javier.lopez@example.com" },
         assignedTo: "quality-management@example.com",
@@ -67,6 +70,7 @@ export const seedActionsData: SeedAction[] = [
         categoryId: "origin-2",
         subcategoryId: "sub-6-1", // Placeholder
         affectedAreasIds: ["area-3", "area-8"],
+        affectedCentersIds: ["0101"],
         centerId: "0101",
         creator: { id: "user-4", name: "Javier López", email: "javier.lopez@example.com" },
         assignedTo: "quality-management@example.com",
@@ -83,6 +87,7 @@ export const seedActionsData: SeedAction[] = [
         categoryId: "origin-4", // Placeholder
         subcategoryId: "sub-2-1", // Placeholder
         affectedAreasIds: ["area-1", "area-12"],
+        affectedCentersIds: ["1601"],
         centerId: "1601",
         creator: { id: "user-1", name: "Ana García", email: "ana.garcia@example.com" },
         assignedTo: "finance@example.com",
@@ -97,6 +102,7 @@ export const seedActionsData: SeedAction[] = [
         categoryId: "origin-3", // Placeholder
         subcategoryId: "sub-3-1", // Placeholder
         affectedAreasIds: ["area-6", "area-14"],
+        affectedCentersIds: ["0702"],
         centerId: "0702",
         creator: { id: "user-7", name: "Elena Gomez", email: "elena.gomez@example.com" },
         assignedTo: "risk-management@example.com",
@@ -111,6 +117,7 @@ export const seedActionsData: SeedAction[] = [
         categoryId: "origin-4", // Placeholder
         subcategoryId: "sub-4-1", // Placeholder
         affectedAreasIds: ["area-3"],
+        affectedCentersIds: ["0302"],
         centerId: "0302",
         creator: { id: "user-2", name: "Carlos Rodríguez", email: "carlos.rodriguez@example.com" },
         assignedTo: "quality-management@example.com",
@@ -125,6 +132,7 @@ export const seedActionsData: SeedAction[] = [
         categoryId: "origin-4", // Placeholder
         subcategoryId: "sub-1-1", // Placeholder
         affectedAreasIds: ["area-5"],
+        affectedCentersIds: ["0885"],
         centerId: "0885",
         creator: { id: "user-3", name: "Laura Martinez", email: "laura.martinez@example.com" },
         assignedTo: "customer-support@example.com",
@@ -139,6 +147,7 @@ export const seedActionsData: SeedAction[] = [
         categoryId: "origin-3", // Placeholder
         subcategoryId: "sub-3-2", // Placeholder
         affectedAreasIds: ["area-4"],
+        affectedCentersIds: ["0702"],
         centerId: "0702",
         creator: { id: "user-admin", name: "Admin User", email: "admin@example.com" },
         assignedTo: "risk-management@example.com",
@@ -153,6 +162,7 @@ export const seedActionsData: SeedAction[] = [
         categoryId: "origin-3", // Placeholder
         subcategoryId: "sub-1-2", // Placeholder
         affectedAreasIds: ["area-5", "area-8"],
+        affectedCentersIds: ["0302"],
         centerId: "0302",
         creator: { id: "user-3", name: "Laura Martinez", email: "laura.martinez@example.com" },
         assignedTo: "risk-management@example.com",
@@ -167,6 +177,7 @@ export const seedActionsData: SeedAction[] = [
         categoryId: "origin-4", // Placeholder
         subcategoryId: "sub-7-1", // Placeholder
         affectedAreasIds: ["area-3", "area-10"],
+        affectedCentersIds: ["1601"],
         centerId: "1601",
         creator: { id: "user-5", name: "Sofía Hernandez", email: "sofia.hernandez@example.com" },
         assignedTo: "it-legacy-systems@example.com",
@@ -181,6 +192,7 @@ export const seedActionsData: SeedAction[] = [
         categoryId: "origin-4", // Placeholder
         subcategoryId: "sub-8-1", // Placeholder
         affectedAreasIds: ["area-4", "area-3"],
+        affectedCentersIds: ["0101"],
         centerId: "0101",
         creator: { id: "user-9", name: "Elisabet Jordana", email: "elisabet.jordana@example.com" },
         assignedTo: "risk-management@example.com",
@@ -195,6 +207,7 @@ export const seedActionsData: SeedAction[] = [
         categoryId: "origin-2",
         subcategoryId: "sub-6-2", // Placeholder
         affectedAreasIds: ["area-8", "area-10"],
+        affectedCentersIds: ["0885"],
         centerId: "0885",
         creator: { id: "user-1", name: "Ana García", email: "ana.garcia@example.com" },
         assignedTo: "quality-management@example.com",
@@ -209,6 +222,7 @@ export const seedActionsData: SeedAction[] = [
         categoryId: "origin-1",
         subcategoryId: "sub-6-3", // Placeholder
         affectedAreasIds: ["area-3", "area-12"],
+        affectedCentersIds: ["0101"],
         centerId: "0101",
         creator: { id: "user-admin", name: "Admin User", email: "admin@example.com" },
         assignedTo: "quality-management@example.com",
@@ -223,6 +237,7 @@ export const seedActionsData: SeedAction[] = [
         categoryId: "origin-4", // Placeholder
         subcategoryId: "sub-9-1", // Placeholder
         affectedAreasIds: ["area-5"],
+        affectedCentersIds: ["1601"],
         centerId: "1601",
         creator: { id: "user-3", name: "Laura Martinez", email: "laura.martinez@example.com" },
         assignedTo: "customer-support@example.com",
@@ -237,6 +252,7 @@ export const seedActionsData: SeedAction[] = [
         categoryId: "origin-4", // Placeholder
         subcategoryId: "sub-2-2", // Placeholder
         affectedAreasIds: ["area-1", "area-5"],
+        affectedCentersIds: ["0885"],
         centerId: "0885",
         creator: { id: "user-6", name: "David Fernandez", email: "david.fernandez@example.com" },
         assignedTo: "finance@example.com",
