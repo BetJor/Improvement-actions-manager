@@ -226,8 +226,8 @@ export async function createAction(data: CreateActionData, masterData: any): Pro
       followers: [],
       readers: [],
       authors: [],
-      originalActionId: data.originalActionId,
-      originalActionTitle: data.originalActionTitle,
+      ...(data.originalActionId && { originalActionId: data.originalActionId }),
+      ...(data.originalActionTitle && { originalActionTitle: data.originalActionTitle }),
     };
   
     // 3. Apply initial permissions for 'Borrador' state
