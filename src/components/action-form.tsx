@@ -419,16 +419,20 @@ export function ActionForm({
                                             </Button>
                                             </FormControl>
                                         </PopoverTrigger>
-                                        <PopoverContent className="w-[--radix-popover-trigger-width] max-h-[--radix-popover-content-available-height] p-0">
-                                            <Command><CommandInput placeholder="Cerca un centre..." /><CommandEmpty>No se ha trobat cap centre.</CommandEmpty>
-                                            <CommandGroup>
-                                                {masterData?.centers?.data?.map((center: Center) => (
-                                                <CommandItem value={center.name} key={center.id} onSelect={() => { form.setValue("centerId", center.id!); setIsCenterPopoverOpen(false); }}>
-                                                    <Check className={cn("mr-2 h-4 w-4", center.id === field.value ? "opacity-100" : "opacity-0")} />
-                                                    {center.name}
-                                                </CommandItem>
-                                                ))}
-                                            </CommandGroup>
+                                        <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                                            <Command>
+                                                <CommandInput placeholder="Cerca un centre..." />
+                                                <CommandList className="max-h-[24rem]">
+                                                    <CommandEmpty>No se ha trobat cap centre.</CommandEmpty>
+                                                    <CommandGroup>
+                                                        {masterData?.centers?.data?.map((center: Center) => (
+                                                        <CommandItem value={center.name} key={center.id} onSelect={() => { form.setValue("centerId", center.id!); setIsCenterPopoverOpen(false); }}>
+                                                            <Check className={cn("mr-2 h-4 w-4", center.id === field.value ? "opacity-100" : "opacity-0")} />
+                                                            {center.name}
+                                                        </CommandItem>
+                                                        ))}
+                                                    </CommandGroup>
+                                                </CommandList>
                                             </Command>
                                         </PopoverContent>
                                         </Popover>
@@ -455,7 +459,7 @@ export function ActionForm({
                                         <DropdownMenuContent className="w-[var(--radix-dropdown-menu-trigger-width)]" align="start">
                                             <DropdownMenuLabel>Áreas Afectadas</DropdownMenuLabel><DropdownMenuSeparator />
                                             {masterData?.affectedAreas?.map((area: AffectedArea) => (
-                                                <DropdownMenuCheckboxItem key={area.id} checked={field.value?.includes(area.id!)} onCheckedChange={(checked) => {
+                                                <DropdownMenuCheckboxItem key={area.id} checked={field.value?.includes(area.id!)} onSelect={(e) => e.preventDefault()} onCheckedChange={(checked) => {
                                                     return checked ? field.onChange([...(field.value || []), area.id]) : field.onChange((field.value || []).filter((value) => value !== area.id))
                                                 }}>{area.name}</DropdownMenuCheckboxItem>
                                             ))}
@@ -490,10 +494,10 @@ export function ActionForm({
                                                     </Button>
                                                 </FormControl>
                                             </PopoverTrigger>
-                                            <PopoverContent className="w-[var(--radix-popover-trigger-width)] max-h-[var(--radix-popover-content-available-height)] p-0">
+                                            <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
                                                 <Command>
                                                     <CommandInput placeholder="Busca un centro..." />
-                                                    <CommandList>
+                                                    <CommandList className="max-h-[24rem]">
                                                         <CommandEmpty>No se encontraron centros.</CommandEmpty>
                                                         <CommandGroup>
                                                             {masterData?.centers?.data?.map((center: Center) => (
