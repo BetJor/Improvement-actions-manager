@@ -37,32 +37,54 @@ export function ReportsClient() {
     } = useMemo(() => {
         if (!actions || actions.length === 0) return { globalStats: null, typeStats: [], pieChartData: [], efficiencyStats: null, qualityStats: null };
 
-        const finalizedActions = actions.filter(a => a.status === 'Finalizada' && a.closure?.date);
-        const compliantActions = finalizedActions.filter(a => a.closure?.isCompliant === true).length;
-        const globalStats = { totalActions: actions.length, activeActions: actions.length - finalizedActions.length, totalFinalized: finalizedActions.length, compliantActions };
+        const validActions = actions.filter(a => a.status !== 'Anulada');
 
-        const actionsByType = actions.reduce((acc, action) => { const type = action.type || 'Sin Ámbito'; if (!acc[type]) acc[type] = []; acc[type].push(action); return acc; }, {} as Record<string, ImprovementAction[]>);
+        if (validActions.length === 0) return { globalStats: null, typeStats: [], pieChartData: [], efficiencyStats: null, qualityStats: null };
+
+        const finalizedActions = validActions.filter(a => a.status === 'Finalizada' && a.closure?.date);
+        const compliantActions = finalizedActions.filter(a => a.closure?.isCompliant === true).length;
+        const globalStats = { totalActions: validActions.length, activeActions: validActions.length - finalizedActions.length, totalFinalized: finalizedActions.length, compliantActions };
+
+        const actionsByType = validActions.reduce((acc, action) => { const type = action.type || 'Sin Ámbito'; if (!acc[type]) acc[type] = []; acc[type].push(action); return acc; }, {} as Record<string, ImprovementAction[]>);
         const typeStats = Object.keys(actionsByType).map(type => { const typeActions = actionsByType[type]; const finalized = typeActions.filter(a => a.status === 'Finalizada'); const compliant = finalized.filter(a => a.closure?.isCompliant === true).length; const successRate = finalized.length > 0 ? (compliant / finalized.length) * 100 : 0; return { name: type, total: typeActions.length, active: typeActions.length - finalized.length, successRate: Math.round(successRate) }; });
         const pieChartData = Object.keys(actionsByType).map(type => ({ name: type, value: actionsByType[type].length }));
 
         const resolutionTimes = finalizedActions.length > 0 ? finalizedActions.map(a => differenceInDays(parseISO(a.closure!.date), parseISO(a.creationDate))) : [0];
         const totalResolutionTime = resolutionTimes.reduce((sum, time) => sum + time, 0);
-        const firstAttemptActions = actions.filter(a => !a.originalActionId);
+        const firstAttemptActions = validActions.filter(a => !a.originalActionId);
         const successfulFirstAttempt = firstAttemptActions.filter(a => a.status === 'Finalizada' && a.closure?.isCompliant).length;
-        const firstDate = actions.length > 0 ? actions.reduce((min, a) => a.creationDate < min ? a.creationDate : min, actions[0].creationDate) : new Date().toISOString();
+        const firstDate = validActions.length > 0 ? validActions.reduce((min, a) => a.creationDate < min ? a.creationDate : min, validActions[0].creationDate) : new Date().toISOString();
         const monthlyFlow = eachMonthOfInterval({ start: startOfMonth(parseISO(firstDate)), end: endOfMonth(new Date()) }).map(month => ({ name: format(month, 'MMM yy'), opened: 0, closed: 0 }));
         const monthlyFlowMap = monthlyFlow.reduce((acc, item) => ({...acc, [item.name]: item }), {});
-        actions.forEach(action => { const openedMonth = format(parseISO(action.creationDate), 'MMM yy'); if(monthlyFlowMap[openedMonth]) monthlyFlowMap[openedMonth].opened++; if(action.status === 'Finalizada' && action.closure?.date){ const closedMonth = format(parseISO(action.closure.date), 'MMM yy'); if(monthlyFlowMap[closedMonth]) monthlyFlowMap[closedMonth].closed++; } });
+        validActions.forEach(action => { const openedMonth = format(parseISO(action.creationDate), 'MMM yy'); if(monthlyFlowMap[openedMonth]) monthlyFlowMap[openedMonth].opened++; if(action.status === 'Finalizada' && action.closure?.date){ const closedMonth = format(parseISO(action.closure.date), 'MMM yy'); if(monthlyFlowMap[closedMonth]) monthlyFlowMap[closedMonth].closed++; } });
         const efficiencyStats = { avgResolutionTime: finalizedActions.length > 0 ? Math.round(totalResolutionTime / finalizedActions.length) : 0, maxResolutionTime: Math.max(...resolutionTimes), firstAttemptSuccessRate: firstAttemptActions.length > 0 ? Math.round((successfulFirstAttempt / firstAttemptActions.length) * 100) : 0, monthlyFlow: Object.values(monthlyFlowMap) };
 
-        const problemCounts = actions.reduce((acc, action) => { const subcategory = action.subcategory || 'Sin Clasificación'; acc[subcategory] = (acc[subcategory] || 0) + 1; return acc; }, {} as Record<string, number>);
+        const problemCounts = validActions.reduce((acc, action) => { const subcategory = action.subcategory || 'Sin Clasificación'; acc[subcategory] = (acc[subcategory] || 0) + 1; return acc; }, {} as Record<string, number>);
         const top5Problems = Object.entries(problemCounts).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value).slice(0, 5);
         const qualityStats = { top5Problems };
 
         return { globalStats, typeStats, pieChartData, efficiencyStats, qualityStats };
     }, [actions]);
 
-    const mainChartData = useMemo(() => { if (!actions || !globalStats) return []; const groupAndCount = (keyAccessor: (action: ImprovementAction) => string | undefined) => { const grouped = actions.reduce((acc, action) => { const key = keyAccessor(action) || 'No Especificado'; acc[key] = (acc[key] || 0) + 1; return acc; }, {} as Record<string, number>); return Object.entries(grouped).map(([name, value], index) => ({ name, value, fill: COLORS[index % COLORS.length] })); }; switch (groupBy) { case 'type': return groupAndCount(a => a.type); case 'center': return groupAndCount(a => a.center); case 'status': return groupAndCount(a => a.status); case 'phase': default: const { compliantActions, totalFinalized } = globalStats; const nonCompliantActions = totalFinalized - compliantActions; return [ { name: 'Borrador/Análisis', value: actions.filter(a => ['Borrador', 'Pendiente Análisis'].includes(a.status)).length, fill: '#f59e0b' }, { name: 'Comprob./Cierre', value: actions.filter(a => ['Pendiente Comprobación', 'Pendiente de Cierre'].includes(a.status)).length, fill: '#3b82f6' }, { name: 'Finalizadas OK', value: compliantActions, fill: '#22c55e' }, { name: 'Finalizadas KO', value: nonCompliantActions, fill: '#ef4444' }, ]; } }, [actions, groupBy, globalStats]);
+    const mainChartData = useMemo(() => { 
+        if (!actions || !globalStats) return []; 
+        const validActions = actions.filter(a => a.status !== 'Anulada');
+        const groupAndCount = (keyAccessor: (action: ImprovementAction) => string | undefined) => { const grouped = validActions.reduce((acc, action) => { const key = keyAccessor(action) || 'No Especificado'; acc[key] = (acc[key] || 0) + 1; return acc; }, {} as Record<string, number>); return Object.entries(grouped).map(([name, value], index) => ({ name, value, fill: COLORS[index % COLORS.length] })); }; 
+        switch (groupBy) { 
+            case 'type': return groupAndCount(a => a.type); 
+            case 'center': return groupAndCount(a => a.center); 
+            case 'status': return groupAndCount(a => a.status); 
+            case 'phase': default: 
+                const { compliantActions, totalFinalized } = globalStats; 
+                const nonCompliantActions = totalFinalized - compliantActions; 
+                return [ 
+                    { name: 'Borrador/Análisis', value: validActions.filter(a => ['Borrador', 'Pendiente Análisis'].includes(a.status)).length, fill: '#f59e0b' }, 
+                    { name: 'Comprob./Cierre', value: validActions.filter(a => ['Pendiente Comprobación', 'Pendiente de Cierre'].includes(a.status)).length, fill: '#3b82f6' }, 
+                    { name: 'Finalizadas OK', value: compliantActions, fill: '#22c55e' }, 
+                    { name: 'Finalizadas KO', value: nonCompliantActions, fill: '#ef4444' }, 
+                ]; 
+        } 
+    }, [actions, groupBy, globalStats]);
 
     if (isLoading) return <DashboardSkeleton />;
     if (error || !globalStats || !efficiencyStats || !qualityStats) return <div className="p-8"><Card><CardHeader><CardTitle>No hay datos</CardTitle></CardHeader><CardContent><p>Actualmente no hay acciones en el sistema para mostrar informes.</p></CardContent></Card></div>;
