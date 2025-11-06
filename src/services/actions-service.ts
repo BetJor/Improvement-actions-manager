@@ -284,18 +284,20 @@ async function handleStatusChange(action: ImprovementAction, oldStatus: Improvem
         dataToUpdate.closureDueDate = addDays(today, workflowSettings.closureDueDays).toISOString();
     }
     
-    // Step 2: Send notifications & add system comment
+    // Step 2: Update permissions based on the new state
+    console.log(`[ActionService] Updating permissions for action ${action.id}...`);
+    // This will return the updated action object with new readers/authors
+    const actionWithNewPermissions = await updateActionPermissions(action.id, action.typeId, action.status, action);
+
+    // Step 3: Send notifications & add system comment
     console.log(`[ActionService] Triggering email notification for state change to '${action.status}'.`);
     const notificationComment = await sendStateChangeEmail({
-        action,
+        action: actionWithNewPermissions, // Use the action with updated permissions
         oldStatus,
         newStatus: action.status
     });
+    
     if (notificationComment) {
-        // This is crucial. We must explicitly add the comment to the action object
-        // before updating permissions, so it's part of the transaction.
-        action.comments = [...(action.comments || []), notificationComment];
-        // Add the comment to the update payload as well.
         dataToUpdate.comments = arrayUnion(notificationComment);
     }
     
@@ -303,11 +305,6 @@ async function handleStatusChange(action: ImprovementAction, oldStatus: Improvem
         console.log(`[ActionService] Updating due dates & comments for action ${action.id}:`, dataToUpdate);
         await updateDoc(actionDocRef, dataToUpdate);
     }
-    
-    // Step 3: Update permissions based on the new state
-    console.log(`[ActionService] Updating permissions for action ${action.id}...`);
-    await updateActionPermissions(action.id, action.typeId, action.status, action);
-
 }
 
 export async function updateAction(
@@ -556,7 +553,7 @@ export async function getFollowedActions(userId: string): Promise<ImprovementAct
     return actions;
 }
 
-export async function updateActionPermissions(actionId: string, typeId: string, status: ImprovementActionStatus, existingAction?: ImprovementAction) {
+export async function updateActionPermissions(actionId: string, typeId: string, status: ImprovementActionStatus, existingAction?: ImprovementAction): Promise<ImprovementAction> {
     console.log(`[ActionService] updateActionPermissions for action ${actionId}, status ${status}`);
     const actionDocRef = doc(db, 'actions', actionId);
     let currentAction = existingAction;
@@ -567,7 +564,7 @@ export async function updateActionPermissions(actionId: string, typeId: string, 
             currentAction = docSnap.data() as ImprovementAction;
         } else {
             console.error("[ActionService] Cannot update permissions: Action document not found.");
-            return;
+            throw new Error("Action not found for permission update.");
         }
     }
     
@@ -576,24 +573,27 @@ export async function updateActionPermissions(actionId: string, typeId: string, 
         const creatorEmail = currentAction.creator?.email || (await getUserById(currentAction.creator.id))?.email;
         if (creatorEmail) {
             console.log(`[ActionService] Setting 'Borrador' permissions for creator: ${creatorEmail}`);
+            const updatedReaders = [creatorEmail];
+            const updatedAuthors = [creatorEmail];
             await updateDoc(actionDocRef, {
-                readers: [creatorEmail],
-                authors: [creatorEmail],
+                readers: updatedReaders,
+                authors: updatedAuthors,
             });
+            return { ...currentAction, readers: updatedReaders, authors: updatedAuthors };
         } else {
             console.warn(`[ActionService] Action ${actionId} in 'Borrador' state has no creator email. Permissions not set.`);
              await updateDoc(actionDocRef, {
                 readers: [],
                 authors: [],
             });
+            return { ...currentAction, readers: [], authors: [] };
         }
-        return;
     }
 
     const permissionRule = await getPermissionRuleForState(typeId, status);
     if (!permissionRule) {
         console.warn(`[ActionService] No permission rule found for type ${typeId} and status ${status}. Keeping existing permissions.`);
-        return;
+        return currentAction; // Return the unchanged action
     }
     console.log(`[ActionService] Found permission rule:`, permissionRule);
 
@@ -618,11 +618,11 @@ export async function updateActionPermissions(actionId: string, typeId: string, 
         authors: finalAuthors
     };
 
-    if (currentAction.comments) {
-        dataToUpdate.comments = currentAction.comments;
-    }
-
     await updateDoc(actionDocRef, dataToUpdate);
     console.log(`[ActionService] Permissions updated successfully for action ${actionId}.`);
+
+    // Return the action object with the new permissions for the next step in the process
+    return { ...currentAction, readers: finalReaders, authors: finalAuthors };
 }
+
 

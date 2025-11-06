@@ -3,15 +3,39 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // Allow public read access to app settings (like AI prompts)
-    match /app_settings/{setting} {
-      allow read: if true;
-      allow write: if request.auth != null; // Only authenticated users can write
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function isUser(userId) {
+      return isSignedIn() && request.auth.uid == userId;
     }
 
-    // Secure all other documents
+    match /app_settings/{setting} {
+      allow read: if true;
+      allow write: if isSignedIn();
+    }
+    
+    match /users/{userId} {
+       allow read, write: if isUser(userId);
+    }
+    
+    match /actions/{actionId} {
+      // READ: Anyone in the 'readers' array can read the document.
+      allow read: if isSignedIn() && request.auth.token.email in resource.data.readers;
+      
+      // CREATE: Any signed-in user can create an action. The client-side logic will set initial permissions.
+      allow create: if isSignedIn();
+      
+      // UPDATE: Only users in the 'authors' array can update the document.
+      allow update: if isSignedIn() && request.auth.token.email in resource.data.authors;
+      
+      // DELETE: Not allowed for now. Actions should be 'Anulada' instead.
+      allow delete: if false;
+    }
+
     match /{document=**} {
-      allow read, write: if request.auth != null;
+      allow read, write: if false; // Default deny all
     }
   }
 }
