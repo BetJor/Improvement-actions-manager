@@ -238,24 +238,36 @@ export async function createAction(data: CreateActionData, masterData: any): Pro
     if (data.originalActionTitle) {
         newActionData.originalActionTitle = data.originalActionTitle;
     }
+
+    // --- CENTRALIZED LOGIC FOR STATUS CHANGE ON CREATION ---
+    const tempActionForLogic = { ...newActionData, id: 'temp-id' } as ImprovementAction;
+
+    // Handle 'Borrador' permissions
+    if (tempActionForLogic.status === 'Borrador' && tempActionForLogic.creator.email) {
+        tempActionForLogic.readers = [tempActionForLogic.creator.email];
+        tempActionForLogic.authors = [tempActionForLogic.creator.email];
+    }
+
+    // Handle 'Pendiente Análisis' logic
+    if (tempActionForLogic.status === 'Pendiente Análisis') {
+        // Send email and get comment
+        const notificationComment = await sendStateChangeEmail({
+            action: tempActionForLogic,
+            oldStatus: 'Borrador',
+            newStatus: 'Pendiente Análisis'
+        });
+        if (notificationComment) {
+            tempActionForLogic.comments = [...(tempActionForLogic.comments || []), notificationComment];
+        }
+        // Update permissions for the new state
+        await updateActionPermissions(tempActionForLogic.id, tempActionForLogic.typeId, tempActionForLogic.status, tempActionForLogic);
+    }
   
-    // 3. Apply initial permissions for 'Borrador' state
-    if (newActionData.status === 'Borrador' && newActionData.creator.email) {
-        newActionData.readers = [newActionData.creator.email];
-        newActionData.authors = [newActionData.creator.email];
-    }
-
-    // 5. Add the new document to Firestore
-    const docRef = await addDoc(actionsCol, newActionData);
-    const newAction = { id: docRef.id, ...newActionData } as ImprovementAction;
-
-    // 6. Handle status change logic if not a draft
-    if (newAction.status !== 'Borrador') {
-        await handleStatusChange(newAction, 'Borrador');
-    }
+    // Add the final prepared document to Firestore
+    const docRef = await addDoc(actionsCol, tempActionForLogic);
     
     // Return the full object to update the local state
-    return newAction;
+    return { ...tempActionForLogic, id: docRef.id };
 }
 
 // Private function to handle status change logic (permissions and notifications)
@@ -290,6 +302,8 @@ async function handleStatusChange(action: ImprovementAction, oldStatus: Improvem
             newStatus: action.status
         });
         if (notificationComment) {
+            // This is crucial. We must explicitly add the comment to the action object
+            // before updating permissions, so it's part of the transaction.
             action.comments = [...(action.comments || []), notificationComment];
         }
     }
@@ -454,9 +468,9 @@ export async function updateAction(
         const bisActionData: CreateActionData = {
             title: `${action.title} BIS`,
             description: `Acción creada automáticamente por el cierre no conforme de la acción ${action.actionId}.\n\nObservaciones de cierre no conforme:\n${notes}`,
-            typeId,
-            categoryId,
-            subcategoryId,
+            typeId: action.typeId,
+            categoryId: action.categoryId,
+            subcategoryId: action.subcategoryId,
             affectedAreasIds: action.affectedAreasIds, 
             centerId: action.centerId,
             affectedCentersIds: action.affectedCentersIds,
@@ -608,6 +622,7 @@ export async function updateActionPermissions(actionId: string, typeId: string, 
     await updateDoc(actionDocRef, dataToUpdate);
     console.log(`[ActionService] Permissions updated successfully for action ${actionId}.`);
 }
+
 
 
 
