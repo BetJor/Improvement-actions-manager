@@ -92,20 +92,12 @@ export const getActionById = async (id: string): Promise<ImprovementAction | nul
         const data = actionDocSnap.data();
 
         // Convert any Timestamps to serializable ISO strings
-        const convertTimestamp = (date: any) => {
+        const convertTimestamp = (date: any): string => {
             if (date instanceof Timestamp) {
                 return date.toDate().toISOString();
             }
             if(typeof date === 'string') {
                 return date;
-            }
-            // Fallback for dd/MM/yyyy strings - might not be needed anymore
-            if (typeof date === 'string' && date.includes('/')) {
-                try {
-                    return parse(date, 'dd/MM/yyyy', new Date()).toISOString();
-                } catch {
-                    return date; // Return original if parsing fails
-                }
             }
             return date;
         }
@@ -114,7 +106,7 @@ export const getActionById = async (id: string): Promise<ImprovementAction | nul
             data.analysis.proposedActions = data.analysis.proposedActions.map((pa: any) => ({
                 ...pa,
                 dueDate: convertTimestamp(pa.dueDate),
-                statusUpdateDate: convertTimestamp(pa.statusUpdateDate),
+                statusUpdateDate: pa.statusUpdateDate ? convertTimestamp(pa.statusUpdateDate) : undefined,
             }));
         }
          if (data.comments) {
@@ -313,7 +305,6 @@ export async function updateAction(
             const newStatus = statusFromForm || data.status || oldStatus;
             const isStatusChanging = newStatus !== oldStatus;
             
-            dataToUpdate.comments = originalAction.comments || [];
             let notificationComment: ActionComment | null = null;
             
             if (data.analysis && Array.isArray(data.analysis.proposedActions)) {
@@ -352,12 +343,11 @@ export async function updateAction(
                 dataToUpdate.readers = readers;
                 dataToUpdate.authors = authors;
                 
-                // Make sure the action data is serializable before sending email
                 const serializableActionForEmail = JSON.parse(JSON.stringify(actionForPermissions));
-
                 notificationComment = await sendStateChangeEmail({ action: serializableActionForEmail, oldStatus, newStatus });
             }
 
+            const commentsToAdd = [];
             if (data.adminEdit) {
                 const { field, label, user, overrideComment, actionIndex } = data.adminEdit;
                 let commentText;
@@ -365,19 +355,23 @@ export async function updateAction(
                 else if (actionIndex !== undefined) commentText = `El administrador ${user} ha modificado el campo '${label}' de la acción propuesta ${actionIndex + 1}.`;
                 else commentText = `El administrador ${user} ha modificado el campo '${label}'.`;
                 
-                dataToUpdate.comments.push({ id: crypto.randomUUID(), author: { id: 'system', name: 'Sistema' }, date: new Date().toISOString(), text: commentText });
+                commentsToAdd.push({ id: crypto.randomUUID(), author: { id: 'system', name: 'Sistema' }, date: new Date().toISOString(), text: commentText });
                 delete dataToUpdate.adminEdit;
             }
 
             if (notificationComment) {
-                 dataToUpdate.comments.push(notificationComment);
+                commentsToAdd.push(notificationComment);
             }
 
             if (data.newComment) {
-                dataToUpdate.comments.push(data.newComment);
+                commentsToAdd.push(data.newComment);
                 delete dataToUpdate.newComment;
             }
             
+            if (commentsToAdd.length > 0) {
+                dataToUpdate.comments = arrayUnion(...commentsToAdd);
+            }
+
             if (data.updateProposedActionStatus || data.updateProposedAction) {
                 const currentProposedActions = originalAction.analysis?.proposedActions || [];
                 let updatedProposedActions;
