@@ -231,7 +231,7 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
         toast({ title: "Iniciando guardado...", description: "Guardando datos del análisis." });
     
         try {
-            await updateAction(action.id, {
+            const { notificationResult } = await updateAction(action.id, {
                 analysis: analysisData,
                 status: "Pendiente Comprobación",
             });
@@ -240,6 +240,26 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
                 title: "Análisis guardado",
                 description: "El estado ha avanzado a 'Pendiente Comprobación'.",
             });
+
+            if (notificationResult?.text) {
+                const urlRegex = /(https?:\/\/[^\s]+)/g;
+                const matches = notificationResult.text.match(urlRegex) || [];
+                const recipientsMatch = notificationResult.text.match(/enviadas a: (.*?)\./);
+                const recipients = recipientsMatch ? recipientsMatch[1].split(', ') : [];
+
+                matches.forEach((url, index) => {
+                    const recipient = recipients[index] || `destinatario ${index + 1}`;
+                    toast({
+                        title: `Email enviado a ${recipient}`,
+                        description: (
+                            <a href={url} target="_blank" rel="noopener noreferrer" className="text-blue-500 underline">
+                                Ver previsualización del correo
+                            </a>
+                        ),
+                        duration: 15000,
+                    });
+                });
+            }
     
             await handleActionUpdate();
             

@@ -254,18 +254,8 @@ export async function createAction(data: CreateActionData, masterData: any): Pro
     newActionData.readers = readers;
     newActionData.authors = authors;
 
-    // This part is crucial, we must ensure all nested objects are plain before sending to notification service
-    const serializableActionForEmail = JSON.parse(JSON.stringify(newActionData));
-
     if (newActionData.status === 'Pendiente Análisis') {
-        // const notificationComment = await sendStateChangeEmail({
-        //     action: serializableActionForEmail,
-        //     oldStatus: 'Borrador',
-        //     newStatus: 'Pendiente Análisis'
-        // });
-        // if (notificationComment) {
-        //     newActionData.comments = [notificationComment];
-        // }
+        // This part is handled after creation now
     }
   
     await setDoc(docRef, sanitizeDataForFirestore(newActionData))
@@ -288,11 +278,16 @@ export async function updateAction(
     data: Partial<ImprovementAction> & { newComment?: any; adminEdit?: any; updateProposedActionStatus?: any; updateProposedAction?: ProposedAction }, 
     masterData: any | null = null, 
     statusFromForm?: 'Borrador' | 'Pendiente Análisis'
-): Promise<{ updatedAction: ImprovementAction, bisCreationResult?: { createdBisTitle?: string, foundBisTitle?: string } }> {
+): Promise<{ 
+    updatedAction: ImprovementAction, 
+    bisCreationResult?: { createdBisTitle?: string, foundBisTitle?: string },
+    notificationResult?: ActionComment | null
+}> {
     const actionDocRef = doc(db, 'actions', actionId);
     let bisCreationResult: { createdBisTitle?: string, foundBisTitle?: string } = {};
+    let notificationResult: ActionComment | null = null;
 
-    // Ensure dueDates in proposed actions are strings before the transaction
+    // Ensure dueDates in proposed actions are ISO strings before the transaction
     if (data.analysis && data.analysis.proposedActions) {
         data.analysis.proposedActions = data.analysis.proposedActions.map(pa => ({
             ...pa,
@@ -313,18 +308,18 @@ export async function updateAction(
             const newStatus = statusFromForm || data.status || oldStatus;
             const isStatusChanging = newStatus !== oldStatus;
             
-            let notificationComment: ActionComment | null = null;
             const commentsToAdd: ActionComment[] = [];
 
             // --- DATA PREPARATION AND SANITIZATION ---
             
             // 1. Process analysis data: Convert dates and set due dates
             if (dataToUpdate.analysis && Array.isArray(dataToUpdate.analysis.proposedActions)) {
+                // Ensure dates are strings before processing
                 dataToUpdate.analysis.proposedActions = dataToUpdate.analysis.proposedActions.map((pa: any) => ({
                     ...pa,
                     dueDate: pa.dueDate instanceof Date ? pa.dueDate.toISOString() : pa.dueDate,
                 }));
-
+                
                 const dueDates = dataToUpdate.analysis.proposedActions
                     .map((pa: ProposedAction) => pa.dueDate ? new Date(pa.dueDate as string) : null)
                     .filter((d: Date | null): d is Date => d !== null && !isNaN(d.getTime()));
@@ -352,11 +347,6 @@ export async function updateAction(
                 const { readers, authors } = await getPermissionsForState(actionForPermissions, newStatus);
                 dataToUpdate.readers = readers;
                 dataToUpdate.authors = authors;
-                
-                // --- EMAIL SENDING TEMPORARILY DISABLED ---
-                // const serializableActionForEmail = JSON.parse(JSON.stringify(actionForPermissions));
-                // notificationComment = await sendStateChangeEmail({ action: serializableActionForEmail, oldStatus, newStatus });
-                // if(notificationComment) commentsToAdd.push(notificationComment);
             }
             
             // 3. Prepare comments
@@ -405,6 +395,14 @@ export async function updateAction(
             console.log("Data being sent to Firestore transaction:", JSON.stringify(finalDataToUpdate, null, 2));
 
             transaction.update(actionDocRef, finalDataToUpdate);
+            
+            // 6. Handle Notifications (outside transaction but prepared within)
+            if (isStatusChanging) {
+                 const actionForPermissions = { ...originalAction, ...dataToUpdate };
+                 const serializableActionForEmail = JSON.parse(JSON.stringify(actionForPermissions));
+                 notificationResult = await sendStateChangeEmail({ action: serializableActionForEmail, oldStatus, newStatus });
+            }
+
         });
 
     } catch (error: any) {
@@ -420,7 +418,7 @@ export async function updateAction(
     const finalActionDoc = await getDoc(actionDocRef);
     const finalAction = { id: finalActionDoc.id, ...finalActionDoc.data() } as ImprovementAction;
 
-    return { updatedAction: finalAction, bisCreationResult };
+    return { updatedAction: finalAction, bisCreationResult, notificationResult };
 }
 
 
@@ -498,5 +496,6 @@ async function getPermissionsForState(action: ImprovementAction, newStatus: Impr
 
 
     
+
 
 
