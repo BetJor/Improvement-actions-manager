@@ -20,35 +20,56 @@ import UserManagementPage from '@/app/user-management/page';
 import ReportsPage from '@/app/reports/page';
 import FirestoreRulesPage from '@/app/firestore-rules/page';
 import WorkflowPage from '@/app/workflow/page';
-import { getActions } from '@/lib/data';
+import { getActionById, getActions, getActionTypes, getCategories, getSubcategories, getAffectedAreas, getCenters, getResponsibilityRoles } from '@/lib/data';
+import { ActionDetailsTab } from '@/components/action-details-tab';
+
 
 import { Home, ListChecks, Settings, Sparkles, Library, Route, Users, BarChart3, GanttChartSquare, FileLock2 } from 'lucide-react';
 
-const pageComponentMapping: { [key: string]: React.ComponentType<any> | undefined } = {
-    '/dashboard': DashboardPage,
-    '/actions': ActionsPage,
-    '/actions/new': NewActionPage,
-    '/settings': SettingsPage,
-    '/workflow': WorkflowPage,
-    '/ai-settings': AiSettingsPage,
-    '/reports': ReportsPage,
-    '/my-groups': MyGroupsPage,
-    '/user-management': UserManagementPage,
-    '/firestore-rules': FirestoreRulesPage,
+const pageComponentMapping: { [key: string]: { component: React.ComponentType<any>, title: string, icon: React.ElementType, isClosable: boolean} | undefined } = {
+    '/dashboard': { component: DashboardPage, title: 'Panel de Control', icon: Home, isClosable: false },
+    '/actions': { component: ActionsPage, title: 'Acciones', icon: ListChecks, isClosable: true },
+    '/actions/new': { component: NewActionPage, title: 'Nueva Acción', icon: ListChecks, isClosable: true },
+    '/settings': { component: SettingsPage, title: 'Configuración', icon: Settings, isClosable: true },
+    '/workflow': { component: WorkflowPage, title: 'Workflow', icon: GanttChartSquare, isClosable: true },
+    '/ai-settings': { component: AiSettingsPage, title: 'Configuración IA', icon: Sparkles, isClosable: true },
+    '/reports': { component: ReportsPage, title: 'Informes', icon: BarChart3, isClosable: true },
+    '/my-groups': { component: MyGroupsPage, title: 'Mis Grupos', icon: Users, isClosable: true },
+    '/user-management': { component: UserManagementPage, title: 'Gestión de Usuarios', icon: Users, isClosable: true },
+    '/firestore-rules': { component: FirestoreRulesPage, title: 'Reglas de Firestore', icon: FileLock2, isClosable: true },
 };
 
-const getPageComponent = (path: string): React.ComponentType<any> | undefined => {
-  // Clean the path of query parameters
-  let cleanPath = path.split('?')[0];
+const getPageComponentInfo = (path: string): { component?: React.ComponentType<any>, title: string, icon: React.ElementType, isClosable: boolean, loader?: () => Promise<ReactNode> } | null => {
+  const cleanPath = path.split('?')[0];
 
   if (pageComponentMapping[cleanPath]) {
-    return pageComponentMapping[cleanPath];
+    return pageComponentMapping[cleanPath]!;
   }
-  // Fallback for dynamic action detail pages
-  if (cleanPath.startsWith('/actions/')) {
-    return ActionDetailPage;
+  
+  const actionMatch = cleanPath.match(/^\/actions\/([^/]+)$/);
+  if (actionMatch) {
+    const actionId = actionMatch[1];
+    return {
+        title: `Acción...`, // Temporary title
+        icon: GanttChartSquare,
+        isClosable: true,
+        loader: async () => {
+            const actionData = await getActionById(actionId);
+            if (!actionData) throw new Error("Action not found");
+            
+            const [types, cats, subcats, areas, centers, roles] = await Promise.all([
+                getActionTypes(), getCategories(), getSubcategories(), getAffectedAreas(), getCenters(), getResponsibilityRoles()
+            ]);
+            const masterData = { ambits: { data: types }, origins: { data: cats }, classifications: { data: subcats }, affectedAreas: areas, centers: { data: centers }, responsibilityRoles: { data: roles } };
+            
+            return <ActionDetailsTab initialAction={actionData} masterData={masterData} />;
+        },
+        // We need a way to update the title after loading
+        // This will be handled inside the openTab function.
+    };
   }
-  return undefined;
+
+  return null;
 };
 
 
@@ -121,28 +142,34 @@ export function TabsProvider({ children, initialPath }: { children: ReactNode, i
                     isLoading: true 
                 };
 
-                // DEMO: Simulate network delay
-                setTimeout(() => {
-                    tabData.loader!().then(loadedContent => {
-                        setTabs(currentTabs => currentTabs.map(t => 
-                            t.id === tabId ? { ...t, content: loadedContent, isLoading: false } : t
-                        ));
-                    }).catch(error => {
-                        console.error("Error loading tab content:", error);
-                        setTabs(currentTabs => currentTabs.map(t => 
-                            t.id === tabId ? { ...t, content: <div>Error loading content.</div>, isLoading: false } : t
-                        ));
-                    });
-                }, 500);
+                tabData.loader().then(loadedContent => {
+                    // Extract actionId from title if it's an ActionDetailsTab
+                    let finalTitle = tabData.title;
+                    if (loadedContent && (loadedContent as any).type === ActionDetailsTab) {
+                        const action = (loadedContent as any).props.initialAction;
+                        if (action) {
+                            finalTitle = `Acción ${action.actionId}`;
+                        }
+                    }
+
+                    setTabs(currentTabs => currentTabs.map(t => 
+                        t.id === tabId ? { ...t, content: loadedContent, title: finalTitle, isLoading: false } : t
+                    ));
+                }).catch(error => {
+                    console.error("Error loading tab content:", error);
+                    setTabs(currentTabs => currentTabs.map(t => 
+                        t.id === tabId ? { ...t, content: <div>Error al cargar la acción. Es posible que no exista o no tengas permisos.</div>, isLoading: false } : t
+                    ));
+                });
 
             } else {
-                const PageComponent = getPageComponent(tabData.path);
+                 const pageInfo = getPageComponentInfo(tabData.path);
+                 const PageComponent = pageInfo?.component;
                 if (!PageComponent) {
                     console.error(`No page component found for path: ${tabData.path}`);
                     newTab = { ...tabData, id: tabId, content: <div>Not Found</div>, isLoading: false };
                 } else {
                     newTab = { ...tabData, id: tabId, content: <div className="flex justify-center items-center h-full"><Loader2 className="h-6 w-6 animate-spin" /></div>, isLoading: true };
-                     // DEMO: Simulate network delay
                     setTimeout(() => {
                         setTabs(currentTabs => currentTabs.map(t => 
                             t.id === tabId ? { ...t, content: <PageComponent />, isLoading: false } : t
@@ -158,14 +185,26 @@ export function TabsProvider({ children, initialPath }: { children: ReactNode, i
     
      useEffect(() => {
         if (user && tabs.length === 0) {
-            openTab({
-                path: `/dashboard`,
-                title: 'Panel de Control',
-                icon: Home,
-                isClosable: false,
-            });
+            const pageInfo = getPageComponentInfo(initialPath);
+            if (pageInfo) {
+                openTab({
+                    path: initialPath,
+                    title: pageInfo.title,
+                    icon: pageInfo.icon,
+                    isClosable: pageInfo.isClosable,
+                    loader: pageInfo.loader
+                });
+            } else {
+                // Fallback to dashboard if path is invalid
+                openTab({
+                    path: `/dashboard`,
+                    title: 'Panel de Control',
+                    icon: Home,
+                    isClosable: false,
+                });
+            }
         }
-    }, [user, tabs.length, openTab]);
+    }, [user, tabs.length, openTab, initialPath]);
 
 
     useEffect(() => {
