@@ -1,3 +1,4 @@
+
 // This file acts as a central export point for all data-related functions,
 // making it easier to import them across the application without knowing the
 // underlying file structure.
@@ -10,3 +11,4 @@ export * from '@/services/storage-service';
 export * from '@/services/permissions-service';
 export * from '@/services/workflow-service';
 export * from '@/services/notification-service';
+export * from '@/services/acl-service';
