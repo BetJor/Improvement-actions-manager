@@ -24,5 +24,7 @@ npm run dev
 
 Un cop arrencat, podràs accedir a l'aplicació a [http://localhost:9002](http://localhost:9002).
 
+**Important**: Qualsevol missatge de `console.log` que estigui en fitxers de codi del servidor (com els que es troben a `src/services/` o `src/ai/`) es mostrarà en **aquesta mateixa terminal**, no a la consola del navegador.
+
 ---
 *Versión 1.0 - 2024-07-31*
