@@ -78,30 +78,17 @@ async function sendEmail(recipient: string, subject: string, html: string): Prom
  * @returns An ActionComment to be added to the action, or null if no email was sent.
  */
 export async function sendStateChangeEmail(details: EmailDetails): Promise<ActionComment | null> {
+  // --- TRACE POINT ---
+  // Display the exact data received by the function for debugging.
+  console.log("--- [Notification Service] Preparing to send email. Data received: ---");
+  console.log(JSON.stringify(details, null, 2));
+  // --------------------
+
   const { action, newStatus } = details;
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9002';
   const actionUrl = `${appUrl}/actions/${action.id}`;
 
-  if (newStatus === 'Pendiente Análisis') {
-    if (!action.responsibleGroupId) {
-      console.warn(`[NotificationService] Action ${action.actionId} has no responsible group. No email sent.`);
-      return { id: crypto.randomUUID(), author: { id: 'system', name: 'Sistema' }, date: new Date().toISOString(), text: "No se pudo notificar por email: no hay responsable de análisis asignado." };
-    }
-    
-    const subject = `Nueva tarea asignada en Acción de Mejora: ${action.actionId}`;
-    const html = `
-      <h1>Tarea de Análisis Asignada</h1>
-      <p>Hola,</p>
-      <p>Se te ha asignado el análisis de la acción de mejora <strong>${action.actionId}: ${action.title}</strong>.</p>
-      <p><strong>Creado por:</strong> ${action.creator.name}</p>
-      <p>Por favor, accede a la plataforma para revisar los detalles y realizar el análisis de causas.</p>
-      <a href="${actionUrl}" style="background-color: #00529B; color: white; padding: 10px 15px; text-decoration: none; border-radius: 5px; display: inline-block;">Ver Acción</a>
-    `;
-
-    const previewUrl = await sendEmail(action.responsibleGroupId, subject, html);
-    return { id: crypto.randomUUID(), author: { id: 'system', name: 'Sistema' }, date: new Date().toISOString(), text: previewUrl ? `Notificación de análisis enviada a ${action.responsibleGroupId}. Previsualización: ${previewUrl}` : `ERROR: No se pudo enviar la notificación de análisis a ${action.responsibleGroupId}.` };
-  
-  } else if (newStatus === 'Pendiente Comprobación') {
+  if (newStatus === 'Pendiente Comprobación') {
     if (!action.analysis?.verificationResponsibleUserId) {
         console.warn(`[NotificationService] Action ${action.actionId} has no verification responsible.`);
         return { id: crypto.randomUUID(), author: { id: 'system', name: 'Sistema' }, date: new Date().toISOString(), text: "No se pudo notificar: no hay responsable de verificación asignado." };
