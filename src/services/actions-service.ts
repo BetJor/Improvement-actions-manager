@@ -243,7 +243,6 @@ export async function createAction(data: CreateActionData, masterData: any): Pro
         newActionData.readers = [newActionData.creator.email];
         newActionData.authors = [newActionData.creator.email];
     } else if (newActionData.status === 'Pendiente Análisis') {
-        // Send email and get comment BEFORE writing to DB
         const notificationComment = await sendStateChangeEmail({
             action: newActionData,
             oldStatus: 'Borrador',
@@ -252,15 +251,14 @@ export async function createAction(data: CreateActionData, masterData: any): Pro
         if (notificationComment) {
             newActionData.comments = [notificationComment];
         }
+        // Immediately set permissions for the new state
+        const updatedPermissions = await getPermissionsForState(newActionData, 'Pendiente Análisis', []);
+        newActionData.readers = updatedPermissions.readers;
+        newActionData.authors = updatedPermissions.authors;
     }
   
     // Now, set the complete data in the document we created
     await setDoc(docRef, newActionData);
-
-    // After setting the data, update permissions if needed
-    if (newActionData.status !== 'Borrador') {
-        await updateActionPermissions(newActionData.id, newActionData.typeId, newActionData.status, newActionData);
-    }
 
     // Return the full object with the real ID to update the local state
     return newActionData;
@@ -271,41 +269,44 @@ async function handleStatusChange(action: ImprovementAction, oldStatus: Improvem
     console.log(`[ActionService] handleStatusChange called for action ${action.id} from ${oldStatus} to ${action.status}`);
     const actionDocRef = doc(db, 'actions', action.id);
     
-    // Step 1: Update due dates based on the new status
-    const workflowSettings = await getWorkflowSettings();
-    const dataToUpdate: any = {};
-    const today = new Date();
-
-    if (action.status === 'Pendiente Comprobación') {
-        dataToUpdate.verificationDueDate = addDays(today, workflowSettings.verificationDueDays).toISOString();
-    }
-    
-    if (action.status === 'Pendiente de Cierre') {
-        dataToUpdate.closureDueDate = addDays(today, workflowSettings.closureDueDays).toISOString();
-    }
-    
-    // Step 2: Update permissions based on the new state
-    console.log(`[ActionService] Updating permissions for action ${action.id}...`);
-    // This will return the updated action object with new readers/authors
-    const actionWithNewPermissions = await updateActionPermissions(action.id, action.typeId, action.status, action);
-
-    // Step 3: Send notifications & add system comment
+    // Send notifications. This happens after the write.
     console.log(`[ActionService] Triggering email notification for state change to '${action.status}'.`);
     const notificationComment = await sendStateChangeEmail({
-        action: actionWithNewPermissions, // Use the action with updated permissions
+        action: action, // Use the action with updated data
         oldStatus,
         newStatus: action.status
     });
     
     if (notificationComment) {
-        dataToUpdate.comments = arrayUnion(notificationComment);
-    }
-    
-    if (Object.keys(dataToUpdate).length > 0) {
-        console.log(`[ActionService] Updating due dates & comments for action ${action.id}:`, dataToUpdate);
-        await updateDoc(actionDocRef, dataToUpdate);
+        await updateDoc(actionDocRef, {
+            comments: arrayUnion(notificationComment)
+        });
     }
 }
+
+async function getPermissionsForState(action: ImprovementAction, newStatus: ImprovementActionStatus, originalReaders: string[]): Promise<{ readers: string[], authors: string[] }> {
+    const permissionRule = await getPermissionRuleForState(action.typeId, newStatus);
+    if (!permissionRule) {
+        console.warn(`[ActionService] No permission rule found for type ${action.typeId} and status ${newStatus}. Keeping existing permissions.`);
+        return { readers: action.readers, authors: action.authors };
+    }
+
+    const allRoles = await getResponsibilityRoles();
+
+    const newReaders = await resolveRoles(permissionRule.readerRoleIds, allRoles, action);
+    const newAuthors = await resolveRoles(permissionRule.authorRoleIds, allRoles, action);
+
+    // READERS: Cumulative. Combine existing readers with new ones.
+    const combinedReaders = [...new Set([...(originalReaders || []), ...newReaders, ...newAuthors])];
+
+    // AUTHORS: Restrictive. Only the ones from the new rule.
+    // Authors are implicitly readers, so we ensure they are in the readers list as well.
+    const finalAuthors = [...new Set(newAuthors)];
+    const finalReaders = [...new Set([...combinedReaders, ...finalAuthors])];
+
+    return { readers: finalReaders, authors: finalAuthors };
+}
+
 
 export async function updateAction(
     actionId: string, 
@@ -503,14 +504,38 @@ export async function updateAction(
          }
     }
     
+    // --- ATOMIC UPDATE LOGIC ---
+    const newStatus = dataToUpdate.status;
+    const isStatusChanging = newStatus && newStatus !== originalAction.status;
+
+    if (isStatusChanging) {
+        // Prepare a temporary action object to resolve roles for the *new* state
+        const futureActionState = { ...originalAction, ...dataToUpdate };
+        const { readers, authors } = await getPermissionsForState(futureActionState, newStatus, originalAction.readers);
+        dataToUpdate.readers = readers;
+        dataToUpdate.authors = authors;
+
+        // Add due dates if applicable
+        const workflowSettings = await getWorkflowSettings();
+        const today = new Date();
+        if (newStatus === 'Pendiente Comprobación') {
+            dataToUpdate.verificationDueDate = addDays(today, workflowSettings.verificationDueDays).toISOString();
+        }
+        if (newStatus === 'Pendiente de Cierre') {
+            dataToUpdate.closureDueDate = addDays(today, workflowSettings.closureDueDays).toISOString();
+        }
+    }
+
     if (Object.keys(dataToUpdate).length > 0) {
         await updateDoc(actionDocRef, dataToUpdate);
     }
     
+    // Get the fully updated action after the write
     const updatedActionDoc = await getDoc(actionDocRef);
     const updatedAction = { id: updatedActionDoc.id, ...updatedActionDoc.data() } as ImprovementAction;
 
-    if (updatedAction.status !== originalAction.status) {
+    // Send notifications *after* the state has been successfully written
+    if (isStatusChanging) {
         await handleStatusChange(updatedAction, originalAction.status);
     }
 
@@ -624,5 +649,6 @@ export async function updateActionPermissions(actionId: string, typeId: string, 
     // Return the action object with the new permissions for the next step in the process
     return { ...currentAction, readers: finalReaders, authors: finalAuthors };
 }
+
 
 
