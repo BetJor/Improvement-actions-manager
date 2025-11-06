@@ -229,12 +229,17 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
         if (!action) return;
         setIsSubmitting(true);
         toast({ title: "Iniciando guardado...", description: "Guardando datos del análisis." });
+
+        const actionForPermissions = { ...action, analysis: analysisData, status: "Pendiente Comprobación" };
     
         try {
-            const { notificationResult } = await updateAction(action.id, {
-                analysis: analysisData,
-                status: "Pendiente Comprobación",
-            });
+            const { notificationResult } = await updateAction(
+                action.id, 
+                { analysis: analysisData, status: "Pendiente Comprobación" },
+                null, // masterData not needed here, only for creation
+                undefined,
+                actionForPermissions // Pass the pre-built object
+            );
             
             toast({
                 title: "Análisis guardado",
@@ -244,7 +249,8 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
             if (notificationResult?.text) {
                 const urlRegex = /(https?:\/\/[^\s]+)/g;
                 const matches = notificationResult.text.match(urlRegex) || [];
-                const recipientsMatch = notificationResult.text.match(/enviadas a: (.*?)\./);
+                
+                const recipientsMatch = notificationResult.text.match(/enviada a (.*?)\. /);
                 const recipients = recipientsMatch ? recipientsMatch[1].split(', ') : [];
 
                 matches.forEach((url, index) => {

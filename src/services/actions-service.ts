@@ -105,7 +105,7 @@ export const getActionById = async (id: string): Promise<ImprovementAction | nul
         if (data.analysis && data.analysis.proposedActions) {
             data.analysis.proposedActions = data.analysis.proposedActions.map((pa: any) => ({
                 ...pa,
-                dueDate: pa.dueDate, // Keep as string
+                dueDate: convertTimestamp(pa.dueDate), // Keep as string
                 statusUpdateDate: pa.statusUpdateDate ? convertTimestamp(pa.statusUpdateDate) : undefined,
             }));
         }
@@ -277,7 +277,8 @@ export async function updateAction(
     actionId: string, 
     data: Partial<ImprovementAction> & { newComment?: any; adminEdit?: any; updateProposedActionStatus?: any; updateProposedAction?: ProposedAction }, 
     masterData: any | null = null, 
-    statusFromForm?: 'Borrador' | 'Pendiente Análisis'
+    statusFromForm?: 'Borrador' | 'Pendiente Análisis',
+    prebuiltActionForPermissions?: any
 ): Promise<{ 
     updatedAction: ImprovementAction, 
     bisCreationResult?: { createdBisTitle?: string, foundBisTitle?: string },
@@ -286,9 +287,9 @@ export async function updateAction(
     const actionDocRef = doc(db, 'actions', actionId);
     let bisCreationResult: { createdBisTitle?: string, foundBisTitle?: string } = {};
     let notificationResult: ActionComment | null = null;
-
-    // Ensure dueDates in proposed actions are ISO strings before the transaction
-    if (data.analysis && data.analysis.proposedActions) {
+    
+    // Ensure all dueDates in proposed actions are converted to ISO strings *before* the transaction
+    if (data.analysis && Array.isArray(data.analysis.proposedActions)) {
         data.analysis.proposedActions = data.analysis.proposedActions.map(pa => ({
             ...pa,
             dueDate: pa.dueDate instanceof Date ? pa.dueDate.toISOString() : pa.dueDate,
@@ -303,23 +304,15 @@ export async function updateAction(
             }
             const originalAction = { id: originalActionSnap.id, ...originalActionSnap.data() } as ImprovementAction;
             
-            const dataToUpdate: any = { ...data };
+            let dataToUpdate: any = { ...data };
             const oldStatus = originalAction.status;
             const newStatus = statusFromForm || data.status || oldStatus;
             const isStatusChanging = newStatus !== oldStatus;
             
             const commentsToAdd: ActionComment[] = [];
 
-            // --- DATA PREPARATION AND SANITIZATION ---
-            
-            // 1. Process analysis data: Convert dates and set due dates
+            // --- DATA PREPARATION ---
             if (dataToUpdate.analysis && Array.isArray(dataToUpdate.analysis.proposedActions)) {
-                // Ensure dates are strings before processing
-                dataToUpdate.analysis.proposedActions = dataToUpdate.analysis.proposedActions.map((pa: any) => ({
-                    ...pa,
-                    dueDate: pa.dueDate instanceof Date ? pa.dueDate.toISOString() : pa.dueDate,
-                }));
-                
                 const dueDates = dataToUpdate.analysis.proposedActions
                     .map((pa: ProposedAction) => pa.dueDate ? new Date(pa.dueDate as string) : null)
                     .filter((d: Date | null): d is Date => d !== null && !isNaN(d.getTime()));
@@ -333,7 +326,6 @@ export async function updateAction(
                 }
             }
 
-            // 2. Process status change and permissions
             if (isStatusChanging) {
                 dataToUpdate.status = newStatus;
                 const workflowSettings = await getWorkflowSettings();
@@ -343,13 +335,12 @@ export async function updateAction(
                     dataToUpdate.closureDueDate = addDays(today, workflowSettings.closureDueDays).toISOString();
                 }
 
-                const actionForPermissions = { ...originalAction, ...dataToUpdate };
-                const { readers, authors } = await getPermissionsForState(actionForPermissions, newStatus);
+                const actionForPerms = prebuiltActionForPermissions || { ...originalAction, ...dataToUpdate };
+                const { readers, authors } = await getPermissionsForState(actionForPerms, newStatus);
                 dataToUpdate.readers = readers;
                 dataToUpdate.authors = authors;
             }
             
-            // 3. Prepare comments
             if (data.adminEdit) {
                 const { field, label, user, overrideComment, actionIndex } = data.adminEdit;
                 let commentText = overrideComment || (actionIndex !== undefined 
@@ -362,11 +353,7 @@ export async function updateAction(
                 commentsToAdd.push(data.newComment);
                 delete dataToUpdate.newComment;
             }
-            if (commentsToAdd.length > 0) {
-                dataToUpdate.comments = arrayUnion(...commentsToAdd);
-            }
-
-            // 4. Process proposed action status updates
+            
             if (data.updateProposedActionStatus || data.updateProposedAction) {
                 const currentPAs = originalAction.analysis?.proposedActions || [];
                 let updatedPAs;
@@ -377,7 +364,7 @@ export async function updateAction(
                         : pa
                     );
                 } else if (data.updateProposedAction) {
-                    updatedPAs = currentPAs.map(pa => pa.id === data.updateProposedAction!.id 
+                     updatedPAs = currentPAs.map(pa => pa.id === data.updateProposedAction!.id 
                         ? { ...data.updateProposedAction, dueDate: new Date(data.updateProposedAction!.dueDate).toISOString() }
                         : pa
                     );
@@ -390,22 +377,26 @@ export async function updateAction(
                 delete dataToUpdate.updateProposedAction;
             }
 
-            // 5. Final sanitation and transaction update
-            const finalDataToUpdate = sanitizeDataForFirestore(dataToUpdate);
-            console.log("Data being sent to Firestore transaction:", JSON.stringify(finalDataToUpdate, null, 2));
-
-            transaction.update(actionDocRef, finalDataToUpdate);
+            // --- NOTIFICATION HANDLING (before commit, to gather comment) ---
+            if (isStatusChanging && prebuiltActionForPermissions) {
+                 const serializableActionForEmail = JSON.parse(JSON.stringify(prebuiltActionForPermissions));
+                 const tempNotificationResult = await sendStateChangeEmail({ action: serializableActionForEmail, oldStatus, newStatus });
+                 if (tempNotificationResult) {
+                    commentsToAdd.push(tempNotificationResult);
+                 }
+            }
             
-            // 6. Handle Notifications (outside transaction but prepared within)
-            if (isStatusChanging) {
-                 const actionForPermissions = { ...originalAction, ...dataToUpdate };
-                 const serializableActionForEmail = JSON.parse(JSON.stringify(actionForPermissions));
-                 notificationResult = await sendStateChangeEmail({ action: serializableActionForEmail, oldStatus, newStatus });
+            if (commentsToAdd.length > 0) {
+                dataToUpdate.comments = arrayUnion(...commentsToAdd);
             }
 
+            const finalDataToUpdate = sanitizeDataForFirestore(dataToUpdate);
+            transaction.update(actionDocRef, finalDataToUpdate);
+            
         });
 
     } catch (error: any) {
+        console.error("Error in updateAction transaction:", error);
         const permissionError = new FirestorePermissionError({
             path: actionDocRef.path,
             operation: 'update',
@@ -420,6 +411,7 @@ export async function updateAction(
 
     return { updatedAction: finalAction, bisCreationResult, notificationResult };
 }
+
 
 
 export async function toggleFollowAction(actionId: string, userId: string): Promise<void> {
@@ -496,6 +488,7 @@ async function getPermissionsForState(action: ImprovementAction, newStatus: Impr
 
 
     
+
 
 
 
