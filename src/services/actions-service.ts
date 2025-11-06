@@ -197,7 +197,10 @@ export async function createAction(data: CreateActionData, masterData: any): Pro
     const workflowSettings = await getWorkflowSettings();
 
     // Create a temporary object for the new document without the final Firestore ID
-    const newActionData: Omit<ImprovementAction, 'id'> = {
+    const docRef = doc(collection(db, "actions"));
+    
+    const newActionData: ImprovementAction = {
+        id: docRef.id, // Use the generated ID
         actionId: newActionId,
         title: data.title,
         category: categoryName,
@@ -235,40 +238,33 @@ export async function createAction(data: CreateActionData, masterData: any): Pro
     if (data.originalActionId) newActionData.originalActionId = data.originalActionId;
     if (data.originalActionTitle) newActionData.originalActionTitle = data.originalActionTitle;
     
-    // First, add the document to get the real ID
-    const docRef = await addDoc(actionsCol, {});
-    const realActionId = docRef.id;
-
-    // Now, construct the final action object with the real ID
-    const finalAction: ImprovementAction = { ...newActionData, id: realActionId };
-
     // --- LOGIC FOR STATUS CHANGE ON CREATION ---
-    if (finalAction.status === 'Borrador' && finalAction.creator.email) {
-        finalAction.readers = [finalAction.creator.email];
-        finalAction.authors = [finalAction.creator.email];
+    if (newActionData.status === 'Borrador' && newActionData.creator.email) {
+        newActionData.readers = [newActionData.creator.email];
+        newActionData.authors = [newActionData.creator.email];
     }
 
-    if (finalAction.status === 'Pendiente Análisis') {
+    if (newActionData.status === 'Pendiente Análisis') {
         const notificationComment = await sendStateChangeEmail({
-            action: finalAction,
+            action: newActionData,
             oldStatus: 'Borrador',
             newStatus: 'Pendiente Análisis'
         });
         if (notificationComment) {
-            finalAction.comments = [...(finalAction.comments || []), notificationComment];
+            newActionData.comments = [...(newActionData.comments || []), notificationComment];
         }
     }
   
     // Now, set the complete data in the document we created
-    await setDoc(docRef, finalAction);
+    await setDoc(docRef, newActionData);
 
     // After setting the data, update permissions if needed
-    if (finalAction.status !== 'Borrador') {
-        await updateActionPermissions(finalAction.id, finalAction.typeId, finalAction.status, finalAction);
+    if (newActionData.status !== 'Borrador') {
+        await updateActionPermissions(newActionData.id, newActionData.typeId, newActionData.status, newActionData);
     }
 
     // Return the full object with the real ID to update the local state
-    return finalAction;
+    return newActionData;
 }
 
 // Private function to handle status change logic (permissions and notifications)
@@ -289,24 +285,24 @@ async function handleStatusChange(action: ImprovementAction, oldStatus: Improvem
         dataToUpdate.closureDueDate = addDays(today, workflowSettings.closureDueDays).toISOString();
     }
     
-    if (Object.keys(dataToUpdate).length > 0) {
-        console.log(`[ActionService] Updating due dates for action ${action.id}:`, dataToUpdate);
-        await updateDoc(actionDocRef, dataToUpdate);
+    // Step 2: Send notifications & add system comment
+    console.log(`[ActionService] Triggering email notification for state change to '${action.status}'.`);
+    const notificationComment = await sendStateChangeEmail({
+        action,
+        oldStatus,
+        newStatus: action.status
+    });
+    if (notificationComment) {
+        // This is crucial. We must explicitly add the comment to the action object
+        // before updating permissions, so it's part of the transaction.
+        action.comments = [...(action.comments || []), notificationComment];
+        // Add the comment to the update payload as well.
+        dataToUpdate.comments = arrayUnion(notificationComment);
     }
     
-    // Step 2: Send notifications & add system comment
-    if (action.status === 'Pendiente Análisis') {
-        console.log(`[ActionService] Triggering email notification for state change to 'Pendiente Análisis'.`);
-        const notificationComment = await sendStateChangeEmail({
-            action,
-            oldStatus,
-            newStatus: action.status
-        });
-        if (notificationComment) {
-            // This is crucial. We must explicitly add the comment to the action object
-            // before updating permissions, so it's part of the transaction.
-            action.comments = [...(action.comments || []), notificationComment];
-        }
+    if (Object.keys(dataToUpdate).length > 0) {
+        console.log(`[ActionService] Updating due dates & comments for action ${action.id}:`, dataToUpdate);
+        await updateDoc(actionDocRef, dataToUpdate);
     }
     
     // Step 3: Update permissions based on the new state
@@ -623,6 +619,7 @@ export async function updateActionPermissions(actionId: string, typeId: string, 
     await updateDoc(actionDocRef, dataToUpdate);
     console.log(`[ActionService] Permissions updated successfully for action ${actionId}.`);
 }
+
 
 
 
