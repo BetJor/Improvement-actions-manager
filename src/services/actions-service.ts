@@ -233,13 +233,15 @@ export async function createAction(data: CreateActionData, masterData: any): Pro
     if (data.originalActionTitle) newActionData.originalActionTitle = data.originalActionTitle;
     
     // Calculate permissions before the first write
-    const actionWithPermissions = await updateActionPermissions(newActionData, newActionData.status);
+    let actionWithPermissions = await updateActionPermissions(newActionData, newActionData.status);
     newActionData = { ...newActionData, ...actionWithPermissions };
 
+    // This part is crucial, we must ensure all nested objects are plain before sending to notification service
+    const serializableActionForEmail = JSON.parse(JSON.stringify(newActionData));
+
     if (newActionData.status === 'Pendiente Análisis') {
-        const serializableAction = JSON.parse(JSON.stringify(newActionData));
         const notificationComment = await sendStateChangeEmail({
-            action: serializableAction,
+            action: serializableActionForEmail,
             oldStatus: 'Borrador',
             newStatus: 'Pendiente Análisis'
         });
@@ -282,34 +284,7 @@ export async function updateAction(
     const newStatus = statusFromForm || data.status || oldStatus;
     const isStatusChanging = newStatus !== oldStatus;
 
-    if (isStatusChanging) {
-        dataToUpdate.status = newStatus;
-        const tempActionForPermissions = { ...originalAction, ...dataToUpdate };
-        const { readers, authors } = await getPermissionsForState(tempActionForPermissions, newStatus);
-        dataToUpdate.readers = readers;
-        dataToUpdate.authors = authors;
-
-        const workflowSettings = await getWorkflowSettings();
-        const today = new Date();
-        if (newStatus === 'Pendiente Comprobación') {
-            dataToUpdate.verificationDueDate = addDays(today, workflowSettings.verificationDueDays).toISOString();
-        }
-        if (newStatus === 'Pendiente de Cierre') {
-            dataToUpdate.closureDueDate = addDays(today, workflowSettings.closureDueDays).toISOString();
-        }
-
-        const serializableAction = JSON.parse(JSON.stringify({ ...originalAction, ...dataToUpdate }));
-        const notificationComment = await sendStateChangeEmail({
-            action: serializableAction,
-            oldStatus,
-            newStatus
-        });
-        if (notificationComment) {
-            dataToUpdate.comments = arrayUnion(notificationComment);
-        }
-    }
-
-
+    // Consolidate all changes into one object before any write operations
     if (data.adminEdit) {
         const { field, label, user, overrideComment, actionIndex } = data.adminEdit;
         let commentText;
@@ -386,7 +361,27 @@ export async function updateAction(
             dataToUpdate.implementationDueDate = new Date(Math.max.apply(null, dueDates.map(d => d.getTime()))).toISOString();
         }
     }
-    
+
+    if (isStatusChanging) {
+        dataToUpdate.status = newStatus;
+        
+        // This is important: create a temporary action object with the changes to calculate permissions
+        const actionForPermissions = { ...originalAction, ...dataToUpdate };
+        const { readers, authors } = await getPermissionsForState(actionForPermissions, newStatus);
+        dataToUpdate.readers = readers;
+        dataToUpdate.authors = authors;
+
+        const workflowSettings = await getWorkflowSettings();
+        const today = new Date();
+        if (newStatus === 'Pendiente Comprobación') {
+            dataToUpdate.verificationDueDate = addDays(today, workflowSettings.verificationDueDays).toISOString();
+        }
+        if (newStatus === 'Pendiente de Cierre') {
+            dataToUpdate.closureDueDate = addDays(today, workflowSettings.closureDueDays).toISOString();
+        }
+    }
+
+    // Now, perform the single atomic update
     await updateDoc(actionDocRef, dataToUpdate)
         .catch(async (serverError) => {
             const permissionError = new FirestorePermissionError({
@@ -395,13 +390,32 @@ export async function updateAction(
                 requestResourceData: dataToUpdate,
             } satisfies SecurityRuleContext);
             errorEmitter.emit('permission-error', permissionError);
-            throw serverError;
+            throw serverError; // Propagate to stop further execution
         });
-    
+
+    // Post-update logic (like sending notifications)
     const updatedActionDoc = await getDoc(actionDocRef);
     const updatedAction = { id: updatedActionDoc.id, ...updatedActionDoc.data() } as ImprovementAction;
 
-    return { updatedAction, bisCreationResult };
+    if (isStatusChanging) {
+        // We serialize the *final* state of the action for the email.
+        const serializableActionForEmail = JSON.parse(JSON.stringify(updatedAction));
+        const notificationComment = await sendStateChangeEmail({
+            action: serializableActionForEmail,
+            oldStatus,
+            newStatus
+        });
+        if (notificationComment) {
+            await updateDoc(actionDocRef, { comments: arrayUnion(notificationComment) })
+                .catch(err => console.error("Failed to add notification comment:", err)); // Log but don't fail the whole operation
+        }
+    }
+    
+    // Refresh the action data after adding the notification comment
+    const finalActionDoc = await getDoc(actionDocRef);
+    const finalAction = { id: finalActionDoc.id, ...finalActionDoc.data() } as ImprovementAction;
+
+    return { updatedAction: finalAction, bisCreationResult };
 }
 
 
