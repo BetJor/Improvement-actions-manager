@@ -379,10 +379,21 @@ export async function updateAction(
         if (newStatus === 'Pendiente de Cierre') {
             dataToUpdate.closureDueDate = addDays(today, workflowSettings.closureDueDays).toISOString();
         }
+        
+        // Pre-generate notification comment and add it to the update object
+        const serializableActionForEmail = JSON.parse(JSON.stringify(actionForPermissions));
+        const notificationComment = await sendStateChangeEmail({
+            action: serializableActionForEmail,
+            oldStatus,
+            newStatus
+        });
+        if (notificationComment) {
+            dataToUpdate.comments = arrayUnion(notificationComment);
+        }
     }
     
     // --- ATOMIC WRITE OPERATION ---
-    updateDoc(actionDocRef, dataToUpdate)
+    await updateDoc(actionDocRef, dataToUpdate)
       .catch(async (serverError) => {
         const permissionError = new FirestorePermissionError({
             path: actionDocRef.path,
@@ -392,28 +403,7 @@ export async function updateAction(
         errorEmitter.emit('permission-error', permissionError);
         throw serverError; // Propagate to stop further execution
       });
-
-    // --- POST-UPDATE LOGIC ---
-    const updatedActionDoc = await getDoc(actionDocRef);
-    let updatedAction = { id: updatedActionDoc.id, ...updatedActionDoc.data() } as ImprovementAction;
-
-    if (isStatusChanging) {
-        // We serialize the *final* state of the action for the email.
-        const serializableActionForEmail = JSON.parse(JSON.stringify(updatedAction));
-        const notificationComment = await sendStateChangeEmail({
-            action: serializableActionForEmail,
-            oldStatus,
-            newStatus
-        });
-        if (notificationComment) {
-            // This is a second write, but it's just adding a comment.
-            // The critical permission-changing write is already done.
-            await updateDoc(actionDocRef, { comments: arrayUnion(notificationComment) })
-                .catch(err => console.error("Failed to add notification comment:", err));
-        }
-    }
     
-    // Refresh the action data after adding the notification comment
     const finalActionDoc = await getDoc(actionDocRef);
     const finalAction = { id: finalActionDoc.id, ...finalActionDoc.data() } as ImprovementAction;
 
