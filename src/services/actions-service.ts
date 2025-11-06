@@ -160,6 +160,23 @@ export const getActionById = async (id: string): Promise<ImprovementAction | nul
     }
 }
 
+// Function to recursively remove undefined values from an object
+function sanitizeDataForFirestore<T extends object>(data: T): T {
+    const sanitizedData = JSON.parse(JSON.stringify(data)); // Deep copy to avoid mutating original
+    const clean = (obj: any) => {
+        Object.keys(obj).forEach(key => {
+            if (obj[key] === undefined) {
+                delete obj[key];
+            } else if (typeof obj[key] === 'object' && obj[key] !== null && !Array.isArray(obj[key]) && !(obj[key] instanceof Date)) {
+                clean(obj[key]);
+            }
+        });
+    };
+    clean(sanitizedData);
+    return sanitizedData;
+}
+
+
 // Function to create a new action
 export async function createAction(data: CreateActionData, masterData: any): Promise<ImprovementAction> {
     if (!data.categoryId) {
@@ -227,6 +244,7 @@ export async function createAction(data: CreateActionData, masterData: any): Pro
         followers: [data.creator.id],
         readers: [],
         authors: [],
+        comments: [], // Ensure comments array exists
     };
     
     if (data.originalActionId) newActionData.originalActionId = data.originalActionId;
@@ -251,7 +269,7 @@ export async function createAction(data: CreateActionData, masterData: any): Pro
         }
     }
   
-    setDoc(docRef, newActionData)
+    setDoc(docRef, sanitizeDataForFirestore(newActionData))
       .catch(async (serverError) => {
         const permissionError = new FirestorePermissionError({
             path: docRef.path,
@@ -286,24 +304,31 @@ export async function updateAction(
             const oldStatus = originalAction.status;
             const newStatus = statusFromForm || data.status || oldStatus;
             const isStatusChanging = newStatus !== oldStatus;
+            
+            let notificationComment: ActionComment | null = null;
+            if (isStatusChanging) {
+                const actionForPermissions = { ...originalAction, ...dataToUpdate };
+                const { readers, authors } = await getPermissionsForState(actionForPermissions, newStatus);
+                dataToUpdate.readers = readers;
+                dataToUpdate.authors = authors;
+                
+                const serializableActionForEmail = JSON.parse(JSON.stringify(actionForPermissions));
+                notificationComment = await sendStateChangeEmail({ action: serializableActionForEmail, oldStatus, newStatus });
+            }
 
             if (data.adminEdit) {
                 const { field, label, user, overrideComment, actionIndex } = data.adminEdit;
                 let commentText;
-                if (overrideComment) {
-                    commentText = overrideComment;
-                } else if (actionIndex !== undefined) {
-                    commentText = `El administrador ${user} ha modificado el campo '${label}' de la acción propuesta ${actionIndex + 1}.`;
-                } else {
-                    commentText = `El administrador ${user} ha modificado el campo '${label}'.`;
-                }
-                dataToUpdate.comments = arrayUnion({
-                    id: crypto.randomUUID(),
-                    author: { id: 'system', name: 'Sistema' },
-                    date: new Date().toISOString(),
-                    text: commentText
-                });
+                if (overrideComment) commentText = overrideComment;
+                else if (actionIndex !== undefined) commentText = `El administrador ${user} ha modificado el campo '${label}' de la acción propuesta ${actionIndex + 1}.`;
+                else commentText = `El administrador ${user} ha modificado el campo '${label}'.`;
+                
+                dataToUpdate.comments = arrayUnion({ id: crypto.randomUUID(), author: { id: 'system', name: 'Sistema' }, date: new Date().toISOString(), text: commentText });
                 delete dataToUpdate.adminEdit;
+            }
+
+            if (notificationComment) {
+                 dataToUpdate.comments = arrayUnion(notificationComment);
             }
 
             if (data.newComment) {
@@ -366,11 +391,6 @@ export async function updateAction(
 
             if (isStatusChanging) {
                 dataToUpdate.status = newStatus;
-                const actionForPermissions = { ...originalAction, ...dataToUpdate };
-                const { readers, authors } = await getPermissionsForState(actionForPermissions, newStatus);
-                dataToUpdate.readers = readers;
-                dataToUpdate.authors = authors;
-
                 const workflowSettings = await getWorkflowSettings();
                 const today = new Date();
                 if (newStatus === 'Pendiente Comprobación') {
@@ -379,15 +399,9 @@ export async function updateAction(
                 if (newStatus === 'Pendiente de Cierre') {
                     dataToUpdate.closureDueDate = addDays(today, workflowSettings.closureDueDays).toISOString();
                 }
-                
-                const serializableActionForEmail = JSON.parse(JSON.stringify(actionForPermissions));
-                const notificationComment = await sendStateChangeEmail({ action: serializableActionForEmail, oldStatus, newStatus });
-                if (notificationComment) {
-                    dataToUpdate.comments = arrayUnion(notificationComment);
-                }
             }
             
-            transaction.update(actionDocRef, dataToUpdate);
+            transaction.update(actionDocRef, sanitizeDataForFirestore(dataToUpdate));
         });
 
     } catch (error: any) {
