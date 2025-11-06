@@ -194,80 +194,81 @@ export async function createAction(data: CreateActionData, masterData: any): Pro
     const affectedCentersNames = data.affectedCentersIds?.map(id => masterData.centers.data.find((c: any) => c.id === id)?.name || id);
     const typeName = masterData.ambits.data.find((t: any) => t.id === data.typeId)?.name || '';
 
-    // Get the global workflow settings for due dates
     const workflowSettings = await getWorkflowSettings();
 
+    // Create a temporary object for the new document without the final Firestore ID
     const newActionData: Omit<ImprovementAction, 'id'> = {
-      actionId: newActionId,
-      title: data.title,
-      category: categoryName,
-      categoryId: data.categoryId,
-      subcategory: subcategoryName,
-      subcategoryId: data.subcategoryId || '',
-      description: data.description,
-      type: typeName,
-      typeId: data.typeId,
-      status: data.status || 'Borrador',
-      affectedAreas: affectedAreasNames,
-      affectedAreasIds: data.affectedAreasIds,
-      affectedCenters: affectedCentersNames,
-      affectedCentersIds: data.affectedCentersIds,
-      center: centerName,
-      centerId: data.centerId,
-      assignedTo: data.assignedTo,
-      creator: {
-        id: data.creator.id,
-        name: creatorDetails?.name || data.creator.name,
-        avatar: creatorDetails?.avatar || "",
-        email: creatorDetails?.email || '',
-      },
-      responsibleGroupId: data.assignedTo,
-      creationDate: creationDate,
-      analysisDueDate: addDays(today, workflowSettings.analysisDueDays).toISOString(), 
-      verificationDueDate: '',
-      implementationDueDate: '', 
-      closureDueDate: '',
-      followers: [data.creator.id], // Automatically follow created actions
-      readers: [],
-      authors: [],
+        actionId: newActionId,
+        title: data.title,
+        category: categoryName,
+        categoryId: data.categoryId,
+        subcategory: subcategoryName,
+        subcategoryId: data.subcategoryId || '',
+        description: data.description,
+        type: typeName,
+        typeId: data.typeId,
+        status: data.status || 'Borrador',
+        affectedAreas: affectedAreasNames,
+        affectedAreasIds: data.affectedAreasIds,
+        affectedCenters: affectedCentersNames,
+        affectedCentersIds: data.affectedCentersIds,
+        center: centerName,
+        centerId: data.centerId,
+        assignedTo: data.assignedTo,
+        creator: {
+            id: data.creator.id,
+            name: creatorDetails?.name || data.creator.name,
+            avatar: creatorDetails?.avatar || "",
+            email: creatorDetails?.email || '',
+        },
+        responsibleGroupId: data.assignedTo,
+        creationDate: creationDate,
+        analysisDueDate: addDays(today, workflowSettings.analysisDueDays).toISOString(), 
+        verificationDueDate: '',
+        implementationDueDate: '', 
+        closureDueDate: '',
+        followers: [data.creator.id],
+        readers: [],
+        authors: [],
     };
 
-    if (data.originalActionId) {
-        newActionData.originalActionId = data.originalActionId;
-    }
-    if (data.originalActionTitle) {
-        newActionData.originalActionTitle = data.originalActionTitle;
+    if (data.originalActionId) newActionData.originalActionId = data.originalActionId;
+    if (data.originalActionTitle) newActionData.originalActionTitle = data.originalActionTitle;
+    
+    // First, add the document to get the real ID
+    const docRef = await addDoc(actionsCol, {});
+    const realActionId = docRef.id;
+
+    // Now, construct the final action object with the real ID
+    const finalAction: ImprovementAction = { ...newActionData, id: realActionId };
+
+    // --- LOGIC FOR STATUS CHANGE ON CREATION ---
+    if (finalAction.status === 'Borrador' && finalAction.creator.email) {
+        finalAction.readers = [finalAction.creator.email];
+        finalAction.authors = [finalAction.creator.email];
     }
 
-    // --- CENTRALIZED LOGIC FOR STATUS CHANGE ON CREATION ---
-    const tempActionForLogic = { ...newActionData, id: 'temp-id' } as ImprovementAction;
-
-    // Handle 'Borrador' permissions
-    if (tempActionForLogic.status === 'Borrador' && tempActionForLogic.creator.email) {
-        tempActionForLogic.readers = [tempActionForLogic.creator.email];
-        tempActionForLogic.authors = [tempActionForLogic.creator.email];
-    }
-
-    // Handle 'Pendiente Análisis' logic
-    if (tempActionForLogic.status === 'Pendiente Análisis') {
-        // Send email and get comment
+    if (finalAction.status === 'Pendiente Análisis') {
         const notificationComment = await sendStateChangeEmail({
-            action: tempActionForLogic,
+            action: finalAction,
             oldStatus: 'Borrador',
             newStatus: 'Pendiente Análisis'
         });
         if (notificationComment) {
-            tempActionForLogic.comments = [...(tempActionForLogic.comments || []), notificationComment];
+            finalAction.comments = [...(finalAction.comments || []), notificationComment];
         }
-        // Update permissions for the new state
-        await updateActionPermissions(tempActionForLogic.id, tempActionForLogic.typeId, tempActionForLogic.status, tempActionForLogic);
     }
   
-    // Add the final prepared document to Firestore
-    const docRef = await addDoc(actionsCol, tempActionForLogic);
-    
-    // Return the full object to update the local state
-    return { ...tempActionForLogic, id: docRef.id };
+    // Now, set the complete data in the document we created
+    await setDoc(docRef, finalAction);
+
+    // After setting the data, update permissions if needed
+    if (finalAction.status !== 'Borrador') {
+        await updateActionPermissions(finalAction.id, finalAction.typeId, finalAction.status, finalAction);
+    }
+
+    // Return the full object with the real ID to update the local state
+    return finalAction;
 }
 
 // Private function to handle status change logic (permissions and notifications)
@@ -622,6 +623,7 @@ export async function updateActionPermissions(actionId: string, typeId: string, 
     await updateDoc(actionDocRef, dataToUpdate);
     console.log(`[ActionService] Permissions updated successfully for action ${actionId}.`);
 }
+
 
 
 
