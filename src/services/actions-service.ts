@@ -272,138 +272,134 @@ export async function updateAction(
     statusFromForm?: 'Borrador' | 'Pendiente Análisis'
 ): Promise<{ updatedAction: ImprovementAction, bisCreationResult?: { createdBisTitle?: string, foundBisTitle?: string } }> {
     const actionDocRef = doc(db, 'actions', actionId);
-    
-    const originalActionSnap = await getDoc(actionDocRef);
-    if (!originalActionSnap.exists()) {
-        throw new Error(`Action with ID ${actionId} not found.`);
-    }
-    const originalAction = { id: originalActionSnap.id, ...originalActionSnap.data() } as ImprovementAction;
-    
-    let dataToUpdate: any = { ...data };
     let bisCreationResult: { createdBisTitle?: string, foundBisTitle?: string } = {};
-    const oldStatus = originalAction.status;
-    const newStatus = statusFromForm || data.status || oldStatus;
-    const isStatusChanging = newStatus !== oldStatus;
 
-    if (data.adminEdit) {
-        const { field, label, user, overrideComment, actionIndex } = data.adminEdit;
-        let commentText;
-        if (overrideComment) {
-            commentText = overrideComment;
-        } else if (actionIndex !== undefined) {
-            commentText = `El administrador ${user} ha modificado el campo '${label}' de la acción propuesta ${actionIndex + 1}.`;
-        } else {
-            commentText = `El administrador ${user} ha modificado el campo '${label}'.`;
-        }
-        dataToUpdate.comments = arrayUnion({
-            id: crypto.randomUUID(),
-            author: { id: 'system', name: 'Sistema' },
-            date: new Date().toISOString(),
-            text: commentText
-        });
-        delete dataToUpdate.adminEdit;
-    }
-
-    if (data.newComment) {
-        dataToUpdate.comments = arrayUnion(data.newComment);
-        delete dataToUpdate.newComment;
-    }
-    
-    if (data.updateProposedActionStatus || data.updateProposedAction) {
-        const currentProposedActions = originalAction.analysis?.proposedActions || [];
-        let updatedProposedActions;
-
-        if(data.updateProposedActionStatus) {
-            updatedProposedActions = currentProposedActions.map(pa => 
-                pa.id === data.updateProposedActionStatus!.proposedActionId 
-                    ? { ...pa, status: data.updateProposedActionStatus!.status, statusUpdateDate: new Date().toISOString() } 
-                    : pa
-            );
-        }
-
-        if(data.updateProposedAction) {
-            updatedProposedActions = currentProposedActions.map(pa =>
-                pa.id === data.updateProposedAction!.id
-                    ? { ...data.updateProposedAction, dueDate: new Date(data.updateProposedAction!.dueDate).toISOString() }
-                    : pa
-            );
-        }
-
-        if (updatedProposedActions) {
-             dataToUpdate['analysis.proposedActions'] = updatedProposedActions;
-             const dueDates = updatedProposedActions
-                .map((pa: ProposedAction) => pa.dueDate ? new Date(pa.dueDate as string) : null)
-                .filter((d): d is Date => d !== null && !isNaN(d.getTime()));
-            
-            if (dueDates.length > 0) {
-                 dataToUpdate.implementationDueDate = new Date(Math.max.apply(null, dueDates.map(d => d.getTime()))).toISOString();
+    try {
+        await runTransaction(db, async (transaction) => {
+            const originalActionSnap = await transaction.get(actionDocRef);
+            if (!originalActionSnap.exists()) {
+                throw new Error(`Action with ID ${actionId} not found.`);
             }
-        }
-        delete dataToUpdate.updateProposedActionStatus;
-        delete dataToUpdate.updateProposedAction;
-    }
+            const originalAction = { id: originalActionSnap.id, ...originalActionSnap.data() } as ImprovementAction;
+            
+            let dataToUpdate: any = { ...data };
+            const oldStatus = originalAction.status;
+            const newStatus = statusFromForm || data.status || oldStatus;
+            const isStatusChanging = newStatus !== oldStatus;
 
-    if (masterData && data.affectedCentersIds) {
-        dataToUpdate.affectedCenters = data.affectedCentersIds.map((id:string) => masterData.centers.data.find((c:any) => c.id === id)?.name || id);
-    }
+            if (data.adminEdit) {
+                const { field, label, user, overrideComment, actionIndex } = data.adminEdit;
+                let commentText;
+                if (overrideComment) {
+                    commentText = overrideComment;
+                } else if (actionIndex !== undefined) {
+                    commentText = `El administrador ${user} ha modificado el campo '${label}' de la acción propuesta ${actionIndex + 1}.`;
+                } else {
+                    commentText = `El administrador ${user} ha modificado el campo '${label}'.`;
+                }
+                dataToUpdate.comments = arrayUnion({
+                    id: crypto.randomUUID(),
+                    author: { id: 'system', name: 'Sistema' },
+                    date: new Date().toISOString(),
+                    text: commentText
+                });
+                delete dataToUpdate.adminEdit;
+            }
 
-    if (data.analysis && Array.isArray(data.analysis.proposedActions)) {
-        const serializedProposedActions = data.analysis.proposedActions.map(pa => ({
-            ...pa,
-            dueDate: new Date(pa.dueDate as Date).toISOString()
-        }));
-        dataToUpdate.analysis = { ...data.analysis, proposedActions: serializedProposedActions };
-        
-        const dueDates = serializedProposedActions
-            .map((pa: ProposedAction) => pa.dueDate ? new Date(pa.dueDate as string) : null)
-            .filter((d): d is Date => d !== null && !isNaN(d.getTime()));
-        if (dueDates.length > 0) {
-            dataToUpdate.implementationDueDate = new Date(Math.max.apply(null, dueDates.map(d => d.getTime()))).toISOString();
-        }
-    }
-    
-    // --- ATOMIC PERMISSION LOGIC ---
-    if (isStatusChanging) {
-        dataToUpdate.status = newStatus;
-        
-        const actionForPermissions = { ...originalAction, ...dataToUpdate };
-        const { readers, authors } = await getPermissionsForState(actionForPermissions, newStatus);
-        dataToUpdate.readers = readers;
-        dataToUpdate.authors = authors;
+            if (data.newComment) {
+                dataToUpdate.comments = arrayUnion(data.newComment);
+                delete dataToUpdate.newComment;
+            }
+            
+            if (data.updateProposedActionStatus || data.updateProposedAction) {
+                const currentProposedActions = originalAction.analysis?.proposedActions || [];
+                let updatedProposedActions;
 
-        const workflowSettings = await getWorkflowSettings();
-        const today = new Date();
-        if (newStatus === 'Pendiente Comprobación') {
-            dataToUpdate.verificationDueDate = addDays(today, workflowSettings.verificationDueDays).toISOString();
-        }
-        if (newStatus === 'Pendiente de Cierre') {
-            dataToUpdate.closureDueDate = addDays(today, workflowSettings.closureDueDays).toISOString();
-        }
-        
-        // Pre-generate notification comment and add it to the update object
-        const serializableActionForEmail = JSON.parse(JSON.stringify(actionForPermissions));
-        const notificationComment = await sendStateChangeEmail({
-            action: serializableActionForEmail,
-            oldStatus,
-            newStatus
+                if(data.updateProposedActionStatus) {
+                    updatedProposedActions = currentProposedActions.map(pa => 
+                        pa.id === data.updateProposedActionStatus!.proposedActionId 
+                            ? { ...pa, status: data.updateProposedActionStatus!.status, statusUpdateDate: new Date().toISOString() } 
+                            : pa
+                    );
+                }
+
+                if(data.updateProposedAction) {
+                    updatedProposedActions = currentProposedActions.map(pa =>
+                        pa.id === data.updateProposedAction!.id
+                            ? { ...data.updateProposedAction, dueDate: new Date(data.updateProposedAction!.dueDate).toISOString() }
+                            : pa
+                    );
+                }
+
+                if (updatedProposedActions) {
+                     dataToUpdate['analysis.proposedActions'] = updatedProposedActions;
+                     const dueDates = updatedProposedActions
+                        .map((pa: ProposedAction) => pa.dueDate ? new Date(pa.dueDate as string) : null)
+                        .filter((d): d is Date => d !== null && !isNaN(d.getTime()));
+                    
+                    if (dueDates.length > 0) {
+                         dataToUpdate.implementationDueDate = new Date(Math.max.apply(null, dueDates.map(d => d.getTime()))).toISOString();
+                    }
+                }
+                delete dataToUpdate.updateProposedActionStatus;
+                delete dataToUpdate.updateProposedAction;
+            }
+
+            if (masterData && data.affectedCentersIds) {
+                dataToUpdate.affectedCenters = data.affectedCentersIds.map((id:string) => masterData.centers.data.find((c:any) => c.id === id)?.name || id);
+            }
+
+            if (data.analysis && Array.isArray(data.analysis.proposedActions)) {
+                const serializedProposedActions = data.analysis.proposedActions.map(pa => ({
+                    ...pa,
+                    dueDate: new Date(pa.dueDate as Date).toISOString()
+                }));
+                dataToUpdate.analysis = { ...data.analysis, proposedActions: serializedProposedActions };
+                
+                const dueDates = serializedProposedActions
+                    .map((pa: ProposedAction) => pa.dueDate ? new Date(pa.dueDate as string) : null)
+                    .filter((d): d is Date => d !== null && !isNaN(d.getTime()));
+                if (dueDates.length > 0) {
+                    dataToUpdate.implementationDueDate = new Date(Math.max.apply(null, dueDates.map(d => d.getTime()))).toISOString();
+                }
+            }
+
+            if (isStatusChanging) {
+                dataToUpdate.status = newStatus;
+                const actionForPermissions = { ...originalAction, ...dataToUpdate };
+                const { readers, authors } = await getPermissionsForState(actionForPermissions, newStatus);
+                dataToUpdate.readers = readers;
+                dataToUpdate.authors = authors;
+
+                const workflowSettings = await getWorkflowSettings();
+                const today = new Date();
+                if (newStatus === 'Pendiente Comprobación') {
+                    dataToUpdate.verificationDueDate = addDays(today, workflowSettings.verificationDueDays).toISOString();
+                }
+                if (newStatus === 'Pendiente de Cierre') {
+                    dataToUpdate.closureDueDate = addDays(today, workflowSettings.closureDueDays).toISOString();
+                }
+                
+                const serializableActionForEmail = JSON.parse(JSON.stringify(actionForPermissions));
+                const notificationComment = await sendStateChangeEmail({ action: serializableActionForEmail, oldStatus, newStatus });
+                if (notificationComment) {
+                    dataToUpdate.comments = arrayUnion(notificationComment);
+                }
+            }
+            
+            transaction.update(actionDocRef, dataToUpdate);
         });
-        if (notificationComment) {
-            dataToUpdate.comments = arrayUnion(notificationComment);
-        }
-    }
-    
-    // --- ATOMIC WRITE OPERATION ---
-    await updateDoc(actionDocRef, dataToUpdate)
-      .catch(async (serverError) => {
+
+    } catch (error: any) {
         const permissionError = new FirestorePermissionError({
             path: actionDocRef.path,
             operation: 'update',
-            requestResourceData: dataToUpdate,
+            requestResourceData: data,
         } satisfies SecurityRuleContext);
         errorEmitter.emit('permission-error', permissionError);
-        throw serverError; // Propagate to stop further execution
-      });
-    
+        throw error;
+    }
+
     const finalActionDoc = await getDoc(actionDocRef);
     const finalAction = { id: finalActionDoc.id, ...finalActionDoc.data() } as ImprovementAction;
 

@@ -39,35 +39,10 @@ export async function getUserById(userId: string): Promise<User | null> {
     if (userDocSnap.exists()) {
         return { id: userDocSnap.id, ...userDocSnap.data() } as User;
     }
-    
-    try {
-        const authUser = auth.currentUser;
-        if (authUser && authUser.uid === userId) {
-            console.log(`User ${userId} not in Firestore, creating from Auth details.`);
-            const newUser: User = {
-                id: authUser.uid,
-                name: authUser.displayName || authUser.email || 'Usuari Nou',
-                email: authUser.email || '',
-                role: 'Creator',
-                avatar: authUser.photoURL || ""
-            };
-            
-            setDoc(userDocRef, newUser)
-              .catch(async (serverError) => {
-                const permissionError = new FirestorePermissionError({
-                    path: userDocRef.path,
-                    operation: 'create',
-                    requestResourceData: newUser,
-                } satisfies SecurityRuleContext);
-                errorEmitter.emit('permission-error', permissionError);
-              });
-            return newUser;
-        }
-    } catch (error) {
-        console.error("Error trying to create user profile from Auth:", error);
-    }
 
-    console.warn(`User with ID ${userId} not found in Firestore and could not be created from Auth.`);
+    // Aquesta part esborrada causava escriptures inesperades.
+    // La creació d'usuaris ara s'ha de gestionar explícitament a través de addUser o des de la lògica d'autenticació.
+    console.warn(`User with ID ${userId} not found in Firestore.`);
     return null;
 }
 
