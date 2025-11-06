@@ -258,14 +258,14 @@ export async function createAction(data: CreateActionData, masterData: any): Pro
     const serializableActionForEmail = JSON.parse(JSON.stringify(newActionData));
 
     if (newActionData.status === 'Pendiente Análisis') {
-        const notificationComment = await sendStateChangeEmail({
-            action: serializableActionForEmail,
-            oldStatus: 'Borrador',
-            newStatus: 'Pendiente Análisis'
-        });
-        if (notificationComment) {
-            newActionData.comments = [notificationComment];
-        }
+        // const notificationComment = await sendStateChangeEmail({
+        //     action: serializableActionForEmail,
+        //     oldStatus: 'Borrador',
+        //     newStatus: 'Pendiente Análisis'
+        // });
+        // if (notificationComment) {
+        //     newActionData.comments = [notificationComment];
+        // }
     }
   
     await setDoc(docRef, sanitizeDataForFirestore(newActionData))
@@ -291,6 +291,14 @@ export async function updateAction(
 ): Promise<{ updatedAction: ImprovementAction, bisCreationResult?: { createdBisTitle?: string, foundBisTitle?: string } }> {
     const actionDocRef = doc(db, 'actions', actionId);
     let bisCreationResult: { createdBisTitle?: string, foundBisTitle?: string } = {};
+
+    // Ensure dueDates in proposed actions are strings before the transaction
+    if (data.analysis && data.analysis.proposedActions) {
+        data.analysis.proposedActions = data.analysis.proposedActions.map(pa => ({
+            ...pa,
+            dueDate: pa.dueDate instanceof Date ? pa.dueDate.toISOString() : pa.dueDate,
+        }));
+    }
 
     try {
         await runTransaction(db, async (transaction) => {
@@ -345,9 +353,10 @@ export async function updateAction(
                 dataToUpdate.readers = readers;
                 dataToUpdate.authors = authors;
                 
-                const serializableActionForEmail = JSON.parse(JSON.stringify(actionForPermissions));
-                notificationComment = await sendStateChangeEmail({ action: serializableActionForEmail, oldStatus, newStatus });
-                if(notificationComment) commentsToAdd.push(notificationComment);
+                // --- EMAIL SENDING TEMPORARILY DISABLED ---
+                // const serializableActionForEmail = JSON.parse(JSON.stringify(actionForPermissions));
+                // notificationComment = await sendStateChangeEmail({ action: serializableActionForEmail, oldStatus, newStatus });
+                // if(notificationComment) commentsToAdd.push(notificationComment);
             }
             
             // 3. Prepare comments
@@ -489,4 +498,5 @@ async function getPermissionsForState(action: ImprovementAction, newStatus: Impr
 
 
     
+
 
