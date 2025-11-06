@@ -263,9 +263,12 @@ export async function createAction(data: CreateActionData, masterData: any): Pro
 
 async function handleStatusChange(action: ImprovementAction, oldStatus: ImprovementActionStatus) {
     const actionDocRef = doc(db, 'actions', action.id);
+
+    // Make a deep copy and serialize dates before sending to the notification service
+    const serializableAction = JSON.parse(JSON.stringify(action));
     
     const notificationComment = await sendStateChangeEmail({
-        action: action,
+        action: serializableAction,
         oldStatus,
         newStatus: action.status
     });
@@ -370,6 +373,10 @@ export async function updateAction(
         }
 
         if (data.analysis && Array.isArray(data.analysis.proposedActions)) {
+            data.analysis.proposedActions = data.analysis.proposedActions.map(pa => ({
+                ...pa,
+                dueDate: (pa.dueDate as Date).toISOString()
+            }));
             const dueDates = data.analysis.proposedActions
                 .map((pa: ProposedAction) => pa.dueDate ? new Date(pa.dueDate as string) : null)
                 .filter((d): d is Date => d !== null && !isNaN(d.getTime()));
@@ -523,4 +530,5 @@ export async function updateActionPermissions(action: ImprovementAction, status:
     action.authors = authors;
     return action;
 }
+
 
