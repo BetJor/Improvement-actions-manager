@@ -160,6 +160,10 @@ export const getActionById = async (id: string): Promise<ImprovementAction | nul
 // Function to create a new action
 export async function createAction(data: CreateActionData, masterData: any): Promise<ImprovementAction> {
     const actionsCol = collection(db, 'actions');
+
+    if (!data.categoryId) {
+        throw new Error("El campo 'categoryId' (Origen) es obligatorio.");
+    }
   
     // 1. Get the last actionId to generate the new one
     const lastActionQuery = query(actionsCol, orderBy("actionId", "desc"), limit(1));
@@ -183,12 +187,12 @@ export async function createAction(data: CreateActionData, masterData: any): Pro
     const creatorDetails = await getUserById(data.creator.id);
 
     // Find names from IDs
-    const categoryName = masterData.origins.data.find((c: any) => c.id === data.categoryId)?.name || data.categoryId || '';
-    const subcategoryName = masterData.classifications.data.find((s: any) => s.id === data.subcategoryId)?.name || data.subcategoryId || '';
+    const categoryName = masterData.origins.data.find((c: any) => c.id === data.categoryId)?.name || '';
+    const subcategoryName = masterData.classifications.data.find((s: any) => s.id === data.subcategoryId)?.name || '';
     const affectedAreasNames = data.affectedAreasIds.map(id => masterData.affectedAreas.find((a: any) => a.id === id)?.name || id);
-    const centerName = masterData.centers.data.find((c: any) => c.id === data.centerId)?.name || data.centerId || '';
+    const centerName = masterData.centers.data.find((c: any) => c.id === data.centerId)?.name || '';
     const affectedCentersNames = data.affectedCentersIds?.map(id => masterData.centers.data.find((c: any) => c.id === id)?.name || id);
-    const typeName = masterData.ambits.data.find((t: any) => t.id === data.typeId)?.name || data.typeId || '';
+    const typeName = masterData.ambits.data.find((t: any) => t.id === data.typeId)?.name || '';
 
     // Get the global workflow settings for due dates
     const workflowSettings = await getWorkflowSettings();
@@ -199,7 +203,7 @@ export async function createAction(data: CreateActionData, masterData: any): Pro
       category: categoryName,
       categoryId: data.categoryId,
       subcategory: subcategoryName,
-      subcategoryId: data.subcategoryId,
+      subcategoryId: data.subcategoryId || '',
       description: data.description,
       type: typeName,
       typeId: data.typeId,
@@ -277,8 +281,19 @@ async function handleStatusChange(action: ImprovementAction, oldStatus: Improvem
         await updateDoc(actionDocRef, dataToUpdate);
     }
     
+    // Step 2: Update permissions based on the new state
     console.log(`[ActionService] Updating permissions for action ${action.id}...`);
     await updateActionPermissions(action.id, action.typeId, action.status, action);
+    
+    // Step 3: Send notifications
+    if (action.status === 'Pendiente Análisis') {
+        console.log(`[ActionService] Triggering email notification for state change to 'Pendiente Análisis'.`);
+        await sendStateChangeEmail({
+            action,
+            oldStatus,
+            newStatus: action.status
+        });
+    }
 }
 
 export async function updateAction(
@@ -423,18 +438,21 @@ export async function updateAction(
     };
 
     const createBisActionFrom = async (action: ImprovementAction, responsible: ActionUserInfo, notes: string) => {
-        if (!action.typeId || !action.categoryId) {
-            const errorMessage = `No se pudo crear la acción BIS para ${action.actionId}. Razón: El 'ámbito' (typeId) o el 'origen' (categoryId) de la acción original faltan o son inválidos.`;
-            console.error(errorMessage, { typeId: action.typeId, categoryId: action.categoryId });
-            throw new Error(errorMessage);
+        
+        const { typeId, categoryId, subcategoryId } = action;
+
+        if (!typeId || !categoryId) {
+            const errorMessage = `No se pudo crear la acción BIS para ${action.actionId}. Razón: Faltan datos críticos en la acción original. typeId: ${typeId}, categoryId: ${categoryId}`;
+            console.error(errorMessage);
+            throw new Error("No se pudo crear la acción BIS por falta de datos en la acción original.");
         }
 
         const bisActionData: CreateActionData = {
             title: `${action.title} BIS`,
             description: `Acción creada automáticamente por el cierre no conforme de la acción ${action.actionId}.\n\nObservaciones de cierre no conforme:\n${notes}`,
-            typeId: action.typeId,
-            categoryId: action.categoryId,
-            subcategoryId: action.subcategoryId,
+            typeId,
+            categoryId,
+            subcategoryId,
             affectedAreasIds: action.affectedAreasIds, 
             centerId: action.centerId,
             affectedCentersIds: action.affectedCentersIds,
@@ -580,6 +598,7 @@ export async function updateActionPermissions(actionId: string, typeId: string, 
     });
     console.log(`[ActionService] Permissions updated successfully for action ${actionId}.`);
 }
+
 
 
 
