@@ -39,6 +39,7 @@ export async function updateWorkflowSettings(settings: Omit<WorkflowSettings, 'i
             requestResourceData: settings,
         } satisfies SecurityRuleContext);
         errorEmitter.emit('permission-error', permissionError);
+        throw serverError;
       });
 }
 

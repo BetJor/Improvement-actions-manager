@@ -1,4 +1,5 @@
 
+
 import { collection, getDocs, doc, addDoc, query, orderBy, updateDoc, deleteDoc, writeBatch, where, getDoc, setDoc, limit, arrayRemove } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { ImprovementActionType, ActionCategory, ActionSubcategory, AffectedArea, MasterDataItem, ResponsibilityRole, Center } from '@/lib/types';
@@ -199,6 +200,7 @@ export async function addMasterDataItem(collectionName: string, item: Omit<Maste
             requestResourceData: { ...item, id: docRef.id, order: newOrder },
         } satisfies SecurityRuleContext);
         errorEmitter.emit('permission-error', permissionError);
+        throw serverError;
       });
 }
 
@@ -213,6 +215,7 @@ export async function updateMasterDataItem(collectionName: string, itemId: strin
             requestResourceData: item,
         } satisfies SecurityRuleContext);
         errorEmitter.emit('permission-error', permissionError);
+        throw serverError;
       });
 }
 
@@ -249,6 +252,8 @@ export async function deleteMasterDataItem(collectionName: string, itemId: strin
             operation: 'delete',
         } satisfies SecurityRuleContext);
         errorEmitter.emit('permission-error', permissionError);
+        throw serverError;
       });
 }
 
+    

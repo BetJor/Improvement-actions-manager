@@ -232,9 +232,8 @@ export async function createAction(data: CreateActionData, masterData: any): Pro
     if (data.originalActionId) newActionData.originalActionId = data.originalActionId;
     if (data.originalActionTitle) newActionData.originalActionTitle = data.originalActionTitle;
     
-    const { readers, authors } = await updateActionPermissions(newActionData, newActionData.status);
-    newActionData.readers = readers;
-    newActionData.authors = authors;
+    const actionWithPermissions = await updateActionPermissions(newActionData, newActionData.status);
+    newActionData = { ...newActionData, ...actionWithPermissions };
 
     if (newActionData.status === 'Pendiente Análisis') {
         const notificationComment = await sendStateChangeEmail({
@@ -262,10 +261,16 @@ export async function createAction(data: CreateActionData, masterData: any): Pro
 
 
 async function handleStatusChange(action: ImprovementAction, oldStatus: ImprovementActionStatus) {
+    // Step 1: Update permissions for the new state
+    const actionWithNewPermissions = await updateActionPermissions(action, action.status);
     const actionDocRef = doc(db, 'actions', action.id);
-
-    // Make a deep copy and serialize dates before sending to the notification service
-    const serializableAction = JSON.parse(JSON.stringify(action));
+    await updateDoc(actionDocRef, { 
+        readers: actionWithNewPermissions.readers, 
+        authors: actionWithNewPermissions.authors 
+    }).catch(e => { throw e; });
+    
+    // Step 2: Send notifications & add system comment
+    const serializableAction = JSON.parse(JSON.stringify(actionWithNewPermissions));
     
     const notificationComment = await sendStateChangeEmail({
         action: serializableAction,
@@ -296,151 +301,140 @@ export async function updateAction(
 ): Promise<{ updatedAction: ImprovementAction, bisCreationResult?: { createdBisTitle?: string, foundBisTitle?: string } }> {
     const actionDocRef = doc(db, 'actions', actionId);
     
-    return runTransaction(db, async (transaction) => {
-        const originalActionSnap = await transaction.get(actionDocRef);
-        if (!originalActionSnap.exists()) {
-            throw new Error(`Action with ID ${actionId} not found.`);
+    // First, consolidate all changes into a single update object.
+    const originalActionSnap = await getDoc(actionDocRef);
+    if (!originalActionSnap.exists()) {
+        throw new Error(`Action with ID ${actionId} not found.`);
+    }
+    const originalAction = { id: originalActionSnap.id, ...originalActionSnap.data() } as ImprovementAction;
+    
+    let dataToUpdate: any = { ...data };
+    let bisCreationResult: { createdBisTitle?: string, foundBisTitle?: string } = {};
+    const oldStatus = originalAction.status;
+    const newStatus = statusFromForm || data.status || oldStatus;
+    const isStatusChanging = newStatus !== oldStatus;
+
+    if (data.adminEdit) {
+        const { field, label, user, overrideComment, actionIndex } = data.adminEdit;
+        let commentText;
+        if (overrideComment) {
+            commentText = overrideComment;
+        } else if (actionIndex !== undefined) {
+            commentText = `El administrador ${user} ha modificado el campo '${label}' de la acción propuesta ${actionIndex + 1}.`;
+        } else {
+            commentText = `El administrador ${user} ha modificado el campo '${label}'.`;
         }
-        const originalAction = { id: originalActionSnap.id, ...originalActionSnap.data() } as ImprovementAction;
-        
-        let dataToUpdate: any = { ...data };
-        let bisCreationResult: { createdBisTitle?: string, foundBisTitle?: string } = {};
-        const oldStatus = originalAction.status;
-        const newStatus = statusFromForm || data.status || oldStatus;
-        const isStatusChanging = newStatus !== oldStatus;
+        dataToUpdate.comments = arrayUnion({
+            id: crypto.randomUUID(),
+            author: { id: 'system', name: 'Sistema' },
+            date: new Date().toISOString(),
+            text: commentText
+        });
+        delete dataToUpdate.adminEdit;
+    }
 
-        if (data.adminEdit) {
-            const { field, label, user, overrideComment, actionIndex } = data.adminEdit;
-            let commentText;
-            if (overrideComment) {
-                commentText = overrideComment;
-            } else if (actionIndex !== undefined) {
-                commentText = `El administrador ${user} ha modificado el campo '${label}' de la acción propuesta ${actionIndex + 1}.`;
-            } else {
-                commentText = `El administrador ${user} ha modificado el campo '${label}'.`;
-            }
-            dataToUpdate.comments = arrayUnion({
-                id: crypto.randomUUID(),
-                author: { id: 'system', name: 'Sistema' },
-                date: new Date().toISOString(),
-                text: commentText
-            });
-            delete dataToUpdate.adminEdit;
-        }
+    if (data.newComment) {
+        dataToUpdate.comments = arrayUnion(data.newComment);
+        delete dataToUpdate.newComment;
+    }
+    
+    if (data.updateProposedActionStatus || data.updateProposedAction) {
+        const currentProposedActions = originalAction.analysis?.proposedActions || [];
+        let updatedProposedActions;
 
-        if (data.newComment) {
-            dataToUpdate.comments = arrayUnion(data.newComment);
-            delete dataToUpdate.newComment;
-        }
-        
-        if (data.updateProposedActionStatus || data.updateProposedAction) {
-            const currentProposedActions = originalAction.analysis?.proposedActions || [];
-            let updatedProposedActions;
-
-            if(data.updateProposedActionStatus) {
-                updatedProposedActions = currentProposedActions.map(pa => 
-                    pa.id === data.updateProposedActionStatus!.proposedActionId 
-                        ? { ...pa, status: data.updateProposedActionStatus!.status, statusUpdateDate: new Date().toISOString() } 
-                        : pa
-                );
-                 dataToUpdate['analysis.proposedActions'] = updatedProposedActions;
-            }
-
-            if(data.updateProposedAction) {
-                updatedProposedActions = currentProposedActions.map(pa =>
-                    pa.id === data.updateProposedAction!.id
-                        ? { ...data.updateProposedAction, dueDate: new Date(data.updateProposedAction!.dueDate).toISOString() }
-                        : pa
-                );
-                 dataToUpdate['analysis.proposedActions'] = updatedProposedActions;
-            }
-
-            if (updatedProposedActions) {
-                 const dueDates = updatedProposedActions
-                    .map((pa: ProposedAction) => pa.dueDate ? new Date(pa.dueDate as string) : null)
-                    .filter((d): d is Date => d !== null && !isNaN(d.getTime()));
-                
-                if (dueDates.length > 0) {
-                     dataToUpdate.implementationDueDate = new Date(Math.max.apply(null, dueDates.map(d => d.getTime()))).toISOString();
-                }
-            }
-            delete dataToUpdate.updateProposedActionStatus;
-            delete dataToUpdate.updateProposedAction;
+        if(data.updateProposedActionStatus) {
+            updatedProposedActions = currentProposedActions.map(pa => 
+                pa.id === data.updateProposedActionStatus!.proposedActionId 
+                    ? { ...pa, status: data.updateProposedActionStatus!.status, statusUpdateDate: new Date().toISOString() } 
+                    : pa
+            );
         }
 
-        if (masterData && data.affectedCentersIds) {
-            dataToUpdate.affectedCenters = data.affectedCentersIds.map((id:string) => masterData.centers.data.find((c:any) => c.id === id)?.name || id);
+        if(data.updateProposedAction) {
+            updatedProposedActions = currentProposedActions.map(pa =>
+                pa.id === data.updateProposedAction!.id
+                    ? { ...data.updateProposedAction, dueDate: new Date(data.updateProposedAction!.dueDate).toISOString() }
+                    : pa
+            );
         }
 
-        if (data.analysis && Array.isArray(data.analysis.proposedActions)) {
-            data.analysis.proposedActions = data.analysis.proposedActions.map(pa => ({
-                ...pa,
-                dueDate: (pa.dueDate as Date).toISOString()
-            }));
-            const dueDates = data.analysis.proposedActions
+        if (updatedProposedActions) {
+             dataToUpdate['analysis.proposedActions'] = updatedProposedActions;
+             const dueDates = updatedProposedActions
                 .map((pa: ProposedAction) => pa.dueDate ? new Date(pa.dueDate as string) : null)
                 .filter((d): d is Date => d !== null && !isNaN(d.getTime()));
+            
             if (dueDates.length > 0) {
-                dataToUpdate.implementationDueDate = new Date(Math.max.apply(null, dueDates.map(d => d.getTime()))).toISOString();
+                 dataToUpdate.implementationDueDate = new Date(Math.max.apply(null, dueDates.map(d => d.getTime()))).toISOString();
             }
         }
+        delete dataToUpdate.updateProposedActionStatus;
+        delete dataToUpdate.updateProposedAction;
+    }
+
+    if (masterData && data.affectedCentersIds) {
+        dataToUpdate.affectedCenters = data.affectedCentersIds.map((id:string) => masterData.centers.data.find((c:any) => c.id === id)?.name || id);
+    }
+
+    if (data.analysis && Array.isArray(data.analysis.proposedActions)) {
+        const serializedProposedActions = data.analysis.proposedActions.map(pa => ({
+            ...pa,
+            dueDate: (pa.dueDate as Date).toISOString()
+        }));
+        dataToUpdate.analysis = { ...data.analysis, proposedActions: serializedProposedActions };
         
-        if (isStatusChanging) {
-            dataToUpdate.status = newStatus;
-            const tempActionForPermissions = { ...originalAction, ...dataToUpdate };
-            const { readers, authors } = await getPermissionsForState(tempActionForPermissions, newStatus);
-            dataToUpdate.readers = readers;
-            dataToUpdate.authors = authors;
-
-            const workflowSettings = await getWorkflowSettings();
-            const today = new Date();
-            if (newStatus === 'Pendiente Comprobación') {
-                dataToUpdate.verificationDueDate = addDays(today, workflowSettings.verificationDueDays).toISOString();
-            }
-            if (newStatus === 'Pendiente de Cierre') {
-                dataToUpdate.closureDueDate = addDays(today, workflowSettings.closureDueDays).toISOString();
-            }
+        const dueDates = serializedProposedActions
+            .map((pa: ProposedAction) => pa.dueDate ? new Date(pa.dueDate as string) : null)
+            .filter((d): d is Date => d !== null && !isNaN(d.getTime()));
+        if (dueDates.length > 0) {
+            dataToUpdate.implementationDueDate = new Date(Math.max.apply(null, dueDates.map(d => d.getTime()))).toISOString();
         }
+    }
+    
+    // Before committing, calculate the new permissions if the status is changing.
+    if (isStatusChanging) {
+        dataToUpdate.status = newStatus;
+        const tempActionForPermissions = { ...originalAction, ...dataToUpdate };
+        const { readers, authors } = await getPermissionsForState(tempActionForPermissions, newStatus);
+        dataToUpdate.readers = readers;
+        dataToUpdate.authors = authors;
 
-        // --- Handle BIS action creation ---
-        if (data.closure && !data.closure.isCompliant && oldStatus !== 'Finalizada') {
-            const bisActionData = { /* ... same as before */ };
-            // The creation logic needs to be adapted to work within a transaction or be idempotent.
-            // For now, let's assume it can be called outside, but this might need refactoring.
-            // For simplicity, we are not creating the BIS action within the transaction.
+        // Update due dates based on new status
+        const workflowSettings = await getWorkflowSettings();
+        const today = new Date();
+        if (newStatus === 'Pendiente Comprobación') {
+            dataToUpdate.verificationDueDate = addDays(today, workflowSettings.verificationDueDays).toISOString();
         }
-        
-        if (Object.keys(dataToUpdate).length > 0) {
-             transaction.update(actionDocRef, dataToUpdate);
+        if (newStatus === 'Pendiente de Cierre') {
+            dataToUpdate.closureDueDate = addDays(today, workflowSettings.closureDueDays).toISOString();
         }
+    }
 
-        return { isStatusChanging, oldStatus, bisCreationResult, dataToUpdate };
+    // Now, perform the atomic update.
+    await updateDoc(actionDocRef, dataToUpdate)
+        .catch(async (serverError) => {
+            const permissionError = new FirestorePermissionError({
+                path: actionDocRef.path,
+                operation: 'update',
+                requestResourceData: dataToUpdate,
+            } satisfies SecurityRuleContext);
+            errorEmitter.emit('permission-error', permissionError);
+            throw serverError; // Re-throw to stop execution
+        });
+    
+    // --- Post-update logic (notifications, etc.) ---
+    const updatedActionDoc = await getDoc(actionDocRef);
+    const updatedAction = { id: updatedActionDoc.id, ...updatedActionDoc.data() } as ImprovementAction;
 
-    }).then(async ({ isStatusChanging, oldStatus, bisCreationResult, dataToUpdate }) => {
-        const updatedActionDoc = await getDoc(actionDocRef);
-        const updatedAction = { id: updatedActionDoc.id, ...updatedActionDoc.data() } as ImprovementAction;
-        
-        if (isStatusChanging) {
-            await handleStatusChange(updatedAction, oldStatus);
-        }
+    if (isStatusChanging) {
+        await handleStatusChange(updatedAction, oldStatus);
+    }
 
-        if (data.closure && !data.closure.isCompliant && oldStatus !== 'Finalizada') {
-             // Create BIS action here, after the main transaction is committed.
-        }
+    if (data.closure && !data.closure.isCompliant && oldStatus !== 'Finalizada') {
+         // Create BIS action here, after the main transaction is committed.
+    }
 
-        return { updatedAction, bisCreationResult };
-
-    }).catch(async (serverError) => {
-        console.error("Error in updateAction transaction:", serverError);
-        const permissionError = new FirestorePermissionError({
-            path: actionDocRef.path,
-            operation: 'update',
-            requestResourceData: data,
-        } satisfies SecurityRuleContext);
-        errorEmitter.emit('permission-error', permissionError);
-        // Re-throw the original error to ensure the calling function knows the operation failed.
-        throw serverError;
-    });
+    return { updatedAction, bisCreationResult };
 }
 
 
@@ -532,3 +526,6 @@ export async function updateActionPermissions(action: ImprovementAction, status:
 }
 
 
+
+
+    

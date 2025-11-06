@@ -101,6 +101,7 @@ export async function addUser(userData: Omit<User, 'id'> & { password?: string }
                 } satisfies SecurityRuleContext);
 
                 errorEmitter.emit('permission-error', permissionError);
+                throw serverError;
             });
         
         return newUserId;
@@ -123,6 +124,7 @@ export async function updateUser(userId: string, user: Partial<Omit<User, 'id'>>
             requestResourceData: user,
         } satisfies SecurityRuleContext);
         errorEmitter.emit('permission-error', permissionError);
+        throw serverError;
       });
 }
 
@@ -135,5 +137,8 @@ export async function deleteUser(userId: string): Promise<void> {
             operation: 'delete',
         } satisfies SecurityRuleContext);
         errorEmitter.emit('permission-error', permissionError);
+        throw serverError;
       });
 }
+
+    

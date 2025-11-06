@@ -59,7 +59,7 @@ export async function uploadFileAndUpdateAction(actionId: string, file: File, us
                     requestResourceData: { attachments: 'add new' },
                 } satisfies SecurityRuleContext);
                 errorEmitter.emit('permission-error', permissionError);
-                reject(serverError); // Also reject the promise
+                reject(permissionError); // Reject with the contextual error
               });
           } catch (innerError) {
             reject(innerError);
@@ -70,9 +70,10 @@ export async function uploadFileAndUpdateAction(actionId: string, file: File, us
 
   } catch (error) {
     console.error("[Storage Service] Fatal error in uploadFileAndUpdateAction:", error);
-    // Here we can't create a FirestorePermissionError as it might not be a permissions issue.
-    // The error is re-thrown to be handled by the calling component's try/catch block.
+    // This could be a storage permission error, but we don't have a custom one for that yet.
+    // For now, re-throw the original error.
     throw error;
   }
 }
 
+    
