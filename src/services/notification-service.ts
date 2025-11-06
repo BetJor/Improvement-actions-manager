@@ -145,7 +145,7 @@ export async function sendStateChangeEmail(details: EmailDetails): Promise<Actio
           <h1>Asignado como Verificador</h1>
           <p>Hola ${verifier.name},</p>
           <p>Has sido asignado/a como responsable de verificar la eficacia de la acción de mejora <strong>${action.actionId}: ${action.title}</strong>.</p>
-          <p>Se te ha notificado a los responsables de las tareas de implementación. Una vez completadas, deberás realizar la verificación desde la plataforma.</p>
+          <p>Se ha notificado a los responsables de las tareas de implementación. Una vez completadas, deberás realizar la verificación desde la plataforma.</p>
           <p>Recibirás notificaciones a medida que se actualice el estado de las tareas.</p>
           <a href="${actionUrl}" style="background-color: #00529B; color: white; padding: 10px 15px; text-decoration: none; border-radius: 5px; display: inline-block;">Ver Acción</a>
        `;

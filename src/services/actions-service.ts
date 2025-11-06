@@ -232,6 +232,7 @@ export async function createAction(data: CreateActionData, masterData: any): Pro
     if (data.originalActionId) newActionData.originalActionId = data.originalActionId;
     if (data.originalActionTitle) newActionData.originalActionTitle = data.originalActionTitle;
     
+    // Calculate permissions before the first write
     const actionWithPermissions = await updateActionPermissions(newActionData, newActionData.status);
     newActionData = { ...newActionData, ...actionWithPermissions };
 
@@ -261,14 +262,24 @@ export async function createAction(data: CreateActionData, masterData: any): Pro
 
 
 async function handleStatusChange(action: ImprovementAction, oldStatus: ImprovementActionStatus) {
+    const actionDocRef = doc(db, 'actions', action.id);
+    
     // Step 1: Update permissions for the new state
     const actionWithNewPermissions = await updateActionPermissions(action, action.status);
-    const actionDocRef = doc(db, 'actions', action.id);
-    await updateDoc(actionDocRef, { 
+
+    updateDoc(actionDocRef, { 
         readers: actionWithNewPermissions.readers, 
         authors: actionWithNewPermissions.authors 
-    }).catch(e => { throw e; });
-    
+    }).catch(async (serverError) => {
+        const permissionError = new FirestorePermissionError({
+            path: actionDocRef.path,
+            operation: 'update',
+            requestResourceData: { readers: actionWithNewPermissions.readers, authors: actionWithNewPermissions.authors },
+        } satisfies SecurityRuleContext);
+        errorEmitter.emit('permission-error', permissionError);
+        throw serverError; // Re-throw to stop execution
+    });
+
     // Step 2: Send notifications & add system comment
     const serializableAction = JSON.parse(JSON.stringify(actionWithNewPermissions));
     
@@ -301,7 +312,6 @@ export async function updateAction(
 ): Promise<{ updatedAction: ImprovementAction, bisCreationResult?: { createdBisTitle?: string, foundBisTitle?: string } }> {
     const actionDocRef = doc(db, 'actions', actionId);
     
-    // First, consolidate all changes into a single update object.
     const originalActionSnap = await getDoc(actionDocRef);
     if (!originalActionSnap.exists()) {
         throw new Error(`Action with ID ${actionId} not found.`);
@@ -391,7 +401,6 @@ export async function updateAction(
         }
     }
     
-    // Before committing, calculate the new permissions if the status is changing.
     if (isStatusChanging) {
         dataToUpdate.status = newStatus;
         const tempActionForPermissions = { ...originalAction, ...dataToUpdate };
@@ -399,7 +408,6 @@ export async function updateAction(
         dataToUpdate.readers = readers;
         dataToUpdate.authors = authors;
 
-        // Update due dates based on new status
         const workflowSettings = await getWorkflowSettings();
         const today = new Date();
         if (newStatus === 'Pendiente Comprobación') {
@@ -410,7 +418,6 @@ export async function updateAction(
         }
     }
 
-    // Now, perform the atomic update.
     await updateDoc(actionDocRef, dataToUpdate)
         .catch(async (serverError) => {
             const permissionError = new FirestorePermissionError({
@@ -419,19 +426,32 @@ export async function updateAction(
                 requestResourceData: dataToUpdate,
             } satisfies SecurityRuleContext);
             errorEmitter.emit('permission-error', permissionError);
-            throw serverError; // Re-throw to stop execution
+            throw serverError;
         });
     
-    // --- Post-update logic (notifications, etc.) ---
     const updatedActionDoc = await getDoc(actionDocRef);
     const updatedAction = { id: updatedActionDoc.id, ...updatedActionDoc.data() } as ImprovementAction;
 
     if (isStatusChanging) {
-        await handleStatusChange(updatedAction, oldStatus);
-    }
-
-    if (data.closure && !data.closure.isCompliant && oldStatus !== 'Finalizada') {
-         // Create BIS action here, after the main transaction is committed.
+        const serializableAction = JSON.parse(JSON.stringify(updatedAction));
+        const notificationComment = await sendStateChangeEmail({
+            action: serializableAction,
+            oldStatus,
+            newStatus: serializableAction.status
+        });
+        
+        if (notificationComment) {
+            updateDoc(actionDocRef, {
+                comments: arrayUnion(notificationComment)
+            }).catch(async (serverError) => {
+                const permissionError = new FirestorePermissionError({
+                    path: actionDocRef.path,
+                    operation: 'update',
+                    requestResourceData: { comments: 'add system notification' },
+                } satisfies SecurityRuleContext);
+                errorEmitter.emit('permission-error', permissionError);
+            });
+        }
     }
 
     return { updatedAction, bisCreationResult };
@@ -481,7 +501,6 @@ export async function getFollowedActions(userId: string): Promise<ImprovementAct
 async function getPermissionsForState(action: ImprovementAction, newStatus: ImprovementActionStatus): Promise<{ readers: string[], authors: string[] }> {
     const permissionRule = await getPermissionRuleForState(action.typeId, newStatus);
     
-    // Fallback: If no specific rule, keep existing authors and readers.
     if (!permissionRule) {
         console.warn(`[ActionService] No permission rule found for type ${action.typeId} and status ${newStatus}. Keeping existing permissions.`);
         return { readers: action.readers || [], authors: action.authors || [] };
@@ -492,13 +511,11 @@ async function getPermissionsForState(action: ImprovementAction, newStatus: Impr
     const newReaders = await resolveRoles(permissionRule.readerRoleIds, allRoles, action);
     const newAuthors = await resolveRoles(permissionRule.authorRoleIds, allRoles, action);
     
-    // Creator should always be able to read.
     const creatorEmail = action.creator?.email || (await getUserById(action.creator.id))?.email;
     if (creatorEmail) {
         newReaders.push(creatorEmail);
     }
     
-    // Authors should always be readers.
     const combinedReaders = [...new Set([...newReaders, ...newAuthors])];
 
     return { readers: combinedReaders, authors: [...new Set(newAuthors)] };
