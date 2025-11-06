@@ -102,34 +102,25 @@ export async function sendStateChangeEmail(details: EmailDetails): Promise<Actio
     return { id: crypto.randomUUID(), author: { id: 'system', name: 'Sistema' }, date: new Date().toISOString(), text: previewUrl ? `Notificación de análisis enviada a ${action.responsibleGroupId}. Previsualización: ${previewUrl}` : `ERROR: No se pudo enviar la notificación de análisis a ${action.responsibleGroupId}.` };
   
   } else if (newStatus === 'Pendiente Comprobación') {
-    if (!action.analysis?.proposedActions || action.analysis.proposedActions.length === 0) {
-        console.warn(`[NotificationService] Action ${action.actionId} has no proposed actions.`);
-        return { id: crypto.randomUUID(), author: { id: 'system', name: 'Sistema' }, date: new Date().toISOString(), text: "No se enviaron notificaciones: no hay acciones propuestas definidas." };
+    if (!action.analysis?.verificationResponsibleUserId) {
+        console.warn(`[NotificationService] Action ${action.actionId} has no verification responsible.`);
+        return { id: crypto.randomUUID(), author: { id: 'system', name: 'Sistema' }, date: new Date().toISOString(), text: "No se pudo notificar: no hay responsable de verificación asignado." };
     }
     
-    // --- TEMPORARY DEBUGGING STEP: ONLY NOTIFY THE FIRST RESPONSIBLE ---
-    const firstProposedAction = action.analysis.proposedActions[0];
-    if (!firstProposedAction.responsibleUserId) {
-         console.warn(`[NotificationService] First proposed action for ${action.actionId} has no responsible user.`);
-         return { id: crypto.randomUUID(), author: { id: 'system', name: 'Sistema' }, date: new Date().toISOString(), text: "No se pudo notificar: la primera acción propuesta no tiene responsable asignado." };
-    }
-    
-    const user = await getUserById(firstProposedAction.responsibleUserId);
+    const user = await getUserById(action.analysis.verificationResponsibleUserId);
 
     if (user?.email) {
-      const subject = `Nueva tarea de implementación asignada: ${action.actionId}`;
+      const subject = `Verificación de acción de mejora pendiente: ${action.actionId}`;
       const html = `
-        <h1>Tarea de Implementación Asignada</h1>
+        <h1>Tarea de Verificación Asignada</h1>
         <p>Hola ${user.name},</p>
-        <p>Se te ha asignado la siguiente tarea dentro de la acción de mejora <strong>${action.actionId}: ${action.title}</strong>:</p>
-        <blockquote style="border-left: 2px solid #ccc; padding-left: 1em; margin-left: 1em; font-style: italic;">${firstProposedAction.description}</blockquote>
-        <p><strong>Fecha de vencimiento:</strong> ${new Date(firstProposedAction.dueDate as string).toLocaleDateString()}</p>
-        <p>Por favor, accede a la plataforma para actualizar el estado de la tarea cuando la completes.</p>
+        <p>Se te ha asignado la verificación de la implementación de la acción de mejora <strong>${action.actionId}: ${action.title}</strong>.</p>
+        <p>Por favor, accede a la plataforma para revisar el plan de acción y verificar su eficacia.</p>
         <a href="${actionUrl}" style="background-color: #00529B; color: white; padding: 10px 15px; text-decoration: none; border-radius: 5px; display: inline-block;">Ver Acción</a>
       `;
       const previewUrl = await sendEmail(user.email, subject, html);
       
-      let commentText = `Notificación de implementación enviada a ${user.email}.`;
+      let commentText = `Notificación de verificación enviada a ${user.email}.`;
       if (previewUrl) {
           commentText += ` Previsualización: ${previewUrl}`;
       } else {
@@ -138,8 +129,8 @@ export async function sendStateChangeEmail(details: EmailDetails): Promise<Actio
       return { id: crypto.randomUUID(), author: { id: 'system', name: 'Sistema' }, date: new Date().toISOString(), text: commentText };
 
     } else {
-         console.warn(`[NotificationService] Could not find user email for ID: ${firstProposedAction.responsibleUserId}`);
-         return { id: crypto.randomUUID(), author: { id: 'system', name: 'Sistema' }, date: new Date().toISOString(), text: "No se pudo notificar al responsable de la primera acción: usuario no encontrado." };
+         console.warn(`[NotificationService] Could not find user email for verification responsible ID: ${action.analysis.verificationResponsibleUserId}`);
+         return { id: crypto.randomUUID(), author: { id: 'system', name: 'Sistema' }, date: new Date().toISOString(), text: "No se pudo notificar al responsable de la verificación: usuario no encontrado." };
     }
   }
 
