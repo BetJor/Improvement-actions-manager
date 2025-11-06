@@ -105,7 +105,7 @@ export const getActionById = async (id: string): Promise<ImprovementAction | nul
         if (data.analysis && data.analysis.proposedActions) {
             data.analysis.proposedActions = data.analysis.proposedActions.map((pa: any) => ({
                 ...pa,
-                dueDate: convertTimestamp(pa.dueDate),
+                dueDate: pa.dueDate, // Keep as string
                 statusUpdateDate: pa.statusUpdateDate ? convertTimestamp(pa.statusUpdateDate) : undefined,
             }));
         }
@@ -292,6 +292,17 @@ export async function updateAction(
     const actionDocRef = doc(db, 'actions', actionId);
     let bisCreationResult: { createdBisTitle?: string, foundBisTitle?: string } = {};
 
+    // --- Data Sanitization and Preparation ---
+    let dataToUpdate: any = { ...data };
+
+    if (dataToUpdate.analysis && Array.isArray(dataToUpdate.analysis.proposedActions)) {
+        dataToUpdate.analysis.proposedActions = dataToUpdate.analysis.proposedActions.map((pa: any) => ({
+            ...pa,
+            // Explicitly convert Date objects to ISO strings BEFORE the transaction
+            dueDate: pa.dueDate instanceof Date ? pa.dueDate.toISOString() : pa.dueDate,
+        }));
+    }
+    
     try {
         await runTransaction(db, async (transaction) => {
             const originalActionSnap = await transaction.get(actionDocRef);
@@ -300,25 +311,16 @@ export async function updateAction(
             }
             const originalAction = { id: originalActionSnap.id, ...originalActionSnap.data() } as ImprovementAction;
             
-            let dataToUpdate: any = { ...data };
             const oldStatus = originalAction.status;
             const newStatus = statusFromForm || data.status || oldStatus;
             const isStatusChanging = newStatus !== oldStatus;
             
             let notificationComment: ActionComment | null = null;
             
-            if (data.analysis && Array.isArray(data.analysis.proposedActions)) {
-                // Ensure dueDates are ISO strings before they enter any other logic
-                const serializedProposedActions = data.analysis.proposedActions.map(pa => ({
-                    ...pa,
-                    dueDate: new Date(pa.dueDate as Date).toISOString()
-                }));
-                
-                dataToUpdate.analysis = { ...data.analysis, proposedActions: serializedProposedActions };
-
-                const dueDates = serializedProposedActions
+            if (dataToUpdate.analysis && Array.isArray(dataToUpdate.analysis.proposedActions)) {
+                const dueDates = dataToUpdate.analysis.proposedActions
                     .map((pa: ProposedAction) => pa.dueDate ? new Date(pa.dueDate as string) : null)
-                    .filter((d): d is Date => d !== null && !isNaN(d.getTime()));
+                    .filter((d: Date | null): d is Date => d !== null && !isNaN(d.getTime()));
                 
                 if (dueDates.length > 0) {
                     const implementationDueDate = new Date(Math.max.apply(null, dueDates.map(d => d.getTime())));
@@ -358,7 +360,7 @@ export async function updateAction(
                 commentsToAdd.push({ id: crypto.randomUUID(), author: { id: 'system', name: 'Sistema' }, date: new Date().toISOString(), text: commentText });
                 delete dataToUpdate.adminEdit;
             }
-
+            
             if (notificationComment) {
                 commentsToAdd.push(notificationComment);
             }
@@ -410,14 +412,16 @@ export async function updateAction(
                 dataToUpdate.affectedCenters = data.affectedCentersIds.map((id:string) => masterData.centers.data.find((c:any) => c.id === id)?.name || id);
             }
             
-            transaction.update(actionDocRef, sanitizeDataForFirestore(dataToUpdate));
+            const finalDataToUpdate = sanitizeDataForFirestore(dataToUpdate);
+            console.log("Data being sent to Firestore transaction:", JSON.stringify(finalDataToUpdate, null, 2));
+            transaction.update(actionDocRef, finalDataToUpdate);
         });
 
     } catch (error: any) {
         const permissionError = new FirestorePermissionError({
             path: actionDocRef.path,
             operation: 'update',
-            requestResourceData: data,
+            requestResourceData: dataToUpdate,
         } satisfies SecurityRuleContext);
         errorEmitter.emit('permission-error', permissionError);
         throw error;
