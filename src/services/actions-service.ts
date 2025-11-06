@@ -237,8 +237,9 @@ export async function createAction(data: CreateActionData, masterData: any): Pro
     newActionData = { ...newActionData, ...actionWithPermissions };
 
     if (newActionData.status === 'Pendiente Análisis') {
+        const serializableAction = JSON.parse(JSON.stringify(newActionData));
         const notificationComment = await sendStateChangeEmail({
-            action: newActionData,
+            action: serializableAction,
             oldStatus: 'Borrador',
             newStatus: 'Pendiente Análisis'
         });
@@ -261,49 +262,6 @@ export async function createAction(data: CreateActionData, masterData: any): Pro
 }
 
 
-async function handleStatusChange(action: ImprovementAction, oldStatus: ImprovementActionStatus) {
-    const actionDocRef = doc(db, 'actions', action.id);
-    
-    // Step 1: Update permissions for the new state
-    const actionWithNewPermissions = await updateActionPermissions(action, action.status);
-
-    updateDoc(actionDocRef, { 
-        readers: actionWithNewPermissions.readers, 
-        authors: actionWithNewPermissions.authors 
-    }).catch(async (serverError) => {
-        const permissionError = new FirestorePermissionError({
-            path: actionDocRef.path,
-            operation: 'update',
-            requestResourceData: { readers: actionWithNewPermissions.readers, authors: actionWithNewPermissions.authors },
-        } satisfies SecurityRuleContext);
-        errorEmitter.emit('permission-error', permissionError);
-        throw serverError; // Re-throw to stop execution
-    });
-
-    // Step 2: Send notifications & add system comment
-    const serializableAction = JSON.parse(JSON.stringify(actionWithNewPermissions));
-    
-    const notificationComment = await sendStateChangeEmail({
-        action: serializableAction,
-        oldStatus,
-        newStatus: action.status
-    });
-    
-    if (notificationComment) {
-        updateDoc(actionDocRef, {
-            comments: arrayUnion(notificationComment)
-        }).catch(async (serverError) => {
-            const permissionError = new FirestorePermissionError({
-                path: actionDocRef.path,
-                operation: 'update',
-                requestResourceData: { comments: 'add system notification' },
-            } satisfies SecurityRuleContext);
-            errorEmitter.emit('permission-error', permissionError);
-        });
-    }
-}
-
-
 export async function updateAction(
     actionId: string, 
     data: Partial<ImprovementAction> & { newComment?: any; adminEdit?: any; updateProposedActionStatus?: any; updateProposedAction?: ProposedAction }, 
@@ -323,6 +281,8 @@ export async function updateAction(
     const oldStatus = originalAction.status;
     const newStatus = statusFromForm || data.status || oldStatus;
     const isStatusChanging = newStatus !== oldStatus;
+
+    // --- Prepare all data changes first ---
 
     if (data.adminEdit) {
         const { field, label, user, overrideComment, actionIndex } = data.adminEdit;
@@ -416,8 +376,20 @@ export async function updateAction(
         if (newStatus === 'Pendiente de Cierre') {
             dataToUpdate.closureDueDate = addDays(today, workflowSettings.closureDueDays).toISOString();
         }
+
+        // Send notification and add comment
+        const serializableAction = JSON.parse(JSON.stringify({ ...originalAction, ...dataToUpdate }));
+        const notificationComment = await sendStateChangeEmail({
+            action: serializableAction,
+            oldStatus,
+            newStatus
+        });
+        if (notificationComment) {
+            dataToUpdate.comments = arrayUnion(notificationComment);
+        }
     }
 
+    // --- Perform the single, atomic write operation ---
     await updateDoc(actionDocRef, dataToUpdate)
         .catch(async (serverError) => {
             const permissionError = new FirestorePermissionError({
@@ -429,30 +401,9 @@ export async function updateAction(
             throw serverError;
         });
     
+    // --- Post-write operations ---
     const updatedActionDoc = await getDoc(actionDocRef);
     const updatedAction = { id: updatedActionDoc.id, ...updatedActionDoc.data() } as ImprovementAction;
-
-    if (isStatusChanging) {
-        const serializableAction = JSON.parse(JSON.stringify(updatedAction));
-        const notificationComment = await sendStateChangeEmail({
-            action: serializableAction,
-            oldStatus,
-            newStatus: serializableAction.status
-        });
-        
-        if (notificationComment) {
-            updateDoc(actionDocRef, {
-                comments: arrayUnion(notificationComment)
-            }).catch(async (serverError) => {
-                const permissionError = new FirestorePermissionError({
-                    path: actionDocRef.path,
-                    operation: 'update',
-                    requestResourceData: { comments: 'add system notification' },
-                } satisfies SecurityRuleContext);
-                errorEmitter.emit('permission-error', permissionError);
-            });
-        }
-    }
 
     return { updatedAction, bisCreationResult };
 }
