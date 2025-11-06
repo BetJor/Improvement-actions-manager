@@ -1,5 +1,4 @@
 
-
 'use server';
 /**
  * @fileOverview A service for handling notifications.
@@ -103,68 +102,45 @@ export async function sendStateChangeEmail(details: EmailDetails): Promise<Actio
     return { id: crypto.randomUUID(), author: { id: 'system', name: 'Sistema' }, date: new Date().toISOString(), text: previewUrl ? `Notificación de análisis enviada a ${action.responsibleGroupId}. Previsualización: ${previewUrl}` : `ERROR: No se pudo enviar la notificación de análisis a ${action.responsibleGroupId}.` };
   
   } else if (newStatus === 'Pendiente Comprobación') {
-    if (!action.analysis?.proposedActions || !action.analysis.verificationResponsibleUserId) {
-        console.warn(`[NotificationService] Action ${action.actionId} is missing proposed actions or a verification responsible.`);
-        return { id: crypto.randomUUID(), author: { id: 'system', name: 'Sistema' }, date: new Date().toISOString(), text: "No se pudieron enviar todas las notificaciones: faltan responsables de tareas o de verificación." };
+    if (!action.analysis?.proposedActions || action.analysis.proposedActions.length === 0) {
+        console.warn(`[NotificationService] Action ${action.actionId} has no proposed actions.`);
+        return { id: crypto.randomUUID(), author: { id: 'system', name: 'Sistema' }, date: new Date().toISOString(), text: "No se enviaron notificaciones: no hay acciones propuestas definidas." };
     }
+    
+    // --- TEMPORARY DEBUGGING STEP: ONLY NOTIFY THE FIRST RESPONSIBLE ---
+    const firstProposedAction = action.analysis.proposedActions[0];
+    if (!firstProposedAction.responsibleUserId) {
+         console.warn(`[NotificationService] First proposed action for ${action.actionId} has no responsible user.`);
+         return { id: crypto.randomUUID(), author: { id: 'system', name: 'Sistema' }, date: new Date().toISOString(), text: "No se pudo notificar: la primera acción propuesta no tiene responsable asignado." };
+    }
+    
+    const user = await getUserById(firstProposedAction.responsibleUserId);
 
-    const allUserIds = [
-      ...action.analysis.proposedActions.map(pa => pa.responsibleUserId),
-      action.analysis.verificationResponsibleUserId
-    ];
-    const uniqueUserIds = [...new Set(allUserIds)];
-    const users = (await Promise.all(uniqueUserIds.map(id => getUserById(id)))).filter((u): u is User => u !== null);
-
-    const emailPromises: Promise<string|null>[] = [];
-    const sentTo: string[] = [];
-
-    // Notify proposed action responsibles
-    for (const pa of action.analysis.proposedActions) {
-      const user = users.find(u => u.id === pa.responsibleUserId);
-      if (user?.email) {
-        const subject = `Nueva tarea de implementación asignada: ${action.actionId}`;
-        const html = `
-          <h1>Tarea de Implementación Asignada</h1>
-          <p>Hola ${user.name},</p>
-          <p>Se te ha asignado la siguiente tarea dentro de la acción de mejora <strong>${action.actionId}: ${action.title}</strong>:</p>
-          <blockquote style="border-left: 2px solid #ccc; padding-left: 1em; margin-left: 1em; font-style: italic;">${pa.description}</blockquote>
-          <p><strong>Fecha de vencimiento:</strong> ${new Date(pa.dueDate as string).toLocaleDateString()}</p>
-          <p>Por favor, accede a la plataforma para actualizar el estado de la tarea cuando la completes.</p>
-          <a href="${actionUrl}" style="background-color: #00529B; color: white; padding: 10px 15px; text-decoration: none; border-radius: 5px; display: inline-block;">Ver Acción</a>
-        `;
-        emailPromises.push(sendEmail(user.email, subject, html));
-        sentTo.push(user.email);
+    if (user?.email) {
+      const subject = `Nueva tarea de implementación asignada: ${action.actionId}`;
+      const html = `
+        <h1>Tarea de Implementación Asignada</h1>
+        <p>Hola ${user.name},</p>
+        <p>Se te ha asignado la siguiente tarea dentro de la acción de mejora <strong>${action.actionId}: ${action.title}</strong>:</p>
+        <blockquote style="border-left: 2px solid #ccc; padding-left: 1em; margin-left: 1em; font-style: italic;">${firstProposedAction.description}</blockquote>
+        <p><strong>Fecha de vencimiento:</strong> ${new Date(firstProposedAction.dueDate as string).toLocaleDateString()}</p>
+        <p>Por favor, accede a la plataforma para actualizar el estado de la tarea cuando la completes.</p>
+        <a href="${actionUrl}" style="background-color: #00529B; color: white; padding: 10px 15px; text-decoration: none; border-radius: 5px; display: inline-block;">Ver Acción</a>
+      `;
+      const previewUrl = await sendEmail(user.email, subject, html);
+      
+      let commentText = `Notificación de implementación enviada a ${user.email}.`;
+      if (previewUrl) {
+          commentText += ` Previsualización: ${previewUrl}`;
+      } else {
+          commentText += ` | ENVÍO FALLÓ.`;
       }
-    }
+      return { id: crypto.randomUUID(), author: { id: 'system', name: 'Sistema' }, date: new Date().toISOString(), text: commentText };
 
-    // Notify verification responsible
-    const verifier = users.find(u => u.id === action.analysis?.verificationResponsibleUserId);
-    if (verifier?.email) {
-       const subject = `Asignado como Verificador para la Acción: ${action.actionId}`;
-       const html = `
-          <h1>Asignado como Verificador</h1>
-          <p>Hola ${verifier.name},</p>
-          <p>Has sido asignado/a como responsable de verificar la eficacia de la acción de mejora <strong>${action.actionId}: ${action.title}</strong>.</p>
-          <p>Se ha notificado a los responsables de las tareas de implementación. Una vez completadas, deberás realizar la verificación desde la plataforma.</p>
-          <p>Recibirás notificaciones a medida que se actualice el estado de las tareas.</p>
-          <a href="${actionUrl}" style="background-color: #00529B; color: white; padding: 10px 15px; text-decoration: none; border-radius: 5px; display: inline-block;">Ver Acción</a>
-       `;
-       emailPromises.push(sendEmail(verifier.email, subject, html));
-       sentTo.push(verifier.email);
+    } else {
+         console.warn(`[NotificationService] Could not find user email for ID: ${firstProposedAction.responsibleUserId}`);
+         return { id: crypto.randomUUID(), author: { id: 'system', name: 'Sistema' }, date: new Date().toISOString(), text: "No se pudo notificar al responsable de la primera acción: usuario no encontrado." };
     }
-    
-    const results = await Promise.all(emailPromises);
-    const successfulPreviews = results.filter((url): url is string => url !== null);
-    
-    let commentText = `Notificaciones de 'Pendiente Comprobación' enviadas a: ${[...new Set(sentTo)].join(', ')}.`;
-    if(successfulPreviews.length > 0) {
-        commentText += ` Previsualizaciones: ${successfulPreviews.join(' , ')}`;
-    }
-    if(results.some(r => r === null)) {
-        commentText += ` | ALGUNOS ENVÍOS FALLARON.`;
-    }
-
-    return { id: crypto.randomUUID(), author: { id: 'system', name: 'Sistema' }, date: new Date().toISOString(), text: commentText };
   }
 
   // Handle other status changes in the future...
