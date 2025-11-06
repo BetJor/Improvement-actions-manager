@@ -3,7 +3,7 @@
 import { collection, doc, getDoc, getDocs, addDoc, updateDoc, query, orderBy, limit, arrayUnion, Timestamp, runTransaction, arrayRemove, where, writeBatch, setDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { format, parse, subDays, addDays } from 'date-fns';
-import type { ImprovementAction, ImprovementActionStatus, ActionUserInfo, ProposedAction, ActionSubcategory, ActionCategory, ImprovementActionType } from '@/lib/types';
+import type { ImprovementAction, ImprovementActionStatus, ActionUserInfo, ProposedAction, ActionSubcategory, ActionCategory, ImprovementActionType, ActionComment } from '@/lib/types';
 import { planTraditionalActionWorkflow, getWorkflowSettings } from './workflow-service';
 import { getUsers, getUserById } from './users-service';
 import { getCategories, getSubcategories, getAffectedAreas, getCenters, getActionTypes, getResponsibilityRoles } from './master-data-service';
@@ -162,16 +162,31 @@ export const getActionById = async (id: string): Promise<ImprovementAction | nul
 
 // Function to recursively remove undefined values from an object
 function sanitizeDataForFirestore<T extends object>(data: T): T {
-    const sanitizedData = JSON.parse(JSON.stringify(data)); // Deep copy to avoid mutating original
+    // Create a deep copy to avoid mutating the original object during the process.
+    const sanitizedData = JSON.parse(JSON.stringify(data));
+
+    // Recursively clean the object
     const clean = (obj: any) => {
-        Object.keys(obj).forEach(key => {
-            if (obj[key] === undefined) {
-                delete obj[key];
-            } else if (typeof obj[key] === 'object' && obj[key] !== null && !Array.isArray(obj[key]) && !(obj[key] instanceof Date)) {
-                clean(obj[key]);
+        if (obj === null || typeof obj !== 'object') {
+            return;
+        }
+
+        for (const key in obj) {
+            if (obj.hasOwnProperty(key)) {
+                if (obj[key] === undefined) {
+                    delete obj[key];
+                } else if (typeof obj[key] === 'object') {
+                    // This will also handle arrays of objects
+                    if(Array.isArray(obj[key])) {
+                        obj[key].forEach((item: any) => clean(item));
+                    } else {
+                        clean(obj[key]);
+                    }
+                }
             }
-        });
+        }
     };
+
     clean(sanitizedData);
     return sanitizedData;
 }
@@ -312,10 +327,20 @@ export async function updateAction(
                 dataToUpdate.readers = readers;
                 dataToUpdate.authors = authors;
                 
+                // Make sure the action object is serializable before sending notifications
                 const serializableActionForEmail = JSON.parse(JSON.stringify(actionForPermissions));
+                 if (serializableActionForEmail.analysis && serializableActionForEmail.analysis.proposedActions) {
+                    serializableActionForEmail.analysis.proposedActions = serializableActionForEmail.analysis.proposedActions.map((pa: any) => ({
+                        ...pa,
+                        dueDate: pa.dueDate ? new Date(pa.dueDate).toISOString() : undefined,
+                    }));
+                }
+
                 notificationComment = await sendStateChangeEmail({ action: serializableActionForEmail, oldStatus, newStatus });
             }
-
+            
+            dataToUpdate.comments = originalAction.comments || [];
+            
             if (data.adminEdit) {
                 const { field, label, user, overrideComment, actionIndex } = data.adminEdit;
                 let commentText;
@@ -323,16 +348,16 @@ export async function updateAction(
                 else if (actionIndex !== undefined) commentText = `El administrador ${user} ha modificado el campo '${label}' de la acción propuesta ${actionIndex + 1}.`;
                 else commentText = `El administrador ${user} ha modificado el campo '${label}'.`;
                 
-                dataToUpdate.comments = arrayUnion({ id: crypto.randomUUID(), author: { id: 'system', name: 'Sistema' }, date: new Date().toISOString(), text: commentText });
+                dataToUpdate.comments.push({ id: crypto.randomUUID(), author: { id: 'system', name: 'Sistema' }, date: new Date().toISOString(), text: commentText });
                 delete dataToUpdate.adminEdit;
             }
 
             if (notificationComment) {
-                 dataToUpdate.comments = arrayUnion(notificationComment);
+                 dataToUpdate.comments.push(notificationComment);
             }
 
             if (data.newComment) {
-                dataToUpdate.comments = arrayUnion(data.newComment);
+                dataToUpdate.comments.push(data.newComment);
                 delete dataToUpdate.newComment;
             }
             
