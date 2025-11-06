@@ -199,7 +199,7 @@ export async function createAction(data: CreateActionData, masterData: any): Pro
     // Create a temporary object for the new document without the final Firestore ID
     const docRef = doc(collection(db, "actions"));
     
-    const newActionData: ImprovementAction = {
+    let newActionData: ImprovementAction = {
         id: docRef.id, // Use the generated ID
         actionId: newActionId,
         title: data.title,
@@ -242,16 +242,15 @@ export async function createAction(data: CreateActionData, masterData: any): Pro
     if (newActionData.status === 'Borrador' && newActionData.creator.email) {
         newActionData.readers = [newActionData.creator.email];
         newActionData.authors = [newActionData.creator.email];
-    }
-
-    if (newActionData.status === 'Pendiente Análisis') {
+    } else if (newActionData.status === 'Pendiente Análisis') {
+        // Send email and get comment BEFORE writing to DB
         const notificationComment = await sendStateChangeEmail({
             action: newActionData,
             oldStatus: 'Borrador',
             newStatus: 'Pendiente Análisis'
         });
         if (notificationComment) {
-            newActionData.comments = [...(newActionData.comments || []), notificationComment];
+            newActionData.comments = [notificationComment];
         }
     }
   
@@ -424,6 +423,13 @@ export async function updateAction(
             }
 
             if (data.analysis && Array.isArray(data.analysis.proposedActions)) {
+                 // Ensure due dates are ISO strings for Firestore
+                data.analysis.proposedActions = data.analysis.proposedActions.map(pa => ({
+                    ...pa,
+                    dueDate: pa.dueDate instanceof Date ? pa.dueDate.toISOString() : pa.dueDate,
+                }));
+                 dataToUpdate.analysis.proposedActions = data.analysis.proposedActions;
+
                 const dueDates = data.analysis.proposedActions
                     .map((pa: ProposedAction) => pa.dueDate ? new Date(pa.dueDate as string) : null)
                     .filter((d): d is Date => d !== null && !isNaN(d.getTime()));
@@ -619,14 +625,4 @@ export async function updateActionPermissions(actionId: string, typeId: string, 
     await updateDoc(actionDocRef, dataToUpdate);
     console.log(`[ActionService] Permissions updated successfully for action ${actionId}.`);
 }
-
-
-
-
-
-
-
-
-
-
 

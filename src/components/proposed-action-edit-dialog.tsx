@@ -72,7 +72,12 @@ export function ProposedActionEditDialog({
   });
 
   const handleSubmit = (values: ProposedActionFormValues) => {
-    onSave(values as ProposedAction);
+    // Convert Date object back to ISO string before saving
+    const dataToSave = {
+      ...values,
+      dueDate: values.dueDate.toISOString(),
+    }
+    onSave(dataToSave as ProposedAction);
   };
 
   return (
@@ -200,3 +205,4 @@ export function ProposedActionEditDialog({
     </Dialog>
   );
 }
+
