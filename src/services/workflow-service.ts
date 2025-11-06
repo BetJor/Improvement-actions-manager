@@ -5,6 +5,8 @@ import { db } from '@/lib/firebase';
 import { format, addDays, parseISO } from 'date-fns';
 import type { ImprovementAction, WorkflowPlan, WorkflowStep, ImprovementActionType } from '@/lib/types';
 import { getActionTypes } from './master-data-service';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError, type SecurityRuleContext } from '@/firebase/errors';
 
 
 interface WorkflowSettings {
@@ -29,7 +31,15 @@ export async function getWorkflowSettings(): Promise<WorkflowSettings> {
 
 export async function updateWorkflowSettings(settings: Omit<WorkflowSettings, 'implementationDueDays'>): Promise<void> {
     const docRef = doc(db, 'app_settings', 'workflow');
-    await setDoc(docRef, settings, { merge: true });
+    setDoc(docRef, settings, { merge: true })
+      .catch(async (serverError) => {
+        const permissionError = new FirestorePermissionError({
+            path: docRef.path,
+            operation: 'update',
+            requestResourceData: settings,
+        } satisfies SecurityRuleContext);
+        errorEmitter.emit('permission-error', permissionError);
+      });
 }
 
 

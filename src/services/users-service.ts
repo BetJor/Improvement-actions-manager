@@ -1,4 +1,5 @@
 
+
 import { collection, getDocs, doc, getDoc, addDoc, query, orderBy, writeBatch, updateDoc, deleteDoc, setDoc } from 'firebase/firestore';
 import { db, auth } from '@/lib/firebase';
 import { users as mockUsers } from '@/lib/static-data';
@@ -11,16 +12,14 @@ export async function getUsers(): Promise<User[]> {
     const usersCol = collection(db, 'users');
     let snapshot = await getDocs(query(usersCol, orderBy("name")));
 
-    // If the collection is empty, populate it from static data
     if (snapshot.empty) {
         console.log("Users collection is empty. Populating from static data...");
         const batch = writeBatch(db);
         mockUsers.forEach(user => {
-            const docRef = doc(usersCol, user.id); // Use the static ID
+            const docRef = doc(usersCol, user.id);
             batch.set(docRef, user);
         });
         await batch.commit();
-        // Re-fetch the data after populating
         snapshot = await getDocs(query(usersCol, orderBy("name")));
         console.log("Users collection populated.");
     }
@@ -41,11 +40,7 @@ export async function getUserById(userId: string): Promise<User | null> {
         return { id: userDocSnap.id, ...userDocSnap.data() } as User;
     }
     
-    // If user is not in 'users' collection, they probably just signed up with Firebase Auth.
-    // We create a basic user profile for them based on their auth details.
     try {
-        // This part relies on Firebase Auth being up-to-date.
-        // It's better to get the user from the client and pass it, but this is a server-side fallback.
         const authUser = auth.currentUser;
         if (authUser && authUser.uid === userId) {
             console.log(`User ${userId} not in Firestore, creating from Auth details.`);
@@ -53,10 +48,19 @@ export async function getUserById(userId: string): Promise<User | null> {
                 id: authUser.uid,
                 name: authUser.displayName || authUser.email || 'Usuari Nou',
                 email: authUser.email || '',
-                role: 'Creator', // Default role for new sign-ups
+                role: 'Creator',
                 avatar: authUser.photoURL || ""
             };
-            await setDoc(userDocRef, newUser);
+            
+            setDoc(userDocRef, newUser)
+              .catch(async (serverError) => {
+                const permissionError = new FirestorePermissionError({
+                    path: userDocRef.path,
+                    operation: 'create',
+                    requestResourceData: newUser,
+                } satisfies SecurityRuleContext);
+                errorEmitter.emit('permission-error', permissionError);
+              });
             return newUser;
         }
     } catch (error) {
@@ -73,10 +77,7 @@ export async function addUser(userData: Omit<User, 'id'> & { password?: string }
     if (!userData.password) {
         throw new Error("La contraseña es obligatoria para crear un nuevo usuario.");
     }
-
-    // WARNING: This is a simplified example. In a real app, this should be a secure backend operation (e.g., Cloud Function).
-    // The currently signed-in user must have permissions to create other users.
-    // For this demo, we assume this is run by an admin on the client. This is NOT secure for production.
+    
     try {
         const userCredential = await createUserWithEmailAndPassword(auth, userData.email, userData.password);
         const newUserId = userCredential.user.uid;
@@ -114,12 +115,25 @@ export async function addUser(userData: Omit<User, 'id'> & { password?: string }
 
 export async function updateUser(userId: string, user: Partial<Omit<User, 'id'>>): Promise<void> {
     const docRef = doc(db, 'users', userId);
-    await updateDoc(docRef, user);
+    updateDoc(docRef, user)
+      .catch(async (serverError) => {
+        const permissionError = new FirestorePermissionError({
+            path: docRef.path,
+            operation: 'update',
+            requestResourceData: user,
+        } satisfies SecurityRuleContext);
+        errorEmitter.emit('permission-error', permissionError);
+      });
 }
 
 export async function deleteUser(userId: string): Promise<void> {
-    // In a real app, you should also handle deleting the user from Firebase Auth.
-    // This requires an Admin SDK on a backend.
     const docRef = doc(db, 'users', userId);
-    await deleteDoc(docRef);
+    deleteDoc(docRef)
+      .catch(async (serverError) => {
+        const permissionError = new FirestorePermissionError({
+            path: docRef.path,
+            operation: 'delete',
+        } satisfies SecurityRuleContext);
+        errorEmitter.emit('permission-error', permissionError);
+      });
 }

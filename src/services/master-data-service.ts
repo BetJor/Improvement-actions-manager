@@ -1,7 +1,11 @@
+
 import { collection, getDocs, doc, addDoc, query, orderBy, updateDoc, deleteDoc, writeBatch, where, getDoc, setDoc, limit, arrayRemove } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { ImprovementActionType, ActionCategory, ActionSubcategory, AffectedArea, MasterDataItem, ResponsibilityRole, Center } from '@/lib/types';
 import { seedActionTypes, seedCategories, seedSubcategories } from '@/lib/master-seed-data';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError, type SecurityRuleContext } from '@/firebase/errors';
+
 
 // Variable global per a prevenir la execució múltiple del seeder
 let isSeedingMasterData = false;
@@ -176,8 +180,6 @@ export async function addMasterDataItem(collectionName: string, item: Omit<Maste
     }
     
     const collectionRef = collection(db, collectionName);
-    
-    // Get the current max order value
     const q = query(collectionRef, orderBy("order", "desc"), limit(1));
     const snapshot = await getDocs(q);
     let newOrder = 0;
@@ -188,31 +190,43 @@ export async function addMasterDataItem(collectionName: string, item: Omit<Maste
         }
     }
     
-    // Add the new item with the calculated order
     const docRef = doc(collectionRef);
-    await setDoc(docRef, { ...item, id: docRef.id, order: newOrder });
+    setDoc(docRef, { ...item, id: docRef.id, order: newOrder })
+      .catch(async (serverError) => {
+        const permissionError = new FirestorePermissionError({
+            path: docRef.path,
+            operation: 'create',
+            requestResourceData: { ...item, id: docRef.id, order: newOrder },
+        } satisfies SecurityRuleContext);
+        errorEmitter.emit('permission-error', permissionError);
+      });
 }
 
 
 export async function updateMasterDataItem(collectionName: string, itemId: string, item: Omit<MasterDataItem, 'id'>): Promise<void> {
     const docRef = doc(db, collectionName, itemId);
-    await updateDoc(docRef, item);
+    updateDoc(docRef, item)
+      .catch(async (serverError) => {
+        const permissionError = new FirestorePermissionError({
+            path: docRef.path,
+            operation: 'update',
+            requestResourceData: item,
+        } satisfies SecurityRuleContext);
+        errorEmitter.emit('permission-error', permissionError);
+      });
 }
 
 export async function deleteMasterDataItem(collectionName: string, itemId: string): Promise<void> {
     const docRef = doc(db, collectionName, itemId);
     
-    // If we're deleting a responsibility role, we need to clean up references in 'ambits'
     if (collectionName === 'responsibilityRoles') {
         const ambitsColRef = collection(db, 'ambits');
         const ambitsSnapshot = await getDocs(ambitsColRef);
-        
         const batch = writeBatch(db);
         
         ambitsSnapshot.forEach(ambitDoc => {
             const ambitData = ambitDoc.data() as ImprovementActionType;
             const fieldsToUpdate: any = {};
-            
             ['configAdminRoleIds', 'possibleCreationRoles', 'possibleAnalysisRoles'].forEach(field => {
                 const roleIds = (ambitData as any)[field];
                 if (Array.isArray(roleIds) && roleIds.includes(itemId)) {
@@ -228,5 +242,13 @@ export async function deleteMasterDataItem(collectionName: string, itemId: strin
         await batch.commit();
     }
     
-    await deleteDoc(docRef);
+    deleteDoc(docRef)
+      .catch(async (serverError) => {
+        const permissionError = new FirestorePermissionError({
+            path: docRef.path,
+            operation: 'delete',
+        } satisfies SecurityRuleContext);
+        errorEmitter.emit('permission-error', permissionError);
+      });
 }
+
