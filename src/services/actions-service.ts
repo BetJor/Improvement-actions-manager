@@ -282,7 +282,33 @@ export async function updateAction(
     const newStatus = statusFromForm || data.status || oldStatus;
     const isStatusChanging = newStatus !== oldStatus;
 
-    // --- Prepare all data changes first ---
+    if (isStatusChanging) {
+        dataToUpdate.status = newStatus;
+        const tempActionForPermissions = { ...originalAction, ...dataToUpdate };
+        const { readers, authors } = await getPermissionsForState(tempActionForPermissions, newStatus);
+        dataToUpdate.readers = readers;
+        dataToUpdate.authors = authors;
+
+        const workflowSettings = await getWorkflowSettings();
+        const today = new Date();
+        if (newStatus === 'Pendiente Comprobación') {
+            dataToUpdate.verificationDueDate = addDays(today, workflowSettings.verificationDueDays).toISOString();
+        }
+        if (newStatus === 'Pendiente de Cierre') {
+            dataToUpdate.closureDueDate = addDays(today, workflowSettings.closureDueDays).toISOString();
+        }
+
+        const serializableAction = JSON.parse(JSON.stringify({ ...originalAction, ...dataToUpdate }));
+        const notificationComment = await sendStateChangeEmail({
+            action: serializableAction,
+            oldStatus,
+            newStatus
+        });
+        if (notificationComment) {
+            dataToUpdate.comments = arrayUnion(notificationComment);
+        }
+    }
+
 
     if (data.adminEdit) {
         const { field, label, user, overrideComment, actionIndex } = data.adminEdit;
@@ -361,35 +387,6 @@ export async function updateAction(
         }
     }
     
-    if (isStatusChanging) {
-        dataToUpdate.status = newStatus;
-        const tempActionForPermissions = { ...originalAction, ...dataToUpdate };
-        const { readers, authors } = await getPermissionsForState(tempActionForPermissions, newStatus);
-        dataToUpdate.readers = readers;
-        dataToUpdate.authors = authors;
-
-        const workflowSettings = await getWorkflowSettings();
-        const today = new Date();
-        if (newStatus === 'Pendiente Comprobación') {
-            dataToUpdate.verificationDueDate = addDays(today, workflowSettings.verificationDueDays).toISOString();
-        }
-        if (newStatus === 'Pendiente de Cierre') {
-            dataToUpdate.closureDueDate = addDays(today, workflowSettings.closureDueDays).toISOString();
-        }
-
-        // Send notification and add comment
-        const serializableAction = JSON.parse(JSON.stringify({ ...originalAction, ...dataToUpdate }));
-        const notificationComment = await sendStateChangeEmail({
-            action: serializableAction,
-            oldStatus,
-            newStatus
-        });
-        if (notificationComment) {
-            dataToUpdate.comments = arrayUnion(notificationComment);
-        }
-    }
-
-    // --- Perform the single, atomic write operation ---
     await updateDoc(actionDocRef, dataToUpdate)
         .catch(async (serverError) => {
             const permissionError = new FirestorePermissionError({
@@ -401,7 +398,6 @@ export async function updateAction(
             throw serverError;
         });
     
-    // --- Post-write operations ---
     const updatedActionDoc = await getDoc(actionDocRef);
     const updatedAction = { id: updatedActionDoc.id, ...updatedActionDoc.data() } as ImprovementAction;
 

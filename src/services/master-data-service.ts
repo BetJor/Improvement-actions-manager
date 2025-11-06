@@ -242,7 +242,16 @@ export async function deleteMasterDataItem(collectionName: string, itemId: strin
             }
         });
         
-        await batch.commit();
+        await batch.commit()
+          .catch(async (serverError) => {
+              const permissionError = new FirestorePermissionError({
+                  path: 'ambits collection',
+                  operation: 'update',
+                  requestResourceData: { removingRoleId: itemId },
+              } satisfies SecurityRuleContext);
+              errorEmitter.emit('permission-error', permissionError);
+              throw serverError; // Propagate error to stop deletion
+          });
     }
     
     deleteDoc(docRef)
@@ -255,5 +264,3 @@ export async function deleteMasterDataItem(collectionName: string, itemId: strin
         throw serverError;
       });
 }
-
-    

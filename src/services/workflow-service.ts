@@ -103,5 +103,3 @@ export async function planTraditionalActionWorkflow(action: Omit<ImprovementActi
         steps: steps,
     };
 }
-
-    
