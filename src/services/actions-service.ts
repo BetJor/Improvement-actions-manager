@@ -281,19 +281,23 @@ async function handleStatusChange(action: ImprovementAction, oldStatus: Improvem
         await updateDoc(actionDocRef, dataToUpdate);
     }
     
-    // Step 2: Update permissions based on the new state
-    console.log(`[ActionService] Updating permissions for action ${action.id}...`);
-    await updateActionPermissions(action.id, action.typeId, action.status, action);
-    
-    // Step 3: Send notifications
+    // Step 2: Send notifications & add system comment
     if (action.status === 'Pendiente Análisis') {
         console.log(`[ActionService] Triggering email notification for state change to 'Pendiente Análisis'.`);
-        await sendStateChangeEmail({
+        const notificationComment = await sendStateChangeEmail({
             action,
             oldStatus,
             newStatus: action.status
         });
+        if (notificationComment) {
+            action.comments = [...(action.comments || []), notificationComment];
+        }
     }
+    
+    // Step 3: Update permissions based on the new state
+    console.log(`[ActionService] Updating permissions for action ${action.id}...`);
+    await updateActionPermissions(action.id, action.typeId, action.status, action);
+
 }
 
 export async function updateAction(
@@ -591,13 +595,20 @@ export async function updateActionPermissions(actionId: string, typeId: string, 
     const finalReaders = [...new Set([...combinedReaders, ...finalAuthors])];
 
     console.log(`[ActionService] Final permissions -> Readers: ${finalReaders.join(', ')}, Authors: ${finalAuthors.join(', ')}`);
-
-    await updateDoc(actionDocRef, {
+    
+    const dataToUpdate: any = {
         readers: finalReaders,
         authors: finalAuthors
-    });
+    };
+
+    if (currentAction.comments) {
+        dataToUpdate.comments = currentAction.comments;
+    }
+
+    await updateDoc(actionDocRef, dataToUpdate);
     console.log(`[ActionService] Permissions updated successfully for action ${actionId}.`);
 }
+
 
 
 
