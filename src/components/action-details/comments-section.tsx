@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
-import { MessageSquare, Send, Loader2, ChevronRight, Info } from "lucide-react"
+import { MessageSquare, Send, Loader2, ChevronRight, Info, ExternalLink } from "lucide-react"
 import { format } from "date-fns"
 import { es } from "date-fns/locale"
 import { cn, safeParseDate } from "@/lib/utils"
@@ -21,6 +21,24 @@ interface CommentsSectionProps {
   action: ImprovementAction
   onActionUpdate: (updatedAction: ImprovementAction) => void;
 }
+
+// Function to find URLs in text and replace them with anchor tags
+const linkify = (text: string) => {
+    const urlRegex = /(https?:\/\/[^\s]+)/g;
+    return text.split(urlRegex).map((part, i) => {
+        if (part.match(urlRegex)) {
+            // Make the link text more user-friendly
+            const linkText = part.includes('ethereal.email') ? 'Previsualización' : 'Enlace';
+            return (
+                <a key={i} href={part} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline inline-flex items-center gap-1">
+                    {linkText} <ExternalLink className="h-3 w-3" />
+                </a>
+            );
+        }
+        return part;
+    });
+};
+
 
 export function CommentsSection({ action, onActionUpdate }: CommentsSectionProps) {
   const { user } = useAuth()
@@ -71,7 +89,7 @@ export function CommentsSection({ action, onActionUpdate }: CommentsSectionProps
     <div className="flex items-start gap-3 rounded-lg border border-blue-200 bg-blue-50 p-3">
         <Info className="h-5 w-5 text-blue-600 mt-0.5 shrink-0" />
         <div className="flex-1">
-            <p className="text-sm text-blue-800 whitespace-pre-wrap">{comment.text}</p>
+            <p className="text-sm text-blue-800 whitespace-pre-wrap">{linkify(comment.text)}</p>
             <p className="text-xs text-blue-500 mt-1">
                 {safeParseDate(comment.date) ? format(safeParseDate(comment.date)!, 'dd/MM/yyyy HH:mm') : ''}
             </p>
