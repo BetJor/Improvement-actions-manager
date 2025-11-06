@@ -42,13 +42,9 @@ function MainLayout({ children }: { children: React.ReactNode }) {
 export function AppContent({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
   const pathname = usePathname();
-  const router = useRouter();
   
-  useEffect(() => {
-    if (!loading && !user && !pathname.includes('/login')) {
-      router.push(`/login`);
-    }
-  }, [user, loading, pathname, router]);
+  // The redirect logic is now handled inside the useAuth hook to keep track of the original URL.
+  // This component just decides what to render based on the auth state.
 
   // While loading, show a full-screen spinner.
   // This prevents any content (even the login page) from flashing briefly
@@ -71,8 +67,8 @@ export function AppContent({ children }: { children: React.ReactNode }) {
     return <>{children}</>;
   }
   
-  // If not on login page and not authenticated, we'll be redirected by the useEffect.
-  // Return null to prevent rendering the main layout.
+  // If not on login page and not authenticated, we'll be redirected by the useAuth hook.
+  // Return null to prevent rendering the main layout while the redirect happens.
   if (!isLoginPage && !user) {
      return null; 
   }

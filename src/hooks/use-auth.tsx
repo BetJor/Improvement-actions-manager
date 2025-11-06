@@ -39,6 +39,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const IMPERSONATION_KEY = 'impersonation_original_user';
+const REDIRECT_URL_KEY = 'auth_redirect_url';
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -124,14 +125,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setLoading(true);
       await loadFullUser(fbUser);
       if (fbUser && pathname.includes('/login')) {
+        const redirectUrl = sessionStorage.getItem(REDIRECT_URL_KEY);
+        sessionStorage.removeItem(REDIRECT_URL_KEY);
         // Use window.location.href for a full page navigation, which is cleaner
         // for redirecting away from a login page.
-        window.location.href = `/dashboard`;
+        window.location.href = redirectUrl || '/dashboard';
       }
     });
 
     return () => unsubscribe();
   }, [pathname, loadFullUser]);
+
+
+  useEffect(() => {
+    // If the user is not being authenticated and is not on the login page,
+    // save the current path and redirect to login.
+    if (!loading && !user && !pathname.includes('/login')) {
+      sessionStorage.setItem(REDIRECT_URL_KEY, pathname);
+      router.push('/login');
+    }
+  }, [user, loading, pathname, router]);
+
 
   useEffect(() => {
     const handleRedirectResult = async () => {
