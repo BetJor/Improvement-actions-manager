@@ -233,8 +233,9 @@ export async function createAction(data: CreateActionData, masterData: any): Pro
     if (data.originalActionTitle) newActionData.originalActionTitle = data.originalActionTitle;
     
     // Calculate permissions before the first write
-    let actionWithPermissions = await updateActionPermissions(newActionData, newActionData.status);
-    newActionData = { ...newActionData, ...actionWithPermissions };
+    const { readers, authors } = await getPermissionsForState(newActionData, newActionData.status);
+    newActionData.readers = readers;
+    newActionData.authors = authors;
 
     // This part is crucial, we must ensure all nested objects are plain before sending to notification service
     const serializableActionForEmail = JSON.parse(JSON.stringify(newActionData));
@@ -284,7 +285,6 @@ export async function updateAction(
     const newStatus = statusFromForm || data.status || oldStatus;
     const isStatusChanging = newStatus !== oldStatus;
 
-    // Consolidate all changes into one object before any write operations
     if (data.adminEdit) {
         const { field, label, user, overrideComment, actionIndex } = data.adminEdit;
         let commentText;
@@ -350,7 +350,7 @@ export async function updateAction(
     if (data.analysis && Array.isArray(data.analysis.proposedActions)) {
         const serializedProposedActions = data.analysis.proposedActions.map(pa => ({
             ...pa,
-            dueDate: (pa.dueDate as Date).toISOString()
+            dueDate: new Date(pa.dueDate as Date).toISOString()
         }));
         dataToUpdate.analysis = { ...data.analysis, proposedActions: serializedProposedActions };
         
@@ -361,11 +361,11 @@ export async function updateAction(
             dataToUpdate.implementationDueDate = new Date(Math.max.apply(null, dueDates.map(d => d.getTime()))).toISOString();
         }
     }
-
+    
+    // --- ATOMIC PERMISSION LOGIC ---
     if (isStatusChanging) {
         dataToUpdate.status = newStatus;
         
-        // This is important: create a temporary action object with the changes to calculate permissions
         const actionForPermissions = { ...originalAction, ...dataToUpdate };
         const { readers, authors } = await getPermissionsForState(actionForPermissions, newStatus);
         dataToUpdate.readers = readers;
@@ -380,22 +380,22 @@ export async function updateAction(
             dataToUpdate.closureDueDate = addDays(today, workflowSettings.closureDueDays).toISOString();
         }
     }
+    
+    // --- ATOMIC WRITE OPERATION ---
+    updateDoc(actionDocRef, dataToUpdate)
+      .catch(async (serverError) => {
+        const permissionError = new FirestorePermissionError({
+            path: actionDocRef.path,
+            operation: 'update',
+            requestResourceData: dataToUpdate,
+        } satisfies SecurityRuleContext);
+        errorEmitter.emit('permission-error', permissionError);
+        throw serverError; // Propagate to stop further execution
+      });
 
-    // Now, perform the single atomic update
-    await updateDoc(actionDocRef, dataToUpdate)
-        .catch(async (serverError) => {
-            const permissionError = new FirestorePermissionError({
-                path: actionDocRef.path,
-                operation: 'update',
-                requestResourceData: dataToUpdate,
-            } satisfies SecurityRuleContext);
-            errorEmitter.emit('permission-error', permissionError);
-            throw serverError; // Propagate to stop further execution
-        });
-
-    // Post-update logic (like sending notifications)
+    // --- POST-UPDATE LOGIC ---
     const updatedActionDoc = await getDoc(actionDocRef);
-    const updatedAction = { id: updatedActionDoc.id, ...updatedActionDoc.data() } as ImprovementAction;
+    let updatedAction = { id: updatedActionDoc.id, ...updatedActionDoc.data() } as ImprovementAction;
 
     if (isStatusChanging) {
         // We serialize the *final* state of the action for the email.
@@ -406,8 +406,10 @@ export async function updateAction(
             newStatus
         });
         if (notificationComment) {
+            // This is a second write, but it's just adding a comment.
+            // The critical permission-changing write is already done.
             await updateDoc(actionDocRef, { comments: arrayUnion(notificationComment) })
-                .catch(err => console.error("Failed to add notification comment:", err)); // Log but don't fail the whole operation
+                .catch(err => console.error("Failed to add notification comment:", err));
         }
     }
     
@@ -460,6 +462,14 @@ export async function getFollowedActions(userId: string): Promise<ImprovementAct
 }
 
 async function getPermissionsForState(action: ImprovementAction, newStatus: ImprovementActionStatus): Promise<{ readers: string[], authors: string[] }> {
+    if (newStatus === 'Borrador') {
+        const creatorEmail = action.creator?.email || (await getUserById(action.creator.id))?.email;
+        if (creatorEmail) {
+            return { readers: [creatorEmail], authors: [creatorEmail] };
+        }
+        return { readers: [], authors: [] };
+    }
+
     const permissionRule = await getPermissionRuleForState(action.typeId, newStatus);
     
     if (!permissionRule) {
@@ -481,29 +491,3 @@ async function getPermissionsForState(action: ImprovementAction, newStatus: Impr
 
     return { readers: combinedReaders, authors: [...new Set(newAuthors)] };
 }
-
-
-export async function updateActionPermissions(action: ImprovementAction, status: ImprovementActionStatus): Promise<ImprovementAction> {
-    
-    if (status === 'Borrador') {
-        const creatorEmail = action.creator?.email || (await getUserById(action.creator.id))?.email;
-        if (creatorEmail) {
-            action.readers = [creatorEmail];
-            action.authors = [creatorEmail];
-        } else {
-             action.readers = [];
-             action.authors = [];
-        }
-        return action;
-    }
-
-    const { readers, authors } = await getPermissionsForState(action, status);
-    action.readers = readers;
-    action.authors = authors;
-    return action;
-}
-
-
-
-
-    
