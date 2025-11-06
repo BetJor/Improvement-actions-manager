@@ -292,17 +292,6 @@ export async function updateAction(
     const actionDocRef = doc(db, 'actions', actionId);
     let bisCreationResult: { createdBisTitle?: string, foundBisTitle?: string } = {};
 
-    // --- Data Sanitization and Preparation ---
-    let dataToUpdate: any = { ...data };
-
-    if (dataToUpdate.analysis && Array.isArray(dataToUpdate.analysis.proposedActions)) {
-        dataToUpdate.analysis.proposedActions = dataToUpdate.analysis.proposedActions.map((pa: any) => ({
-            ...pa,
-            // Explicitly convert Date objects to ISO strings BEFORE the transaction
-            dueDate: pa.dueDate instanceof Date ? pa.dueDate.toISOString() : pa.dueDate,
-        }));
-    }
-    
     try {
         await runTransaction(db, async (transaction) => {
             const originalActionSnap = await transaction.get(actionDocRef);
@@ -311,13 +300,23 @@ export async function updateAction(
             }
             const originalAction = { id: originalActionSnap.id, ...originalActionSnap.data() } as ImprovementAction;
             
+            const dataToUpdate: any = { ...data };
             const oldStatus = originalAction.status;
             const newStatus = statusFromForm || data.status || oldStatus;
             const isStatusChanging = newStatus !== oldStatus;
             
             let notificationComment: ActionComment | null = null;
+            const commentsToAdd: ActionComment[] = [];
+
+            // --- DATA PREPARATION AND SANITIZATION ---
             
+            // 1. Process analysis data: Convert dates and set due dates
             if (dataToUpdate.analysis && Array.isArray(dataToUpdate.analysis.proposedActions)) {
+                dataToUpdate.analysis.proposedActions = dataToUpdate.analysis.proposedActions.map((pa: any) => ({
+                    ...pa,
+                    dueDate: pa.dueDate instanceof Date ? pa.dueDate.toISOString() : pa.dueDate,
+                }));
+
                 const dueDates = dataToUpdate.analysis.proposedActions
                     .map((pa: ProposedAction) => pa.dueDate ? new Date(pa.dueDate as string) : null)
                     .filter((d: Date | null): d is Date => d !== null && !isNaN(d.getTime()));
@@ -331,6 +330,7 @@ export async function updateAction(
                 }
             }
 
+            // 2. Process status change and permissions
             if (isStatusChanging) {
                 dataToUpdate.status = newStatus;
                 const workflowSettings = await getWorkflowSettings();
@@ -347,73 +347,54 @@ export async function updateAction(
                 
                 const serializableActionForEmail = JSON.parse(JSON.stringify(actionForPermissions));
                 notificationComment = await sendStateChangeEmail({ action: serializableActionForEmail, oldStatus, newStatus });
+                if(notificationComment) commentsToAdd.push(notificationComment);
             }
-
-            const commentsToAdd = [];
+            
+            // 3. Prepare comments
             if (data.adminEdit) {
                 const { field, label, user, overrideComment, actionIndex } = data.adminEdit;
-                let commentText;
-                if (overrideComment) commentText = overrideComment;
-                else if (actionIndex !== undefined) commentText = `El administrador ${user} ha modificado el campo '${label}' de la acción propuesta ${actionIndex + 1}.`;
-                else commentText = `El administrador ${user} ha modificado el campo '${label}'.`;
-                
+                let commentText = overrideComment || (actionIndex !== undefined 
+                    ? `El administrador ${user} ha modificado el campo '${label}' de la acción propuesta ${actionIndex + 1}.`
+                    : `El administrador ${user} ha modificado el campo '${label}'.`);
                 commentsToAdd.push({ id: crypto.randomUUID(), author: { id: 'system', name: 'Sistema' }, date: new Date().toISOString(), text: commentText });
                 delete dataToUpdate.adminEdit;
             }
-            
-            if (notificationComment) {
-                commentsToAdd.push(notificationComment);
-            }
-
             if (data.newComment) {
                 commentsToAdd.push(data.newComment);
                 delete dataToUpdate.newComment;
             }
-            
             if (commentsToAdd.length > 0) {
                 dataToUpdate.comments = arrayUnion(...commentsToAdd);
             }
 
+            // 4. Process proposed action status updates
             if (data.updateProposedActionStatus || data.updateProposedAction) {
-                const currentProposedActions = originalAction.analysis?.proposedActions || [];
-                let updatedProposedActions;
+                const currentPAs = originalAction.analysis?.proposedActions || [];
+                let updatedPAs;
 
-                if(data.updateProposedActionStatus) {
-                    updatedProposedActions = currentProposedActions.map(pa => 
-                        pa.id === data.updateProposedActionStatus!.proposedActionId 
-                            ? { ...pa, status: data.updateProposedActionStatus!.status, statusUpdateDate: new Date().toISOString() } 
-                            : pa
+                if (data.updateProposedActionStatus) {
+                    updatedPAs = currentPAs.map(pa => pa.id === data.updateProposedActionStatus!.proposedActionId 
+                        ? { ...pa, status: data.updateProposedActionStatus!.status, statusUpdateDate: new Date().toISOString() } 
+                        : pa
+                    );
+                } else if (data.updateProposedAction) {
+                    updatedPAs = currentPAs.map(pa => pa.id === data.updateProposedAction!.id 
+                        ? { ...data.updateProposedAction, dueDate: new Date(data.updateProposedAction!.dueDate).toISOString() }
+                        : pa
                     );
                 }
 
-                if(data.updateProposedAction) {
-                    updatedProposedActions = currentProposedActions.map(pa =>
-                        pa.id === data.updateProposedAction!.id
-                            ? { ...data.updateProposedAction, dueDate: new Date(data.updateProposedAction!.dueDate).toISOString() }
-                            : pa
-                    );
-                }
-
-                if (updatedProposedActions) {
-                     dataToUpdate['analysis.proposedActions'] = updatedProposedActions;
-                     const dueDates = updatedProposedActions
-                        .map((pa: ProposedAction) => pa.dueDate ? new Date(pa.dueDate as string) : null)
-                        .filter((d): d is Date => d !== null && !isNaN(d.getTime()));
-                    
-                    if (dueDates.length > 0) {
-                         dataToUpdate.implementationDueDate = new Date(Math.max.apply(null, dueDates.map(d => d.getTime()))).toISOString();
-                    }
+                if (updatedPAs) {
+                    dataToUpdate['analysis.proposedActions'] = updatedPAs;
                 }
                 delete dataToUpdate.updateProposedActionStatus;
                 delete dataToUpdate.updateProposedAction;
             }
 
-            if (masterData && data.affectedCentersIds) {
-                dataToUpdate.affectedCenters = data.affectedCentersIds.map((id:string) => masterData.centers.data.find((c:any) => c.id === id)?.name || id);
-            }
-            
+            // 5. Final sanitation and transaction update
             const finalDataToUpdate = sanitizeDataForFirestore(dataToUpdate);
             console.log("Data being sent to Firestore transaction:", JSON.stringify(finalDataToUpdate, null, 2));
+
             transaction.update(actionDocRef, finalDataToUpdate);
         });
 
@@ -421,7 +402,7 @@ export async function updateAction(
         const permissionError = new FirestorePermissionError({
             path: actionDocRef.path,
             operation: 'update',
-            requestResourceData: dataToUpdate,
+            requestResourceData: data,
         } satisfies SecurityRuleContext);
         errorEmitter.emit('permission-error', permissionError);
         throw error;
@@ -508,3 +489,4 @@ async function getPermissionsForState(action: ImprovementAction, newStatus: Impr
 
 
     
+
