@@ -98,8 +98,7 @@ export function TabsProvider({ children, initialPath }: { children: ReactNode, i
 
     const setActiveTab = useCallback((tabId: string) => {
         setActiveTabState(tabId);
-        reloadAllActions();
-    }, [reloadAllActions]);
+    }, []);
 
     const openTab = useCallback((tabData: TabInput) => {
         const tabId = tabData.path;
