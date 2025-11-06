@@ -284,7 +284,7 @@ export async function createAction(data: CreateActionData, masterData: any): Pro
         }
     }
   
-    setDoc(docRef, sanitizeDataForFirestore(newActionData))
+    await setDoc(docRef, sanitizeDataForFirestore(newActionData))
       .catch(async (serverError) => {
         const permissionError = new FirestorePermissionError({
             path: docRef.path,
@@ -292,6 +292,7 @@ export async function createAction(data: CreateActionData, masterData: any): Pro
             requestResourceData: newActionData,
         } satisfies SecurityRuleContext);
         errorEmitter.emit('permission-error', permissionError);
+        throw serverError;
       });
 
     return newActionData;
@@ -320,16 +321,47 @@ export async function updateAction(
             const newStatus = statusFromForm || data.status || oldStatus;
             const isStatusChanging = newStatus !== oldStatus;
             
+            // Prepare comments array
+            dataToUpdate.comments = originalAction.comments || [];
             let notificationComment: ActionComment | null = null;
+            
+            // This is the main logic for updating an action when analysis is saved
+            if (data.analysis && Array.isArray(data.analysis.proposedActions)) {
+                const serializedProposedActions = data.analysis.proposedActions.map(pa => ({
+                    ...pa,
+                    dueDate: new Date(pa.dueDate as Date).toISOString()
+                }));
+                dataToUpdate.analysis = { ...data.analysis, proposedActions: serializedProposedActions };
+
+                const dueDates = serializedProposedActions
+                    .map((pa: ProposedAction) => pa.dueDate ? new Date(pa.dueDate as string) : null)
+                    .filter((d): d is Date => d !== null && !isNaN(d.getTime()));
+                
+                if (dueDates.length > 0) {
+                    const implementationDueDate = new Date(Math.max.apply(null, dueDates.map(d => d.getTime())));
+                    dataToUpdate.implementationDueDate = implementationDueDate.toISOString();
+                    
+                    const workflowSettings = await getWorkflowSettings();
+                    dataToUpdate.verificationDueDate = addDays(implementationDueDate, workflowSettings.verificationDueDays).toISOString();
+                }
+            }
+
             if (isStatusChanging) {
+                dataToUpdate.status = newStatus;
+                const workflowSettings = await getWorkflowSettings();
+                const today = new Date();
+                
+                if (newStatus === 'Pendiente de Cierre') {
+                    dataToUpdate.closureDueDate = addDays(today, workflowSettings.closureDueDays).toISOString();
+                }
+
                 const actionForPermissions = { ...originalAction, ...dataToUpdate };
                 const { readers, authors } = await getPermissionsForState(actionForPermissions, newStatus);
                 dataToUpdate.readers = readers;
                 dataToUpdate.authors = authors;
                 
-                // Make sure the action object is serializable before sending notifications
                 const serializableActionForEmail = JSON.parse(JSON.stringify(actionForPermissions));
-                 if (serializableActionForEmail.analysis && serializableActionForEmail.analysis.proposedActions) {
+                if (serializableActionForEmail.analysis && serializableActionForEmail.analysis.proposedActions) {
                     serializableActionForEmail.analysis.proposedActions = serializableActionForEmail.analysis.proposedActions.map((pa: any) => ({
                         ...pa,
                         dueDate: pa.dueDate ? new Date(pa.dueDate).toISOString() : undefined,
@@ -338,9 +370,7 @@ export async function updateAction(
 
                 notificationComment = await sendStateChangeEmail({ action: serializableActionForEmail, oldStatus, newStatus });
             }
-            
-            dataToUpdate.comments = originalAction.comments || [];
-            
+
             if (data.adminEdit) {
                 const { field, label, user, overrideComment, actionIndex } = data.adminEdit;
                 let commentText;
@@ -398,33 +428,6 @@ export async function updateAction(
             if (masterData && data.affectedCentersIds) {
                 dataToUpdate.affectedCenters = data.affectedCentersIds.map((id:string) => masterData.centers.data.find((c:any) => c.id === id)?.name || id);
             }
-
-            if (data.analysis && Array.isArray(data.analysis.proposedActions)) {
-                const serializedProposedActions = data.analysis.proposedActions.map(pa => ({
-                    ...pa,
-                    dueDate: new Date(pa.dueDate as Date).toISOString()
-                }));
-                dataToUpdate.analysis = { ...data.analysis, proposedActions: serializedProposedActions };
-                
-                const dueDates = serializedProposedActions
-                    .map((pa: ProposedAction) => pa.dueDate ? new Date(pa.dueDate as string) : null)
-                    .filter((d): d is Date => d !== null && !isNaN(d.getTime()));
-                if (dueDates.length > 0) {
-                    dataToUpdate.implementationDueDate = new Date(Math.max.apply(null, dueDates.map(d => d.getTime()))).toISOString();
-                }
-            }
-
-            if (isStatusChanging) {
-                dataToUpdate.status = newStatus;
-                const workflowSettings = await getWorkflowSettings();
-                const today = new Date();
-                if (newStatus === 'Pendiente Comprobación') {
-                    dataToUpdate.verificationDueDate = addDays(today, workflowSettings.verificationDueDays).toISOString();
-                }
-                if (newStatus === 'Pendiente de Cierre') {
-                    dataToUpdate.closureDueDate = addDays(today, workflowSettings.closureDueDays).toISOString();
-                }
-            }
             
             transaction.update(actionDocRef, sanitizeDataForFirestore(dataToUpdate));
         });
@@ -449,7 +452,7 @@ export async function updateAction(
 export async function toggleFollowAction(actionId: string, userId: string): Promise<void> {
     const actionDocRef = doc(db, 'actions', actionId);
     
-    runTransaction(db, async (transaction) => {
+    await runTransaction(db, async (transaction) => {
         const actionDoc = await transaction.get(actionDocRef);
         if (!actionDoc.exists()) {
             throw "Document does not exist!";
@@ -468,6 +471,7 @@ export async function toggleFollowAction(actionId: string, userId: string): Prom
             requestResourceData: { toggleFollow: userId },
         } satisfies SecurityRuleContext);
         errorEmitter.emit('permission-error', permissionError);
+        throw serverError; // Re-throw to inform the caller
     });
 }
 
