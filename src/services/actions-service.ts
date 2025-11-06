@@ -162,21 +162,14 @@ export const getActionById = async (id: string): Promise<ImprovementAction | nul
 
 // Function to recursively remove undefined values from an object
 function sanitizeDataForFirestore<T extends object>(data: T): T {
-    // Create a deep copy to avoid mutating the original object during the process.
     const sanitizedData = JSON.parse(JSON.stringify(data));
-
-    // Recursively clean the object
     const clean = (obj: any) => {
-        if (obj === null || typeof obj !== 'object') {
-            return;
-        }
-
+        if (obj === null || typeof obj !== 'object') return;
         for (const key in obj) {
             if (obj.hasOwnProperty(key)) {
                 if (obj[key] === undefined) {
                     delete obj[key];
                 } else if (typeof obj[key] === 'object') {
-                    // This will also handle arrays of objects
                     if(Array.isArray(obj[key])) {
                         obj[key].forEach((item: any) => clean(item));
                     } else {
@@ -186,7 +179,6 @@ function sanitizeDataForFirestore<T extends object>(data: T): T {
             }
         }
     };
-
     clean(sanitizedData);
     return sanitizedData;
 }
@@ -321,16 +313,16 @@ export async function updateAction(
             const newStatus = statusFromForm || data.status || oldStatus;
             const isStatusChanging = newStatus !== oldStatus;
             
-            // Prepare comments array
             dataToUpdate.comments = originalAction.comments || [];
             let notificationComment: ActionComment | null = null;
             
-            // This is the main logic for updating an action when analysis is saved
             if (data.analysis && Array.isArray(data.analysis.proposedActions)) {
+                // Ensure dueDates are ISO strings before they enter any other logic
                 const serializedProposedActions = data.analysis.proposedActions.map(pa => ({
                     ...pa,
                     dueDate: new Date(pa.dueDate as Date).toISOString()
                 }));
+                
                 dataToUpdate.analysis = { ...data.analysis, proposedActions: serializedProposedActions };
 
                 const dueDates = serializedProposedActions
@@ -360,13 +352,8 @@ export async function updateAction(
                 dataToUpdate.readers = readers;
                 dataToUpdate.authors = authors;
                 
+                // Make sure the action data is serializable before sending email
                 const serializableActionForEmail = JSON.parse(JSON.stringify(actionForPermissions));
-                if (serializableActionForEmail.analysis && serializableActionForEmail.analysis.proposedActions) {
-                    serializableActionForEmail.analysis.proposedActions = serializableActionForEmail.analysis.proposedActions.map((pa: any) => ({
-                        ...pa,
-                        dueDate: pa.dueDate ? new Date(pa.dueDate).toISOString() : undefined,
-                    }));
-                }
 
                 notificationComment = await sendStateChangeEmail({ action: serializableActionForEmail, oldStatus, newStatus });
             }
@@ -520,3 +507,6 @@ async function getPermissionsForState(action: ImprovementAction, newStatus: Impr
 
     return { readers: combinedReaders, authors: [...new Set(newAuthors)] };
 }
+
+
+    
