@@ -228,28 +228,35 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
     const handleAnalysisSave = async (analysisData: any) => {
         if (!action) return;
         setIsSubmitting(true);
-        try {
-          await updateAction(action.id, {
-            analysis: analysisData,
-            status: "Pendiente Comprobación",
-          });
-          
-          toast({
-            title: "Análisis guardado",
-            description: "El análisis de causas se ha guardado y el estado ha avanzado.",
-          });
+        toast({ title: "Iniciando guardado...", description: "Guardando datos del análisis." });
     
-          await handleActionUpdate();
+        try {
+            await updateAction(action.id, {
+                analysis: analysisData,
+                status: "Pendiente Comprobación",
+            });
+            
+            toast({
+                title: "Análisis guardado",
+                description: "El estado ha avanzado a 'Pendiente Comprobación'.",
+            });
+    
+            await handleActionUpdate();
+            
+            toast({
+                title: "Proceso completado",
+                description: "La acción se ha guardado y avanzado correctamente.",
+            });
     
         } catch (error) {
-          console.error("Error saving analysis:", error);
-          toast({
-              variant: "destructive",
-              title: "Error al guardar",
-              description: "No se pudo guardar el análisis.",
-          });
+            console.error("Error saving analysis:", error);
+            toast({
+                variant: "destructive",
+                title: "Error al guardar el análisis",
+                description: "No se pudo guardar. Revisa los permisos o contacta con el administrador.",
+            });
         } finally {
-          setIsSubmitting(false);
+            setIsSubmitting(false);
         }
     }
 
@@ -1297,3 +1304,5 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
         </div>
     )
 }
+
+    
