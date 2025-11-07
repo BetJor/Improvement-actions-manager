@@ -87,7 +87,7 @@ export function AnalysisSection({ action, user, isAdmin, isSubmitting, onSave, o
   
   const [emailInfo, setEmailInfo] = useState<EmailInfo | null>(null);
   const [isEmailInfoLoading, setIsEmailInfoLoading] = useState(false);
-  const [isEmailDialogValid, setIsEmailDialogValid] = useState(false);
+  const [isEmailDialogVisible, setIsEmailDialogVisible] = useState(false);
   const [isSendingTestEmail, setIsSendingTestEmail] = useState(false);
 
   const form = useForm<AnalysisFormValues>({
@@ -106,8 +106,8 @@ export function AnalysisSection({ action, user, isAdmin, isSubmitting, onSave, o
   
   const verificationResponsibleUserId = form.watch("verificationResponsibleUserId");
 
-  useEffect(() => {
-    setIsEmailDialogValid(!!verificationResponsibleUserId);
+  const isEmailDialogDataValid = useMemo(() => {
+    return !!verificationResponsibleUserId;
   }, [verificationResponsibleUserId]);
 
 
@@ -256,32 +256,46 @@ export function AnalysisSection({ action, user, isAdmin, isSubmitting, onSave, o
   
   const handlePreviewEmail = async () => {
     setIsEmailInfoLoading(true);
+    setIsEmailDialogVisible(true);
     setEmailInfo(null);
-    
-    // Ensure form data is valid before creating the temporary action object
+  
     const isValid = await form.trigger();
     if (!isValid) {
-        toast({ variant: "destructive", title: "Formulario inválido", description: "Por favor, complete todos los campos requeridos antes de previsualizar." });
-        setIsEmailInfoLoading(false);
-        return;
+      toast({
+        variant: "destructive",
+        title: "Formulario inválido",
+        description: "Por favor, complete todos los campos requeridos antes de previsualizar.",
+      });
+      setIsEmailInfoLoading(false);
+      return;
     }
-
+  
     const formData = form.getValues();
     const tempAction = {
       ...action,
       analysis: {
-        ...formData,
+        causes: formData.causes,
+        proposedActions: formData.proposedActions.map(pa => ({ ...pa, dueDate: pa.dueDate.toISOString() })),
+        verificationResponsibleUserId: formData.verificationResponsibleUserId,
         analysisResponsible: action.analysis?.analysisResponsible || user,
-        analysisDate: action.analysis?.analysisDate || new Date().toISOString()
-      }
+        analysisDate: action.analysis?.analysisDate || new Date().toISOString(),
+      },
     };
-    
+  
     try {
-      const details = await getEmailDetailsForStateChange({ action: tempAction, oldStatus: action.status, newStatus: 'Pendiente Comprobación'});
+      const details = await getEmailDetailsForStateChange({
+        action: tempAction,
+        oldStatus: action.status,
+        newStatus: 'Pendiente Comprobación',
+      });
       setEmailInfo(details);
     } catch (e) {
       console.error(e);
-      toast({ variant: "destructive", title: "Error al generar la previsualización", description: "No se pudieron obtener los detalles del email."});
+      toast({
+        variant: "destructive",
+        title: "Error al generar la previsualización",
+        description: "No se pudieron obtener los detalles del email.",
+      });
     } finally {
       setIsEmailInfoLoading(false);
     }
@@ -526,9 +540,9 @@ export function AnalysisSection({ action, user, isAdmin, isSubmitting, onSave, o
                   Guardar Análisis y Avanzar
                 </Button>
                 <div className="border-l pl-4 space-x-2">
-                    <Dialog>
+                    <Dialog open={isEmailDialogVisible} onOpenChange={setIsEmailDialogVisible}>
                         <DialogTrigger asChild>
-                            <Button type="button" variant="secondary" onClick={handlePreviewEmail} disabled={isEmailInfoLoading || !isEmailDialogValid}>
+                            <Button type="button" variant="secondary" onClick={handlePreviewEmail} disabled={!isEmailDialogDataValid}>
                                 {isEmailInfoLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Mail className="mr-2 h-4 w-4" />}
                                 1. Previsualizar Correo
                             </Button>
@@ -538,7 +552,9 @@ export function AnalysisSection({ action, user, isAdmin, isSubmitting, onSave, o
                                 <DialogTitle>Previsualización del Correo de Notificación</DialogTitle>
                                 <DialogDescription>Este es el correo que se enviará al responsable de la verificación.</DialogDescription>
                             </DialogHeader>
-                            {emailInfo ? (
+                            {isEmailInfoLoading ? (
+                                <div className="py-4 flex justify-center items-center h-48"><Loader2 className="h-8 w-8 animate-spin" /></div>
+                            ) : emailInfo ? (
                                 <div className="space-y-4 py-4">
                                     <p><strong>Destinatario:</strong> {emailInfo.recipient}</p>
                                     <p><strong>Asunto:</strong> {emailInfo.subject}</p>
@@ -608,3 +624,5 @@ export function AnalysisSection({ action, user, isAdmin, isSubmitting, onSave, o
     </>
   )
 }
+
+    
