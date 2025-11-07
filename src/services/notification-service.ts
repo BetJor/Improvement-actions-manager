@@ -93,15 +93,13 @@ export async function getEmailDetailsForStateChange(details: StateChangeDetails)
     const actionUrl = `${appUrl}/actions/${action.id}`;
 
     if (!analysisData?.verificationResponsibleUserEmail) {
-        console.error("[getEmailDetailsForStateChange] Error: verificationResponsibleUserEmail is missing from analysisData.");
-        return null;
+        throw new Error("No se ha proporcionado el email del responsable de verificación.");
     }
-
+    
     const recipientEmail = analysisData.verificationResponsibleUserEmail;
 
-    // We don't need to fetch the user anymore, but we can try to get the name for a personal touch if needed later.
-    // For now, we'll use a generic greeting.
-    const userName = 'Usuario';
+    const allUsers = await getUsers();
+    const userName = allUsers.find(u => u.email === recipientEmail)?.name || 'Usuario';
 
     const subject = `Verificación de acción de mejora pendiente: ${action.actionId}`;
     const html = `
@@ -115,16 +113,6 @@ export async function getEmailDetailsForStateChange(details: StateChangeDetails)
     return { recipient: recipientEmail, subject, html, actionUrl };
 }
 
-
-
-/**
- * Sends a pre-formatted email for testing purposes.
- */
-export async function sendTestEmail(emailInfo: EmailInfo): Promise<string | null> {
-    return await sendEmail(emailInfo.recipient, emailInfo.subject, emailInfo.html);
-}
-
-
 /**
  * Handles sending email notifications based on the state change.
  * @returns An ActionComment to be added to the action, or null if no email was sent.
@@ -133,20 +121,20 @@ export async function sendStateChangeEmail(details: { action: ImprovementAction,
     const { action, newStatus } = details;
     
     if (newStatus === 'Pendiente Comprobación') {
-        const responsibleId = action.analysis?.verificationResponsibleUserId;
-        if (!responsibleId) {
+        const responsibleEmail = action.analysis?.verificationResponsibleUserEmail;
+        if (!responsibleEmail) {
             return { id: crypto.randomUUID(), author: { id: 'system', name: 'Sistema' }, date: new Date().toISOString(), text: "No se pudo notificar: no hay responsable de verificación asignado." };
         }
         
-        const user = await getUserById(responsibleId);
-        
-        if (user?.email) {
-            const emailInfo = await getEmailDetailsForStateChange({ action, analysisData: { verificationResponsibleUserEmail: user.email } });
-            if (!emailInfo) return null;
+        try {
+            const emailInfo = await getEmailDetailsForStateChange({ action, analysisData: { verificationResponsibleUserEmail: responsibleEmail } });
+            if (!emailInfo) {
+                 return { id: crypto.randomUUID(), author: { id: 'system', name: 'Sistema' }, date: new Date().toISOString(), text: "No se pudieron preparar los detalles del email de notificación." };
+            }
 
             const previewUrl = await sendEmail(emailInfo.recipient, emailInfo.subject, emailInfo.html);
             
-            let commentText = `Notificación de verificación enviada a ${user.email}.`;
+            let commentText = `Notificación de verificación enviada a ${emailInfo.recipient}.`;
             if (previewUrl) {
                 commentText += ` Previsualización: ${previewUrl}`;
             } else {
@@ -154,8 +142,9 @@ export async function sendStateChangeEmail(details: { action: ImprovementAction,
             }
             return { id: crypto.randomUUID(), author: { id: 'system', name: 'Sistema' }, date: new Date().toISOString(), text: commentText };
 
-        } else {
-             return { id: crypto.randomUUID(), author: { id: 'system', name: 'Sistema' }, date: new Date().toISOString(), text: "No se pudo notificar al responsable de la verificación: usuario no encontrado." };
+        } catch (error: any) {
+            console.error(`[NotificationService] Error in sendStateChangeEmail:`, error);
+            return { id: crypto.randomUUID(), author: { id: 'system', name: 'Sistema' }, date: new Date().toISOString(), text: `Error al intentar notificar: ${error.message}` };
         }
     }
 

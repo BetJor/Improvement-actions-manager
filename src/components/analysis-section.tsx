@@ -15,7 +15,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { Loader2, PlusCircle, Trash2, CalendarIcon, Save, Mic, MicOff, Wand2, Pencil, Mail, Send } from "lucide-react"
+import { Loader2, PlusCircle, Trash2, CalendarIcon, Save, Mic, MicOff, Wand2, Pencil } from "lucide-react"
 import type { ImprovementAction, User } from "@/lib/types"
 import { cn } from "@/lib/utils"
 import { format } from "date-fns"
@@ -30,12 +30,9 @@ import {
   DialogTitle,
   DialogDescription,
   DialogFooter,
-  DialogClose,
-  DialogTrigger,
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { Separator } from "./ui/separator"
-import { getEmailDetailsForStateChange, sendTestEmail, type EmailInfo } from "@/services/notification-service"
 
 
 const analysisSchema = z.object({
@@ -63,12 +60,6 @@ interface AnalysisSectionProps {
   onEditField: (field: string, label: string, value: any, options?: any, fieldType?: string) => void;
 }
 
-interface DebugInfo {
-  formData: AnalysisFormValues | null;
-  emailDetails: EmailInfo | null;
-  error: string | null;
-}
-
 export function AnalysisSection({ action, user, isAdmin, isSubmitting, onSave, onEditField }: AnalysisSectionProps) {
   const { toast } = useToast()
 
@@ -90,10 +81,6 @@ export function AnalysisSection({ action, user, isAdmin, isSubmitting, onSave, o
   const [isSuggestionDialogOpen, setIsSuggestionDialogOpen] = useState(false);
   const [hasImprovePrompt, setHasImprovePrompt] = useState(false);
   const [hasAnalysisPrompt, setHasAnalysisPrompt] = useState(false);
-  
-  const [debugInfo, setDebugInfo] = useState<DebugInfo | null>(null);
-  const [isEmailDialogVisible, setIsEmailDialogVisible] = useState(false);
-  const [isSendingTestEmail, setIsSendingTestEmail] = useState(false);
 
   const form = useForm<AnalysisFormValues>({
     resolver: zodResolver(analysisSchema),
@@ -113,13 +100,6 @@ export function AnalysisSection({ action, user, isAdmin, isSubmitting, onSave, o
     control: form.control,
     name: "proposedActions",
   })
-  
-  const verificationResponsibleUserEmail = form.watch("verificationResponsibleUserEmail");
-
-  const isEmailDialogDataValid = useMemo(() => {
-    return !!verificationResponsibleUserEmail;
-  }, [verificationResponsibleUserEmail]);
-
 
   useEffect(() => {
     async function loadData() {
@@ -274,65 +254,6 @@ export function AnalysisSection({ action, user, isAdmin, isSubmitting, onSave, o
     setIsSuggestionDialogOpen(false);
     setAnalysisAiSuggestion(null);
   };
-  
-  const handlePreviewEmail = async () => {
-    setDebugInfo(null);
-    setIsEmailDialogVisible(true);
-  
-    const isValid = await form.trigger();
-    if (!isValid) {
-      toast({
-        variant: "destructive",
-        title: "Formulario inválido",
-        description: "Por favor, complete todos los campos requeridos.",
-      });
-      setIsEmailDialogVisible(false);
-      return;
-    }
-  
-    const formData = form.getValues();
-    let emailDetails: EmailInfo | null = null;
-    let errorLog: string | null = null;
-  
-    try {
-        emailDetails = await getEmailDetailsForStateChange({ action, analysisData: formData });
-        if (!emailDetails) {
-            throw new Error("La función getEmailDetailsForStateChange ha devuelto null. Compruebe la lógica del servidor.");
-        }
-    } catch (e: any) {
-        console.error(e);
-        errorLog = e.message || "Error desconocido al obtener los detalles del email.";
-    }
-    
-    setDebugInfo({ formData, emailDetails, error: errorLog });
-  };
-
-
-  const handleSendTestEmail = async () => {
-    if (!debugInfo || !debugInfo.emailDetails) {
-        toast({ variant: "destructive", title: "Error", description: "Primero previsualiza los datos del correo."});
-        return;
-    };
-    setIsSendingTestEmail(true);
-    try {
-        const previewUrl = await sendTestEmail(debugInfo.emailDetails);
-        if (previewUrl) {
-            toast({
-                title: "Correo de prueba enviado",
-                description: (<a href={previewUrl} target="_blank" rel="noopener noreferrer" className="underline">Ver previsualización</a>),
-                duration: 15000,
-            });
-        } else {
-            throw new Error("No se recibió URL de previsualización.");
-        }
-    } catch (e) {
-        console.error(e);
-        toast({ variant: "destructive", title: "Error al enviar el correo", description: "No se pudo enviar el correo de prueba."});
-    } finally {
-        setIsSendingTestEmail(false);
-    }
-  }
-
 
   const onSubmit = (values: AnalysisFormValues) => {
     const analysisData = {
@@ -343,6 +264,7 @@ export function AnalysisSection({ action, user, isAdmin, isSubmitting, onSave, o
         responsibleUserId: users.find(u => u.email === pa.responsibleUserEmail)?.id || '',
       })),
       verificationResponsibleUserEmail: values.verificationResponsibleUserEmail, // Pass email directly
+      verificationResponsibleUserId: users.find(u => u.email === values.verificationResponsibleUserEmail)?.id || '',
       analysisResponsible: {
         id: user.id,
         name: user.name || "Usuario desconocido",
@@ -551,59 +473,12 @@ export function AnalysisSection({ action, user, isAdmin, isSubmitting, onSave, o
                   {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                   Guardar Análisis y Avanzar
                 </Button>
-                <div className="border-l pl-4 space-x-2">
-                    <Button type="button" variant="secondary" onClick={handlePreviewEmail} disabled={!isEmailDialogDataValid}>
-                        <Mail className="mr-2 h-4 w-4" />
-                        1. Previsualizar Correo
-                    </Button>
-                    <Button type="button" variant="secondary" onClick={handleSendTestEmail} disabled={!debugInfo || !debugInfo.emailDetails || isSendingTestEmail}>
-                        {isSendingTestEmail ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
-                        2. Enviar Correo de Prueba
-                    </Button>
-                </div>
             </div>
 
           </form>
         </Form>
       </CardContent>
     </Card>
-
-    <Dialog open={isEmailDialogVisible} onOpenChange={setIsEmailDialogVisible}>
-        <DialogContent className="max-w-3xl">
-            <DialogHeader>
-                <DialogTitle>Información de Depuración del Correo</DialogTitle>
-                <DialogDescription>A continuació es mostren les dades recollides i les que es preparen per a l'enviament.</DialogDescription>
-            </DialogHeader>
-            {!debugInfo ? (
-                <div className="py-4 flex justify-center items-center h-48"><Loader2 className="h-8 w-8 animate-spin" /></div>
-            ) : (
-                <div className="grid grid-cols-2 gap-4 max-h-[60vh] overflow-y-auto p-1">
-                    <div className="space-y-2">
-                        <h3 className="font-semibold">1. Dades Recollides del Formulari</h3>
-                        <pre className="p-2 border rounded-md bg-muted/30 text-xs overflow-x-auto">
-                            {JSON.stringify(debugInfo.formData, null, 2)}
-                        </pre>
-                    </div>
-                     <div className="space-y-2">
-                        <h3 className="font-semibold">2. Dades Preparades per a l'Email</h3>
-                        {debugInfo.error ? (
-                            <pre className="p-2 border rounded-md bg-destructive/10 text-destructive text-xs overflow-x-auto">
-                                Error: {debugInfo.error}
-                            </pre>
-                        ) : (
-                            <pre className="p-2 border rounded-md bg-muted/30 text-xs overflow-x-auto">
-                                {JSON.stringify(debugInfo.emailDetails, null, 2)}
-                            </pre>
-                        )}
-                    </div>
-                </div>
-            )}
-            <DialogFooter>
-                <DialogClose asChild><Button variant="outline">Tancar</Button></DialogClose>
-            </DialogFooter>
-        </DialogContent>
-    </Dialog>
-
 
     <Dialog open={isSuggestionDialogOpen} onOpenChange={setIsSuggestionDialogOpen}>
         <DialogContent className="sm:max-w-2xl">

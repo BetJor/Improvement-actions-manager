@@ -277,8 +277,7 @@ export async function updateAction(
     actionId: string, 
     data: Partial<ImprovementAction> & { newComment?: any; adminEdit?: any; updateProposedActionStatus?: any; updateProposedAction?: ProposedAction }, 
     masterData: any | null = null, 
-    statusFromForm?: 'Borrador' | 'Pendiente Análisis',
-    prebuiltActionForPermissions?: any
+    statusFromForm?: 'Borrador' | 'Pendiente Análisis'
 ): Promise<{ 
     updatedAction: ImprovementAction, 
     bisCreationResult?: { createdBisTitle?: string, foundBisTitle?: string },
@@ -286,7 +285,7 @@ export async function updateAction(
 }> {
     const actionDocRef = doc(db, 'actions', actionId);
     let bisCreationResult: { createdBisTitle?: string, foundBisTitle?: string } = {};
-    let notificationResult: ActionComment | null = null;
+    let finalNotificationResult: ActionComment | null = null;
     
     // Ensure all dueDates in proposed actions are converted to ISO strings *before* the transaction
     if (data.analysis && Array.isArray(data.analysis.proposedActions)) {
@@ -335,7 +334,8 @@ export async function updateAction(
                     dataToUpdate.closureDueDate = addDays(today, workflowSettings.closureDueDays).toISOString();
                 }
 
-                const actionForPerms = prebuiltActionForPermissions || { ...originalAction, ...dataToUpdate };
+                // Important: Use the MERGED data for permission calculation
+                const actionForPerms = { ...originalAction, ...dataToUpdate };
                 const { readers, authors } = await getPermissionsForState(actionForPerms, newStatus);
                 dataToUpdate.readers = readers;
                 dataToUpdate.authors = authors;
@@ -376,15 +376,6 @@ export async function updateAction(
                 delete dataToUpdate.updateProposedActionStatus;
                 delete dataToUpdate.updateProposedAction;
             }
-
-            // --- NOTIFICATION HANDLING (before commit, to gather comment) ---
-            if (isStatusChanging && prebuiltActionForPermissions) {
-                 const serializableActionForEmail = JSON.parse(JSON.stringify(prebuiltActionForPermissions));
-                 const tempNotificationResult = await sendStateChangeEmail({ action: serializableActionForEmail, oldStatus, newStatus });
-                 if (tempNotificationResult) {
-                    commentsToAdd.push(tempNotificationResult);
-                 }
-            }
             
             if (commentsToAdd.length > 0) {
                 dataToUpdate.comments = arrayUnion(...commentsToAdd);
@@ -393,7 +384,24 @@ export async function updateAction(
             const finalDataToUpdate = sanitizeDataForFirestore(dataToUpdate);
             transaction.update(actionDocRef, finalDataToUpdate);
             
+            // --- Post-Transaction Actions ---
+            // Prepare notification details to be used after the transaction succeeds.
+            if (isStatusChanging) {
+                const actionForEmail = { ...originalAction, ...dataToUpdate };
+                const tempNotificationResult = await sendStateChangeEmail({ action: actionForEmail, oldStatus, newStatus });
+                if (tempNotificationResult) {
+                    finalNotificationResult = tempNotificationResult;
+                }
+            }
         });
+        
+        // If the transaction succeeded, and we have a notification comment, add it in a separate write.
+        if (finalNotificationResult) {
+             await updateDoc(actionDocRef, {
+                comments: arrayUnion(finalNotificationResult)
+            });
+        }
+
 
     } catch (error: any) {
         console.error("Error in updateAction transaction:", error);
@@ -409,7 +417,7 @@ export async function updateAction(
     const finalActionDoc = await getDoc(actionDocRef);
     const finalAction = { id: finalActionDoc.id, ...finalActionDoc.data() } as ImprovementAction;
 
-    return { updatedAction: finalAction, bisCreationResult, notificationResult };
+    return { updatedAction: finalAction, bisCreationResult, notificationResult: finalNotificationResult };
 }
 
 
@@ -488,6 +496,7 @@ async function getPermissionsForState(action: ImprovementAction, newStatus: Impr
 
 
     
+
 
 
 
