@@ -280,9 +280,6 @@ export function AnalysisSection({ action, user, isAdmin, isSubmitting, onSave, o
   
     try {
       emailDetails = await getEmailDetailsForStateChange({ action, formData });
-      if (!emailDetails) {
-        errorLog = "La función getEmailDetailsForStateChange ha devuelto null. Compruebe la lógica del servidor.";
-      }
     } catch (e: any) {
       console.error(e);
       errorLog = e.message || "Error desconocido al obtener los detalles del email.";

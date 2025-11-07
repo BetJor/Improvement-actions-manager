@@ -97,8 +97,9 @@ export async function getEmailDetailsForStateChange(details: { action: Improveme
         const user = await getUserById(responsibleId);
 
         if (!user || !user.email) {
-            console.warn(`[NotificationService] Could not find user email for verification responsible ID: ${responsibleId}`);
-            return null; // Return null if user or email is not found
+            console.warn(`[NotificationService] Could not find user or email for verification responsible ID: ${responsibleId}`);
+            // Throw a specific error instead of returning null
+            throw new Error(`No s'ha trobat l'usuari o el seu correu per a l'ID: ${responsibleId}`);
         }
 
         const subject = `Verificación de acción de mejora pendiente: ${action.actionId}`;
