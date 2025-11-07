@@ -34,16 +34,30 @@ export async function getUserById(userId: string): Promise<User | null> {
     }
     
     const userDocRef = doc(db, 'users', userId);
-    const userDocSnap = await getDoc(userDocRef);
+    
+    try {
+        const userDocSnap = await getDoc(userDocRef);
 
-    if (userDocSnap.exists()) {
-        return { id: userDocSnap.id, ...userDocSnap.data() } as User;
+        if (userDocSnap.exists()) {
+            return { id: userDocSnap.id, ...userDocSnap.data() } as User;
+        }
+
+        console.warn(`User with ID ${userId} not found in Firestore.`);
+        return null;
+        
+    } catch (serverError: any) {
+        // Create and emit a contextual error for permission issues.
+        const permissionError = new FirestorePermissionError({
+            path: userDocRef.path,
+            operation: 'get',
+        } satisfies SecurityRuleContext);
+
+        errorEmitter.emit('permission-error', permissionError);
+
+        // We still return null to maintain the function's contract,
+        // but the specific error is now visible in the dev overlay.
+        return null;
     }
-
-    // Aquesta part esborrada causava escriptures inesperades.
-    // La creació d'usuaris ara s'ha de gestionar explícitament a través de addUser o des de la lògica d'autenticació.
-    console.warn(`User with ID ${userId} not found in Firestore.`);
-    return null;
 }
 
 
