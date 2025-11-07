@@ -12,7 +12,7 @@ import nodemailer from 'nodemailer';
 
 interface StateChangeDetails {
   action: ImprovementAction;
-  newAnalysisData?: {
+  formData?: {
     verificationResponsibleUserId: string;
     // ... other analysis data
   };
@@ -87,19 +87,23 @@ async function sendEmail(recipient: string, subject: string, html: string): Prom
 /**
  * Prepares the details for an email notification without sending it.
  */
-export async function getEmailDetailsForStateChange(details: { action: ImprovementAction, formData: any }): Promise<EmailInfo | null> {
+export async function getEmailDetailsForStateChange(details: StateChangeDetails): Promise<EmailInfo | null> {
     const { action, formData } = details;
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9002';
     const actionUrl = `${appUrl}/actions/${action.id}`;
 
-    if (formData && formData.verificationResponsibleUserId) {
+    if (formData?.verificationResponsibleUserId) {
         const responsibleId = formData.verificationResponsibleUserId;
         const user = await getUserById(responsibleId);
 
-        if (!user || !user.email) {
-            console.warn(`[NotificationService] Could not find user or email for verification responsible ID: ${responsibleId}`);
-            // Throw a specific error instead of returning null
-            throw new Error(`No s'ha trobat l'usuari o el seu correu per a l'ID: ${responsibleId}`);
+        if (!user) {
+            // Throw a more specific error if the user is not found at all
+            throw new Error(`Error: No s'ha trobat l'usuari amb ID: ${responsibleId}. Comprova que aquest usuari existeix a la col·lecció 'users'.`);
+        }
+        
+        if (!user.email) {
+            // Throw a specific error if the user is found but has no email
+            throw new Error(`Error: L'usuari amb ID ${responsibleId} ('${user.name}') s'ha trobat, però no té un camp 'email' vàlid.`);
         }
 
         const subject = `Verificación de acción de mejora pendiente: ${action.actionId}`;
