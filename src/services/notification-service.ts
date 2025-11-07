@@ -1,5 +1,4 @@
 
-
 'use server';
 /**
  * @fileOverview A service for handling notifications.
@@ -86,33 +85,34 @@ async function sendEmail(recipient: string, subject: string, html: string): Prom
 
 /**
  * Prepares the details for an email notification without sending it.
+ * This version uses the email directly from the form data.
  */
 export async function getEmailDetailsForStateChange(details: StateChangeDetails): Promise<EmailInfo | null> {
     const { action, analysisData } = details;
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9002';
     const actionUrl = `${appUrl}/actions/${action.id}`;
 
-    if (analysisData?.verificationResponsibleUserEmail) {
-        const recipientEmail = analysisData.verificationResponsibleUserEmail;
-        // We find the user just to get their name for the email body.
-        // The recipient is the email itself.
-        const allUsers = await getUsers();
-        const user = allUsers.find(u => u.email === recipientEmail);
-        const userName = user ? user.name : 'Usuario';
-
-
-        const subject = `Verificación de acción de mejora pendiente: ${action.actionId}`;
-        const html = `
-          <h1>Tarea de Verificación Asignada</h1>
-          <p>Hola ${userName},</p>
-          <p>Se te ha asignado la verificación de la implementación de la acción de mejora <strong>${action.actionId}: ${action.title}</strong>.</p>
-          <p>Por favor, accede a la plataforma para revisar el plan de acción y verificar su eficacia.</p>
-          <a href="${actionUrl}" style="background-color: #00529B; color: white; padding: 10px 15px; text-decoration: none; border-radius: 5px; display: inline-block;">Ver Acción</a>
-        `;
-        return { recipient: recipientEmail, subject, html, actionUrl };
+    if (!analysisData?.verificationResponsibleUserEmail) {
+        console.error("[getEmailDetailsForStateChange] Error: verificationResponsibleUserEmail is missing from analysisData.");
+        return null;
     }
+
+    const recipientEmail = analysisData.verificationResponsibleUserEmail;
+
+    // We don't need to fetch the user anymore, but we can try to get the name for a personal touch if needed later.
+    // For now, we'll use a generic greeting.
+    const userName = 'Usuario';
+
+    const subject = `Verificación de acción de mejora pendiente: ${action.actionId}`;
+    const html = `
+      <h1>Tarea de Verificación Asignada</h1>
+      <p>Hola ${userName},</p>
+      <p>Se te ha asignado la verificación de la implementación de la acción de mejora <strong>${action.actionId}: ${action.title}</strong>.</p>
+      <p>Por favor, accede a la plataforma para revisar el plan de acción y verificar su eficacia.</p>
+      <a href="${actionUrl}" style="background-color: #00529B; color: white; padding: 10px 15px; text-decoration: none; border-radius: 5px; display: inline-block;">Ver Acción</a>
+    `;
     
-    return null;
+    return { recipient: recipientEmail, subject, html, actionUrl };
 }
 
 
@@ -130,15 +130,11 @@ export async function sendTestEmail(emailInfo: EmailInfo): Promise<string | null
  * @returns An ActionComment to be added to the action, or null if no email was sent.
  */
 export async function sendStateChangeEmail(details: { action: ImprovementAction, oldStatus: string, newStatus: string }): Promise<ActionComment | null> {
-    console.log("--- [Notification Service] Preparing to send email. Data received: ---");
-    console.log(JSON.stringify(details, null, 2));
-
     const { action, newStatus } = details;
     
     if (newStatus === 'Pendiente Comprobación') {
         const responsibleId = action.analysis?.verificationResponsibleUserId;
         if (!responsibleId) {
-            console.warn(`[NotificationService] Action ${action.actionId} has no verification responsible.`);
             return { id: crypto.randomUUID(), author: { id: 'system', name: 'Sistema' }, date: new Date().toISOString(), text: "No se pudo notificar: no hay responsable de verificación asignado." };
         }
         
@@ -159,7 +155,6 @@ export async function sendStateChangeEmail(details: { action: ImprovementAction,
             return { id: crypto.randomUUID(), author: { id: 'system', name: 'Sistema' }, date: new Date().toISOString(), text: commentText };
 
         } else {
-             console.warn(`[NotificationService] Could not find user email for verification responsible ID: ${responsibleId}`);
              return { id: crypto.randomUUID(), author: { id: 'system', name: 'Sistema' }, date: new Date().toISOString(), text: "No se pudo notificar al responsable de la verificación: usuario no encontrado." };
         }
     }

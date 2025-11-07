@@ -342,7 +342,7 @@ export function AnalysisSection({ action, user, isAdmin, isSubmitting, onSave, o
         id: pa.id || crypto.randomUUID(),
         responsibleUserId: users.find(u => u.email === pa.responsibleUserEmail)?.id || '',
       })),
-      verificationResponsibleUserId: users.find(u => u.email === values.verificationResponsibleUserEmail)?.id || '',
+      verificationResponsibleUserEmail: values.verificationResponsibleUserEmail, // Pass email directly
       analysisResponsible: {
         id: user.id,
         name: user.name || "Usuario desconocido",
