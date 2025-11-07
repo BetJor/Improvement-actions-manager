@@ -274,7 +274,7 @@ export function AnalysisSection({ action, user, isAdmin, isSubmitting, onSave, o
   
     try {
       const details = await getEmailDetailsForStateChange({
-        action: action, // Pass original action
+        action: action, 
         newAnalysisData: formData, // Pass new form data
         newStatus: 'Pendiente Comprobación',
       });
