@@ -7,12 +7,12 @@
  */
 
 import { ImprovementAction, User, ActionComment, ProposedAction } from '@/lib/types';
-import { getUserById } from './users-service';
+import { getUserById, getUsers } from './users-service';
 import nodemailer from 'nodemailer';
 
 interface StateChangeDetails {
   action: ImprovementAction;
-  formData?: {
+  analysisData?: {
     verificationResponsibleUserId: string;
     // ... other analysis data
   };
@@ -88,21 +88,25 @@ async function sendEmail(recipient: string, subject: string, html: string): Prom
  * Prepares the details for an email notification without sending it.
  */
 export async function getEmailDetailsForStateChange(details: StateChangeDetails): Promise<EmailInfo | null> {
-    const { action, formData } = details;
+    const { action, analysisData } = details;
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9002';
     const actionUrl = `${appUrl}/actions/${action.id}`;
 
-    if (formData?.verificationResponsibleUserId) {
-        const responsibleId = formData.verificationResponsibleUserId;
+    if (analysisData?.verificationResponsibleUserId) {
+        const responsibleId = analysisData.verificationResponsibleUserId;
         const user = await getUserById(responsibleId);
 
         if (!user) {
-            // Throw a more specific error if the user is not found at all
-            throw new Error(`Error: No s'ha trobat l'usuari amb ID: ${responsibleId}. Comprova que aquest usuari existeix a la col·lecció 'users'.`);
+            // Diagnostic step: Try to access the collection in general.
+            try {
+                const allUsers = await getUsers();
+                throw new Error(`No s'ha trobat l'usuari amb ID: ${responsibleId}, tot i que s'ha pogut accedir a la col·lecció 'users' (s'han trobat ${allUsers.length} usuaris en total). Comprova que l'ID és correcte.`);
+            } catch (collectionError) {
+                 throw new Error(`No s'ha trobat l'usuari amb ID: ${responsibleId}. A més, s'ha produït un error en intentar accedir a la col·lecció 'users', la qual cosa suggereix un problema de permisos generals.`);
+            }
         }
         
         if (!user.email) {
-            // Throw a specific error if the user is found but has no email
             throw new Error(`Error: L'usuari amb ID ${responsibleId} ('${user.name}') s'ha trobat, però no té un camp 'email' vàlid.`);
         }
 
@@ -117,7 +121,6 @@ export async function getEmailDetailsForStateChange(details: StateChangeDetails)
         return { recipient: user.email, subject, html, actionUrl };
     }
     
-    // Return null if the conditions aren't met
     return null;
 }
 
@@ -136,11 +139,8 @@ export async function sendTestEmail(emailInfo: EmailInfo): Promise<string | null
  * @returns An ActionComment to be added to the action, or null if no email was sent.
  */
 export async function sendStateChangeEmail(details: { action: ImprovementAction, oldStatus: string, newStatus: string }): Promise<ActionComment | null> {
-    // --- TRACE POINT ---
-    // Display the exact data received by the function for debugging.
     console.log("--- [Notification Service] Preparing to send email. Data received: ---");
     console.log(JSON.stringify(details, null, 2));
-    // --------------------
 
     const { action, newStatus } = details;
     
@@ -154,7 +154,7 @@ export async function sendStateChangeEmail(details: { action: ImprovementAction,
         const user = await getUserById(responsibleId);
         
         if (user?.email) {
-            const emailInfo = await getEmailDetailsForStateChange({ action, formData: action.analysis });
+            const emailInfo = await getEmailDetailsForStateChange({ action, analysisData: action.analysis });
             if (!emailInfo) return null;
 
             const previewUrl = await sendEmail(emailInfo.recipient, emailInfo.subject, emailInfo.html);

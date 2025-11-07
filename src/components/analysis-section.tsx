@@ -279,7 +279,7 @@ export function AnalysisSection({ action, user, isAdmin, isSubmitting, onSave, o
     let errorLog: string | null = null;
   
     try {
-      emailDetails = await getEmailDetailsForStateChange({ action, formData });
+      emailDetails = await getEmailDetailsForStateChange({ action, analysisData: formData });
     } catch (e: any) {
       console.error(e);
       errorLog = e.message || "Error desconocido al obtener los detalles del email.";
