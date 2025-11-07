@@ -31,7 +31,6 @@ import {
   DialogDescription,
   DialogFooter,
   DialogClose,
-  DialogTrigger,
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { Separator } from "./ui/separator"
@@ -280,8 +279,8 @@ export function AnalysisSection({ action, user, isAdmin, isSubmitting, onSave, o
   
     try {
       emailDetails = await getEmailDetailsForStateChange({
-        action: action, 
-        newAnalysisData: formData,
+        action,
+        newAnalysisData: formData
       });
       if (!emailDetails) {
         throw new Error("La función getEmailDetailsForStateChange ha devuelto null. Compruebe la lógica del servidor.");

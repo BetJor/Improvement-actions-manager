@@ -92,8 +92,6 @@ export async function getEmailDetailsForStateChange(details: StateChangeDetails)
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9002';
     const actionUrl = `${appUrl}/actions/${action.id}`;
 
-    // Aquest és el punt clau. Abans només comprovava newStatus.
-    // Ara mirem si tenim newAnalysisData, que és el que conté l'ID del responsable de verificació.
     if (newAnalysisData) {
         const responsibleId = newAnalysisData.verificationResponsibleUserId;
         if (!responsibleId) {
@@ -173,3 +171,4 @@ export async function sendStateChangeEmail(details: { action: ImprovementAction,
 
   return null;
 }
+
