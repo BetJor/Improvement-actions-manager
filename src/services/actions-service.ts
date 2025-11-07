@@ -254,10 +254,6 @@ export async function createAction(data: CreateActionData, masterData: any): Pro
     newActionData.readers = readers;
     newActionData.authors = authors;
 
-    if (newActionData.status === 'Pendiente Análisis') {
-        // This part is handled after creation now
-    }
-  
     await setDoc(docRef, sanitizeDataForFirestore(newActionData))
       .catch(async (serverError) => {
         const permissionError = new FirestorePermissionError({
@@ -268,6 +264,23 @@ export async function createAction(data: CreateActionData, masterData: any): Pro
         errorEmitter.emit('permission-error', permissionError);
         throw serverError;
       });
+
+    // If status is 'Pendiente Análisis', send email after creation
+    if (newActionData.status === 'Pendiente Análisis') {
+        const notificationResult = await sendStateChangeEmail({
+            action: newActionData,
+            oldStatus: 'Borrador',
+            newStatus: 'Pendiente Análisis'
+        });
+        if (notificationResult) {
+            await updateDoc(docRef, {
+                comments: arrayUnion(notificationResult)
+            });
+            // Re-fetch to include the comment in the returned object
+            const finalDoc = await getDoc(docRef);
+            newActionData = { id: finalDoc.id, ...finalDoc.data() } as ImprovementAction;
+        }
+    }
 
     return newActionData;
 }
@@ -496,6 +509,7 @@ async function getPermissionsForState(action: ImprovementAction, newStatus: Impr
 
 
     
+
 
 
 

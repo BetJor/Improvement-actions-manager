@@ -1,4 +1,5 @@
 
+
 'use server';
 /**
  * @fileOverview A service for handling notifications.
@@ -9,16 +10,7 @@ import { ImprovementAction, User, ActionComment, ProposedAction } from '@/lib/ty
 import { getUserById, getUsers } from './users-service';
 import nodemailer from 'nodemailer';
 
-interface StateChangeDetails {
-  action: ImprovementAction;
-  analysisData?: {
-    verificationResponsibleUserEmail: string;
-    // ... other analysis data
-  };
-}
-
-
-export interface EmailInfo {
+interface EmailInfo {
     recipient: string;
     subject: string;
     html: string;
@@ -83,22 +75,15 @@ async function sendEmail(recipient: string, subject: string, html: string): Prom
   }
 }
 
-/**
- * Prepares the details for an email notification without sending it.
- * This version uses the email directly from the form data.
- */
-export async function getEmailDetailsForStateChange(details: StateChangeDetails): Promise<EmailInfo | null> {
-    const { action, analysisData } = details;
+async function getEmailDetailsForVerification(action: ImprovementAction): Promise<EmailInfo> {
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9002';
     const actionUrl = `${appUrl}/actions/${action.id}`;
 
-    if (!analysisData?.verificationResponsibleUserEmail) {
+    const recipientEmail = action.analysis?.verificationResponsibleUserEmail;
+    if (!recipientEmail) {
         throw new Error("No se ha proporcionado el email del responsable de verificación.");
     }
     
-    const recipientEmail = analysisData.verificationResponsibleUserEmail;
-
-    // We still query users to get the name for a personalized email, but we don't depend on it for the email address.
     const allUsers = await getUsers();
     const userName = allUsers.find(u => u.email === recipientEmail)?.name || 'Usuario';
 
@@ -114,6 +99,31 @@ export async function getEmailDetailsForStateChange(details: StateChangeDetails)
     return { recipient: recipientEmail, subject, html, actionUrl };
 }
 
+async function getEmailDetailsForAnalysis(action: ImprovementAction): Promise<EmailInfo> {
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9002';
+    const actionUrl = `${appUrl}/actions/${action.id}`;
+
+    const recipientEmail = action.responsibleGroupId; // This is the email of the responsible group/person
+     if (!recipientEmail) {
+        throw new Error("No se ha proporcionado el email del responsable del análisis.");
+    }
+
+    const allUsers = await getUsers();
+    const userName = allUsers.find(u => u.email === recipientEmail)?.name || recipientEmail;
+    
+    const subject = `Nueva acción de mejora asignada para análisis: ${action.actionId}`;
+    const html = `
+      <h1>Nueva Acción Asignada para Análisis</h1>
+      <p>Hola ${userName},</p>
+      <p>Se te ha asignado el análisis de la nueva acción de mejora <strong>${action.actionId}: ${action.title}</strong>.</p>
+      <p>Por favor, accede a la plataforma para realizar el análisis de causas y proponer un plan de acción.</p>
+      <a href="${actionUrl}" style="background-color: #00529B; color: white; padding: 10px 15px; text-decoration: none; border-radius: 5px; display: inline-block;">Ver Acción</a>
+    `;
+
+    return { recipient: recipientEmail, subject, html, actionUrl };
+}
+
+
 /**
  * Handles sending email notifications based on the state change.
  * @returns An ActionComment to be added to the action, or null if no email was sent.
@@ -121,33 +131,33 @@ export async function getEmailDetailsForStateChange(details: StateChangeDetails)
 export async function sendStateChangeEmail(details: { action: ImprovementAction, oldStatus: string, newStatus: string }): Promise<ActionComment | null> {
     const { action, newStatus } = details;
     
+    let getDetailsFunction;
+    let notificationType = '';
+
     if (newStatus === 'Pendiente Comprobación') {
-        const responsibleEmail = action.analysis?.verificationResponsibleUserEmail;
-        if (!responsibleEmail) {
-            return { id: crypto.randomUUID(), author: { id: 'system', name: 'Sistema' }, date: new Date().toISOString(), text: "No se pudo notificar: no hay responsable de verificación asignado." };
-        }
-        
-        try {
-            const emailInfo = await getEmailDetailsForStateChange({ action, analysisData: { verificationResponsibleUserEmail: responsibleEmail } });
-            if (!emailInfo) {
-                 return { id: crypto.randomUUID(), author: { id: 'system', name: 'Sistema' }, date: new Date().toISOString(), text: "No se pudieron preparar los detalles del email de notificación." };
-            }
-
-            const previewUrl = await sendEmail(emailInfo.recipient, emailInfo.subject, emailInfo.html);
-            
-            let commentText = `Notificación de verificación enviada a ${emailInfo.recipient}.`;
-            if (previewUrl) {
-                commentText += ` Previsualización: ${previewUrl}`;
-            } else {
-                commentText += ` | ENVÍO FALLÓ.`;
-            }
-            return { id: crypto.randomUUID(), author: { id: 'system', name: 'Sistema' }, date: new Date().toISOString(), text: commentText };
-
-        } catch (error: any) {
-            console.error(`[NotificationService] Error in sendStateChangeEmail:`, error);
-            return { id: crypto.randomUUID(), author: { id: 'system', name: 'Sistema' }, date: new Date().toISOString(), text: `Error al intentar notificar: ${error.message}` };
-        }
+        getDetailsFunction = getEmailDetailsForVerification;
+        notificationType = 'verificación';
+    } else if (newStatus === 'Pendiente Análisis') {
+        getDetailsFunction = getEmailDetailsForAnalysis;
+        notificationType = 'análisis';
+    } else {
+        return null; // No notification for other state changes
     }
+        
+    try {
+        const emailInfo = await getDetailsFunction(action);
+        const previewUrl = await sendEmail(emailInfo.recipient, emailInfo.subject, emailInfo.html);
+        
+        let commentText = `Notificación de ${notificationType} enviada a ${emailInfo.recipient}.`;
+        if (previewUrl) {
+            commentText += ` Previsualización: ${previewUrl}`;
+        } else {
+            commentText += ` | ENVÍO FALLÓ.`;
+        }
+        return { id: crypto.randomUUID(), author: { id: 'system', name: 'Sistema' }, date: new Date().toISOString(), text: commentText };
 
-  return null;
+    } catch (error: any) {
+        console.error(`[NotificationService] Error in sendStateChangeEmail for ${notificationType}:`, error);
+        return { id: crypto.randomUUID(), author: { id: 'system', name: 'Sistema' }, date: new Date().toISOString(), text: `Error al intentar notificar: ${error.message}` };
+    }
 }
