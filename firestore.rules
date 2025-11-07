@@ -37,8 +37,17 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    // Default deny rule for master data collections unless specified otherwise
+    match /ambits/{docId} { allow read, write: if isSignedIn(); }
+    match /origins/{docId} { allow read, write: if isSignedIn(); }
+    match /classifications/{docId} { allow read, write: if isSignedIn(); }
+    match /locations/{docId} { allow read, write: if isSignedIn(); }
+    match /responsibilityRoles/{docId} { allow read, write: if isSignedIn(); }
+    match /permissionMatrix/{docId} { allow read, write: if isSignedIn(); }
+
+
     match /{document=**} {
-      allow read, write: if false; // Default deny all
+      allow read, write: if false; // Default deny all for any other path
     }
   }
 }
