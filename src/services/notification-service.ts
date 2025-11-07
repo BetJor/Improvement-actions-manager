@@ -84,8 +84,8 @@ async function getEmailDetailsForVerification(action: ImprovementAction): Promis
         throw new Error("No se ha proporcionado el email del responsable de verificación.");
     }
     
-    const allUsers = await getUsers();
-    const userName = allUsers.find(u => u.email === recipientEmail)?.name || 'Usuario';
+    // We will use the email as the name to avoid DB queries from the server
+    const userName = recipientEmail;
 
     const subject = `Verificación de acción de mejora pendiente: ${action.actionId}`;
     const html = `
@@ -108,8 +108,9 @@ async function getEmailDetailsForAnalysis(action: ImprovementAction): Promise<Em
         throw new Error("No se ha proporcionado el email del responsable del análisis.");
     }
 
-    const allUsers = await getUsers();
-    const userName = allUsers.find(u => u.email === recipientEmail)?.name || recipientEmail;
+    // To avoid permission issues when running from server-side,
+    // we'll just use the email as the name in the greeting.
+    const userName = recipientEmail;
     
     const subject = `Nueva acción de mejora asignada para análisis: ${action.actionId}`;
     const html = `
@@ -152,12 +153,14 @@ export async function sendStateChangeEmail(details: { action: ImprovementAction,
         if (previewUrl) {
             commentText += ` Previsualización: ${previewUrl}`;
         } else {
-            commentText += ` | ENVÍO FALLÓ.`;
+            // This case might happen if nodemailer fails for other reasons than permissions
+            commentText += ` | ENVÍO FALLÓ. Revise la configuración del servidor de correo.`;
         }
         return { id: crypto.randomUUID(), author: { id: 'system', name: 'Sistema' }, date: new Date().toISOString(), text: commentText };
 
     } catch (error: any) {
         console.error(`[NotificationService] Error in sendStateChangeEmail for ${notificationType}:`, error);
+        // The error message from getDetailsFunction (e.g., "Missing email") will be included.
         return { id: crypto.randomUUID(), author: { id: 'system', name: 'Sistema' }, date: new Date().toISOString(), text: `Error al intentar notificar: ${error.message}` };
     }
 }
