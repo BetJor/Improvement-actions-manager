@@ -42,7 +42,7 @@ export async function getUserById(userId: string): Promise<User | null> {
             return { id: userDocSnap.id, ...userDocSnap.data() } as User;
         }
 
-        console.warn(`User with ID ${userId} not found in Firestore.`);
+        console.warn(`[User Service] User with ID '${userId}' not found in Firestore. This might be expected if the user was deleted or the ID is incorrect.`);
         return null;
         
     } catch (serverError: any) {

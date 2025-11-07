@@ -31,6 +31,7 @@ import {
   DialogDescription,
   DialogFooter,
   DialogClose,
+  DialogTrigger,
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { Separator } from "./ui/separator"
@@ -278,12 +279,9 @@ export function AnalysisSection({ action, user, isAdmin, isSubmitting, onSave, o
     let errorLog: string | null = null;
   
     try {
-      emailDetails = await getEmailDetailsForStateChange({
-        action,
-        newAnalysisData: formData
-      });
+      emailDetails = await getEmailDetailsForStateChange({ action, formData });
       if (!emailDetails) {
-        throw new Error("La función getEmailDetailsForStateChange ha devuelto null. Compruebe la lógica del servidor.");
+        errorLog = "La función getEmailDetailsForStateChange ha devuelto null. Compruebe la lógica del servidor.";
       }
     } catch (e: any) {
       console.error(e);

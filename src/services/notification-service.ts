@@ -87,22 +87,18 @@ async function sendEmail(recipient: string, subject: string, html: string): Prom
 /**
  * Prepares the details for an email notification without sending it.
  */
-export async function getEmailDetailsForStateChange(details: StateChangeDetails): Promise<EmailInfo | null> {
-    const { action, newAnalysisData } = details;
+export async function getEmailDetailsForStateChange(details: { action: ImprovementAction, formData: any }): Promise<EmailInfo | null> {
+    const { action, formData } = details;
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9002';
     const actionUrl = `${appUrl}/actions/${action.id}`;
 
-    if (newAnalysisData) {
-        const responsibleId = newAnalysisData.verificationResponsibleUserId;
-        if (!responsibleId) {
-            console.warn(`[NotificationService] No verification responsible ID provided in newAnalysisData.`);
-            return null;
-        }
-
+    if (formData && formData.verificationResponsibleUserId) {
+        const responsibleId = formData.verificationResponsibleUserId;
         const user = await getUserById(responsibleId);
-        if (!user?.email) {
+
+        if (!user || !user.email) {
             console.warn(`[NotificationService] Could not find user email for verification responsible ID: ${responsibleId}`);
-            return null;
+            return null; // Return null if user or email is not found
         }
 
         const subject = `Verificación de acción de mejora pendiente: ${action.actionId}`;
@@ -115,8 +111,11 @@ export async function getEmailDetailsForStateChange(details: StateChangeDetails)
         `;
         return { recipient: user.email, subject, html, actionUrl };
     }
+    
+    // Return null if the conditions aren't met
     return null;
 }
+
 
 
 /**
@@ -150,7 +149,7 @@ export async function sendStateChangeEmail(details: { action: ImprovementAction,
         const user = await getUserById(responsibleId);
         
         if (user?.email) {
-            const emailInfo = await getEmailDetailsForStateChange({ action, newAnalysisData: action.analysis });
+            const emailInfo = await getEmailDetailsForStateChange({ action, formData: action.analysis });
             if (!emailInfo) return null;
 
             const previewUrl = await sendEmail(emailInfo.recipient, emailInfo.subject, emailInfo.html);
@@ -171,4 +170,3 @@ export async function sendStateChangeEmail(details: { action: ImprovementAction,
 
   return null;
 }
-
