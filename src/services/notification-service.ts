@@ -4,7 +4,7 @@
  * @fileOverview A service for handling notifications.
  * This service uses Nodemailer with an Ethereal test account to send emails.
  */
-
+import 'dotenv/config';
 import { ImprovementAction, User, ActionComment, ProposedAction } from '@/lib/types';
 import { getUserById, getUsers } from './users-service';
 import nodemailer from 'nodemailer';
@@ -98,6 +98,7 @@ export async function getEmailDetailsForStateChange(details: StateChangeDetails)
     
     const recipientEmail = analysisData.verificationResponsibleUserEmail;
 
+    // We still query users to get the name for a personalized email, but we don't depend on it for the email address.
     const allUsers = await getUsers();
     const userName = allUsers.find(u => u.email === recipientEmail)?.name || 'Usuario';
 
