@@ -15,7 +15,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { Loader2, PlusCircle, Trash2, CalendarIcon, Save, Mic, MicOff, Wand2, Pencil } from "lucide-react"
+import { Loader2, PlusCircle, Trash2, CalendarIcon, Save, Mic, MicOff, Wand2, Pencil, Mail, Send } from "lucide-react"
 import type { ImprovementAction, User } from "@/lib/types"
 import { cn } from "@/lib/utils"
 import { format } from "date-fns"
@@ -30,9 +30,11 @@ import {
   DialogTitle,
   DialogDescription,
   DialogFooter,
+  DialogClose,
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { Separator } from "./ui/separator"
+import { getEmailDetailsForStateChange, sendTestEmail, type EmailInfo } from "@/services/notification-service"
 
 
 const analysisSchema = z.object({
@@ -81,6 +83,11 @@ export function AnalysisSection({ action, user, isAdmin, isSubmitting, onSave, o
   const [isSuggestionDialogOpen, setIsSuggestionDialogOpen] = useState(false);
   const [hasImprovePrompt, setHasImprovePrompt] = useState(false);
   const [hasAnalysisPrompt, setHasAnalysisPrompt] = useState(false);
+  
+  const [emailInfo, setEmailInfo] = useState<EmailInfo | null>(null);
+  const [isEmailInfoLoading, setIsEmailInfoLoading] = useState(false);
+  const [isEmailDialogValid, setIsEmailDialogValid] = useState(false);
+  const [isSendingTestEmail, setIsSendingTestEmail] = useState(false);
 
   const form = useForm<AnalysisFormValues>({
     resolver: zodResolver(analysisSchema),
@@ -95,6 +102,13 @@ export function AnalysisSection({ action, user, isAdmin, isSubmitting, onSave, o
     control: form.control,
     name: "proposedActions",
   })
+  
+  const verificationResponsibleUserId = form.watch("verificationResponsibleUserId");
+
+  useEffect(() => {
+    setIsEmailDialogValid(!!verificationResponsibleUserId);
+  }, [verificationResponsibleUserId]);
+
 
   useEffect(() => {
     async function loadData() {
@@ -238,6 +252,61 @@ export function AnalysisSection({ action, user, isAdmin, isSubmitting, onSave, o
     setIsSuggestionDialogOpen(false);
     setAnalysisAiSuggestion(null);
   };
+  
+  const handlePreviewEmail = async () => {
+    setIsEmailInfoLoading(true);
+    setEmailInfo(null);
+    
+    // Ensure form data is valid before creating the temporary action object
+    const isValid = await form.trigger();
+    if (!isValid) {
+        toast({ variant: "destructive", title: "Formulario inválido", description: "Por favor, complete todos los campos requeridos antes de previsualizar." });
+        setIsEmailInfoLoading(false);
+        return;
+    }
+
+    const formData = form.getValues();
+    const tempAction = {
+      ...action,
+      analysis: {
+        ...formData,
+        analysisResponsible: action.analysis?.analysisResponsible || user,
+        analysisDate: action.analysis?.analysisDate || new Date().toISOString()
+      }
+    };
+    
+    try {
+      const details = await getEmailDetailsForStateChange({ action: tempAction, oldStatus: action.status, newStatus: 'Pendiente Comprobación'});
+      setEmailInfo(details);
+    } catch (e) {
+      console.error(e);
+      toast({ variant: "destructive", title: "Error al generar la previsualización", description: "No se pudieron obtener los detalles del email."});
+    } finally {
+      setIsEmailInfoLoading(false);
+    }
+  };
+
+  const handleSendTestEmail = async () => {
+    if (!emailInfo) return;
+    setIsSendingTestEmail(true);
+    try {
+        const previewUrl = await sendTestEmail(emailInfo);
+        if (previewUrl) {
+            toast({
+                title: "Correo de prueba enviado",
+                description: (<a href={previewUrl} target="_blank" rel="noopener noreferrer" className="underline">Ver previsualización</a>),
+                duration: 15000,
+            });
+        } else {
+            throw new Error("No se recibió URL de previsualización.");
+        }
+    } catch (e) {
+        console.error(e);
+        toast({ variant: "destructive", title: "Error al enviar el correo", description: "No se pudo enviar el correo de prueba."});
+    } finally {
+        setIsSendingTestEmail(false);
+    }
+  }
 
 
   const onSubmit = (values: AnalysisFormValues) => {
@@ -447,11 +516,47 @@ export function AnalysisSection({ action, user, isAdmin, isSubmitting, onSave, o
                 </FormItem>
               )}
             />
+            
+            <Separator />
+            
+            <div className="flex items-center gap-4">
+                <Button type="submit" disabled={isSubmitting}>
+                  {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                  Guardar Análisis y Avanzar
+                </Button>
+                <div className="border-l pl-4 space-x-2">
+                    <Dialog>
+                        <DialogTrigger asChild>
+                            <Button type="button" variant="secondary" onClick={handlePreviewEmail} disabled={isEmailInfoLoading || !isEmailDialogValid}>
+                                {isEmailInfoLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Mail className="mr-2 h-4 w-4" />}
+                                1. Previsualizar Correo
+                            </Button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-2xl">
+                            <DialogHeader>
+                                <DialogTitle>Previsualización del Correo de Notificación</DialogTitle>
+                                <DialogDescription>Este es el correo que se enviará al responsable de la verificación.</DialogDescription>
+                            </DialogHeader>
+                            {emailInfo ? (
+                                <div className="space-y-4 py-4">
+                                    <p><strong>Destinatario:</strong> {emailInfo.recipient}</p>
+                                    <p><strong>Asunto:</strong> {emailInfo.subject}</p>
+                                    <Separator />
+                                    <div className="p-4 border rounded-md bg-muted/30 max-h-96 overflow-y-auto" dangerouslySetInnerHTML={{ __html: emailInfo.html }}></div>
+                                </div>
+                            ) : <p className="py-4">No se pudo generar la información del correo. Asegúrate de que has asignado un responsable de verificación.</p>}
+                            <DialogFooter>
+                                <DialogClose asChild><Button variant="outline">Cerrar</Button></DialogClose>
+                            </DialogFooter>
+                        </DialogContent>
+                    </Dialog>
+                    <Button type="button" variant="secondary" onClick={handleSendTestEmail} disabled={!emailInfo || isSendingTestEmail}>
+                        {isSendingTestEmail ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
+                        2. Enviar Correo de Prueba
+                    </Button>
+                </div>
+            </div>
 
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-              Guardar Análisis y Avanzar
-            </Button>
           </form>
         </Form>
       </CardContent>
@@ -502,5 +607,3 @@ export function AnalysisSection({ action, user, isAdmin, isSubmitting, onSave, o
     </>
   )
 }
-
-    

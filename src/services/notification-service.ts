@@ -9,10 +9,17 @@ import { ImprovementAction, User, ActionComment, ProposedAction } from '@/lib/ty
 import { getUserById } from './users-service';
 import nodemailer from 'nodemailer';
 
-interface EmailDetails {
+interface StateChangeDetails {
   action: ImprovementAction;
   oldStatus: string;
   newStatus: string;
+}
+
+export interface EmailInfo {
+    recipient: string;
+    subject: string;
+    html: string;
+    actionUrl: string;
 }
 
 // Cached transporter object.
@@ -74,54 +81,88 @@ async function sendEmail(recipient: string, subject: string, html: string): Prom
 }
 
 /**
+ * Prepares the details for an email notification without sending it.
+ */
+export async function getEmailDetailsForStateChange(details: StateChangeDetails): Promise<EmailInfo | null> {
+    const { action, newStatus } = details;
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9002';
+    const actionUrl = `${appUrl}/actions/${action.id}`;
+
+    if (newStatus === 'Pendiente Comprobación') {
+        if (!action.analysis?.verificationResponsibleUserId) {
+            console.warn(`[NotificationService] Action ${action.actionId} has no verification responsible.`);
+            return null;
+        }
+
+        const user = await getUserById(action.analysis.verificationResponsibleUserId);
+        if (!user?.email) {
+            console.warn(`[NotificationService] Could not find user email for verification responsible ID: ${action.analysis.verificationResponsibleUserId}`);
+            return null;
+        }
+
+        const subject = `Verificación de acción de mejora pendiente: ${action.actionId}`;
+        const html = `
+          <h1>Tarea de Verificación Asignada</h1>
+          <p>Hola ${user.name},</p>
+          <p>Se te ha asignado la verificación de la implementación de la acción de mejora <strong>${action.actionId}: ${action.title}</strong>.</p>
+          <p>Por favor, accede a la plataforma para revisar el plan de acción y verificar su eficacia.</p>
+          <a href="${actionUrl}" style="background-color: #00529B; color: white; padding: 10px 15px; text-decoration: none; border-radius: 5px; display: inline-block;">Ver Acción</a>
+        `;
+        return { recipient: user.email, subject, html, actionUrl };
+    }
+    return null;
+}
+
+
+/**
+ * Sends a pre-formatted email for testing purposes.
+ */
+export async function sendTestEmail(emailInfo: EmailInfo): Promise<string | null> {
+    return await sendEmail(emailInfo.recipient, emailInfo.subject, emailInfo.html);
+}
+
+
+/**
  * Handles sending email notifications based on the state change.
  * @returns An ActionComment to be added to the action, or null if no email was sent.
  */
-export async function sendStateChangeEmail(details: EmailDetails): Promise<ActionComment | null> {
+export async function sendStateChangeEmail(details: StateChangeDetails): Promise<ActionComment | null> {
   // --- TRACE POINT ---
   // Display the exact data received by the function for debugging.
   console.log("--- [Notification Service] Preparing to send email. Data received: ---");
   console.log(JSON.stringify(details, null, 2));
   // --------------------
 
-  const { action, newStatus } = details;
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9002';
-  const actionUrl = `${appUrl}/actions/${action.id}`;
-
-  if (newStatus === 'Pendiente Comprobación') {
-    if (!action.analysis?.verificationResponsibleUserId) {
-        console.warn(`[NotificationService] Action ${action.actionId} has no verification responsible.`);
-        return { id: crypto.randomUUID(), author: { id: 'system', name: 'Sistema' }, date: new Date().toISOString(), text: "No se pudo notificar: no hay responsable de verificación asignado." };
-    }
+    const { action, newStatus } = details;
     
-    const user = await getUserById(action.analysis.verificationResponsibleUserId);
+    // For now, only handle this specific transition.
+    if (newStatus === 'Pendiente Comprobación') {
+        if (!action.analysis?.verificationResponsibleUserId) {
+            console.warn(`[NotificationService] Action ${action.actionId} has no verification responsible.`);
+            return { id: crypto.randomUUID(), author: { id: 'system', name: 'Sistema' }, date: new Date().toISOString(), text: "No se pudo notificar: no hay responsable de verificación asignado." };
+        }
+        
+        const user = await getUserById(action.analysis.verificationResponsibleUserId);
+        
+        if (user?.email) {
+            const emailInfo = await getEmailDetailsForStateChange(details);
+            if (!emailInfo) return null;
 
-    if (user?.email) {
-      const subject = `Verificación de acción de mejora pendiente: ${action.actionId}`;
-      const html = `
-        <h1>Tarea de Verificación Asignada</h1>
-        <p>Hola ${user.name},</p>
-        <p>Se te ha asignado la verificación de la implementación de la acción de mejora <strong>${action.actionId}: ${action.title}</strong>.</p>
-        <p>Por favor, accede a la plataforma para revisar el plan de acción y verificar su eficacia.</p>
-        <a href="${actionUrl}" style="background-color: #00529B; color: white; padding: 10px 15px; text-decoration: none; border-radius: 5px; display: inline-block;">Ver Acción</a>
-      `;
-      const previewUrl = await sendEmail(user.email, subject, html);
-      
-      let commentText = `Notificación de verificación enviada a ${user.email}.`;
-      if (previewUrl) {
-          commentText += ` Previsualización: ${previewUrl}`;
-      } else {
-          commentText += ` | ENVÍO FALLÓ.`;
-      }
-      return { id: crypto.randomUUID(), author: { id: 'system', name: 'Sistema' }, date: new Date().toISOString(), text: commentText };
+            const previewUrl = await sendEmail(emailInfo.recipient, emailInfo.subject, emailInfo.html);
+            
+            let commentText = `Notificación de verificación enviada a ${user.email}.`;
+            if (previewUrl) {
+                commentText += ` Previsualización: ${previewUrl}`;
+            } else {
+                commentText += ` | ENVÍO FALLÓ.`;
+            }
+            return { id: crypto.randomUUID(), author: { id: 'system', name: 'Sistema' }, date: new Date().toISOString(), text: commentText };
 
-    } else {
-         console.warn(`[NotificationService] Could not find user email for verification responsible ID: ${action.analysis.verificationResponsibleUserId}`);
-         return { id: crypto.randomUUID(), author: { id: 'system', name: 'Sistema' }, date: new Date().toISOString(), text: "No se pudo notificar al responsable de la verificación: usuario no encontrado." };
+        } else {
+             console.warn(`[NotificationService] Could not find user email for verification responsible ID: ${action.analysis.verificationResponsibleUserId}`);
+             return { id: crypto.randomUUID(), author: { id: 'system', name: 'Sistema' }, date: new Date().toISOString(), text: "No se pudo notificar al responsable de la verificación: usuario no encontrado." };
+        }
     }
-  }
 
-  // Handle other status changes in the future...
-  
   return null;
 }
