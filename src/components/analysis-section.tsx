@@ -44,12 +44,12 @@ const analysisSchema = z.object({
     z.object({
       id: z.string().optional(),
       description: z.string().min(1, "La descripción es requerida."),
-      responsibleUserId: z.string().min(1, "El responsable es requerido."),
+      responsibleUserEmail: z.string().email("El email del responsable no es válido."),
       dueDate: z.date({ required_error: "La fecha de vencimiento es requerida." }),
       status: z.enum(["Pendiente", "Implementada", "Implementada Parcialmente", "No Implementada"]).default("Pendiente"),
     })
   ).min(1, "Se debe proponer al menos una acción."),
-  verificationResponsibleUserId: z.string().min(1, "El responsable de verificación es requerido."),
+  verificationResponsibleUserEmail: z.string().email("El email del responsable de verificación no es válido."),
 })
 
 type AnalysisFormValues = z.infer<typeof analysisSchema>
@@ -99,8 +99,13 @@ export function AnalysisSection({ action, user, isAdmin, isSubmitting, onSave, o
     resolver: zodResolver(analysisSchema),
     defaultValues: {
       causes: action.analysis?.causes || "",
-      proposedActions: action.analysis?.proposedActions.map(pa => ({...pa, dueDate: new Date(pa.dueDate), status: pa.status || 'Pendiente'})) || [],
-      verificationResponsibleUserId: action.analysis?.verificationResponsibleUserId || "",
+      proposedActions: action.analysis?.proposedActions.map(pa => ({
+          ...pa, 
+          responsibleUserEmail: users.find(u => u.id === pa.responsibleUserId)?.email || '', // Needs users to be loaded
+          dueDate: new Date(pa.dueDate), 
+          status: pa.status || 'Pendiente'
+      })) || [],
+      verificationResponsibleUserEmail: users.find(u => u.id === action.analysis?.verificationResponsibleUserId)?.email || "", // Needs users to be loaded
     },
   })
 
@@ -109,11 +114,11 @@ export function AnalysisSection({ action, user, isAdmin, isSubmitting, onSave, o
     name: "proposedActions",
   })
   
-  const verificationResponsibleUserId = form.watch("verificationResponsibleUserId");
+  const verificationResponsibleUserEmail = form.watch("verificationResponsibleUserEmail");
 
   const isEmailDialogDataValid = useMemo(() => {
-    return !!verificationResponsibleUserId;
-  }, [verificationResponsibleUserId]);
+    return !!verificationResponsibleUserEmail;
+  }, [verificationResponsibleUserEmail]);
 
 
   useEffect(() => {
@@ -122,6 +127,17 @@ export function AnalysisSection({ action, user, isAdmin, isSubmitting, onSave, o
         try {
             const fetchedUsers = await getUsers();
             setUsers(fetchedUsers);
+            // Once users are loaded, reset form with correct emails
+            form.reset({
+                causes: action.analysis?.causes || "",
+                proposedActions: action.analysis?.proposedActions.map(pa => ({
+                    ...pa,
+                    responsibleUserEmail: fetchedUsers.find(u => u.id === pa.responsibleUserId)?.email || '',
+                    dueDate: new Date(pa.dueDate),
+                    status: pa.status || 'Pendiente'
+                })) || [],
+                verificationResponsibleUserEmail: fetchedUsers.find(u => u.id === action.analysis?.verificationResponsibleUserId)?.email || ""
+            });
         } catch (error) {
             console.error("Failed to load users for analysis section", error);
             toast({ variant: "destructive", title: "Error", description: "No se han podido cargar los usuarios." });
@@ -130,7 +146,7 @@ export function AnalysisSection({ action, user, isAdmin, isSubmitting, onSave, o
         }
     }
     loadData();
-  }, [toast]);
+  }, [action.analysis, form.reset, toast]);
 
   useEffect(() => {
     async function checkPrompts() {
@@ -249,7 +265,7 @@ export function AnalysisSection({ action, user, isAdmin, isSubmitting, onSave, o
       const newActions = analysisAiSuggestion.proposedActions.map(action => ({
         id: crypto.randomUUID(),
         description: action.description,
-        responsibleUserId: '',
+        responsibleUserEmail: '', // Changed to email
         dueDate: new Date(), 
         status: 'Pendiente' as const
       }));
@@ -279,10 +295,13 @@ export function AnalysisSection({ action, user, isAdmin, isSubmitting, onSave, o
     let errorLog: string | null = null;
   
     try {
-      emailDetails = await getEmailDetailsForStateChange({ action, analysisData: formData });
+        emailDetails = await getEmailDetailsForStateChange({ action, analysisData: formData });
+        if (!emailDetails) {
+            throw new Error("La función getEmailDetailsForStateChange ha devuelto null. Compruebe la lógica del servidor.");
+        }
     } catch (e: any) {
-      console.error(e);
-      errorLog = e.message || "Error desconocido al obtener los detalles del email.";
+        console.error(e);
+        errorLog = e.message || "Error desconocido al obtener los detalles del email.";
     }
     
     setDebugInfo({ formData, emailDetails, error: errorLog });
@@ -317,19 +336,21 @@ export function AnalysisSection({ action, user, isAdmin, isSubmitting, onSave, o
 
   const onSubmit = (values: AnalysisFormValues) => {
     const analysisData = {
-        ...values,
-        proposedActions: values.proposedActions.map(pa => ({
-            ...pa,
-            id: pa.id || crypto.randomUUID(),
-        })),
-        analysisResponsible: {
-            id: user.id,
-            name: user.name || "Usuario desconocido",
-            avatar: user.avatar || "",
-        },
-        analysisDate: new Date().toISOString(),
-    }
-    onSave(analysisData)
+      causes: values.causes,
+      proposedActions: values.proposedActions.map(pa => ({
+        ...pa,
+        id: pa.id || crypto.randomUUID(),
+        responsibleUserId: users.find(u => u.email === pa.responsibleUserEmail)?.id || '',
+      })),
+      verificationResponsibleUserId: users.find(u => u.email === values.verificationResponsibleUserEmail)?.id || '',
+      analysisResponsible: {
+        id: user.id,
+        name: user.name || "Usuario desconocido",
+        avatar: user.avatar || "",
+      },
+      analysisDate: new Date().toISOString(),
+    };
+    onSave(analysisData);
   }
 
   if (isLoadingUsers) {
@@ -421,11 +442,11 @@ export function AnalysisSection({ action, user, isAdmin, isSubmitting, onSave, o
                     <div className="grid md:grid-cols-2 gap-4">
                         <FormField
                         control={form.control}
-                        name={`proposedActions.${index}.responsibleUserId`}
+                        name={`proposedActions.${index}.responsibleUserEmail`}
                         render={({ field }) => (
                             <FormItem>
                                 <FormLabel>Responsable</FormLabel>
-                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <Select onValueChange={field.onChange} value={field.value}>
                                     <FormControl>
                                         <SelectTrigger>
                                             <SelectValue placeholder="Selecciona un usuario" />
@@ -433,7 +454,7 @@ export function AnalysisSection({ action, user, isAdmin, isSubmitting, onSave, o
                                     </FormControl>
                                     <SelectContent>
                                         {users.map((user) => (
-                                            <SelectItem key={user.id} value={user.id!}>{user.name}</SelectItem>
+                                            <SelectItem key={user.id} value={user.email}>{user.name}</SelectItem>
                                         ))}
                                     </SelectContent>
                                 </Select>
@@ -493,7 +514,7 @@ export function AnalysisSection({ action, user, isAdmin, isSubmitting, onSave, o
                 type="button"
                 variant="outline"
                 size="sm"
-                onClick={() => append({ description: "", responsibleUserId: "", dueDate: new Date(), status: 'Pendiente' })}
+                onClick={() => append({ description: "", responsibleUserEmail: "", dueDate: new Date(), status: 'Pendiente' })}
               >
                 <PlusCircle className="mr-2 h-4 w-4" />
                 Añadir Acción
@@ -502,11 +523,11 @@ export function AnalysisSection({ action, user, isAdmin, isSubmitting, onSave, o
 
             <FormField
               control={form.control}
-              name="verificationResponsibleUserId"
+              name="verificationResponsibleUserEmail"
               render={({ field }) => (
                 <FormItem>
                     <FormLabel className="text-lg font-semibold">Responsable de la Verificación</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                             <SelectTrigger className="md:max-w-sm">
                                 <SelectValue placeholder="Selecciona el usuario que verificará la eficacia" />
@@ -514,7 +535,7 @@ export function AnalysisSection({ action, user, isAdmin, isSubmitting, onSave, o
                         </FormControl>
                         <SelectContent>
                             {users.map((user) => (
-                                <SelectItem key={user.id} value={user.id!}>{user.name}</SelectItem>
+                                <SelectItem key={user.id} value={user.email}>{user.name}</SelectItem>
                             ))}
                         </SelectContent>
                     </Select>

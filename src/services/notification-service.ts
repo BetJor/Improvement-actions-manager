@@ -13,7 +13,7 @@ import nodemailer from 'nodemailer';
 interface StateChangeDetails {
   action: ImprovementAction;
   analysisData?: {
-    verificationResponsibleUserId: string;
+    verificationResponsibleUserEmail: string;
     // ... other analysis data
   };
 }
@@ -92,33 +92,24 @@ export async function getEmailDetailsForStateChange(details: StateChangeDetails)
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9002';
     const actionUrl = `${appUrl}/actions/${action.id}`;
 
-    if (analysisData?.verificationResponsibleUserId) {
-        const responsibleId = analysisData.verificationResponsibleUserId;
-        const user = await getUserById(responsibleId);
+    if (analysisData?.verificationResponsibleUserEmail) {
+        const recipientEmail = analysisData.verificationResponsibleUserEmail;
+        // We find the user just to get their name for the email body.
+        // The recipient is the email itself.
+        const allUsers = await getUsers();
+        const user = allUsers.find(u => u.email === recipientEmail);
+        const userName = user ? user.name : 'Usuario';
 
-        if (!user) {
-            // Diagnostic step: Try to access the collection in general.
-            try {
-                const allUsers = await getUsers();
-                throw new Error(`No s'ha trobat l'usuari amb ID: ${responsibleId}, tot i que s'ha pogut accedir a la col·lecció 'users' (s'han trobat ${allUsers.length} usuaris en total). Comprova que l'ID és correcte.`);
-            } catch (collectionError) {
-                 throw new Error(`No s'ha trobat l'usuari amb ID: ${responsibleId}. A més, s'ha produït un error en intentar accedir a la col·lecció 'users', la qual cosa suggereix un problema de permisos generals.`);
-            }
-        }
-        
-        if (!user.email) {
-            throw new Error(`Error: L'usuari amb ID ${responsibleId} ('${user.name}') s'ha trobat, però no té un camp 'email' vàlid.`);
-        }
 
         const subject = `Verificación de acción de mejora pendiente: ${action.actionId}`;
         const html = `
           <h1>Tarea de Verificación Asignada</h1>
-          <p>Hola ${user.name},</p>
+          <p>Hola ${userName},</p>
           <p>Se te ha asignado la verificación de la implementación de la acción de mejora <strong>${action.actionId}: ${action.title}</strong>.</p>
           <p>Por favor, accede a la plataforma para revisar el plan de acción y verificar su eficacia.</p>
           <a href="${actionUrl}" style="background-color: #00529B; color: white; padding: 10px 15px; text-decoration: none; border-radius: 5px; display: inline-block;">Ver Acción</a>
         `;
-        return { recipient: user.email, subject, html, actionUrl };
+        return { recipient: recipientEmail, subject, html, actionUrl };
     }
     
     return null;
@@ -154,7 +145,7 @@ export async function sendStateChangeEmail(details: { action: ImprovementAction,
         const user = await getUserById(responsibleId);
         
         if (user?.email) {
-            const emailInfo = await getEmailDetailsForStateChange({ action, analysisData: action.analysis });
+            const emailInfo = await getEmailDetailsForStateChange({ action, analysisData: { verificationResponsibleUserEmail: user.email } });
             if (!emailInfo) return null;
 
             const previewUrl = await sendEmail(emailInfo.recipient, emailInfo.subject, emailInfo.html);
