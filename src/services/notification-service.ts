@@ -11,9 +11,13 @@ import nodemailer from 'nodemailer';
 
 interface StateChangeDetails {
   action: ImprovementAction;
-  oldStatus: string;
   newStatus: string;
+  newAnalysisData?: {
+    verificationResponsibleUserId: string;
+    // ... other analysis data
+  };
 }
+
 
 export interface EmailInfo {
     recipient: string;
@@ -84,19 +88,20 @@ async function sendEmail(recipient: string, subject: string, html: string): Prom
  * Prepares the details for an email notification without sending it.
  */
 export async function getEmailDetailsForStateChange(details: StateChangeDetails): Promise<EmailInfo | null> {
-    const { action, newStatus } = details;
+    const { action, newStatus, newAnalysisData } = details;
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9002';
     const actionUrl = `${appUrl}/actions/${action.id}`;
 
     if (newStatus === 'Pendiente Comprobación') {
-        if (!action.analysis?.verificationResponsibleUserId) {
-            console.warn(`[NotificationService] Action ${action.actionId} has no verification responsible.`);
+        const responsibleId = newAnalysisData?.verificationResponsibleUserId;
+        if (!responsibleId) {
+            console.warn(`[NotificationService] No verification responsible ID provided.`);
             return null;
         }
 
-        const user = await getUserById(action.analysis.verificationResponsibleUserId);
+        const user = await getUserById(responsibleId);
         if (!user?.email) {
-            console.warn(`[NotificationService] Could not find user email for verification responsible ID: ${action.analysis.verificationResponsibleUserId}`);
+            console.warn(`[NotificationService] Could not find user email for verification responsible ID: ${responsibleId}`);
             return null;
         }
 
@@ -137,12 +142,13 @@ export async function sendStateChangeEmail(details: StateChangeDetails): Promise
     
     // For now, only handle this specific transition.
     if (newStatus === 'Pendiente Comprobación') {
-        if (!action.analysis?.verificationResponsibleUserId) {
+        const responsibleId = details.newAnalysisData?.verificationResponsibleUserId;
+        if (!responsibleId) {
             console.warn(`[NotificationService] Action ${action.actionId} has no verification responsible.`);
             return { id: crypto.randomUUID(), author: { id: 'system', name: 'Sistema' }, date: new Date().toISOString(), text: "No se pudo notificar: no hay responsable de verificación asignado." };
         }
         
-        const user = await getUserById(action.analysis.verificationResponsibleUserId);
+        const user = await getUserById(responsibleId);
         
         if (user?.email) {
             const emailInfo = await getEmailDetailsForStateChange(details);
@@ -159,7 +165,7 @@ export async function sendStateChangeEmail(details: StateChangeDetails): Promise
             return { id: crypto.randomUUID(), author: { id: 'system', name: 'Sistema' }, date: new Date().toISOString(), text: commentText };
 
         } else {
-             console.warn(`[NotificationService] Could not find user email for verification responsible ID: ${action.analysis.verificationResponsibleUserId}`);
+             console.warn(`[NotificationService] Could not find user email for verification responsible ID: ${responsibleId}`);
              return { id: crypto.randomUUID(), author: { id: 'system', name: 'Sistema' }, date: new Date().toISOString(), text: "No se pudo notificar al responsable de la verificación: usuario no encontrado." };
         }
     }

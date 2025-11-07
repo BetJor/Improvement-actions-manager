@@ -1,4 +1,5 @@
 
+
 "use client"
 
 import { useState, useEffect, useRef, useMemo } from "react"
@@ -270,21 +271,11 @@ export function AnalysisSection({ action, user, isAdmin, isSubmitting, onSave, o
     }
   
     const formData = form.getValues();
-    const tempAction = {
-      ...action,
-      analysis: {
-        causes: formData.causes,
-        proposedActions: formData.proposedActions.map(pa => ({ ...pa, dueDate: pa.dueDate.toISOString() })),
-        verificationResponsibleUserId: formData.verificationResponsibleUserId,
-        analysisResponsible: action.analysis?.analysisResponsible || user,
-        analysisDate: action.analysis?.analysisDate || new Date().toISOString(),
-      },
-    };
   
     try {
       const details = await getEmailDetailsForStateChange({
-        action: tempAction,
-        oldStatus: action.status,
+        action: action, // Pass original action
+        newAnalysisData: formData, // Pass new form data
         newStatus: 'Pendiente Comprobación',
       });
       setEmailInfo(details);
