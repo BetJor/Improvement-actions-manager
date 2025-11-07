@@ -63,6 +63,12 @@ interface AnalysisSectionProps {
   onEditField: (field: string, label: string, value: any, options?: any, fieldType?: string) => void;
 }
 
+interface DebugInfo {
+  formData: AnalysisFormValues | null;
+  emailDetails: EmailInfo | null;
+  error: string | null;
+}
+
 export function AnalysisSection({ action, user, isAdmin, isSubmitting, onSave, onEditField }: AnalysisSectionProps) {
   const { toast } = useToast()
 
@@ -85,8 +91,7 @@ export function AnalysisSection({ action, user, isAdmin, isSubmitting, onSave, o
   const [hasImprovePrompt, setHasImprovePrompt] = useState(false);
   const [hasAnalysisPrompt, setHasAnalysisPrompt] = useState(false);
   
-  const [emailInfo, setEmailInfo] = useState<EmailInfo | null>(null);
-  const [isEmailInfoLoading, setIsEmailInfoLoading] = useState(false);
+  const [debugInfo, setDebugInfo] = useState<DebugInfo | null>(null);
   const [isEmailDialogVisible, setIsEmailDialogVisible] = useState(false);
   const [isSendingTestEmail, setIsSendingTestEmail] = useState(false);
 
@@ -255,47 +260,49 @@ export function AnalysisSection({ action, user, isAdmin, isSubmitting, onSave, o
   };
   
   const handlePreviewEmail = async () => {
-    setIsEmailInfoLoading(true);
+    setDebugInfo(null);
     setIsEmailDialogVisible(true);
-    setEmailInfo(null);
   
     const isValid = await form.trigger();
     if (!isValid) {
       toast({
         variant: "destructive",
         title: "Formulario inválido",
-        description: "Por favor, complete todos los campos requeridos antes de previsualizar.",
+        description: "Por favor, complete todos los campos requeridos.",
       });
-      setIsEmailInfoLoading(false);
+      setIsEmailDialogVisible(false);
       return;
     }
   
     const formData = form.getValues();
+    let emailDetails: EmailInfo | null = null;
+    let errorLog: string | null = null;
   
     try {
-      const details = await getEmailDetailsForStateChange({
+      emailDetails = await getEmailDetailsForStateChange({
         action: action, 
-        newAnalysisData: formData, // Pass new form data
-        newStatus: 'Pendiente Comprobación',
+        newAnalysisData: formData,
       });
-      setEmailInfo(details);
-    } catch (e) {
+      if (!emailDetails) {
+        throw new Error("La función getEmailDetailsForStateChange ha devuelto null. Compruebe la lógica del servidor.");
+      }
+    } catch (e: any) {
       console.error(e);
-      toast({
-        variant: "destructive",
-        title: "Error al generar la previsualización",
-        description: "No se pudieron obtener los detalles del email.",
-      });
-    } finally {
-      setIsEmailInfoLoading(false);
+      errorLog = e.message || "Error desconocido al obtener los detalles del email.";
     }
+    
+    setDebugInfo({ formData, emailDetails, error: errorLog });
   };
 
+
   const handleSendTestEmail = async () => {
-    if (!emailInfo) return;
+    if (!debugInfo || !debugInfo.emailDetails) {
+        toast({ variant: "destructive", title: "Error", description: "Primero previsualiza los datos del correo."});
+        return;
+    };
     setIsSendingTestEmail(true);
     try {
-        const previewUrl = await sendTestEmail(emailInfo);
+        const previewUrl = await sendTestEmail(debugInfo.emailDetails);
         if (previewUrl) {
             toast({
                 title: "Correo de prueba enviado",
@@ -530,34 +537,11 @@ export function AnalysisSection({ action, user, isAdmin, isSubmitting, onSave, o
                   Guardar Análisis y Avanzar
                 </Button>
                 <div className="border-l pl-4 space-x-2">
-                    <Dialog open={isEmailDialogVisible} onOpenChange={setIsEmailDialogVisible}>
-                        <DialogTrigger asChild>
-                            <Button type="button" variant="secondary" onClick={handlePreviewEmail} disabled={!isEmailDialogDataValid}>
-                                {isEmailInfoLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Mail className="mr-2 h-4 w-4" />}
-                                1. Previsualizar Correo
-                            </Button>
-                        </DialogTrigger>
-                        <DialogContent className="max-w-2xl">
-                            <DialogHeader>
-                                <DialogTitle>Previsualización del Correo de Notificación</DialogTitle>
-                                <DialogDescription>Este es el correo que se enviará al responsable de la verificación.</DialogDescription>
-                            </DialogHeader>
-                            {isEmailInfoLoading ? (
-                                <div className="py-4 flex justify-center items-center h-48"><Loader2 className="h-8 w-8 animate-spin" /></div>
-                            ) : emailInfo ? (
-                                <div className="space-y-4 py-4">
-                                    <p><strong>Destinatario:</strong> {emailInfo.recipient}</p>
-                                    <p><strong>Asunto:</strong> {emailInfo.subject}</p>
-                                    <Separator />
-                                    <div className="p-4 border rounded-md bg-muted/30 max-h-96 overflow-y-auto" dangerouslySetInnerHTML={{ __html: emailInfo.html }}></div>
-                                </div>
-                            ) : <p className="py-4">No se pudo generar la información del correo. Asegúrate de que has asignado un responsable de verificación.</p>}
-                            <DialogFooter>
-                                <DialogClose asChild><Button variant="outline">Cerrar</Button></DialogClose>
-                            </DialogFooter>
-                        </DialogContent>
-                    </Dialog>
-                    <Button type="button" variant="secondary" onClick={handleSendTestEmail} disabled={!emailInfo || isSendingTestEmail}>
+                    <Button type="button" variant="secondary" onClick={handlePreviewEmail} disabled={!isEmailDialogDataValid}>
+                        <Mail className="mr-2 h-4 w-4" />
+                        1. Previsualizar Correo
+                    </Button>
+                    <Button type="button" variant="secondary" onClick={handleSendTestEmail} disabled={!debugInfo || !debugInfo.emailDetails || isSendingTestEmail}>
                         {isSendingTestEmail ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
                         2. Enviar Correo de Prueba
                     </Button>
@@ -568,6 +552,43 @@ export function AnalysisSection({ action, user, isAdmin, isSubmitting, onSave, o
         </Form>
       </CardContent>
     </Card>
+
+    <Dialog open={isEmailDialogVisible} onOpenChange={setIsEmailDialogVisible}>
+        <DialogContent className="max-w-3xl">
+            <DialogHeader>
+                <DialogTitle>Información de Depuración del Correo</DialogTitle>
+                <DialogDescription>A continuació es mostren les dades recollides i les que es preparen per a l'enviament.</DialogDescription>
+            </DialogHeader>
+            {!debugInfo ? (
+                <div className="py-4 flex justify-center items-center h-48"><Loader2 className="h-8 w-8 animate-spin" /></div>
+            ) : (
+                <div className="grid grid-cols-2 gap-4 max-h-[60vh] overflow-y-auto p-1">
+                    <div className="space-y-2">
+                        <h3 className="font-semibold">1. Dades Recollides del Formulari</h3>
+                        <pre className="p-2 border rounded-md bg-muted/30 text-xs overflow-x-auto">
+                            {JSON.stringify(debugInfo.formData, null, 2)}
+                        </pre>
+                    </div>
+                     <div className="space-y-2">
+                        <h3 className="font-semibold">2. Dades Preparades per a l'Email</h3>
+                        {debugInfo.error ? (
+                            <pre className="p-2 border rounded-md bg-destructive/10 text-destructive text-xs overflow-x-auto">
+                                Error: {debugInfo.error}
+                            </pre>
+                        ) : (
+                            <pre className="p-2 border rounded-md bg-muted/30 text-xs overflow-x-auto">
+                                {JSON.stringify(debugInfo.emailDetails, null, 2)}
+                            </pre>
+                        )}
+                    </div>
+                </div>
+            )}
+            <DialogFooter>
+                <DialogClose asChild><Button variant="outline">Tancar</Button></DialogClose>
+            </DialogFooter>
+        </DialogContent>
+    </Dialog>
+
 
     <Dialog open={isSuggestionDialogOpen} onOpenChange={setIsSuggestionDialogOpen}>
         <DialogContent className="sm:max-w-2xl">

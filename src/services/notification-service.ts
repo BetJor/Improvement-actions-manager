@@ -12,7 +12,6 @@ import nodemailer from 'nodemailer';
 
 interface StateChangeDetails {
   action: ImprovementAction;
-  newStatus: string;
   newAnalysisData?: {
     verificationResponsibleUserId: string;
     // ... other analysis data
@@ -89,14 +88,16 @@ async function sendEmail(recipient: string, subject: string, html: string): Prom
  * Prepares the details for an email notification without sending it.
  */
 export async function getEmailDetailsForStateChange(details: StateChangeDetails): Promise<EmailInfo | null> {
-    const { action, newStatus, newAnalysisData } = details;
+    const { action, newAnalysisData } = details;
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9002';
     const actionUrl = `${appUrl}/actions/${action.id}`;
 
-    if (newStatus === 'Pendiente Comprobación') {
-        const responsibleId = newAnalysisData?.verificationResponsibleUserId;
+    // Aquest és el punt clau. Abans només comprovava newStatus.
+    // Ara mirem si tenim newAnalysisData, que és el que conté l'ID del responsable de verificació.
+    if (newAnalysisData) {
+        const responsibleId = newAnalysisData.verificationResponsibleUserId;
         if (!responsibleId) {
-            console.warn(`[NotificationService] No verification responsible ID provided.`);
+            console.warn(`[NotificationService] No verification responsible ID provided in newAnalysisData.`);
             return null;
         }
 
@@ -132,18 +133,17 @@ export async function sendTestEmail(emailInfo: EmailInfo): Promise<string | null
  * Handles sending email notifications based on the state change.
  * @returns An ActionComment to be added to the action, or null if no email was sent.
  */
-export async function sendStateChangeEmail(details: StateChangeDetails): Promise<ActionComment | null> {
-  // --- TRACE POINT ---
-  // Display the exact data received by the function for debugging.
-  console.log("--- [Notification Service] Preparing to send email. Data received: ---");
-  console.log(JSON.stringify(details, null, 2));
-  // --------------------
+export async function sendStateChangeEmail(details: { action: ImprovementAction, oldStatus: string, newStatus: string }): Promise<ActionComment | null> {
+    // --- TRACE POINT ---
+    // Display the exact data received by the function for debugging.
+    console.log("--- [Notification Service] Preparing to send email. Data received: ---");
+    console.log(JSON.stringify(details, null, 2));
+    // --------------------
 
     const { action, newStatus } = details;
     
-    // For now, only handle this specific transition.
     if (newStatus === 'Pendiente Comprobación') {
-        const responsibleId = details.newAnalysisData?.verificationResponsibleUserId;
+        const responsibleId = action.analysis?.verificationResponsibleUserId;
         if (!responsibleId) {
             console.warn(`[NotificationService] Action ${action.actionId} has no verification responsible.`);
             return { id: crypto.randomUUID(), author: { id: 'system', name: 'Sistema' }, date: new Date().toISOString(), text: "No se pudo notificar: no hay responsable de verificación asignado." };
@@ -152,7 +152,7 @@ export async function sendStateChangeEmail(details: StateChangeDetails): Promise
         const user = await getUserById(responsibleId);
         
         if (user?.email) {
-            const emailInfo = await getEmailDetailsForStateChange(details);
+            const emailInfo = await getEmailDetailsForStateChange({ action, newAnalysisData: action.analysis });
             if (!emailInfo) return null;
 
             const previewUrl = await sendEmail(emailInfo.recipient, emailInfo.subject, emailInfo.html);
