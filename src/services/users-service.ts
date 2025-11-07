@@ -35,14 +35,26 @@ export async function getUserById(userId: string): Promise<User | null> {
     
     const userDocRef = doc(db, 'users', userId);
     
-    const userDocSnap = await getDoc(userDocRef);
+    try {
+        const userDocSnap = await getDoc(userDocRef);
 
-    if (userDocSnap.exists()) {
-        return { id: userDocSnap.id, ...userDocSnap.data() } as User;
+        if (userDocSnap.exists()) {
+            return { id: userDocSnap.id, ...userDocSnap.data() } as User;
+        }
+
+        console.warn(`[User Service] User with ID '${userId}' not found in Firestore. This might be expected if the user was deleted or the ID is incorrect.`);
+        return null;
+    } catch (serverError: any) {
+        // Create and emit a contextual error for permission issues.
+        const permissionError = new FirestorePermissionError({
+            path: userDocRef.path,
+            operation: 'get',
+        } satisfies SecurityRuleContext);
+        errorEmitter.emit('permission-error', permissionError);
+
+        // Also re-throw the original error to stop execution.
+        throw serverError;
     }
-
-    console.warn(`[User Service] User with ID '${userId}' not found in Firestore. This might be expected if the user was deleted or the ID is incorrect.`);
-    return null;
 }
 
 
