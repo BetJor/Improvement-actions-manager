@@ -339,15 +339,17 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
         setIsSubmitting(true);
         toast({ title: "[GREEN] Iniciando actualización de tarea...", className: "bg-green-100" });
         try {
-            toast({ title: "[GREEN] Preparando para notificar al verificador...", className: "bg-green-100" });
-            toast({ title: "[GREEN] Llamando a updateAction para actualizar tarea...", className: "bg-green-100" });
-
-            await updateAction(action.id, {
+            const payload = {
                 updateProposedActionStatus: {
                     proposedActionId,
                     status: newStatus,
                 }
-            });
+            };
+            toast({ title: `[GREEN] DEBUG: Enviando updateProposedActionStatus: ${JSON.stringify(payload.updateProposedActionStatus)}`, className: "bg-green-100", duration: 10000 });
+            toast({ title: "[GREEN] Llamando a updateAction para actualizar tarea...", className: "bg-green-100" });
+
+            await updateAction(action.id, payload);
+            
             toast({
                 title: "Estado actualizado",
                 description: "El estado de la acción propuesta se ha actualizado.",
