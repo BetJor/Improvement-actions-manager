@@ -111,7 +111,9 @@ export const getActionById = async (id: string): Promise<ImprovementAction | nul
         }
          if (data.comments && Array.isArray(data.comments)) {
             data.comments.sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime());
-        }
+        } else {
+             data.comments = [];
+         }
 
 
         const serializableData = {
@@ -282,6 +284,44 @@ export async function createAction(data: CreateActionData, masterData: any): Pro
 }
 
 
+async function handleProposedActionStatusUpdate(
+    transaction: any,
+    actionDocRef: any,
+    originalAction: ImprovementAction,
+    updateData: { proposedActionId: string, status: ProposedAction['status'] }
+): Promise<{ updatedAction: ImprovementAction, notificationResult: ActionComment | null }> {
+    const currentPAs = originalAction.analysis?.proposedActions || [];
+    const updatedPAs = currentPAs.map(pa => 
+        pa.id === updateData.proposedActionId 
+            ? { ...pa, status: updateData.status, statusUpdateDate: new Date().toISOString() } 
+            : pa
+    );
+
+    const updatedActionForEmail = { ...originalAction, analysis: { ...originalAction.analysis, proposedActions: updatedPAs } as any };
+    
+    const notificationResult = await sendStateChangeEmail({ 
+        action: updatedActionForEmail, 
+        oldStatus: originalAction.status, 
+        newStatus: originalAction.status,
+        updatedProposedActionId: updateData.proposedActionId
+    });
+
+    const newComments = [...(originalAction.comments || [])];
+    if (notificationResult) {
+        newComments.push(notificationResult);
+    }
+    
+    const dataToUpdate = {
+        'analysis.proposedActions': updatedPAs,
+        comments: newComments,
+    };
+    
+    transaction.update(actionDocRef, sanitizeDataForFirestore(dataToUpdate));
+
+    return { updatedAction: { ...originalAction, ...dataToUpdate }, notificationResult };
+}
+
+
 export async function updateAction(
     actionId: string, 
     data: Partial<ImprovementAction> & { newComment?: any; adminEdit?: any; updateProposedActionStatus?: { proposedActionId: string, status: ProposedAction['status'] }; updateProposedAction?: ProposedAction }, 
@@ -312,42 +352,18 @@ export async function updateAction(
             }
             const originalAction = { id: originalActionSnap.id, ...originalActionSnap.data() } as ImprovementAction;
             
-            let dataToUpdate: any = { ...data };
-            let commentsToAdd: ActionComment[] = [];
-            
             // --- ISOLATED ACTION: UPDATE PROPOSED ACTION STATUS ---
             if (data.updateProposedActionStatus) {
-                const currentPAs = originalAction.analysis?.proposedActions || [];
-                const updatedPAs = currentPAs.map(pa => pa.id === data.updateProposedActionStatus!.proposedActionId 
-                    ? { ...pa, status: data.updateProposedActionStatus!.status, statusUpdateDate: new Date().toISOString() } 
-                    : pa
-                );
-                dataToUpdate['analysis.proposedActions'] = updatedPAs;
-                
-                const actionForEmail = { ...originalAction, analysis: { ...originalAction.analysis, proposedActions: updatedPAs } };
-                
-                finalNotificationResult = await sendStateChangeEmail({ 
-                    action: actionForEmail, 
-                    oldStatus: originalAction.status, 
-                    newStatus: originalAction.status, // Status doesn't change, but we need it for the function
-                    updatedProposedActionId: data.updateProposedActionStatus?.proposedActionId
-                });
-                
-                if (finalNotificationResult) {
-                    commentsToAdd.push(finalNotificationResult);
-                }
-                
-                // Add new comments to existing ones
-                dataToUpdate.comments = [...(originalAction.comments || []), ...commentsToAdd];
-                
-                delete dataToUpdate.updateProposedActionStatus;
-                transaction.update(actionDocRef, sanitizeDataForFirestore(dataToUpdate));
-                
+                const { notificationResult } = await handleProposedActionStatusUpdate(transaction, actionDocRef, originalAction, data.updateProposedActionStatus);
+                finalNotificationResult = notificationResult;
                 // IMPORTANT: Exit after this specific action to prevent fall-through
                 return;
             }
             
             // --- GENERAL UPDATE LOGIC ---
+            let dataToUpdate: any = { ...data };
+            let commentsToAdd: ActionComment[] = [];
+            
             const oldStatus = originalAction.status;
             const newStatus = statusFromForm || data.status || oldStatus;
             const isStatusChanging = newStatus !== oldStatus;
@@ -531,3 +547,6 @@ async function getPermissionsForState(action: ImprovementAction, newStatus: Impr
 
 
 
+
+
+    
