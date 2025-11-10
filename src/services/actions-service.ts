@@ -396,14 +396,24 @@ export async function updateAction(
             transaction.update(actionDocRef, finalDataToUpdate);
             
             // --- Post-Transaction Actions ---
+            const actionForEmail = { ...originalAction, ...dataToUpdate };
             // Prepare notification details to be used after the transaction succeeds.
-             if (isStatusChanging || data.updateProposedActionStatus) {
-                const actionForEmail = { ...originalAction, ...dataToUpdate };
-                const tempNotificationResult = await sendStateChangeEmail({ 
+             if (data.updateProposedActionStatus) {
+                 const tempNotificationResult = await sendStateChangeEmail({ 
                     action: actionForEmail, 
                     oldStatus, 
                     newStatus,
                     updatedProposedActionId: data.updateProposedActionStatus?.proposedActionId
+                });
+                 if (tempNotificationResult) {
+                    finalNotificationResult = tempNotificationResult;
+                }
+                 delete dataToUpdate.updateProposedActionStatus;
+            } else if (isStatusChanging) {
+                 const tempNotificationResult = await sendStateChangeEmail({ 
+                    action: actionForEmail, 
+                    oldStatus, 
+                    newStatus,
                 });
                 if (tempNotificationResult) {
                     finalNotificationResult = tempNotificationResult;
@@ -411,7 +421,6 @@ export async function updateAction(
             }
             
             // We need to delete the specific fields from the object so they are not processed again
-            if (data.updateProposedActionStatus) delete dataToUpdate.updateProposedActionStatus;
             if (data.updateProposedAction) delete dataToUpdate.updateProposedAction;
 
         });
@@ -517,6 +526,7 @@ async function getPermissionsForState(action: ImprovementAction, newStatus: Impr
 
 
     
+
 
 
 
