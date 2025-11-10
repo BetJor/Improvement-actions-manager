@@ -109,9 +109,10 @@ export const getActionById = async (id: string): Promise<ImprovementAction | nul
                 statusUpdateDate: pa.statusUpdateDate ? convertTimestamp(pa.statusUpdateDate) : undefined,
             }));
         }
-         if (data.comments) {
-            data.comments = data.comments.sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime());
+         if (data.comments && Array.isArray(data.comments)) {
+            data.comments.sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime());
         }
+
 
         const serializableData = {
             ...data,
@@ -321,9 +322,6 @@ export async function updateAction(
             const newStatus = statusFromForm || data.status || oldStatus;
             const isStatusChanging = newStatus !== oldStatus;
             
-            const commentsToAdd: ActionComment[] = [];
-
-            // This is a specific update for a sub-task, not a main state change.
             if (data.updateProposedActionStatus) {
                 const currentPAs = originalAction.analysis?.proposedActions || [];
                 const updatedPAs = currentPAs.map(pa => pa.id === data.updateProposedActionStatus!.proposedActionId 
@@ -331,23 +329,24 @@ export async function updateAction(
                     : pa
                 );
                 dataToUpdate['analysis.proposedActions'] = updatedPAs;
-
-                // Send notification for this specific sub-task update
+                
                 const actionForEmail = { ...originalAction, ...dataToUpdate, analysis: { ...originalAction.analysis, proposedActions: updatedPAs } };
+                
                 const tempNotificationResult = await sendStateChangeEmail({ 
                     action: actionForEmail, 
                     oldStatus, 
                     newStatus,
                     updatedProposedActionId: data.updateProposedActionStatus?.proposedActionId
                 });
+                
                 if (tempNotificationResult) {
-                    finalNotificationResult = tempNotificationResult; // Will be added outside transaction
+                   finalNotificationResult = tempNotificationResult;
                 }
                 
-                // Clean up and update
                 delete dataToUpdate.updateProposedActionStatus;
                 transaction.update(actionDocRef, sanitizeDataForFirestore(dataToUpdate));
-                return; // Stop further processing in this transaction
+                
+                return;
             }
             
             // --- DATA PREPARATION ---
@@ -364,7 +363,7 @@ export async function updateAction(
                     dataToUpdate.verificationDueDate = addDays(implementationDueDate, workflowSettings.verificationDueDays).toISOString();
                 }
             }
-
+            
             if (isStatusChanging) {
                 dataToUpdate.status = newStatus;
                 const workflowSettings = await getWorkflowSettings();
@@ -374,15 +373,13 @@ export async function updateAction(
                     dataToUpdate.closureDueDate = addDays(today, workflowSettings.closureDueDate).toISOString();
                 }
 
-                // Important: Use the MERGED data for permission calculation
                 const actionForPerms = { ...originalAction, ...dataToUpdate };
                 const { readers, authors } = await getPermissionsForState(actionForPerms, newStatus);
                 dataToUpdate.readers = readers;
                 dataToUpdate.authors = authors;
 
-                // Prepare notification for the main status change
                 const tempNotificationResult = await sendStateChangeEmail({ 
-                    action: actionForEmail, 
+                    action: actionForPerms, 
                     oldStatus, 
                     newStatus,
                 });
@@ -391,6 +388,7 @@ export async function updateAction(
                 }
             }
             
+            let commentsToAdd: ActionComment[] = [];
             if (data.adminEdit) {
                 const { field, label, user, overrideComment, actionIndex } = data.adminEdit;
                 let commentText = overrideComment || (actionIndex !== undefined 
@@ -402,6 +400,10 @@ export async function updateAction(
             if (data.newComment) {
                 commentsToAdd.push(data.newComment);
                 delete dataToUpdate.newComment;
+            }
+            
+            if (commentsToAdd.length > 0) {
+                dataToUpdate.comments = [...(originalAction.comments || []), ...commentsToAdd];
             }
             
             if (data.updateProposedAction) {
@@ -416,16 +418,10 @@ export async function updateAction(
                  delete dataToUpdate.updateProposedAction;
             }
             
-            if (commentsToAdd.length > 0) {
-                dataToUpdate.comments = arrayUnion(...commentsToAdd);
-            }
-
             const finalDataToUpdate = sanitizeDataForFirestore(dataToUpdate);
-            const actionForEmail = { ...originalAction, ...dataToUpdate };
             transaction.update(actionDocRef, finalDataToUpdate);
         });
         
-        // If the transaction succeeded, and we have a notification comment, add it in a separate write.
         if (finalNotificationResult) {
              await updateDoc(actionDocRef, {
                 comments: arrayUnion(finalNotificationResult)
@@ -526,6 +522,7 @@ async function getPermissionsForState(action: ImprovementAction, newStatus: Impr
 
 
     
+
 
 
 
