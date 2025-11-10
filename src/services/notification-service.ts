@@ -1,5 +1,4 @@
 
-
 'use server';
 /**
  * @fileOverview A service for handling notifications.
@@ -103,7 +102,19 @@ async function getEmailDetailsForVerification(action: ImprovementAction): Promis
           <p>Se te ha asignado la verificación final de la implementación de la acción de mejora <strong>${action.actionId}: ${action.title}</strong>.</p>
           <p>Tu tarea consiste en comprobar la eficacia del siguiente plan de acción una vez todas las tareas hayan sido implementadas por sus respectivos responsables.</p>
           
-          <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;">
+           <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;">
+                <h3 style="margin-top: 0; color: #00529B;">Detalles de la Acción Origen</h3>
+                <table style="width: 100%; border-collapse: collapse;">
+                    <tr style="border-bottom: 1px solid #eee;"><td style="padding: 8px 0; font-weight: bold; width: 120px;">Creador/a:</td><td>${action.creator.name}</td></tr>
+                    <tr style="border-bottom: 1px solid #eee;"><td style="padding: 8px 0; font-weight: bold;">Ámbito:</td><td>${action.type}</td></tr>
+                    <tr style="border-bottom: 1px solid #eee;"><td style="padding: 8px 0; font-weight: bold;">Origen:</td><td>${action.category}</td></tr>
+                    <tr style="border-bottom: 1px solid #eee;"><td style="padding: 8px 0; font-weight: bold;">Centro:</td><td>${action.center || 'No especificado'}</td></tr>
+                </table>
+                <h4 style="margin-top: 15px; margin-bottom: 5px; color: #333;">Observaciones:</h4>
+                <p style="margin: 0; white-space: pre-wrap; font-style: italic;">${action.description}</p>
+            </div>
+
+          <div style="background-color: #f0faff; padding: 15px; border-radius: 5px; margin: 20px 0;">
             <h3 style="margin-top: 0; color: #00529B;">Plan de Acción a Verificar</h3>
             ${proposedActionsHtml}
           </div>
@@ -135,16 +146,24 @@ async function getEmailDetailsForProposedAction(action: ImprovementAction, propo
           <h2 style="color: #00529B; border-bottom: 2px solid #00529B; padding-bottom: 10px;">Nueva Tarea Asignada</h2>
           <p>Se te ha asignado una nueva tarea dentro de la acción de mejora <strong>${action.actionId}: ${action.title}</strong>.</p>
           
-          <div style="background-color: #f8f9fa; border-left: 4px solid #00529B; padding: 15px; margin: 20px 0;">
-            <p style="margin: 0;"><strong>Tarea a realizar:</strong></p>
+           <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;">
+                <h3 style="margin-top: 0; color: #00529B;">Detalles de la Acción Origen</h3>
+                <table style="width: 100%; border-collapse: collapse;">
+                    <tr style="border-bottom: 1px solid #eee;"><td style="padding: 8px 0; font-weight: bold; width: 120px;">Creador/a:</td><td>${action.creator.name}</td></tr>
+                    <tr style="border-bottom: 1px solid #eee;"><td style="padding: 8px 0; font-weight: bold;">Ámbito:</td><td>${action.type}</td></tr>
+                    <tr style="border-bottom: 1px solid #eee;"><td style="padding: 8px 0; font-weight: bold;">Origen:</td><td>${action.category}</td></tr>
+                    <tr style="border-bottom: 1px solid #eee;"><td style="padding: 8px 0; font-weight: bold;">Centro:</td><td>${action.center || 'No especificado'}</td></tr>
+                </table>
+                <h4 style="margin-top: 15px; margin-bottom: 5px; color: #333;">Observaciones:</h4>
+                <p style="margin: 0; white-space: pre-wrap; font-style: italic;">${action.description}</p>
+            </div>
+
+          <div style="background-color: #f0faff; border-left: 4px solid #00529B; padding: 15px; margin: 20px 0;">
+            <p style="margin: 0;"><strong>Tu tarea a realizar:</strong></p>
             <p style="margin: 5px 0 0; font-size: 1.1em; font-style: italic;">${proposedAction.description}</p>
+             <p style="margin: 10px 0 0; font-size: 0.9em; color: #555;">Fecha límite: <strong>${dueDate}</strong></p>
           </div>
           
-          <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
-              <tr style="border-bottom: 1px solid #eee;"><td style="padding: 8px 0; font-weight: bold; width: 150px;">Fecha límite:</td><td>${dueDate}</td></tr>
-              <tr style="border-bottom: 1px solid #eee;"><td style="padding: 8px 0; font-weight: bold;">Creador/a Acción:</td><td>${action.creator.name}</td></tr>
-          </table>
-
           <p>Por favor, accede a la plataforma para actualizar el estado de la tarea una vez la hayas completado.</p>
           <a href="${actionUrl}" style="background-color: #00529B; color: white; padding: 12px 20px; text-decoration: none; border-radius: 5px; display: inline-block; text-align: center;">Ver y Actualizar Tarea</a>
         </div>
@@ -170,7 +189,7 @@ async function getEmailDetailsForAnalysis(action: ImprovementAction): Promise<Em
       <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
         <div style="max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px;">
           <h2 style="color: #00529B; border-bottom: 2px solid #00529B; padding-bottom: 10px;">Nueva Acción de Mejora para Analizar</h2>
-          <p>Se ha asignado el análisis de la acción de mejora <strong>${action.actionId}: ${action.title}</strong>.</p>
+          <p>Se te ha asignado el análisis de la acción de mejora <strong>${action.actionId}: ${action.title}</strong>.</p>
           <p>La fecha límite para completar el análisis es el <strong>${dueDate}</strong>.</p>
           
           <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;">
