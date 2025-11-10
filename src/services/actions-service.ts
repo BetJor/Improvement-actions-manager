@@ -313,8 +313,7 @@ export async function updateAction(
             const originalAction = { id: originalActionSnap.id, ...originalActionSnap.data() } as ImprovementAction;
             
             let dataToUpdate: any = { ...data };
-            const oldStatus = originalAction.status;
-            const newStatus = statusFromForm || data.status || oldStatus;
+            let commentsToAdd: ActionComment[] = [];
             
             // --- ISOLATED ACTION: UPDATE PROPOSED ACTION STATUS ---
             if (data.updateProposedActionStatus) {
@@ -325,20 +324,23 @@ export async function updateAction(
                 );
                 dataToUpdate['analysis.proposedActions'] = updatedPAs;
                 
-                const actionForEmail = { ...originalAction, ...dataToUpdate, analysis: { ...originalAction.analysis, proposedActions: updatedPAs } };
+                const actionForEmail = { ...originalAction, analysis: { ...originalAction.analysis, proposedActions: updatedPAs } };
                 
                 finalNotificationResult = await sendStateChangeEmail({ 
                     action: actionForEmail, 
-                    oldStatus, 
-                    newStatus,
+                    oldStatus: originalAction.status, 
+                    newStatus: originalAction.status, // Status doesn't change, but we need it for the function
                     updatedProposedActionId: data.updateProposedActionStatus?.proposedActionId
                 });
                 
-                delete dataToUpdate.updateProposedActionStatus;
                 if (finalNotificationResult) {
-                    dataToUpdate.comments = arrayUnion(finalNotificationResult);
+                    commentsToAdd.push(finalNotificationResult);
                 }
                 
+                // Add new comments to existing ones
+                dataToUpdate.comments = [...(originalAction.comments || []), ...commentsToAdd];
+                
+                delete dataToUpdate.updateProposedActionStatus;
                 transaction.update(actionDocRef, sanitizeDataForFirestore(dataToUpdate));
                 
                 // IMPORTANT: Exit after this specific action to prevent fall-through
@@ -346,21 +348,9 @@ export async function updateAction(
             }
             
             // --- GENERAL UPDATE LOGIC ---
+            const oldStatus = originalAction.status;
+            const newStatus = statusFromForm || data.status || oldStatus;
             const isStatusChanging = newStatus !== oldStatus;
-            
-            if (dataToUpdate.analysis && Array.isArray(dataToUpdate.analysis.proposedActions)) {
-                const dueDates = dataToUpdate.analysis.proposedActions
-                    .map((pa: ProposedAction) => pa.dueDate ? new Date(pa.dueDate as string) : null)
-                    .filter((d: Date | null): d is Date => d !== null && !isNaN(d.getTime()));
-                
-                if (dueDates.length > 0) {
-                    const implementationDueDate = new Date(Math.max.apply(null, dueDates.map(d => d.getTime())));
-                    dataToUpdate.implementationDueDate = implementationDueDate.toISOString();
-                    
-                    const workflowSettings = await getWorkflowSettings();
-                    dataToUpdate.verificationDueDate = addDays(implementationDueDate, workflowSettings.verificationDueDays).toISOString();
-                }
-            }
             
             if (isStatusChanging) {
                 dataToUpdate.status = newStatus;
@@ -381,9 +371,25 @@ export async function updateAction(
                     oldStatus, 
                     newStatus,
                 });
+                 if (finalNotificationResult) {
+                    commentsToAdd.push(finalNotificationResult);
+                }
+            }
+
+            if (dataToUpdate.analysis && Array.isArray(dataToUpdate.analysis.proposedActions)) {
+                const dueDates = dataToUpdate.analysis.proposedActions
+                    .map((pa: ProposedAction) => pa.dueDate ? new Date(pa.dueDate as string) : null)
+                    .filter((d: Date | null): d is Date => d !== null && !isNaN(d.getTime()));
+                
+                if (dueDates.length > 0) {
+                    const implementationDueDate = new Date(Math.max.apply(null, dueDates.map(d => d.getTime())));
+                    dataToUpdate.implementationDueDate = implementationDueDate.toISOString();
+                    
+                    const workflowSettings = await getWorkflowSettings();
+                    dataToUpdate.verificationDueDate = addDays(implementationDueDate, workflowSettings.verificationDueDays).toISOString();
+                }
             }
             
-            let commentsToAdd: ActionComment[] = [];
             if (data.adminEdit) {
                 const { field, label, user, overrideComment, actionIndex } = data.adminEdit;
                 let commentText = overrideComment || (actionIndex !== undefined 
@@ -397,12 +403,7 @@ export async function updateAction(
                 delete dataToUpdate.newComment;
             }
             
-            if (finalNotificationResult) {
-                commentsToAdd.push(finalNotificationResult);
-            }
-            
             if (commentsToAdd.length > 0) {
-                // Read existing comments, add new ones, and then update the whole array
                 const existingComments = originalAction.comments || [];
                 dataToUpdate.comments = [...existingComments, ...commentsToAdd];
             }
@@ -516,6 +517,7 @@ async function getPermissionsForState(action: ImprovementAction, newStatus: Impr
 
 
     
+
 
 
 
