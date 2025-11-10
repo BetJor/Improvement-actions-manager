@@ -228,8 +228,11 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
     const handleAnalysisSave = async (analysisData: any) => {
         if (!action) return;
         setIsSubmitting(true);
-    
+        
+        toast({ title: "[BLUE] Iniciando avance de estado...", className: "bg-blue-100" });
+
         try {
+            toast({ title: "[BLUE] Llamando a updateAction para cambiar estado...", className: "bg-blue-100" });
             await updateAction(
                 action.id, 
                 { analysis: analysisData, status: "Pendiente Comprobación" }
@@ -251,6 +254,7 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
             });
         } finally {
             setIsSubmitting(false);
+            toast({ title: "[BLUE] Proceso de avance finalizado.", className: "bg-blue-100" });
         }
     }
 
@@ -331,7 +335,9 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
     const handleUpdateProposedActionStatus = async (proposedActionId: string, newStatus: ProposedActionStatus) => {
         if (!action) return;
         setIsSubmitting(true);
+        toast({ title: "[GREEN] Iniciando actualización de tarea...", className: "bg-green-100" });
         try {
+            toast({ title: "[GREEN] Llamando a updateAction para actualizar tarea específica...", className: "bg-green-100" });
             await updateAction(action.id, {
                 updateProposedActionStatus: {
                     proposedActionId,
@@ -348,6 +354,7 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
             toast({ variant: "destructive", title: "Error al actualizar el estado." });
         } finally {
             setIsSubmitting(false);
+             toast({ title: "[GREEN] Proceso de actualización de tarea finalizado.", className: "bg-green-100" });
         }
     };
     
@@ -1298,5 +1305,7 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
         </div>
     )
 }
+
+    
 
     

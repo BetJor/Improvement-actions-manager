@@ -11,6 +11,7 @@ import { getPermissionRuleForState, resolveRoles } from './permissions-service';
 import { sendStateChangeEmail } from './notification-service';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError, type SecurityRuleContext } from '@/firebase/errors';
+import { useToast } from '@/hooks/use-toast';
 
 
 interface CreateActionData extends Omit<ImprovementAction, 'id' | 'actionId' | 'status' | 'creationDate' | 'category' | 'subcategory' | 'type' | 'affectedAreas' | 'affectedCenters' | 'center' | 'analysisDueDate' | 'implementationDueDate' | 'closureDueDate' | 'readers' | 'authors' | 'verificationDueDate' > {
@@ -290,6 +291,9 @@ async function handleProposedActionStatusUpdate(
     originalAction: ImprovementAction,
     updateData: { proposedActionId: string, status: ProposedAction['status'] }
 ): Promise<{ updatedAction: ImprovementAction, notificationResult: ActionComment | null }> {
+    const { toast } = useToast();
+    toast({ title: "[SERVICE-GREEN] Detectado: Actualización de Tarea Específica.", className: "bg-green-200" });
+
     const currentPAs = originalAction.analysis?.proposedActions || [];
     const updatedPAs = currentPAs.map(pa => 
         pa.id === updateData.proposedActionId 
@@ -306,7 +310,8 @@ async function handleProposedActionStatusUpdate(
         updatedProposedActionId: updateData.proposedActionId
     });
 
-    const newComments = [...(originalAction.comments || [])];
+    const existingComments = Array.isArray(originalAction.comments) ? originalAction.comments : [];
+    const newComments = [...existingComments];
     if (notificationResult) {
         newComments.push(notificationResult);
     }
@@ -335,6 +340,7 @@ export async function updateAction(
     const actionDocRef = doc(db, 'actions', actionId);
     let bisCreationResult: { createdBisTitle?: string, foundBisTitle?: string } = {};
     let finalNotificationResult: ActionComment | null = null;
+    const { toast } = useToast();
     
     // Ensure all dueDates in proposed actions are converted to ISO strings *before* the transaction
     if (data.analysis && Array.isArray(data.analysis.proposedActions)) {
@@ -351,16 +357,16 @@ export async function updateAction(
                 throw new Error(`Action with ID ${actionId} not found.`);
             }
             const originalAction = { id: originalActionSnap.id, ...originalActionSnap.data() } as ImprovementAction;
-            
+
             // --- ISOLATED ACTION: UPDATE PROPOSED ACTION STATUS ---
             if (data.updateProposedActionStatus) {
                 const { notificationResult } = await handleProposedActionStatusUpdate(transaction, actionDocRef, originalAction, data.updateProposedActionStatus);
                 finalNotificationResult = notificationResult;
-                // IMPORTANT: Exit after this specific action to prevent fall-through
-                return;
+                return; // IMPORTANT: Exit transaction after this specific action
             }
-            
+
             // --- GENERAL UPDATE LOGIC ---
+            toast({ title: "[SERVICE-BLUE] Detectado: Cambio de Estado General.", className: "bg-blue-200" });
             let dataToUpdate: any = { ...data };
             let commentsToAdd: ActionComment[] = [];
             
@@ -420,7 +426,7 @@ export async function updateAction(
             }
             
             if (commentsToAdd.length > 0) {
-                const existingComments = originalAction.comments || [];
+                const existingComments = Array.isArray(originalAction.comments) ? originalAction.comments : [];
                 dataToUpdate.comments = [...existingComments, ...commentsToAdd];
             }
             
@@ -548,5 +554,7 @@ async function getPermissionsForState(action: ImprovementAction, newStatus: Impr
 
 
 
+
+    
 
     
