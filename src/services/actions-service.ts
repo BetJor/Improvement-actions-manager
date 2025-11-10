@@ -348,101 +348,104 @@ export async function updateAction(
     }
 
     try {
-        await runTransaction(db, async (transaction) => {
-            const originalActionSnap = await transaction.get(actionDocRef);
-            if (!originalActionSnap.exists()) {
-                throw new Error(`Action with ID ${actionId} not found.`);
-            }
-            const originalAction = { id: originalActionSnap.id, ...originalActionSnap.data() } as ImprovementAction;
-
-            // --- ISOLATED ACTION: UPDATE PROPOSED ACTION STATUS ---
-            if (data.updateProposedActionStatus) {
-                const { notificationResult } = await handleProposedActionStatusUpdate(transaction, actionDocRef, originalAction, data.updateProposedActionStatus);
+        if (data.updateProposedActionStatus) {
+            await runTransaction(db, async (transaction) => {
+                const originalActionSnap = await transaction.get(actionDocRef);
+                if (!originalActionSnap.exists()) {
+                    throw new Error(`Action with ID ${actionId} not found.`);
+                }
+                const originalAction = { id: originalActionSnap.id, ...originalActionSnap.data() } as ImprovementAction;
+                const { notificationResult } = await handleProposedActionStatusUpdate(transaction, actionDocRef, originalAction, data.updateProposedActionStatus!);
                 finalNotificationResult = notificationResult;
-                return; // IMPORTANT: Exit transaction after this specific action
-            }
-
-            // --- GENERAL UPDATE LOGIC ---
-            console.log("[SERVICE-BLUE] Detectado: Cambio de Estado General.");
-            let dataToUpdate: any = { ...data };
-            let commentsToAdd: ActionComment[] = [];
-            
-            const oldStatus = originalAction.status;
-            const newStatus = statusFromForm || data.status || oldStatus;
-            const isStatusChanging = newStatus !== oldStatus;
-            
-            if (isStatusChanging) {
-                dataToUpdate.status = newStatus;
-                const workflowSettings = await getWorkflowSettings();
-                const today = new Date();
-                
-                if (newStatus === 'Pendiente de Cierre') {
-                    dataToUpdate.closureDueDate = addDays(today, workflowSettings.closureDueDate).toISOString();
+            });
+        } else {
+            await runTransaction(db, async (transaction) => {
+                const originalActionSnap = await transaction.get(actionDocRef);
+                if (!originalActionSnap.exists()) {
+                    throw new Error(`Action with ID ${actionId} not found.`);
                 }
+                const originalAction = { id: originalActionSnap.id, ...originalActionSnap.data() } as ImprovementAction;
 
-                const actionForPerms = { ...originalAction, ...dataToUpdate };
-                const { readers, authors } = await getPermissionsForState(actionForPerms, newStatus);
-                dataToUpdate.readers = readers;
-                dataToUpdate.authors = authors;
-
-                finalNotificationResult = await sendStateChangeEmail({ 
-                    action: actionForPerms, 
-                    oldStatus, 
-                    newStatus,
-                });
-                 if (finalNotificationResult) {
-                    commentsToAdd.push(finalNotificationResult);
-                }
-            }
-
-            if (dataToUpdate.analysis && Array.isArray(dataToUpdate.analysis.proposedActions)) {
-                const dueDates = dataToUpdate.analysis.proposedActions
-                    .map((pa: ProposedAction) => pa.dueDate ? new Date(pa.dueDate as string) : null)
-                    .filter((d: Date | null): d is Date => d !== null && !isNaN(d.getTime()));
+                console.log("[SERVICE-BLUE] Detectado: Cambio de Estado General.");
+                let dataToUpdate: any = { ...data };
+                let commentsToAdd: ActionComment[] = [];
                 
-                if (dueDates.length > 0) {
-                    const implementationDueDate = new Date(Math.max.apply(null, dueDates.map(d => d.getTime())));
-                    dataToUpdate.implementationDueDate = implementationDueDate.toISOString();
-                    
+                const oldStatus = originalAction.status;
+                const newStatus = statusFromForm || data.status || oldStatus;
+                const isStatusChanging = newStatus !== oldStatus;
+                
+                if (isStatusChanging) {
+                    dataToUpdate.status = newStatus;
                     const workflowSettings = await getWorkflowSettings();
-                    dataToUpdate.verificationDueDate = addDays(implementationDueDate, workflowSettings.verificationDueDays).toISOString();
-                }
-            }
-            
-            if (data.adminEdit) {
-                const { field, label, user, overrideComment, actionIndex } = data.adminEdit;
-                let commentText = overrideComment || (actionIndex !== undefined 
-                    ? `El administrador ${user} ha modificado el campo '${label}' de la acción propuesta ${actionIndex + 1}.`
-                    : `El administrador ${user} ha modificado el campo '${label}'.`);
-                commentsToAdd.push({ id: crypto.randomUUID(), author: { id: 'system', name: 'Sistema' }, date: new Date().toISOString(), text: commentText });
-                delete dataToUpdate.adminEdit;
-            }
-            if (data.newComment) {
-                commentsToAdd.push(data.newComment);
-                delete dataToUpdate.newComment;
-            }
-            
-            if (commentsToAdd.length > 0) {
-                const existingComments = Array.isArray(originalAction.comments) ? originalAction.comments : [];
-                dataToUpdate.comments = [...existingComments, ...commentsToAdd];
-            }
-            
-            if (data.updateProposedAction) {
-                 const currentPAs = originalAction.analysis?.proposedActions || [];
-                 const updatedPAs = currentPAs.map(pa => pa.id === data.updateProposedAction!.id 
-                    ? { ...data.updateProposedAction, dueDate: new Date(data.updateProposedAction!.dueDate).toISOString() }
-                    : pa
-                );
-                if (updatedPAs) {
-                    dataToUpdate['analysis.proposedActions'] = updatedPAs;
-                }
-                 delete dataToUpdate.updateProposedAction;
-            }
-            
-            const finalDataToUpdate = sanitizeDataForFirestore(dataToUpdate);
-            transaction.update(actionDocRef, finalDataToUpdate);
-        });
+                    const today = new Date();
+                    
+                    if (newStatus === 'Pendiente de Cierre') {
+                        dataToUpdate.closureDueDate = addDays(today, workflowSettings.closureDueDate).toISOString();
+                    }
 
+                    const actionForPerms = { ...originalAction, ...dataToUpdate };
+                    const { readers, authors } = await getPermissionsForState(actionForPerms, newStatus);
+                    dataToUpdate.readers = readers;
+                    dataToUpdate.authors = authors;
+
+                    finalNotificationResult = await sendStateChangeEmail({ 
+                        action: actionForPerms, 
+                        oldStatus, 
+                        newStatus,
+                    });
+                    if (finalNotificationResult) {
+                        commentsToAdd.push(finalNotificationResult);
+                    }
+                }
+
+                if (dataToUpdate.analysis && Array.isArray(dataToUpdate.analysis.proposedActions)) {
+                    const dueDates = dataToUpdate.analysis.proposedActions
+                        .map((pa: ProposedAction) => pa.dueDate ? new Date(pa.dueDate as string) : null)
+                        .filter((d: Date | null): d is Date => d !== null && !isNaN(d.getTime()));
+                    
+                    if (dueDates.length > 0) {
+                        const implementationDueDate = new Date(Math.max.apply(null, dueDates.map(d => d.getTime())));
+                        dataToUpdate.implementationDueDate = implementationDueDate.toISOString();
+                        
+                        const workflowSettings = await getWorkflowSettings();
+                        dataToUpdate.verificationDueDate = addDays(implementationDueDate, workflowSettings.verificationDueDays).toISOString();
+                    }
+                }
+                
+                if (data.adminEdit) {
+                    const { field, label, user, overrideComment, actionIndex } = data.adminEdit;
+                    let commentText = overrideComment || (actionIndex !== undefined 
+                        ? `El administrador ${user} ha modificado el campo '${label}' de la acción propuesta ${actionIndex + 1}.`
+                        : `El administrador ${user} ha modificado el campo '${label}'.`);
+                    commentsToAdd.push({ id: crypto.randomUUID(), author: { id: 'system', name: 'Sistema' }, date: new Date().toISOString(), text: commentText });
+                    delete dataToUpdate.adminEdit;
+                }
+                if (data.newComment) {
+                    commentsToAdd.push(data.newComment);
+                    delete dataToUpdate.newComment;
+                }
+                
+                if (commentsToAdd.length > 0) {
+                    const existingComments = Array.isArray(originalAction.comments) ? originalAction.comments : [];
+                    dataToUpdate.comments = [...existingComments, ...commentsToAdd];
+                }
+                
+                if (data.updateProposedAction) {
+                    const currentPAs = originalAction.analysis?.proposedActions || [];
+                    const updatedPAs = currentPAs.map(pa => pa.id === data.updateProposedAction!.id 
+                        ? { ...data.updateProposedAction, dueDate: new Date(data.updateProposedAction!.dueDate).toISOString() }
+                        : pa
+                    );
+                    if (updatedPAs) {
+                        dataToUpdate['analysis.proposedActions'] = updatedPAs;
+                    }
+                    delete dataToUpdate.updateProposedAction;
+                }
+                
+                const finalDataToUpdate = sanitizeDataForFirestore(dataToUpdate);
+                transaction.update(actionDocRef, finalDataToUpdate);
+            });
+        }
     } catch (error: any) {
         console.error("Error in updateAction transaction:", error);
         const permissionError = new FirestorePermissionError({
