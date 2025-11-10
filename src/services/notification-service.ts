@@ -223,6 +223,41 @@ async function getEmailDetailsForAnalysis(action: ImprovementAction): Promise<Em
     return { recipient: recipientEmail, subject, html, actionUrl };
 }
 
+async function getEmailDetailsForClosure(action: ImprovementAction): Promise<EmailInfo> {
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9002';
+    const actionUrl = `${appUrl}/actions/${action.id}`;
+
+    const recipientEmail = action.creator.email;
+    if (!recipientEmail) {
+        throw new Error(`No se pudo encontrar el email del creador para la acción ${action.actionId}.`);
+    }
+
+    const dueDate = action.closureDueDate ? format(safeParseDate(action.closureDueDate)!, 'dd/MM/yyyy') : 'No definida';
+    
+    const subject = `Acción pendiente de cierre: ${action.actionId}`;
+    const html = `
+      <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+        <div style="max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px;">
+          <h2 style="color: #00529B; border-bottom: 2px solid #00529B; padding-bottom: 10px;">Acción de Mejora Pendiente de Cierre</h2>
+          <p>La acción de mejora <strong>${action.actionId}: ${action.title}</strong> que creaste ha sido completamente verificada y está lista para su cierre final.</p>
+          <p>La fecha límite para completar el cierre es el <strong>${dueDate}</strong>.</p>
+          
+          <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;">
+            <h3 style="margin-top: 0; color: #00529B;">Resumen de la Verificación</h3>
+            <p style="margin-top: 10px;"><strong>Verificado por:</strong> ${action.verification?.verificationResponsible.name || 'N/D'}</p>
+            <p><strong>Fecha de Verificación:</strong> ${action.verification?.verificationDate ? format(safeParseDate(action.verification.verificationDate)!, 'dd/MM/yyyy') : 'N/D'}</p>
+            <h4 style="margin-top: 15px; margin-bottom: 5px; color: #333;">Observaciones de la Verificación:</h4>
+            <p style="margin: 0; white-space: pre-wrap; font-style: italic;">${action.verification?.notes || 'Sin observaciones.'}</p>
+          </div>
+          
+          <p>Por favor, accede a la plataforma para revisar la verificación y proceder con el cierre conforme o no conforme de la acción.</p>
+          <a href="${actionUrl}" style="background-color: #00529B; color: white; padding: 12px 20px; text-decoration: none; border-radius: 5px; display: inline-block; text-align: center;">Cerrar Acción</a>
+        </div>
+      </div>
+    `;
+    return { recipient: recipientEmail, subject, html, actionUrl };
+}
+
 /**
  * Handles sending email notifications based on the state change.
  * @returns An ActionComment to be added to the action, or null if no email was sent.
@@ -232,53 +267,65 @@ export async function sendStateChangeEmail(details: { action: ImprovementAction,
     
     let emailTasks: Promise<{ recipient: string, url: string | null }>[] = [];
     let notificationSummary = '';
+    let emailInfoGenerator: ((action: ImprovementAction) => Promise<EmailInfo>) | null = null;
+    let recipients: string[] = [];
 
-    if (newStatus === 'Pendiente Análisis') {
-        notificationSummary = 'Notificación de análisis enviada a:';
-        try {
-            const emailInfo = await getEmailDetailsForAnalysis(action);
-            emailTasks.push(
-                sendEmail(emailInfo.recipient, emailInfo.subject, emailInfo.html).then(url => ({ recipient: emailInfo.recipient, url }))
-            );
-        } catch (error: any) {
-            return { id: crypto.randomUUID(), author: { id: 'system', name: 'Sistema' }, date: new Date().toISOString(), text: `Error al preparar la notificación de análisis: ${error.message}` };
-        }
-    } else if (newStatus === 'Pendiente Comprobación' && action.analysis) {
-        notificationSummary = 'Notificaciones de implementación/verificación enviadas a:';
-        const uniqueResponsibleEmails = [...new Set(action.analysis.proposedActions.map(pa => pa.responsibleUserEmail))];
+    switch (newStatus) {
+        case 'Pendiente Análisis':
+            notificationSummary = 'Notificación de análisis enviada a:';
+            emailInfoGenerator = getEmailDetailsForAnalysis;
+            recipients = [action.responsibleGroupId];
+            break;
+        case 'Pendiente Comprobación':
+             notificationSummary = 'Notificaciones de implementación/verificación enviadas a:';
+            if (action.analysis) {
+                const responsibleEmails = [...new Set(action.analysis.proposedActions.map(pa => pa.responsibleUserEmail))];
+                recipients.push(...responsibleEmails);
 
-        for (const email of uniqueResponsibleEmails) {
-            const userFirstAction = action.analysis.proposedActions.find(pa => pa.responsibleUserEmail === email);
-            if(userFirstAction) {
-                try {
-                    const emailInfo = await getEmailDetailsForProposedAction(action, userFirstAction);
-                    emailTasks.push(
-                        sendEmail(emailInfo.recipient, emailInfo.subject, emailInfo.html).then(url => ({ recipient: emailInfo.recipient, url }))
-                    );
-                } catch (error: any) {
-                     return { id: crypto.randomUUID(), author: { id: 'system', name: 'Sistema' }, date: new Date().toISOString(), text: `Error al preparar email de acción propuesta: ${error.message}` };
+                let verifierEmail = action.analysis.verificationResponsibleUserEmail;
+                 if (!verifierEmail && action.analysis.verificationResponsibleUserId) {
+                    const verifier = await getUserById(action.analysis.verificationResponsibleUserId);
+                    if (verifier?.email) recipients.push(verifier.email);
+                } else if(verifierEmail) {
+                    recipients.push(verifierEmail);
                 }
             }
-        }
-
-        let verifierEmail = action.analysis.verificationResponsibleUserEmail;
-        if (!verifierEmail && action.analysis.verificationResponsibleUserId) {
-            const verifier = await getUserById(action.analysis.verificationResponsibleUserId);
-            verifierEmail = verifier?.email;
-        }
-
-        if (verifierEmail) {
-            try {
-                const verifierEmailInfo = await getEmailDetailsForVerification(action);
-                emailTasks.push(
-                    sendEmail(verifierEmailInfo.recipient, verifierEmailInfo.subject, verifierEmailInfo.html).then(url => ({ recipient: verifierEmailInfo.recipient, url }))
-                );
-            } catch (error: any) {
-                 return { id: crypto.randomUUID(), author: { id: 'system', name: 'Sistema' }, date: new Date().toISOString(), text: `Error al preparar email de verificación: ${error.message}` };
+            break;
+        case 'Pendiente de Cierre':
+            notificationSummary = 'Notificación de acción pendiente de cierre enviada a:';
+            emailInfoGenerator = getEmailDetailsForClosure;
+            if (action.creator.email) {
+                recipients = [action.creator.email];
+            }
+            break;
+        default:
+            return null;
+    }
+     
+    if (newStatus === 'Pendiente Comprobación' && action.analysis) {
+        for (const email of [...new Set(recipients)]) {
+            const userFirstAction = action.analysis.proposedActions.find(pa => pa.responsibleUserEmail === email);
+            if (userFirstAction) {
+                try {
+                    const emailInfo = await getEmailDetailsForProposedAction(action, userFirstAction);
+                    emailTasks.push(sendEmail(emailInfo.recipient, emailInfo.subject, emailInfo.html).then(url => ({ recipient: emailInfo.recipient, url })));
+                } catch (error: any) { return { id: crypto.randomUUID(), author: { id: 'system', name: 'Sistema' }, date: new Date().toISOString(), text: `Error al preparar email de acción propuesta: ${error.message}` }; }
+            } else if (email === action.analysis.verificationResponsibleUserEmail) {
+                 try {
+                    const emailInfo = await getEmailDetailsForVerification(action);
+                    emailTasks.push(sendEmail(emailInfo.recipient, emailInfo.subject, emailInfo.html).then(url => ({ recipient: emailInfo.recipient, url })));
+                } catch (error: any) { return { id: crypto.randomUUID(), author: { id: 'system', name: 'Sistema' }, date: new Date().toISOString(), text: `Error al preparar email de verificación: ${error.message}` }; }
             }
         }
-    } else {
-        return null;
+    } else if (emailInfoGenerator && recipients.length > 0) {
+        for (const recipient of recipients) {
+             try {
+                const emailInfo = await emailInfoGenerator(action);
+                emailTasks.push(sendEmail(recipient, emailInfo.subject, emailInfo.html).then(url => ({ recipient, url })));
+            } catch (error: any) {
+                return { id: crypto.randomUUID(), author: { id: 'system', name: 'Sistema' }, date: new Date().toISOString(), text: `Error al preparar la notificación: ${error.message}` };
+            }
+        }
     }
     
     if (emailTasks.length === 0) {
@@ -292,9 +339,9 @@ export async function sendStateChangeEmail(details: { action: ImprovementAction,
 
     let commentText = '';
     if (successfulSends.length > 0) {
-        const recipients = successfulSends.map(r => r.recipient).join(', ');
+        const uniqueRecipients = [...new Set(successfulSends.map(r => r.recipient))];
         const previews = successfulSends.map(r => r.url).join(' ');
-        commentText = `${notificationSummary} ${recipients}. ${previews}`;
+        commentText = `${notificationSummary} ${uniqueRecipients.join(', ')}. ${previews}`;
     }
     
     if (failedSends.length > 0) {
@@ -328,11 +375,12 @@ export async function sendProposedActionUpdateEmail(
 
     const statusListHtml = action.analysis.proposedActions.map(pa => {
         const isUpdated = pa.id === updatedProposedActionId;
+        const dueDate = pa.dueDate ? format(safeParseDate(pa.dueDate)!, 'dd/MM/yyyy') : 'N/D';
         return `
             <li style="margin-bottom: 8px; ${isUpdated ? 'font-weight: bold;' : ''}">
                 ${pa.description} - 
                 Responsable: ${pa.responsibleUserEmail || 'N/D'} | 
-                Fecha Límite: ${pa.dueDate ? format(safeParseDate(pa.dueDate)!, 'dd/MM/yyyy') : 'N/D'} |
+                Fecha Límite: ${dueDate} |
                 Estado: ${pa.status || 'Pendiente'} ${isUpdated ? '(Actualizado recientemente)' : ''}
             </li>
         `;
@@ -384,59 +432,3 @@ export async function sendProposedActionUpdateEmail(
         };
     }
 }
-
-
-export async function sendClosureNotificationEmail(action: ImprovementAction): Promise<ActionComment | null> {
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9002';
-    const actionUrl = `${appUrl}/actions/${action.id}`;
-
-    const recipientEmail = action.creator.email;
-    if (!recipientEmail) {
-        console.error(`[sendClosureNotificationEmail] No se pudo encontrar el email del creador para la acción ${action.actionId}.`);
-        return { id: crypto.randomUUID(), author: { id: 'system', name: 'Sistema' }, date: new Date().toISOString(), text: `Error: No se encontró el email del creador para enviar la notificación de cierre.` };
-    }
-
-    const dueDate = action.closureDueDate ? format(safeParseDate(action.closureDueDate)!, 'dd/MM/yyyy') : 'No definida';
-    
-    const subject = `Acción pendiente de cierre: ${action.actionId}`;
-    const html = `
-      <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
-        <div style="max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px;">
-          <h2 style="color: #00529B; border-bottom: 2px solid #00529B; padding-bottom: 10px;">Acción de Mejora Pendiente de Cierre</h2>
-          <p>La acción de mejora <strong>${action.actionId}: ${action.title}</strong> que creaste ha sido completamente verificada y está lista para su cierre final.</p>
-          <p>La fecha límite para completar el cierre es el <strong>${dueDate}</strong>.</p>
-          
-          <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;">
-            <h3 style="margin-top: 0; color: #00529B;">Resumen de la Verificación</h3>
-            <p style="margin-top: 10px;"><strong>Verificado por:</strong> ${action.verification?.verificationResponsible.name || 'N/D'}</p>
-            <p><strong>Fecha de Verificación:</strong> ${action.verification?.verificationDate ? format(safeParseDate(action.verification.verificationDate)!, 'dd/MM/yyyy') : 'N/D'}</p>
-            <h4 style="margin-top: 15px; margin-bottom: 5px; color: #333;">Observaciones de la Verificación:</h4>
-            <p style="margin: 0; white-space: pre-wrap; font-style: italic;">${action.verification?.notes || 'Sin observaciones.'}</p>
-          </div>
-          
-          <p>Por favor, accede a la plataforma para revisar la verificación y proceder con el cierre conforme o no conforme de la acción.</p>
-          <a href="${actionUrl}" style="background-color: #00529B; color: white; padding: 12px 20px; text-decoration: none; border-radius: 5px; display: inline-block; text-align: center;">Cerrar Acción</a>
-        </div>
-      </div>
-    `;
-
-    const previewUrl = await sendEmail(recipientEmail, subject, html);
-    
-    if (previewUrl && !previewUrl.startsWith('FALLO_DE_ENVIO')) {
-        return {
-            id: crypto.randomUUID(),
-            author: { id: 'system', name: 'Sistema' },
-            date: new Date().toISOString(),
-            text: `Notificación de acción pendiente de cierre enviada a: ${recipientEmail}. ${previewUrl}`
-        };
-    } else {
-        return {
-            id: crypto.randomUUID(),
-            author: { id: 'system', name: 'Sistema' },
-            date: new Date().toISOString(),
-            text: `Fallo al enviar notificación de cierre a: ${recipientEmail}.`
-        };
-    }
-}
-
-

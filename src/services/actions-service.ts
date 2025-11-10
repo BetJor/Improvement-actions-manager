@@ -393,6 +393,7 @@ export async function updateAction(
                     dataToUpdate.readers = readers;
                     dataToUpdate.authors = authors;
     
+                    // We pass the new data directly for the email to be correct
                     finalNotificationResult = await sendStateChangeEmail({ 
                         action: actionForPerms, 
                         oldStatus, 
@@ -568,6 +569,7 @@ async function getPermissionsForState(action: ImprovementAction, newStatus: Impr
     
 
     
+
 
 
 
