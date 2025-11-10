@@ -48,12 +48,9 @@ const linkify = (text: string): (string | JSX.Element)[] => {
             );
         }
         
-        // Remove the parenthesis and the word "Previsualización" if it's next to a link
-        if (i > 0 && parts[i-1]?.includes('ethereal.email')) {
-             return part.replace(/^\s*\((Previsualización)\)\s*/, '');
-        }
-        
-        return part;
+        // This regex looks for a standalone parenthesis followed by the word "Previsualización" and removes it.
+        // It's a bit of a specific fix for the previous format.
+        return part.replace(/\(Previsualización\)\s*/, '');
     });
 };
 

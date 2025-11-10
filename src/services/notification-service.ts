@@ -180,7 +180,7 @@ export async function sendStateChangeEmail(details: { action: ImprovementAction,
     let notificationSummary = '';
 
     if (newStatus === 'Pendiente Análisis') {
-        notificationSummary = 'Notificación de análisis';
+        notificationSummary = 'Notificación de análisis enviada a:';
         try {
             const emailInfo = await getEmailDetailsForAnalysis(action);
             emailTasks.push(
@@ -190,7 +190,7 @@ export async function sendStateChangeEmail(details: { action: ImprovementAction,
             return { id: crypto.randomUUID(), author: { id: 'system', name: 'Sistema' }, date: new Date().toISOString(), text: `Error al preparar la notificación de análisis: ${error.message}` };
         }
     } else if (newStatus === 'Pendiente Comprobación' && action.analysis) {
-        notificationSummary = 'Notificaciones de implementación/verificación';
+        notificationSummary = 'Notificaciones de implementación/verificación enviadas a:';
         const uniqueResponsibleEmails = [...new Set(action.analysis.proposedActions.map(pa => pa.responsibleUserEmail))];
 
         for (const email of uniqueResponsibleEmails) {
@@ -233,8 +233,8 @@ export async function sendStateChangeEmail(details: { action: ImprovementAction,
     let commentText = '';
     if (successfulSends.length > 0) {
         const recipients = successfulSends.map(r => r.recipient).join(', ');
-        const previews = successfulSends.map(r => `(Previsualización: ${r.url})`).join(' ');
-        commentText = `${notificationSummary} enviada a: ${recipients}. ${previews}`;
+        const previews = successfulSends.map(r => r.url).join(' ');
+        commentText = `${notificationSummary} ${recipients}. ${previews}`;
     }
     
     if (failedSends.length > 0) {
