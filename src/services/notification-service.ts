@@ -1,4 +1,5 @@
 
+
 'use server';
 /**
  * @fileOverview A service for handling notifications.
@@ -87,13 +88,29 @@ async function getEmailDetailsForVerification(action: ImprovementAction): Promis
     }
     
     const subject = `Asignado como verificador para la acción: ${action.actionId}`;
+    
+    const proposedActionsHtml = action.analysis?.proposedActions.map(pa => `
+        <div style="padding: 10px; border: 1px solid #eee; border-radius: 4px; margin-bottom: 10px;">
+            <p style="margin:0; font-weight: bold;">${pa.description}</p>
+            <p style="margin:5px 0 0; font-size: 0.9em; color: #555;">Responsable: ${pa.responsibleUserEmail} | Fecha Límite: ${pa.dueDate ? format(safeParseDate(pa.dueDate)!, 'dd/MM/yyyy') : 'N/D'}</p>
+        </div>
+    `).join('') || '<p>No se han definido acciones.</p>';
+
     const html = `
-      <div style="font-family: Arial, sans-serif; line-height: 1.6;">
-        <h2>Tarea de Verificación Asignada</h2>
-        <p>Se te ha asignado la verificación final de la implementación de la acción de mejora <strong>${action.actionId}: ${action.title}</strong>.</p>
-        <p>Tu tarea consiste en comprobar la eficacia de las acciones correctivas una vez estas hayan sido implementadas por sus respectivos responsables.</p>
-        <p>Recibirás notificaciones a medida que el estado de las acciones propuestas se actualice. Una vez todas estén completadas, podrás realizar la verificación final desde la plataforma.</p>
-        <a href="${actionUrl}" style="background-color: #00529B; color: white; padding: 10px 15px; text-decoration: none; border-radius: 5px; display: inline-block;">Ver Acción de Mejora</a>
+      <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+        <div style="max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px;">
+          <h2 style="color: #00529B; border-bottom: 2px solid #00529B; padding-bottom: 10px;">Tarea de Verificación Asignada</h2>
+          <p>Se te ha asignado la verificación final de la implementación de la acción de mejora <strong>${action.actionId}: ${action.title}</strong>.</p>
+          <p>Tu tarea consiste en comprobar la eficacia del siguiente plan de acción una vez todas las tareas hayan sido implementadas por sus respectivos responsables.</p>
+          
+          <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;">
+            <h3 style="margin-top: 0; color: #00529B;">Plan de Acción a Verificar</h3>
+            ${proposedActionsHtml}
+          </div>
+
+          <p>Recibirás notificaciones a medida que el estado de las acciones propuestas se actualice. Una vez todas estén completadas, podrás realizar la verificación final desde la plataforma.</p>
+          <a href="${actionUrl}" style="background-color: #00529B; color: white; padding: 12px 20px; text-decoration: none; border-radius: 5px; display: inline-block; text-align: center;">Ver Acción de Mejora</a>
+        </div>
       </div>
     `;
     
@@ -113,16 +130,24 @@ async function getEmailDetailsForProposedAction(action: ImprovementAction, propo
     
     const subject = `Nueva tarea asignada en la acción de mejora: ${action.actionId}`;
     const html = `
-      <div style="font-family: Arial, sans-serif; line-height: 1.6;">
-        <h2>Nueva Tarea Asignada</h2>
-        <p>Se te ha asignado una nueva tarea dentro de la acción de mejora <strong>${action.actionId}: ${action.title}</strong>.</p>
-        <div style="background-color: #f8f9fa; border-left: 4px solid #00529B; padding: 15px; margin: 20px 0;">
-          <p><strong>Tarea a realizar:</strong></p>
-          <p><em>${proposedAction.description}</em></p>
-          <p><strong>Fecha límite de implementación:</strong> ${dueDate}</p>
+      <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+        <div style="max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px;">
+          <h2 style="color: #00529B; border-bottom: 2px solid #00529B; padding-bottom: 10px;">Nueva Tarea Asignada</h2>
+          <p>Se te ha asignado una nueva tarea dentro de la acción de mejora <strong>${action.actionId}: ${action.title}</strong>.</p>
+          
+          <div style="background-color: #f8f9fa; border-left: 4px solid #00529B; padding: 15px; margin: 20px 0;">
+            <p style="margin: 0;"><strong>Tarea a realizar:</strong></p>
+            <p style="margin: 5px 0 0; font-size: 1.1em; font-style: italic;">${proposedAction.description}</p>
+          </div>
+          
+          <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+              <tr style="border-bottom: 1px solid #eee;"><td style="padding: 8px 0; font-weight: bold; width: 150px;">Fecha límite:</td><td>${dueDate}</td></tr>
+              <tr style="border-bottom: 1px solid #eee;"><td style="padding: 8px 0; font-weight: bold;">Creador/a Acción:</td><td>${action.creator.name}</td></tr>
+          </table>
+
+          <p>Por favor, accede a la plataforma para actualizar el estado de la tarea una vez la hayas completado.</p>
+          <a href="${actionUrl}" style="background-color: #00529B; color: white; padding: 12px 20px; text-decoration: none; border-radius: 5px; display: inline-block; text-align: center;">Ver y Actualizar Tarea</a>
         </div>
-        <p>Por favor, accede a la plataforma para actualizar el estado de la tarea una vez la hayas completado.</p>
-        <a href="${actionUrl}" style="background-color: #00529B; color: white; padding: 10px 15px; text-decoration: none; border-radius: 5px; display: inline-block;">Ver Acción de Mejora</a>
       </div>
     `;
 
@@ -145,7 +170,7 @@ async function getEmailDetailsForAnalysis(action: ImprovementAction): Promise<Em
       <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
         <div style="max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px;">
           <h2 style="color: #00529B; border-bottom: 2px solid #00529B; padding-bottom: 10px;">Nueva Acción de Mejora para Analizar</h2>
-          <p>Se te ha asignado el análisis de la acción de mejora <strong>${action.actionId}: ${action.title}</strong>.</p>
+          <p>Se ha asignado el análisis de la acción de mejora <strong>${action.actionId}: ${action.title}</strong>.</p>
           <p>La fecha límite para completar el análisis es el <strong>${dueDate}</strong>.</p>
           
           <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;">

@@ -228,51 +228,19 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
     const handleAnalysisSave = async (analysisData: any) => {
         if (!action) return;
         setIsSubmitting(true);
-        toast({ title: "Iniciando guardado...", description: "Guardando datos del análisis." });
-
-        const actionForPermissions = { ...action, analysis: analysisData, status: "Pendiente Comprobación" };
     
         try {
-            const { notificationResult } = await updateAction(
+            await updateAction(
                 action.id, 
-                { analysis: analysisData, status: "Pendiente Comprobación" },
-                null, // masterData not needed here, only for creation
-                undefined,
-                actionForPermissions // Pass the pre-built object
+                { analysis: analysisData, status: "Pendiente Comprobación" }
             );
             
             toast({
                 title: "Análisis guardado",
                 description: "El estado ha avanzado a 'Pendiente Comprobación'.",
             });
-
-            if (notificationResult?.text) {
-                const urlRegex = /(https?:\/\/[^\s]+)/g;
-                const matches = notificationResult.text.match(urlRegex) || [];
-                
-                const recipientsMatch = notificationResult.text.match(/enviada a (.*?)\. /);
-                const recipients = recipientsMatch ? recipientsMatch[1].split(', ') : [];
-
-                matches.forEach((url, index) => {
-                    const recipient = recipients[index] || `destinatario ${index + 1}`;
-                    toast({
-                        title: `Email enviado a ${recipient}`,
-                        description: (
-                            <a href={url} target="_blank" rel="noopener noreferrer" className="text-blue-500 underline">
-                                Ver previsualización del correo
-                            </a>
-                        ),
-                        duration: 15000,
-                    });
-                });
-            }
     
             await handleActionUpdate();
-            
-            toast({
-                title: "Proceso completado",
-                description: "La acción se ha guardado y avanzado correctamente.",
-            });
     
         } catch (error) {
             console.error("Error saving analysis:", error);
@@ -803,13 +771,13 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
             ["Estado", action.status === 'Finalizada' && action.closure?.isCompliant === false ? 'Finalizada (No Conforme)' : action.status],
             ["Creador", action.creator.name],
             ["Fecha Creación", safeParseDate(action.creationDate) ? format(safeParseDate(action.creationDate)!, 'dd/MM/yyyy HH:mm') : 'N/D'],
+            ["Responsable Análisis", action.responsibleUser?.name || action.responsibleGroupId],
             ["Ámbito", action.type],
             ["Origen", action.category],
             ["Clasificación", action.subcategory],
             ["Centro Principal", action.center],
             ["Centros Afectados", action.affectedCenters?.join(', ')],
             ["Áreas Afectadas", action.affectedAreas.join(', ')],
-            ["Responsable Análisis", action.assignedTo],
             ["Fecha Vto. Análisis", safeParseDate(action.analysisDueDate) ? format(safeParseDate(action.analysisDueDate)!, 'dd/MM/yyyy') : 'N/D'],
             ["Fecha Vto. Implantación", safeParseDate(action.implementationDueDate) ? format(safeParseDate(action.implementationDueDate)!, 'dd/MM/yyyy') : 'N/D'],
             ["Fecha Vto. Cierre", safeParseDate(action.closureDueDate) ? format(safeParseDate(action.closureDueDate)!, 'dd/MM/yyyy') : 'N/D'],
@@ -825,7 +793,7 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
             detailsData.push(["Fecha de Análisis", safeParseDate(action.analysis.analysisDate) ? format(safeParseDate(action.analysis.analysisDate)!, 'dd/MM/yyyy') : 'N/D']);
             detailsData.push(["Análisis de Causa Raíz"]);
             detailsData.push([action.analysis.causes]);
-            detailsData.push(["Responsable Verificación", users.find(u => u.id === action.analysis?.verificationResponsibleUserId)?.name || 'N/D']);
+            detailsData.push(["Responsable Verificación", users.find(u => u.id === action.analysis?.verificationResponsibleUserId)?.name || '']);
             detailsData.push([]);
         }
     
@@ -855,7 +823,7 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
         if (action.analysis?.proposedActions?.length) {
             const proposedActionsData = action.analysis.proposedActions.map(pa => ({
                 'Descripción': pa.description,
-                'Responsable': users.find(u => u.id === pa.responsibleUserId)?.name || 'N/D',
+                'Responsable': users.find(u => u.id === pa.responsibleUserId)?.name || '',
                 'Fecha Límite': safeParseDate(pa.dueDate as string) ? format(safeParseDate(pa.dueDate as string)!, 'dd/MM/yyyy') : 'N/D',
                 'Estado': pa.status || 'Pendiente',
                 'Fecha Estado': pa.statusUpdateDate ? format(safeParseDate(pa.statusUpdateDate)!, 'dd/MM/yyyy HH:mm') : 'N/D',
