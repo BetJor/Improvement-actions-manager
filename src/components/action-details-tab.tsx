@@ -232,7 +232,9 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
         toast({ title: "[BLUE] Iniciando avance de estado...", className: "bg-blue-100" });
 
         try {
+            toast({ title: "[BLUE] Preparando para enviar notificaciones...", className: "bg-blue-100" });
             toast({ title: "[BLUE] Llamando a updateAction para cambiar estado...", className: "bg-blue-100" });
+            
             await updateAction(
                 action.id, 
                 { analysis: analysisData, status: "Pendiente Comprobación" }
@@ -337,7 +339,9 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
         setIsSubmitting(true);
         toast({ title: "[GREEN] Iniciando actualización de tarea...", className: "bg-green-100" });
         try {
-            toast({ title: "[GREEN] Llamando a updateAction para actualizar tarea específica...", className: "bg-green-100" });
+            toast({ title: "[GREEN] Preparando para notificar al verificador...", className: "bg-green-100" });
+            toast({ title: "[GREEN] Llamando a updateAction para actualizar tarea...", className: "bg-green-100" });
+
             await updateAction(action.id, {
                 updateProposedActionStatus: {
                     proposedActionId,
@@ -785,6 +789,7 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
             ["Centro Principal", action.center],
             ["Centros Afectados", action.affectedCenters?.join(', ')],
             ["Áreas Afectadas", action.affectedAreas.join(', ')],
+            ["Descripción", action.description],
             ["Fecha Vto. Análisis", safeParseDate(action.analysisDueDate) ? format(safeParseDate(action.analysisDueDate)!, 'dd/MM/yyyy') : 'N/D'],
             ["Fecha Vto. Implantación", safeParseDate(action.implementationDueDate) ? format(safeParseDate(action.implementationDueDate)!, 'dd/MM/yyyy') : 'N/D'],
             ["Fecha Vto. Cierre", safeParseDate(action.closureDueDate) ? format(safeParseDate(action.closureDueDate)!, 'dd/MM/yyyy') : 'N/D'],
