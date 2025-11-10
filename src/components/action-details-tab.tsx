@@ -229,12 +229,7 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
         if (!action) return;
         setIsSubmitting(true);
         
-        toast({ title: "[BLUE] Iniciando avance de estado...", className: "bg-blue-100" });
-
         try {
-            toast({ title: "[BLUE] Preparando para enviar notificaciones...", className: "bg-blue-100" });
-            toast({ title: "[BLUE] Llamando a updateAction para cambiar estado...", className: "bg-blue-100" });
-            
             await updateAction(
                 action.id, 
                 { analysis: analysisData, status: "Pendiente Comprobación" }
@@ -256,7 +251,6 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
             });
         } finally {
             setIsSubmitting(false);
-            toast({ title: "[BLUE] Proceso de avance finalizado.", className: "bg-blue-100" });
         }
     }
 
@@ -337,7 +331,6 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
     const handleUpdateProposedActionStatus = async (proposedActionId: string, newStatus: ProposedActionStatus) => {
         if (!action) return;
         setIsSubmitting(true);
-        toast({ title: "[GREEN] Iniciando actualización de tarea...", className: "bg-green-100" });
         try {
             const payload = {
                 updateProposedActionStatus: {
@@ -345,9 +338,6 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
                     status: newStatus,
                 }
             };
-            toast({ title: `[GREEN] DEBUG: Enviando updateProposedActionStatus: ${JSON.stringify(payload.updateProposedActionStatus)}`, className: "bg-green-100", duration: 10000 });
-            toast({ title: "[GREEN] Llamando a updateAction para actualizar tarea...", className: "bg-green-100" });
-
             await updateAction(action.id, payload);
             
             toast({
@@ -360,7 +350,6 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
             toast({ variant: "destructive", title: "Error al actualizar el estado." });
         } finally {
             setIsSubmitting(false);
-             toast({ title: "[GREEN] Proceso de actualización de tarea finalizado.", className: "bg-green-100" });
         }
     };
     
