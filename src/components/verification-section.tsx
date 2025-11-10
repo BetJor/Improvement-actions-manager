@@ -15,7 +15,7 @@ import { Loader2, Save, Mic, Wand2, Pencil } from "lucide-react"
 import { useState, useEffect, useRef } from "react"
 import { improveWriting } from "@/ai/flows/improveWriting"
 import { useToast } from "@/hooks/use-toast"
-import { getPrompt } from "@/lib/data"
+import { getPrompt, sendStateChangeEmail } from "@/lib/data"
 import { cn } from "@/lib/utils"
 import {
   Dialog,
@@ -164,7 +164,7 @@ export function VerificationSection({ action, user, isSubmitting, onSave, isAdmi
     setAiSuggestion(null);
   };
 
-  const onSubmit = (values: VerificationFormValues) => {
+  const onSubmit = async (values: VerificationFormValues) => {
     const verificationData = {
       ...values,
       isEffective: true, // This could be another field in the form
@@ -175,7 +175,29 @@ export function VerificationSection({ action, user, isSubmitting, onSave, isAdmi
       },
       verificationDate: new Date().toISOString(),
     }
-    onSave(verificationData)
+    await onSave(verificationData);
+
+    // Send notification to the creator
+    if (action.creator.email) {
+      try {
+        await sendStateChangeEmail({
+          action: { ...action, status: 'Pendiente de Cierre' }, // Simulate the new state for the email
+          oldStatus: action.status,
+          newStatus: 'Pendiente de Cierre'
+        });
+        toast({
+          title: "Notificación enviada",
+          description: "Se ha notificado al creador que la acción está pendiente de cierre.",
+        });
+      } catch (error) {
+        console.error("Failed to send closure notification email:", error);
+        toast({
+          variant: "destructive",
+          title: "Error de Notificación",
+          description: "No se pudo enviar el email de notificación al creador.",
+        });
+      }
+    }
   }
 
   return (

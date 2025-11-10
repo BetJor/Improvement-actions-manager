@@ -214,80 +214,42 @@ async function getEmailDetailsForAnalysis(action: ImprovementAction): Promise<Em
     return { recipient: recipientEmail, subject, html, actionUrl };
 }
 
-async function getEmailDetailsForVerificationUpdate(action: ImprovementAction, updatedProposedActionId: string): Promise<EmailInfo> {
+async function getEmailDetailsForClosure(action: ImprovementAction): Promise<EmailInfo> {
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9002';
     const actionUrl = `${appUrl}/actions/${action.id}`;
-    
-    const recipientEmail = action.analysis?.verificationResponsibleUserEmail;
+
+    const recipientEmail = action.creator.email;
     if (!recipientEmail) {
-        throw new Error("No se ha proporcionado el email del responsable de verificación.");
+        throw new Error("No se ha proporcionado el email del creador para la notificación de cierre.");
     }
-    
-    const allActions = action.analysis?.proposedActions || [];
-    const updatedAction = allActions.find(pa => pa.id === updatedProposedActionId);
-    
-    if (!updatedAction) {
-        throw new Error("La acción propuesta actualizada no se ha encontrado.");
-    }
-    
-    const allTasksCompleted = allActions.every(pa => pa.status && pa.status !== 'Pendiente');
-    
-    const subject = `Actualización en el plan de acción de: ${action.actionId}`;
-    
-    const proposedActionsHtml = allActions.map(pa => {
-        const isUpdated = pa.id === updatedProposedActionId;
-        const statusColor = pa.status === 'Implementada' ? '#28a745' : pa.status === 'No Implementada' ? '#dc3545' : '#ffc107';
-        return `
-            <div style="padding: 10px; border: 1px solid ${isUpdated ? '#00529B' : '#eee'}; border-left: 4px solid ${isUpdated ? '#00529B' : '#eee'}; border-radius: 4px; margin-bottom: 10px; background-color: ${isUpdated ? '#f0faff' : 'transparent'};">
-                <p style="margin:0; font-weight: bold;">${pa.description}</p>
-                <p style="margin:5px 0 0; font-size: 0.9em; color: #555;">
-                    Responsable: ${pa.responsibleUserEmail} |
-                    Fecha Límite: ${pa.dueDate ? format(safeParseDate(pa.dueDate)!, 'dd/MM/yyyy') : 'N/D'} |
-                    Estado: <span style="font-weight: bold; color: ${statusColor};">${pa.status}</span>
-                    ${isUpdated ? '(Actualizado Recientemente)' : ''}
-                </p>
-            </div>
-        `;
-    }).join('');
 
-    const finalMessage = allTasksCompleted
-        ? `<h3 style="color: #28a745;">¡Plan de Acción Completado!</h3>
-           <p>Todas las tareas del plan de acción han sido implementadas. Ya puedes proceder a la verificación final de la eficacia.</p>
-           <p>Tienes hasta el <strong>${action.verificationDueDate ? format(safeParseDate(action.verificationDueDate)!, 'dd/MM/yyyy') : 'N/D'}</strong> para completarla.</p>`
-        : `<p>Una de las tareas ha sido actualizada. Aún quedan tareas pendientes de implementar. Se te notificará de nuevo cuando todo el plan esté completado.</p>`;
-
+    const dueDate = action.closureDueDate ? format(safeParseDate(action.closureDueDate)!, 'dd/MM/yyyy') : 'No definida';
+    
+    const subject = `Acción pendiente de cierre: ${action.actionId}`;
     const html = `
       <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
         <div style="max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px;">
-          <h2 style="color: #00529B; border-bottom: 2px solid #00529B; padding-bottom: 10px;">Actualización del Plan de Acción</h2>
-          <p>Se ha actualizado el estado de una de las tareas de la acción de mejora <strong>${action.actionId}: ${action.title}</strong>.</p>
+          <h2 style="color: #00529B; border-bottom: 2px solid #00529B; padding-bottom: 10px;">Acción de Mejora Pendiente de Cierre</h2>
+          <p>La acción de mejora <strong>${action.actionId}: ${action.title}</strong> que creaste ha sido completamente verificada y está lista para su cierre final.</p>
+          <p>La fecha límite para completar el cierre es el <strong>${dueDate}</strong>.</p>
           
-           <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;">
-                <h3 style="margin-top: 0; color: #00529B;">Detalles de la Acción Origen</h3>
-                <table style="width: 100%; border-collapse: collapse;">
-                    <tr style="border-bottom: 1px solid #eee;"><td style="padding: 8px 0; font-weight: bold; width: 120px;">Creador/a:</td><td>${action.creator.name}</td></tr>
-                    <tr style="border-bottom: 1px solid #eee;"><td style="padding: 8px 0; font-weight: bold;">Ámbito:</td><td>${action.type}</td></tr>
-                    <tr style="border-bottom: 1px solid #eee;"><td style="padding: 8px 0; font-weight: bold;">Origen:</td><td>${action.category}</td></tr>
-                    <tr style="border-bottom: 1px solid #eee;"><td style="padding: 8px 0; font-weight: bold;">Centro:</td><td>${action.center || 'No especificado'}</td></tr>
-                </table>
-                <h4 style="margin-top: 15px; margin-bottom: 5px; color: #333;">Observaciones:</h4>
-                <p style="margin: 0; white-space: pre-wrap; font-style: italic;">${action.description}</p>
-            </div>
-
-          <div style="padding: 15px; border-radius: 5px; margin: 20px 0;">
-            <h3 style="margin-top: 0; color: #00529B;">Estado del Plan de Acción</h3>
-            ${proposedActionsHtml}
+          <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;">
+            <h3 style="margin-top: 0; color: #00529B;">Resumen de la Verificación</h3>
+            <p style="margin-top: 10px;"><strong>Verificado por:</strong> ${action.verification?.verificationResponsible.name || 'N/D'}</p>
+            <p><strong>Fecha de Verificación:</strong> ${action.verification?.verificationDate ? format(safeParseDate(action.verification.verificationDate)!, 'dd/MM/yyyy') : 'N/D'}</p>
+            <h4 style="margin-top: 15px; margin-bottom: 5px; color: #333;">Observaciones de la Verificación:</h4>
+            <p style="margin: 0; white-space: pre-wrap; font-style: italic;">${action.verification?.notes || 'Sin observaciones.'}</p>
           </div>
           
-          ${finalMessage}
-          
-          <a href="${actionUrl}" style="background-color: #00529B; color: white; padding: 12px 20px; text-decoration: none; border-radius: 5px; display: inline-block; text-align: center;">Ver Acción de Mejora</a>
+          <p>Por favor, accede a la plataforma para revisar la verificación y proceder con el cierre conforme o no conforme de la acción.</p>
+          <a href="${actionUrl}" style="background-color: #00529B; color: white; padding: 12px 20px; text-decoration: none; border-radius: 5px; display: inline-block; text-align: center;">Cerrar Acción</a>
         </div>
       </div>
     `;
 
     return { recipient: recipientEmail, subject, html, actionUrl };
 }
+
 
 /**
  * Handles sending email notifications based on the state change.
@@ -343,50 +305,6 @@ export async function sendStateChangeEmail(details: { action: ImprovementAction,
     
     if (emailTasks.length === 0) {
         return { id: crypto.randomUUID(), author: { id: 'system', name: 'Sistema' }, date: new Date().toISOString(), text: 'No se encontraron destinatarios para la notificación.' };
-    }
-
-    const results = await Promise.all(emailTasks);
-    
-    const successfulSends = results.filter(r => r.url && !r.url.startsWith('FALLO_DE_ENVIO'));
-    const failedSends = results.filter(r => !r.url || r.url.startsWith('FALLO_DE_ENVIO'));
-
-    let commentText = '';
-    if (successfulSends.length > 0) {
-        const recipients = successfulSends.map(r => r.recipient).join(', ');
-        const previews = successfulSends.map(r => r.url).join(' ');
-        commentText = `${notificationSummary} ${recipients}. ${previews}`;
-    }
-    
-    if (failedSends.length > 0) {
-        const failedRecipients = failedSends.map(r => r.recipient).join(', ');
-        commentText += `\nFallo de envío a: ${failedRecipients}.`;
-    }
-
-    return { id: crypto.randomUUID(), author: { id: 'system', name: 'Sistema' }, date: new Date().toISOString(), text: commentText.trim() };
-}
-
-
-/**
- * Sends a specific notification when a proposed action's status is updated.
- * @returns An ActionComment to be added to the action, or null if no email was sent.
- */
-export async function sendProposedActionUpdateEmail(action: ImprovementAction, updatedProposedActionId: string): Promise<ActionComment | null> {
-    let emailTasks: Promise<{ recipient: string, url: string | null }>[] = [];
-    
-    const paIndex = action.analysis?.proposedActions.findIndex(p => p.id === updatedProposedActionId) ?? -1;
-    const notificationSummary = `Notificación de actualización de estado de la acción propuesta ${paIndex + 1} enviada a:`;
-
-    try {
-        const emailInfo = await getEmailDetailsForVerificationUpdate(action, updatedProposedActionId);
-        emailTasks.push(
-            sendEmail(emailInfo.recipient, emailInfo.subject, emailInfo.html).then(url => ({ recipient: emailInfo.recipient, url }))
-        );
-    } catch (error: any) {
-        return { id: crypto.randomUUID(), author: { id: 'system', name: 'Sistema' }, date: new Date().toISOString(), text: `Error al preparar la notificación de actualización: ${error.message}` };
-    }
-    
-    if (emailTasks.length === 0) {
-        return { id: crypto.randomUUID(), author: { id: 'system', name: 'Sistema' }, date: new Date().toISOString(), text: 'No se encontró el destinatario para la notificación de actualización.' };
     }
 
     const results = await Promise.all(emailTasks);
