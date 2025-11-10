@@ -323,6 +323,33 @@ export async function updateAction(
             
             const commentsToAdd: ActionComment[] = [];
 
+            // This is a specific update for a sub-task, not a main state change.
+            if (data.updateProposedActionStatus) {
+                const currentPAs = originalAction.analysis?.proposedActions || [];
+                const updatedPAs = currentPAs.map(pa => pa.id === data.updateProposedActionStatus!.proposedActionId 
+                    ? { ...pa, status: data.updateProposedActionStatus!.status, statusUpdateDate: new Date().toISOString() } 
+                    : pa
+                );
+                dataToUpdate['analysis.proposedActions'] = updatedPAs;
+
+                // Send notification for this specific sub-task update
+                const actionForEmail = { ...originalAction, ...dataToUpdate, analysis: { ...originalAction.analysis, proposedActions: updatedPAs } };
+                const tempNotificationResult = await sendStateChangeEmail({ 
+                    action: actionForEmail, 
+                    oldStatus, 
+                    newStatus,
+                    updatedProposedActionId: data.updateProposedActionStatus?.proposedActionId
+                });
+                if (tempNotificationResult) {
+                    finalNotificationResult = tempNotificationResult; // Will be added outside transaction
+                }
+                
+                // Clean up and update
+                delete dataToUpdate.updateProposedActionStatus;
+                transaction.update(actionDocRef, sanitizeDataForFirestore(dataToUpdate));
+                return; // Stop further processing in this transaction
+            }
+            
             // --- DATA PREPARATION ---
             if (dataToUpdate.analysis && Array.isArray(dataToUpdate.analysis.proposedActions)) {
                 const dueDates = dataToUpdate.analysis.proposedActions
@@ -344,7 +371,7 @@ export async function updateAction(
                 const today = new Date();
                 
                 if (newStatus === 'Pendiente de Cierre') {
-                    dataToUpdate.closureDueDate = addDays(today, workflowSettings.closureDueDays).toISOString();
+                    dataToUpdate.closureDueDate = addDays(today, workflowSettings.closureDueDate).toISOString();
                 }
 
                 // Important: Use the MERGED data for permission calculation
@@ -352,6 +379,16 @@ export async function updateAction(
                 const { readers, authors } = await getPermissionsForState(actionForPerms, newStatus);
                 dataToUpdate.readers = readers;
                 dataToUpdate.authors = authors;
+
+                // Prepare notification for the main status change
+                const tempNotificationResult = await sendStateChangeEmail({ 
+                    action: actionForEmail, 
+                    oldStatus, 
+                    newStatus,
+                });
+                if (tempNotificationResult) {
+                    finalNotificationResult = tempNotificationResult;
+                }
             }
             
             if (data.adminEdit) {
@@ -367,25 +404,16 @@ export async function updateAction(
                 delete dataToUpdate.newComment;
             }
             
-            if (data.updateProposedActionStatus || data.updateProposedAction) {
-                const currentPAs = originalAction.analysis?.proposedActions || [];
-                let updatedPAs;
-
-                if (data.updateProposedActionStatus) {
-                    updatedPAs = currentPAs.map(pa => pa.id === data.updateProposedActionStatus!.proposedActionId 
-                        ? { ...pa, status: data.updateProposedActionStatus!.status, statusUpdateDate: new Date().toISOString() } 
-                        : pa
-                    );
-                } else if (data.updateProposedAction) {
-                     updatedPAs = currentPAs.map(pa => pa.id === data.updateProposedAction!.id 
-                        ? { ...data.updateProposedAction, dueDate: new Date(data.updateProposedAction!.dueDate).toISOString() }
-                        : pa
-                    );
-                }
-
+            if (data.updateProposedAction) {
+                 const currentPAs = originalAction.analysis?.proposedActions || [];
+                 const updatedPAs = currentPAs.map(pa => pa.id === data.updateProposedAction!.id 
+                    ? { ...data.updateProposedAction, dueDate: new Date(data.updateProposedAction!.dueDate).toISOString() }
+                    : pa
+                );
                 if (updatedPAs) {
                     dataToUpdate['analysis.proposedActions'] = updatedPAs;
                 }
+                 delete dataToUpdate.updateProposedAction;
             }
             
             if (commentsToAdd.length > 0) {
@@ -393,36 +421,8 @@ export async function updateAction(
             }
 
             const finalDataToUpdate = sanitizeDataForFirestore(dataToUpdate);
-            transaction.update(actionDocRef, finalDataToUpdate);
-            
-            // --- Post-Transaction Actions ---
             const actionForEmail = { ...originalAction, ...dataToUpdate };
-            // Prepare notification details to be used after the transaction succeeds.
-             if (data.updateProposedActionStatus) {
-                 const tempNotificationResult = await sendStateChangeEmail({ 
-                    action: actionForEmail, 
-                    oldStatus, 
-                    newStatus,
-                    updatedProposedActionId: data.updateProposedActionStatus?.proposedActionId
-                });
-                 if (tempNotificationResult) {
-                    finalNotificationResult = tempNotificationResult;
-                }
-                 delete dataToUpdate.updateProposedActionStatus;
-            } else if (isStatusChanging) {
-                 const tempNotificationResult = await sendStateChangeEmail({ 
-                    action: actionForEmail, 
-                    oldStatus, 
-                    newStatus,
-                });
-                if (tempNotificationResult) {
-                    finalNotificationResult = tempNotificationResult;
-                }
-            }
-            
-            // We need to delete the specific fields from the object so they are not processed again
-            if (data.updateProposedAction) delete dataToUpdate.updateProposedAction;
-
+            transaction.update(actionDocRef, finalDataToUpdate);
         });
         
         // If the transaction succeeded, and we have a notification comment, add it in a separate write.
@@ -526,6 +526,7 @@ async function getPermissionsForState(action: ImprovementAction, newStatus: Impr
 
 
     
+
 
 
 
