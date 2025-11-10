@@ -23,18 +23,36 @@ interface CommentsSectionProps {
 }
 
 // Function to find URLs in text and replace them with anchor tags
-const linkify = (text: string) => {
+const linkify = (text: string): (string | JSX.Element)[] => {
+    if (!text) return [text];
+
     const urlRegex = /(https?:\/\/[^\s]+)/g;
-    return text.split(urlRegex).map((part, i) => {
+    const parts = text.split(urlRegex);
+
+    return parts.map((part, i) => {
         if (part.match(urlRegex)) {
-            // Make the link text more user-friendly
-            const linkText = part.includes('ethereal.email') ? 'Previsualización' : 'Enlace';
+            // It's a URL
+            const isPreviewLink = part.includes('ethereal.email');
+            const linkText = isPreviewLink ? "Previsualización" : "Enlace";
+            
             return (
-                <a key={i} href={part} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline inline-flex items-center gap-1">
+                <a 
+                  key={i} 
+                  href={part} 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="text-blue-600 hover:underline inline-flex items-center gap-1"
+                >
                     {linkText} <ExternalLink className="h-3 w-3" />
                 </a>
             );
         }
+        
+        // Remove the parenthesis and the word "Previsualización" if it's next to a link
+        if (i > 0 && parts[i-1]?.includes('ethereal.email')) {
+             return part.replace(/^\s*\((Previsualización)\)\s*/, '');
+        }
+        
         return part;
     });
 };

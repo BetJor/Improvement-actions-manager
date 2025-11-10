@@ -1,5 +1,4 @@
 
-
 'use server';
 /**
  * @fileOverview A service for handling notifications.
@@ -234,12 +233,13 @@ export async function sendStateChangeEmail(details: { action: ImprovementAction,
     let commentText = '';
     if (successfulSends.length > 0) {
         const recipients = successfulSends.map(r => r.recipient).join(', ');
-        const previews = successfulSends.map(r => `<a href="${r.url!}" target="_blank" rel="noopener noreferrer">Previsualización (${r.recipient})</a>`).join(' | ');
+        const previews = successfulSends.map(r => `(Previsualización: ${r.url})`).join(' ');
         commentText = `${notificationSummary} enviada a: ${recipients}. ${previews}`;
     }
     
     if (failedSends.length > 0) {
-        commentText += `\nFallo de envío a: ${failedSends.map(r => r.recipient).join(', ')}.`;
+        const failedRecipients = failedSends.map(r => r.recipient).join(', ');
+        commentText += `\nFallo de envío a: ${failedRecipients}.`;
     }
 
     return { id: crypto.randomUUID(), author: { id: 'system', name: 'Sistema' }, date: new Date().toISOString(), text: commentText.trim() };
