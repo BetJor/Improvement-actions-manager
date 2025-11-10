@@ -288,7 +288,7 @@ export async function createAction(data: CreateActionData, masterData: any): Pro
 
 export async function updateAction(
     actionId: string, 
-    data: Partial<ImprovementAction> & { newComment?: any; adminEdit?: any; updateProposedActionStatus?: any; updateProposedAction?: ProposedAction }, 
+    data: Partial<ImprovementAction> & { newComment?: any; adminEdit?: any; updateProposedActionStatus?: { proposedActionId: string, status: ProposedAction['status'] }; updateProposedAction?: ProposedAction }, 
     masterData: any | null = null, 
     statusFromForm?: 'Borrador' | 'Pendiente Análisis'
 ): Promise<{ 
@@ -386,8 +386,6 @@ export async function updateAction(
                 if (updatedPAs) {
                     dataToUpdate['analysis.proposedActions'] = updatedPAs;
                 }
-                delete dataToUpdate.updateProposedActionStatus;
-                delete dataToUpdate.updateProposedAction;
             }
             
             if (commentsToAdd.length > 0) {
@@ -399,13 +397,23 @@ export async function updateAction(
             
             // --- Post-Transaction Actions ---
             // Prepare notification details to be used after the transaction succeeds.
-            if (isStatusChanging) {
+             if (isStatusChanging || data.updateProposedActionStatus) {
                 const actionForEmail = { ...originalAction, ...dataToUpdate };
-                const tempNotificationResult = await sendStateChangeEmail({ action: actionForEmail, oldStatus, newStatus });
+                const tempNotificationResult = await sendStateChangeEmail({ 
+                    action: actionForEmail, 
+                    oldStatus, 
+                    newStatus,
+                    updatedProposedActionId: data.updateProposedActionStatus?.proposedActionId
+                });
                 if (tempNotificationResult) {
                     finalNotificationResult = tempNotificationResult;
                 }
             }
+            
+            // We need to delete the specific fields from the object so they are not processed again
+            if (data.updateProposedActionStatus) delete dataToUpdate.updateProposedActionStatus;
+            if (data.updateProposedAction) delete dataToUpdate.updateProposedAction;
+
         });
         
         // If the transaction succeeded, and we have a notification comment, add it in a separate write.
@@ -509,6 +517,7 @@ async function getPermissionsForState(action: ImprovementAction, newStatus: Impr
 
 
     
+
 
 
 
