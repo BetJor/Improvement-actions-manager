@@ -200,7 +200,6 @@ export async function createAction(data: CreateActionData, masterData: any): Pro
     const newActionId = `AM-${year}${newActionIdNumber.toString().padStart(3, '0')}`;
   
     const today = new Date();
-    const creatorDetails = await getUserById(data.creator.id);
     const categoryName = masterData.origins.data.find((c: any) => c.id === data.categoryId)?.name || '';
     const subcategoryName = masterData.classifications.data.find((s: any) => s.id === data.subcategoryId)?.name || '';
     const affectedAreasNames = data.affectedAreasIds.map(id => masterData.affectedAreas.find((a: any) => a.id === id)?.name || id);
@@ -233,9 +232,9 @@ export async function createAction(data: CreateActionData, masterData: any): Pro
         assignedTo: data.assignedTo,
         creator: {
             id: data.creator.id,
-            name: creatorDetails?.name || data.creator.name,
-            avatar: creatorDetails?.avatar || "",
-            email: creatorDetails?.email || '',
+            name: data.creator.name,
+            avatar: data.creator.avatar || "",
+            email: data.creator.email || '',
         },
         responsibleGroupId: data.assignedTo,
         creationDate: today.toISOString(),
@@ -289,6 +288,8 @@ async function handleProposedActionStatusUpdate(
     originalAction: ImprovementAction,
     updateData: { proposedActionId: string, status: ProposedAction['status'] }
 ): Promise<ActionComment | null> {
+    const paIndex = originalAction.analysis?.proposedActions.findIndex(p => p.id === updateData.proposedActionId) ?? -1;
+
     const currentPAs = originalAction.analysis?.proposedActions || [];
     const updatedPAs = currentPAs.map(pa => 
         pa.id === updateData.proposedActionId 
@@ -348,12 +349,13 @@ export async function updateAction(
                 throw new Error(`Action with ID ${actionId} not found.`);
             }
             const originalAction = { id: originalActionSnap.id, ...originalActionSnap.data() } as ImprovementAction;
-
+            
+            // --- ISOLATED LOGIC FOR PROPOSED ACTION STATUS UPDATE ---
             if (data.updateProposedActionStatus) {
                 finalNotificationResult = await handleProposedActionStatusUpdate(transaction, actionDocRef, originalAction, data.updateProposedActionStatus!);
-                // This specific path is now fully isolated and will return after the transaction
-                return; 
-            }
+                // IMPORTANT: This logic path is now completely isolated and finishes here.
+                return;
+            } 
             
             // --- GENERAL LOGIC (Status Change, Comments, etc.) ---
             let dataToUpdate: any = { ...data };
@@ -367,7 +369,7 @@ export async function updateAction(
                 const today = new Date();
                 
                 if (newStatus === 'Pendiente de Cierre') {
-                    dataToUpdate.closureDueDate = addDays(today, workflowSettings.closureDueDate).toISOString();
+                    dataToUpdate.closureDueDate = addDays(today, workflowSettings.closureDueDays).toISOString();
                 }
 
                 const actionForPerms = { ...originalAction, ...dataToUpdate };
@@ -546,6 +548,7 @@ async function getPermissionsForState(action: ImprovementAction, newStatus: Impr
     
 
     
+
 
 
 

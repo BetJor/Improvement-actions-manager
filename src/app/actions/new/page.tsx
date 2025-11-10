@@ -80,6 +80,7 @@ export default function NewActionPage() {
           id: user.id,
           name: user.name || "Usuario desconocido",
           avatar: user.avatar || undefined,
+          email: user.email || '',
         },
       };
       const newAction = await createAction(actionData, masterData);
