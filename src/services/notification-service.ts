@@ -1,5 +1,4 @@
 
-
 'use server';
 /**
  * @fileOverview A service for handling notifications.
@@ -242,7 +241,8 @@ async function getEmailDetailsForVerificationUpdate(action: ImprovementAction, u
                 <p style="margin:0; font-weight: bold;">${pa.description}</p>
                 <p style="margin:5px 0 0; font-size: 0.9em; color: #555;">
                     Responsable: ${pa.responsibleUserEmail} |
-                    Estado: <span style="font-weight: bold; color: ${statusColor};">${pa.status}</span>
+                    Estado: <span style="font-weight: bold; color: ${statusColor};">${pa.status}</span> |
+                    Fecha Límite: ${pa.dueDate ? format(safeParseDate(pa.dueDate)!, 'dd/MM/yyyy') : 'N/D'}
                     ${isUpdated ? '(Actualizado Recientemente)' : ''}
                 </p>
             </div>
