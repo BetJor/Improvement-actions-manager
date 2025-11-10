@@ -249,6 +249,18 @@ export async function createAction(data: CreateActionData, masterData: any): Pro
     
     if (data.originalActionId) newActionData.originalActionId = data.originalActionId;
     if (data.originalActionTitle) newActionData.originalActionTitle = data.originalActionTitle;
+
+    // If status is 'Pendiente Análisis', send email and add comment *before* writing to DB
+    if (newActionData.status === 'Pendiente Análisis') {
+        const notificationResult = await sendStateChangeEmail({
+            action: newActionData,
+            oldStatus: 'Borrador',
+            newStatus: 'Pendiente Análisis'
+        });
+        if (notificationResult) {
+            newActionData.comments = [notificationResult];
+        }
+    }
     
     // Calculate permissions before the first write
     const { readers, authors } = await getPermissionsForState(newActionData, newActionData.status);
@@ -265,23 +277,6 @@ export async function createAction(data: CreateActionData, masterData: any): Pro
         errorEmitter.emit('permission-error', permissionError);
         throw serverError;
       });
-
-    // If status is 'Pendiente Análisis', send email after creation
-    if (newActionData.status === 'Pendiente Análisis') {
-        const notificationResult = await sendStateChangeEmail({
-            action: newActionData,
-            oldStatus: 'Borrador',
-            newStatus: 'Pendiente Análisis'
-        });
-        if (notificationResult) {
-            await updateDoc(docRef, {
-                comments: arrayUnion(notificationResult)
-            });
-            // Re-fetch to include the comment in the returned object
-            const finalDoc = await getDoc(docRef);
-            newActionData = { id: finalDoc.id, ...finalDoc.data() } as ImprovementAction;
-        }
-    }
 
     return newActionData;
 }
@@ -407,7 +402,9 @@ export async function updateAction(
             }
             
             if (commentsToAdd.length > 0) {
-                dataToUpdate.comments = arrayUnion(...commentsToAdd);
+                // Read existing comments, add new ones, and then update the whole array
+                const existingComments = originalAction.comments || [];
+                dataToUpdate.comments = [...existingComments, ...commentsToAdd];
             }
             
             if (data.updateProposedAction) {
@@ -519,6 +516,7 @@ async function getPermissionsForState(action: ImprovementAction, newStatus: Impr
 
 
     
+
 
 
 
