@@ -15,7 +15,7 @@ import { Loader2, Save, Mic, Wand2, Pencil } from "lucide-react"
 import { useState, useEffect, useRef } from "react"
 import { improveWriting } from "@/ai/flows/improveWriting"
 import { useToast } from "@/hooks/use-toast"
-import { getPrompt, sendStateChangeEmail } from "@/lib/data"
+import { getPrompt, sendClosureNotificationEmail, updateAction } from "@/lib/data"
 import { cn } from "@/lib/utils"
 import {
   Dialog,
@@ -180,15 +180,18 @@ export function VerificationSection({ action, user, isSubmitting, onSave, isAdmi
     // Send notification to the creator
     if (action.creator.email) {
       try {
-        await sendStateChangeEmail({
-          action: { ...action, status: 'Pendiente de Cierre' }, // Simulate the new state for the email
-          oldStatus: action.status,
-          newStatus: 'Pendiente de Cierre'
-        });
+        const notificationComment = await sendClosureNotificationEmail(action);
+        
         toast({
           title: "Notificación enviada",
           description: "Se ha notificado al creador que la acción está pendiente de cierre.",
         });
+
+        // Save the notification comment to Firestore
+        if (notificationComment) {
+          await updateAction(action.id, { newComment: notificationComment });
+        }
+
       } catch (error) {
         console.error("Failed to send closure notification email:", error);
         toast({
@@ -309,5 +312,3 @@ export function VerificationSection({ action, user, isSubmitting, onSave, isAdmi
     </>
   )
 }
-
-    

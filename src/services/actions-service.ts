@@ -368,13 +368,12 @@ export async function updateAction(
             }
             const originalAction = { id: originalActionSnap.id, ...originalActionSnap.data() } as ImprovementAction;
             
-            // --- ISOLATED LOGIC FOR PROPOSED ACTION STATUS UPDATE (FLUX VERD) ---
+            // --- ISOLATED LOGIC FOR PROPOSED ACTION STATUS UPDATE ---
             if (data.updateProposedActionStatus) {
                 finalNotificationResult = await handleProposedActionStatusUpdate(transaction, actionDocRef, originalAction, data.updateProposedActionStatus!);
-                return;
-            } 
-            // --- GENERAL LOGIC (FLUX BLAU, etc.) ---
-            else {
+            
+            // --- GENERAL LOGIC (status changes, admin edits, etc.) ---
+            } else {
                 let dataToUpdate: any = { ...data };
                 const oldStatus = originalAction.status;
                 const newStatus = statusFromForm || data.status || oldStatus;
@@ -569,6 +568,7 @@ async function getPermissionsForState(action: ImprovementAction, newStatus: Impr
     
 
     
+
 
 
 

@@ -439,3 +439,4 @@ export async function sendClosureNotificationEmail(action: ImprovementAction): P
     }
 }
 
+
