@@ -320,8 +320,8 @@ export async function updateAction(
             let dataToUpdate: any = { ...data };
             const oldStatus = originalAction.status;
             const newStatus = statusFromForm || data.status || oldStatus;
-            const isStatusChanging = newStatus !== oldStatus;
             
+            // --- ISOLATED ACTION: UPDATE PROPOSED ACTION STATUS ---
             if (data.updateProposedActionStatus) {
                 const currentPAs = originalAction.analysis?.proposedActions || [];
                 const updatedPAs = currentPAs.map(pa => pa.id === data.updateProposedActionStatus!.proposedActionId 
@@ -332,24 +332,27 @@ export async function updateAction(
                 
                 const actionForEmail = { ...originalAction, ...dataToUpdate, analysis: { ...originalAction.analysis, proposedActions: updatedPAs } };
                 
-                const tempNotificationResult = await sendStateChangeEmail({ 
+                finalNotificationResult = await sendStateChangeEmail({ 
                     action: actionForEmail, 
                     oldStatus, 
                     newStatus,
                     updatedProposedActionId: data.updateProposedActionStatus?.proposedActionId
                 });
                 
-                if (tempNotificationResult) {
-                   finalNotificationResult = tempNotificationResult;
+                delete dataToUpdate.updateProposedActionStatus;
+                if (finalNotificationResult) {
+                    dataToUpdate.comments = arrayUnion(finalNotificationResult);
                 }
                 
-                delete dataToUpdate.updateProposedActionStatus;
                 transaction.update(actionDocRef, sanitizeDataForFirestore(dataToUpdate));
                 
+                // IMPORTANT: Exit after this specific action to prevent fall-through
                 return;
             }
             
-            // --- DATA PREPARATION ---
+            // --- GENERAL UPDATE LOGIC ---
+            const isStatusChanging = newStatus !== oldStatus;
+            
             if (dataToUpdate.analysis && Array.isArray(dataToUpdate.analysis.proposedActions)) {
                 const dueDates = dataToUpdate.analysis.proposedActions
                     .map((pa: ProposedAction) => pa.dueDate ? new Date(pa.dueDate as string) : null)
@@ -378,14 +381,11 @@ export async function updateAction(
                 dataToUpdate.readers = readers;
                 dataToUpdate.authors = authors;
 
-                const tempNotificationResult = await sendStateChangeEmail({ 
+                finalNotificationResult = await sendStateChangeEmail({ 
                     action: actionForPerms, 
                     oldStatus, 
                     newStatus,
                 });
-                if (tempNotificationResult) {
-                    finalNotificationResult = tempNotificationResult;
-                }
             }
             
             let commentsToAdd: ActionComment[] = [];
@@ -402,8 +402,12 @@ export async function updateAction(
                 delete dataToUpdate.newComment;
             }
             
+            if (finalNotificationResult) {
+                commentsToAdd.push(finalNotificationResult);
+            }
+            
             if (commentsToAdd.length > 0) {
-                dataToUpdate.comments = [...(originalAction.comments || []), ...commentsToAdd];
+                dataToUpdate.comments = arrayUnion(...commentsToAdd);
             }
             
             if (data.updateProposedAction) {
@@ -421,13 +425,6 @@ export async function updateAction(
             const finalDataToUpdate = sanitizeDataForFirestore(dataToUpdate);
             transaction.update(actionDocRef, finalDataToUpdate);
         });
-        
-        if (finalNotificationResult) {
-             await updateDoc(actionDocRef, {
-                comments: arrayUnion(finalNotificationResult)
-            });
-        }
-
 
     } catch (error: any) {
         console.error("Error in updateAction transaction:", error);
@@ -522,6 +519,7 @@ async function getPermissionsForState(action: ImprovementAction, newStatus: Impr
 
 
     
+
 
 
 
