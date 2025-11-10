@@ -112,11 +112,11 @@ export function AnalysisSection({ action, user, isAdmin, isSubmitting, onSave, o
                 causes: action.analysis?.causes || "",
                 proposedActions: action.analysis?.proposedActions.map(pa => ({
                     ...pa,
-                    responsibleUserEmail: fetchedUsers.find(u => u.id === pa.responsibleUserId)?.email || '',
+                    responsibleUserEmail: fetchedUsers.find(u => u.id === pa.responsibleUserId)?.email || pa.responsibleUserEmail || '',
                     dueDate: new Date(pa.dueDate),
                     status: pa.status || 'Pendiente'
                 })) || [],
-                verificationResponsibleUserEmail: fetchedUsers.find(u => u.id === action.analysis?.verificationResponsibleUserId)?.email || ""
+                verificationResponsibleUserEmail: fetchedUsers.find(u => u.id === action.analysis?.verificationResponsibleUserId)?.email || action.analysis?.verificationResponsibleUserEmail || ""
             });
         } catch (error) {
             console.error("Failed to load users for analysis section", error);
@@ -262,6 +262,7 @@ export function AnalysisSection({ action, user, isAdmin, isSubmitting, onSave, o
         ...pa,
         id: pa.id || crypto.randomUUID(),
         responsibleUserId: users.find(u => u.email === pa.responsibleUserEmail)?.id || '',
+        responsibleUserEmail: pa.responsibleUserEmail,
       })),
       verificationResponsibleUserEmail: values.verificationResponsibleUserEmail, // Pass email directly
       verificationResponsibleUserId: users.find(u => u.email === values.verificationResponsibleUserEmail)?.id || '',
