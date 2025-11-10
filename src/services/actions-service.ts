@@ -283,14 +283,12 @@ export async function createAction(data: CreateActionData, masterData: any): Pro
     return newActionData;
 }
 
-
 async function handleProposedActionStatusUpdate(
     transaction: any,
     actionDocRef: any,
     originalAction: ImprovementAction,
     updateData: { proposedActionId: string, status: ProposedAction['status'] }
-): Promise<{ updatedAction: ImprovementAction, notificationResult: ActionComment | null }> {
-
+): Promise<ActionComment | null> {
     const currentPAs = originalAction.analysis?.proposedActions || [];
     const updatedPAs = currentPAs.map(pa => 
         pa.id === updateData.proposedActionId 
@@ -318,7 +316,7 @@ async function handleProposedActionStatusUpdate(
     
     transaction.update(actionDocRef, sanitizeDataForFirestore(dataToUpdate));
 
-    return { updatedAction: { ...originalAction, ...dataToUpdate }, notificationResult };
+    return notificationResult;
 }
 
 
@@ -351,14 +349,13 @@ export async function updateAction(
             }
             const originalAction = { id: originalActionSnap.id, ...originalActionSnap.data() } as ImprovementAction;
 
-            // --- CARRILL 1: Actualització de Tasca Específica ---
             if (data.updateProposedActionStatus) {
-                const { notificationResult } = await handleProposedActionStatusUpdate(transaction, actionDocRef, originalAction, data.updateProposedActionStatus!);
-                finalNotificationResult = notificationResult;
-                return; // Finalitza la transacció aquí
-            } 
+                finalNotificationResult = await handleProposedActionStatusUpdate(transaction, actionDocRef, originalAction, data.updateProposedActionStatus!);
+                // This specific path is now fully isolated and will return after the transaction
+                return; 
+            }
             
-            // --- CARRILL 2: Lògica General (Canvi d'estat, comentaris, etc.) ---
+            // --- GENERAL LOGIC (Status Change, Comments, etc.) ---
             let dataToUpdate: any = { ...data };
             const oldStatus = originalAction.status;
             const newStatus = statusFromForm || data.status || oldStatus;
@@ -549,5 +546,6 @@ async function getPermissionsForState(action: ImprovementAction, newStatus: Impr
     
 
     
+
 
 

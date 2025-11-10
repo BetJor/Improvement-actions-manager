@@ -1,4 +1,5 @@
 
+
 'use server';
 /**
  * @fileOverview A service for handling notifications.
@@ -241,8 +242,8 @@ async function getEmailDetailsForVerificationUpdate(action: ImprovementAction, u
                 <p style="margin:0; font-weight: bold;">${pa.description}</p>
                 <p style="margin:5px 0 0; font-size: 0.9em; color: #555;">
                     Responsable: ${pa.responsibleUserEmail} |
-                    Estado: <span style="font-weight: bold; color: ${statusColor};">${pa.status}</span> |
-                    Fecha Límite: ${pa.dueDate ? format(safeParseDate(pa.dueDate)!, 'dd/MM/yyyy') : 'N/D'}
+                    Fecha Límite: ${pa.dueDate ? format(safeParseDate(pa.dueDate)!, 'dd/MM/yyyy') : 'N/D'} |
+                    Estado: <span style="font-weight: bold; color: ${statusColor};">${pa.status}</span>
                     ${isUpdated ? '(Actualizado Recientemente)' : ''}
                 </p>
             </div>
@@ -371,7 +372,9 @@ export async function sendStateChangeEmail(details: { action: ImprovementAction,
  */
 export async function sendProposedActionUpdateEmail(action: ImprovementAction, updatedProposedActionId: string): Promise<ActionComment | null> {
     let emailTasks: Promise<{ recipient: string, url: string | null }>[] = [];
-    let notificationSummary = 'Notificación de actualización de estado enviada a:';
+    
+    const paIndex = action.analysis?.proposedActions.findIndex(p => p.id === updatedProposedActionId) ?? -1;
+    const notificationSummary = `Notificación de actualización de estado de la acción propuesta ${paIndex + 1} enviada a:`;
 
     try {
         const emailInfo = await getEmailDetailsForVerificationUpdate(action, updatedProposedActionId);
