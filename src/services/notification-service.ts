@@ -292,8 +292,8 @@ async function getEmailDetailsForVerificationUpdate(action: ImprovementAction, u
  * Handles sending email notifications based on the state change.
  * @returns An ActionComment to be added to the action, or null if no email was sent.
  */
-export async function sendStateChangeEmail(details: { action: ImprovementAction, oldStatus: string, newStatus: string, updatedProposedActionId?: string }): Promise<ActionComment | null> {
-    const { action, newStatus, updatedProposedActionId } = details;
+export async function sendStateChangeEmail(details: { action: ImprovementAction, oldStatus: string, newStatus: string }): Promise<ActionComment | null> {
+    const { action, newStatus } = details;
     
     let emailTasks: Promise<{ recipient: string, url: string | null }>[] = [];
     let notificationSummary = '';
@@ -336,22 +336,54 @@ export async function sendStateChangeEmail(details: { action: ImprovementAction,
                  return { id: crypto.randomUUID(), author: { id: 'system', name: 'Sistema' }, date: new Date().toISOString(), text: `Error al preparar email de verificación: ${error.message}` };
             }
         }
-    } else if (updatedProposedActionId) {
-        notificationSummary = 'Notificación de actualización de estado enviada a:';
-        try {
-            const emailInfo = await getEmailDetailsForVerificationUpdate(action, updatedProposedActionId);
-            emailTasks.push(
-                sendEmail(emailInfo.recipient, emailInfo.subject, emailInfo.html).then(url => ({ recipient: emailInfo.recipient, url }))
-            );
-        } catch (error: any) {
-            return { id: crypto.randomUUID(), author: { id: 'system', name: 'Sistema' }, date: new Date().toISOString(), text: `Error al preparar la notificación de actualización: ${error.message}` };
-        }
     } else {
         return null;
     }
     
     if (emailTasks.length === 0) {
         return { id: crypto.randomUUID(), author: { id: 'system', name: 'Sistema' }, date: new Date().toISOString(), text: 'No se encontraron destinatarios para la notificación.' };
+    }
+
+    const results = await Promise.all(emailTasks);
+    
+    const successfulSends = results.filter(r => r.url && !r.url.startsWith('FALLO_DE_ENVIO'));
+    const failedSends = results.filter(r => !r.url || r.url.startsWith('FALLO_DE_ENVIO'));
+
+    let commentText = '';
+    if (successfulSends.length > 0) {
+        const recipients = successfulSends.map(r => r.recipient).join(', ');
+        const previews = successfulSends.map(r => r.url).join(' ');
+        commentText = `${notificationSummary} ${recipients}. ${previews}`;
+    }
+    
+    if (failedSends.length > 0) {
+        const failedRecipients = failedSends.map(r => r.recipient).join(', ');
+        commentText += `\nFallo de envío a: ${failedRecipients}.`;
+    }
+
+    return { id: crypto.randomUUID(), author: { id: 'system', name: 'Sistema' }, date: new Date().toISOString(), text: commentText.trim() };
+}
+
+
+/**
+ * Sends a specific notification when a proposed action's status is updated.
+ * @returns An ActionComment to be added to the action, or null if no email was sent.
+ */
+export async function sendProposedActionUpdateEmail(action: ImprovementAction, updatedProposedActionId: string): Promise<ActionComment | null> {
+    let emailTasks: Promise<{ recipient: string, url: string | null }>[] = [];
+    let notificationSummary = 'Notificación de actualización de estado enviada a:';
+
+    try {
+        const emailInfo = await getEmailDetailsForVerificationUpdate(action, updatedProposedActionId);
+        emailTasks.push(
+            sendEmail(emailInfo.recipient, emailInfo.subject, emailInfo.html).then(url => ({ recipient: emailInfo.recipient, url }))
+        );
+    } catch (error: any) {
+        return { id: crypto.randomUUID(), author: { id: 'system', name: 'Sistema' }, date: new Date().toISOString(), text: `Error al preparar la notificación de actualización: ${error.message}` };
+    }
+    
+    if (emailTasks.length === 0) {
+        return { id: crypto.randomUUID(), author: { id: 'system', name: 'Sistema' }, date: new Date().toISOString(), text: 'No se encontró el destinatario para la notificación de actualización.' };
     }
 
     const results = await Promise.all(emailTasks);

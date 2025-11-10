@@ -8,7 +8,7 @@ import { planTraditionalActionWorkflow, getWorkflowSettings } from './workflow-s
 import { getUsers, getUserById } from './users-service';
 import { getCategories, getSubcategories, getAffectedAreas, getCenters, getActionTypes, getResponsibilityRoles } from './master-data-service';
 import { getPermissionRuleForState, resolveRoles } from './permissions-service';
-import { sendStateChangeEmail } from './notification-service';
+import { sendStateChangeEmail, sendProposedActionUpdateEmail } from './notification-service';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError, type SecurityRuleContext } from '@/firebase/errors';
 
@@ -300,12 +300,10 @@ async function handleProposedActionStatusUpdate(
 
     const updatedActionForEmail = { ...originalAction, analysis: { ...originalAction.analysis, proposedActions: updatedPAs } as any };
     
-    const notificationResult = await sendStateChangeEmail({ 
-        action: updatedActionForEmail, 
-        oldStatus: originalAction.status, 
-        newStatus: originalAction.status,
-        updatedProposedActionId: updateData.proposedActionId
-    });
+    const notificationResult = await sendProposedActionUpdateEmail(
+        updatedActionForEmail,
+        updateData.proposedActionId
+    );
 
     const existingComments = Array.isArray(originalAction.comments) ? originalAction.comments : [];
     const newComments = [...existingComments];
@@ -338,7 +336,6 @@ export async function updateAction(
     let bisCreationResult: { createdBisTitle?: string, foundBisTitle?: string } = {};
     let finalNotificationResult: ActionComment | null = null;
     
-    // Ensure all dueDates in proposed actions are converted to ISO strings *before* the transaction
     if (data.analysis && Array.isArray(data.analysis.proposedActions)) {
         data.analysis.proposedActions = data.analysis.proposedActions.map(pa => ({
             ...pa,
@@ -354,15 +351,14 @@ export async function updateAction(
             }
             const originalAction = { id: originalActionSnap.id, ...originalActionSnap.data() } as ImprovementAction;
 
-            // --- LANE 1: Specific Task Update ---
+            // --- CARRILL 1: Actualització de Tasca Específica ---
             if (data.updateProposedActionStatus) {
                 const { notificationResult } = await handleProposedActionStatusUpdate(transaction, actionDocRef, originalAction, data.updateProposedActionStatus!);
                 finalNotificationResult = notificationResult;
-                // Important: We stop here to prevent falling through to general state change logic.
-                return; 
+                return; // Finalitza la transacció aquí
             } 
             
-            // --- LANE 2: General Update Logic ---
+            // --- CARRILL 2: Lògica General (Canvi d'estat, comentaris, etc.) ---
             let dataToUpdate: any = { ...data };
             const oldStatus = originalAction.status;
             const newStatus = statusFromForm || data.status || oldStatus;
@@ -553,4 +549,5 @@ async function getPermissionsForState(action: ImprovementAction, newStatus: Impr
     
 
     
+
 
