@@ -11,7 +11,6 @@ import { getPermissionRuleForState, resolveRoles } from './permissions-service';
 import { sendStateChangeEmail } from './notification-service';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError, type SecurityRuleContext } from '@/firebase/errors';
-import { useToast } from '@/hooks/use-toast';
 
 
 interface CreateActionData extends Omit<ImprovementAction, 'id' | 'actionId' | 'status' | 'creationDate' | 'category' | 'subcategory' | 'type' | 'affectedAreas' | 'affectedCenters' | 'center' | 'analysisDueDate' | 'implementationDueDate' | 'closureDueDate' | 'readers' | 'authors' | 'verificationDueDate' > {
@@ -291,8 +290,7 @@ async function handleProposedActionStatusUpdate(
     originalAction: ImprovementAction,
     updateData: { proposedActionId: string, status: ProposedAction['status'] }
 ): Promise<{ updatedAction: ImprovementAction, notificationResult: ActionComment | null }> {
-    const { toast } = useToast();
-    toast({ title: "[SERVICE-GREEN] Detectado: Actualización de Tarea Específica.", className: "bg-green-200" });
+    console.log("[SERVICE-GREEN] Detectado: Actualización de Tarea Específica.");
 
     const currentPAs = originalAction.analysis?.proposedActions || [];
     const updatedPAs = currentPAs.map(pa => 
@@ -340,7 +338,6 @@ export async function updateAction(
     const actionDocRef = doc(db, 'actions', actionId);
     let bisCreationResult: { createdBisTitle?: string, foundBisTitle?: string } = {};
     let finalNotificationResult: ActionComment | null = null;
-    const { toast } = useToast();
     
     // Ensure all dueDates in proposed actions are converted to ISO strings *before* the transaction
     if (data.analysis && Array.isArray(data.analysis.proposedActions)) {
@@ -366,7 +363,7 @@ export async function updateAction(
             }
 
             // --- GENERAL UPDATE LOGIC ---
-            toast({ title: "[SERVICE-BLUE] Detectado: Cambio de Estado General.", className: "bg-blue-200" });
+            console.log("[SERVICE-BLUE] Detectado: Cambio de Estado General.");
             let dataToUpdate: any = { ...data };
             let commentsToAdd: ActionComment[] = [];
             
