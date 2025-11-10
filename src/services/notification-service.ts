@@ -89,11 +89,13 @@ async function getEmailDetailsForVerification(action: ImprovementAction): Promis
     
     const subject = `Asignado como verificador para la acción: ${action.actionId}`;
     const html = `
-      <h1>Tarea de Verificación Asignada</h1>
-      <p>Se te ha asignado la verificación final de la implementación de la acción de mejora <strong>${action.actionId}: ${action.title}</strong>.</p>
-      <p>Tu tarea consiste en comprobar la eficacia de las acciones correctivas una vez estas hayan sido implementadas por sus respectivos responsables.</p>
-      <p>Recibirás notificaciones a medida que el estado de las acciones propuestas se actualice. Una vez todas estén completadas, podrás realizar la verificación final desde la plataforma.</p>
-      <a href="${actionUrl}" style="background-color: #00529B; color: white; padding: 10px 15px; text-decoration: none; border-radius: 5px; display: inline-block;">Ver Acción de Mejora</a>
+      <div style="font-family: Arial, sans-serif; line-height: 1.6;">
+        <h2>Tarea de Verificación Asignada</h2>
+        <p>Se te ha asignado la verificación final de la implementación de la acción de mejora <strong>${action.actionId}: ${action.title}</strong>.</p>
+        <p>Tu tarea consiste en comprobar la eficacia de las acciones correctivas una vez estas hayan sido implementadas por sus respectivos responsables.</p>
+        <p>Recibirás notificaciones a medida que el estado de las acciones propuestas se actualice. Una vez todas estén completadas, podrás realizar la verificación final desde la plataforma.</p>
+        <a href="${actionUrl}" style="background-color: #00529B; color: white; padding: 10px 15px; text-decoration: none; border-radius: 5px; display: inline-block;">Ver Acción de Mejora</a>
+      </div>
     `;
     
     return { recipient: recipientEmail, subject, html, actionUrl };
@@ -103,50 +105,70 @@ async function getEmailDetailsForProposedAction(action: ImprovementAction, propo
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9002';
     const actionUrl = `${appUrl}/actions/${action.id}`;
 
-    const recipientEmail = proposedAction.responsibleUserEmail;
-    if (!recipientEmail) {
+    if (!proposedAction.responsibleUserEmail) {
         throw new Error(`La acción propuesta '${proposedAction.description.substring(0, 30)}...' no tiene un email de responsable.`);
     }
+    const recipientEmail = proposedAction.responsibleUserEmail;
 
     const dueDate = proposedAction.dueDate ? format(safeParseDate(proposedAction.dueDate)!, 'dd/MM/yyyy') : 'N/D';
     
     const subject = `Nueva tarea asignada en la acción de mejora: ${action.actionId}`;
     const html = `
-      <h1>Nueva Tarea Asignada</h1>
-      <p>Se te ha asignado una nueva tarea dentro de la acción de mejora <strong>${action.actionId}: ${action.title}</strong>.</p>
-      <hr>
-      <p><strong>Tarea a realizar:</strong></p>
-      <p><em>${proposedAction.description}</em></p>
-      <p><strong>Fecha límite de implementación:</strong> ${dueDate}</p>
-      <hr>
-      <p>Por favor, accede a la plataforma para actualizar el estado de la tarea una vez la hayas completado.</p>
-      <a href="${actionUrl}" style="background-color: #00529B; color: white; padding: 10px 15px; text-decoration: none; border-radius: 5px; display: inline-block;">Ver Acción de Mejora</a>
+      <div style="font-family: Arial, sans-serif; line-height: 1.6;">
+        <h2>Nueva Tarea Asignada</h2>
+        <p>Se te ha asignado una nueva tarea dentro de la acción de mejora <strong>${action.actionId}: ${action.title}</strong>.</p>
+        <div style="background-color: #f8f9fa; border-left: 4px solid #00529B; padding: 15px; margin: 20px 0;">
+          <p><strong>Tarea a realizar:</strong></p>
+          <p><em>${proposedAction.description}</em></p>
+          <p><strong>Fecha límite de implementación:</strong> ${dueDate}</p>
+        </div>
+        <p>Por favor, accede a la plataforma para actualizar el estado de la tarea una vez la hayas completado.</p>
+        <a href="${actionUrl}" style="background-color: #00529B; color: white; padding: 10px 15px; text-decoration: none; border-radius: 5px; display: inline-block;">Ver Acción de Mejora</a>
+      </div>
     `;
 
     return { recipient: recipientEmail, subject, html, actionUrl };
 }
-
 
 async function getEmailDetailsForAnalysis(action: ImprovementAction): Promise<EmailInfo> {
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9002';
     const actionUrl = `${appUrl}/actions/${action.id}`;
 
-    const recipientEmail = action.responsibleGroupId; // This is the email of the responsible group/person
-     if (!recipientEmail) {
+    const recipientEmail = action.responsibleGroupId;
+    if (!recipientEmail) {
         throw new Error("No se ha proporcionado el email del responsable del análisis.");
     }
+
+    const dueDate = action.analysisDueDate ? format(safeParseDate(action.analysisDueDate)!, 'dd/MM/yyyy') : 'No definida';
     
     const subject = `Nueva acción de mejora asignada para análisis: ${action.actionId}`;
     const html = `
-      <h1>Nueva Acción Asignada para Análisis</h1>
-      <p>Se ha asignado el análisis de la nueva acción de mejora <strong>${action.actionId}: ${action.title}</strong>.</p>
-      <p>Por favor, accede a la plataforma para realizar el análisis de causas y proponer un plan de acción.</p>
-      <a href="${actionUrl}" style="background-color: #00529B; color: white; padding: 10px 15px; text-decoration: none; border-radius: 5px; display: inline-block;">Ver Acción</a>
+      <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+        <div style="max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px;">
+          <h2 style="color: #00529B; border-bottom: 2px solid #00529B; padding-bottom: 10px;">Nueva Acción de Mejora para Analizar</h2>
+          <p>Se te ha asignado el análisis de la acción de mejora <strong>${action.actionId}: ${action.title}</strong>.</p>
+          <p>La fecha límite para completar el análisis es el <strong>${dueDate}</strong>.</p>
+          
+          <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;">
+            <h3 style="margin-top: 0; color: #00529B;">Detalles de la Acción</h3>
+            <table style="width: 100%; border-collapse: collapse;">
+              <tr style="border-bottom: 1px solid #eee;"><td style="padding: 8px 0; font-weight: bold; width: 120px;">Creador/a:</td><td>${action.creator.name}</td></tr>
+              <tr style="border-bottom: 1px solid #eee;"><td style="padding: 8px 0; font-weight: bold;">Ámbito:</td><td>${action.type}</td></tr>
+              <tr style="border-bottom: 1px solid #eee;"><td style="padding: 8px 0; font-weight: bold;">Origen:</td><td>${action.category}</td></tr>
+              <tr style="border-bottom: 1px solid #eee;"><td style="padding: 8px 0; font-weight: bold;">Centro:</td><td>${action.center || 'No especificado'}</td></tr>
+            </table>
+            <h4 style="margin-top: 15px; margin-bottom: 5px; color: #333;">Observaciones:</h4>
+            <p style="margin: 0; white-space: pre-wrap; font-style: italic;">${action.description}</p>
+          </div>
+          
+          <p>Por favor, accede a la plataforma para realizar el análisis de causas y proponer un plan de acción.</p>
+          <a href="${actionUrl}" style="background-color: #00529B; color: white; padding: 12px 20px; text-decoration: none; border-radius: 5px; display: inline-block; text-align: center;">Realizar Análisis</a>
+        </div>
+      </div>
     `;
 
     return { recipient: recipientEmail, subject, html, actionUrl };
 }
-
 
 /**
  * Handles sending email notifications based on the state change.
@@ -159,7 +181,7 @@ export async function sendStateChangeEmail(details: { action: ImprovementAction,
     let notificationSummary = '';
 
     if (newStatus === 'Pendiente Análisis') {
-        notificationSummary = 'Notificación de análisis enviada a:';
+        notificationSummary = 'Notificación de análisis';
         try {
             const emailInfo = await getEmailDetailsForAnalysis(action);
             emailTasks.push(
@@ -169,10 +191,9 @@ export async function sendStateChangeEmail(details: { action: ImprovementAction,
             return { id: crypto.randomUUID(), author: { id: 'system', name: 'Sistema' }, date: new Date().toISOString(), text: `Error al preparar la notificación de análisis: ${error.message}` };
         }
     } else if (newStatus === 'Pendiente Comprobación' && action.analysis) {
-        notificationSummary = 'Notificaciones de implementación/verificación enviadas a:';
+        notificationSummary = 'Notificaciones de implementación/verificación';
         const uniqueResponsibleEmails = [...new Set(action.analysis.proposedActions.map(pa => pa.responsibleUserEmail))];
 
-        // Email to each person responsible for a proposed action
         for (const email of uniqueResponsibleEmails) {
             const userFirstAction = action.analysis.proposedActions.find(pa => pa.responsibleUserEmail === email);
             if(userFirstAction) {
@@ -187,7 +208,6 @@ export async function sendStateChangeEmail(details: { action: ImprovementAction,
             }
         }
 
-        // Email to the final verifier
         if (action.analysis.verificationResponsibleUserEmail) {
             try {
                 const verifierEmailInfo = await getEmailDetailsForVerification(action);
@@ -211,15 +231,15 @@ export async function sendStateChangeEmail(details: { action: ImprovementAction,
     const successfulSends = results.filter(r => r.url && !r.url.startsWith('FALLO_DE_ENVIO'));
     const failedSends = results.filter(r => !r.url || r.url.startsWith('FALLO_DE_ENVIO'));
 
-    let commentText = `${notificationSummary}\n\n`;
+    let commentText = '';
     if (successfulSends.length > 0) {
-        commentText += `Correctamente a: ${successfulSends.map(r => r.recipient).join(', ')}.\n`;
-        successfulSends.forEach(r => {
-            commentText += `Previsualización para ${r.recipient}: ${r.url}\n`;
-        });
+        const recipients = successfulSends.map(r => r.recipient).join(', ');
+        const previews = successfulSends.map(r => `<a href="${r.url!}" target="_blank" rel="noopener noreferrer">Previsualización (${r.recipient})</a>`).join(' | ');
+        commentText = `${notificationSummary} enviada a: ${recipients}. ${previews}`;
     }
+    
     if (failedSends.length > 0) {
-        commentText += `\nFallo de envío a: ${failedSends.map(r => r.recipient).join(', ')}. Revisa la configuración del servidor y los emails.`;
+        commentText += `\nFallo de envío a: ${failedSends.map(r => r.recipient).join(', ')}.`;
     }
 
     return { id: crypto.randomUUID(), author: { id: 'system', name: 'Sistema' }, date: new Date().toISOString(), text: commentText.trim() };
