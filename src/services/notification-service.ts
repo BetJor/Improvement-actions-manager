@@ -6,8 +6,7 @@
  */
 import 'dotenv/config';
 import { ImprovementAction, User, ActionComment, ProposedAction } from '@/lib/types';
-import { getUserById, getUsers } from './users-service';
-import { addCommentToAction } from './actions-service';
+import { getUserById, getUsers, addCommentToAction } from './users-service';
 import nodemailer from 'nodemailer';
 import { format } from 'date-fns';
 import { safeParseDate } from '@/lib/utils';
@@ -71,10 +70,10 @@ async function sendEmail(recipient: string, subject: string, html: string): Prom
     console.log(`[NotificationService] Email sent to ${recipient}. Preview URL: ${previewUrl}`);
     return previewUrl;
 
-  } catch (error) {
+  } catch (error: any) {
     console.error(`[NotificationService] Failed to send email to ${recipient}:`, error);
     // Return a specific string to indicate failure
-    return `FALLO_DE_ENVIO: ${error instanceof Error ? error.message : String(error)}`;
+    return `FALLO_DE_ENVIO: ${error.message || String(error)}`;
   }
 }
 

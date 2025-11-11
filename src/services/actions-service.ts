@@ -553,7 +553,6 @@ async function getPermissionsForState(action: ImprovementAction, newStatus: Impr
 }
 
 async function handleBisCreation(originalAction: ImprovementAction): Promise<{ createdBisTitle?: string, foundBisTitle?: string }> {
-    // Check if a BIS action already exists for this original action
     const q = query(collection(db, 'actions'), where('originalActionId', '==', originalAction.id));
     const existingBisSnapshot = await getDocs(q);
 
@@ -576,7 +575,12 @@ async function handleBisCreation(originalAction: ImprovementAction): Promise<{ c
         title: `${originalAction.title} (BIS)`,
         description: `Acción creada automáticamente a partir del cierre no conforme de la acción ${originalAction.actionId}.\n\nObservaciones del cierre original:\n${originalAction.closure?.notes || 'N/A'}`,
         status: 'Borrador',
-        creator: originalAction.creator,
+        creator: {
+            id: originalAction.creator.id,
+            name: originalAction.creator.name,
+            avatar: originalAction.creator.avatar || "",
+            email: originalAction.creator.email || '',
+        },
         assignedTo: originalAction.responsibleGroupId,
         typeId: originalAction.typeId,
         categoryId: originalAction.categoryId,
@@ -595,11 +599,6 @@ async function handleBisCreation(originalAction: ImprovementAction): Promise<{ c
     return { createdBisTitle: newBisAction.actionId };
 }
 
-
-/**
- * Isolated function to add a comment to an action.
- * This uses arrayUnion to safely add a comment without overwriting the array.
- */
 export async function addCommentToAction(actionId: string, comment: ActionComment): Promise<void> {
     const actionDocRef = doc(db, 'actions', actionId);
     await updateDoc(actionDocRef, {
