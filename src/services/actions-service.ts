@@ -552,7 +552,13 @@ async function getPermissionsForState(action: ImprovementAction, newStatus: Impr
     return { readers: combinedReaders, authors: [...new Set(newAuthors)] };
 }
 
+
+/**
+ * Handles the creation of a BIS action when an action is closed as non-compliant.
+ * This function is designed to be called *after* the original action's transaction is complete.
+ */
 async function handleBisCreation(originalAction: ImprovementAction): Promise<{ createdBisTitle?: string, foundBisTitle?: string }> {
+    // 1. Check for duplicates
     const q = query(collection(db, 'actions'), where('originalActionId', '==', originalAction.id));
     const existingBisSnapshot = await getDocs(q);
 
@@ -562,6 +568,7 @@ async function handleBisCreation(originalAction: ImprovementAction): Promise<{ c
         return { foundBisTitle: foundBis.actionId };
     }
 
+    // 2. Prepare data for the new BIS action
     const masterData = {
         origins: { data: await getCategories() },
         classifications: { data: await getSubcategories() },
@@ -574,7 +581,7 @@ async function handleBisCreation(originalAction: ImprovementAction): Promise<{ c
     const bisActionData: CreateActionData = {
         title: `${originalAction.title} (BIS)`,
         description: `Acción creada automáticamente a partir del cierre no conforme de la acción ${originalAction.actionId}.\n\nObservaciones del cierre original:\n${originalAction.closure?.notes || 'N/A'}`,
-        status: 'Borrador',
+        status: 'Borrador', // Always start as a draft
         creator: {
             id: originalAction.creator.id,
             name: originalAction.creator.name,
@@ -592,10 +599,17 @@ async function handleBisCreation(originalAction: ImprovementAction): Promise<{ c
         originalActionTitle: `${originalAction.actionId}: ${originalAction.title}`,
     };
 
+    // 3. Create the BIS action
     const newBisAction = await createAction(bisActionData, masterData);
 
-    await sendBisCreationNotificationEmail(newBisAction, originalAction);
-
+    // 4. Send notification and get the comment text
+    const commentText = await sendBisCreationNotificationEmail(newBisAction, originalAction);
+    
+    // 5. Add the comment to the ORIGINAL action
+    if (commentText) {
+        await addCommentToAction(originalAction.id, commentText);
+    }
+    
     return { createdBisTitle: newBisAction.actionId };
 }
 

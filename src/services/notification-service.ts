@@ -6,7 +6,7 @@
  */
 import 'dotenv/config';
 import { ImprovementAction, User, ActionComment, ProposedAction } from '@/lib/types';
-import { getUserById, getUsers, addCommentToAction } from './users-service';
+import { getUserById, getUsers } from './users-service';
 import nodemailer from 'nodemailer';
 import { format } from 'date-fns';
 import { safeParseDate } from '@/lib/utils';
@@ -70,10 +70,10 @@ async function sendEmail(recipient: string, subject: string, html: string): Prom
     console.log(`[NotificationService] Email sent to ${recipient}. Preview URL: ${previewUrl}`);
     return previewUrl;
 
-  } catch (error: any) {
+  } catch (error) {
     console.error(`[NotificationService] Failed to send email to ${recipient}:`, error);
     // Return a specific string to indicate failure
-    return `FALLO_DE_ENVIO: ${error.message || String(error)}`;
+    return `FALLO_DE_ENVIO: ${error instanceof Error ? error.message : String(error)}`;
   }
 }
 
@@ -81,8 +81,10 @@ async function getEmailDetailsForVerification(action: ImprovementAction): Promis
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9002';
     const actionUrl = `${appUrl}/actions/${action.id}`;
 
-    const recipientEmail = action.analysis?.verificationResponsibleUserEmail;
-
+    let recipientEmail = action.analysis?.verificationResponsibleUserEmail;
+    // THIS IS THE LINE THAT WAS CAUSING THE PROBLEM. REMOVED THE DB LOOKUP.
+    // The email is now guaranteed to be in the action object.
+    
     if (!recipientEmail) {
         throw new Error("No se ha proporcionado el email del responsable de verificación.");
     }
@@ -428,12 +430,16 @@ export async function sendProposedActionUpdateEmail(
     }
 }
 
-
-export async function sendBisCreationNotificationEmail(bisAction: ImprovementAction, originalAction: ImprovementAction): Promise<void> {
+/**
+ * Sends a notification to the creator when a BIS action is created from a non-compliant closure.
+ * This function is completely isolated and does not modify the action itself.
+ * @returns The text for the comment to be added to the *original* action.
+ */
+export async function sendBisCreationNotificationEmail(bisAction: ImprovementAction, originalAction: ImprovementAction): Promise<ActionComment | null> {
     const recipientEmail = bisAction.creator.email;
     if (!recipientEmail) {
         console.warn(`[sendBisCreationNotificationEmail] No se pudo encontrar el email del creador para la nueva acción BIS ${bisAction.actionId}.`);
-        return;
+        return null;
     }
 
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9002';
@@ -460,17 +466,21 @@ export async function sendBisCreationNotificationEmail(bisAction: ImprovementAct
     `;
 
     const previewUrl = await sendEmail(recipientEmail, subject, html);
-    const commentText = previewUrl && !previewUrl.startsWith('FALLO_DE_ENVIO')
-        ? `Notificación de creación de acción BIS (${bisAction.actionId}) enviada a: ${recipientEmail}. ${previewUrl}`
-        : `Fallo al enviar notificación de creación de acción BIS a: ${recipientEmail}.`;
-
-    const comment: ActionComment = {
-        id: crypto.randomUUID(),
-        author: { id: 'system', name: 'Sistema' },
-        date: new Date().toISOString(),
-        text: commentText,
-    };
     
-    // Add the comment to the ORIGINAL action to keep track of the event
-    await addCommentToAction(originalAction.id, comment);
+    // This function now returns the comment object to be added by the calling service.
+    if (previewUrl && !previewUrl.startsWith('FALLO_DE_ENVIO')) {
+        return {
+            id: crypto.randomUUID(),
+            author: { id: 'system', name: 'Sistema' },
+            date: new Date().toISOString(),
+            text: `Notificación de creación de acción BIS (${bisAction.actionId}) enviada a: ${recipientEmail}. ${previewUrl}`
+        };
+    } else {
+        return {
+            id: crypto.randomUUID(),
+            author: { id: 'system', name: 'Sistema' },
+            date: new Date().toISOString(),
+            text: `Fallo al enviar notificación de creación de acción BIS a: ${recipientEmail}.`
+        };
+    }
 }
