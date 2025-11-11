@@ -136,6 +136,19 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
       loadUsers();
     }, []);
 
+    const handleActionUpdate = async () => {
+        if (!action) return;
+        try {
+            const updatedActionData = await getActionById(action.id);
+            if (updatedActionData) {
+                setActions(prev => prev.map(a => a.id === updatedActionData.id ? updatedActionData : a));
+                setAction(updatedActionData);
+            }
+        } catch (error) {
+            console.error("Error refreshing action data:", error);
+        }
+    }
+
     useEffect(() => {
         const updatedActionFromGlobalState = actions.find(a => a.id === action?.id);
         if (updatedActionFromGlobalState && JSON.stringify(updatedActionFromGlobalState) !== JSON.stringify(action)) {
@@ -143,14 +156,6 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
         }
     }, [actions, action]);
     
-    const handleActionUpdate = async () => {
-        if (!action) return;
-        const updatedActionData = await getActionById(action.id);
-        if (updatedActionData) {
-            setActions(prev => prev.map(a => a.id === updatedActionData.id ? updatedActionData : a));
-            setAction(updatedActionData);
-        }
-    }
 
     const handleEditSubmit = async (formData: any, status?: 'Borrador' | 'Pendiente Análisis') => {
         if (!action) return;
@@ -169,7 +174,7 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
                 closeCurrentTab();
             } else {
                 setIsEditing(false);
-                await handleActionUpdate();
+                await handleActionUpdate(); // Force a full refresh from global state
             }
         } catch (error) {
             console.error("Error updating action:", error);

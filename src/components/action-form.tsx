@@ -148,7 +148,10 @@ export function ActionForm({
   const { reset } = form;
 
   useEffect(() => {
-    reset(initialFormValues);
+      // This effect ensures that if the underlying `initialData` prop changes
+      // (which happens after a save in `ActionDetailsTab`), the form is reset
+      // with the new values. This is key to preventing stale data on re-edit.
+      reset(initialFormValues);
   }, [initialData, reset, initialFormValues]);
 
   
