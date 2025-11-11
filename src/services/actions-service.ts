@@ -1,4 +1,5 @@
 
+
 import { collection, doc, getDoc, getDocs, addDoc, updateDoc, query, orderBy, limit, arrayUnion, Timestamp, runTransaction, arrayRemove, where, writeBatch, setDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { format, parse, subDays, addDays } from 'date-fns';
@@ -378,16 +379,28 @@ export async function updateAction(
                 const newStatus = statusFromForm || data.status || oldStatus;
                 const isStatusChanging = newStatus !== oldStatus;
                 
-                // If form data is being saved (and masterData is available), update denormalized text fields
-                if (masterData) {
+                // --- Start of the new specific logic block ---
+                // This block ONLY runs when masterData and statusFromForm are provided,
+                // which is true only when saving from the main action form.
+                if (masterData && statusFromForm) {
                     if (data.typeId) dataToUpdate.type = masterData.ambits.data.find((t: any) => t.id === data.typeId)?.name || '';
                     if (data.categoryId) dataToUpdate.category = masterData.origins.data.find((c: any) => c.id === data.categoryId)?.name || '';
-                    if (data.subcategoryId) dataToUpdate.subcategory = masterData.classifications.data.find((s: any) => s.id === data.subcategoryId)?.name || '';
                     if (data.centerId) dataToUpdate.center = masterData.centers.data.find((c: any) => c.id === data.centerId)?.name || '';
                     if (data.affectedAreasIds) dataToUpdate.affectedAreas = data.affectedAreasIds.map((id: string) => masterData.affectedAreas.find((a: any) => a.id === id)?.name || id);
                     if (data.affectedCentersIds) dataToUpdate.affectedCenters = data.affectedCentersIds.map((id: string) => masterData.centers.data.find((c: any) => c.id === id)?.name || id);
+                    
+                    // Logic to clean inconsistent subcategory
+                    const subcategoryIsValid = masterData.classifications.data.some((sc: ActionSubcategory) => sc.id === data.subcategoryId && sc.categoryId === data.categoryId);
+                    if (data.subcategoryId && subcategoryIsValid) {
+                        dataToUpdate.subcategory = masterData.classifications.data.find((s: any) => s.id === data.subcategoryId)?.name || '';
+                    } else {
+                        // If subcategory is invalid or doesn't exist, clear both fields.
+                        dataToUpdate.subcategoryId = '';
+                        dataToUpdate.subcategory = '';
+                    }
                 }
-                
+                // --- End of the new specific logic block ---
+
                 if (isStatusChanging) {
                     dataToUpdate.status = newStatus;
                     const workflowSettings = await getWorkflowSettings();
