@@ -292,28 +292,34 @@ export function ActionForm({
   };
 
   const handleFormSubmit = (status: 'Borrador' | 'Pendiente Análisis') => {
-      let values = form.getValues();
+      // Manual validation before submitting
+      const values = form.getValues();
       let isValid = true;
+      let valuesToSubmit = { ...values };
       
-      if (values.categoryId) {
-        const categoryIsValid = filteredCategories.some(c => c.id === values.categoryId);
+      // Check if categoryId is valid for the selected typeId
+      if (valuesToSubmit.categoryId) {
+        const categoryIsValid = filteredCategories.some(c => c.id === valuesToSubmit.categoryId);
         if (!categoryIsValid) {
           form.setError('categoryId', { type: 'manual', message: 'El origen ya no es válido para el ámbito seleccionado.' });
           isValid = false;
         }
       }
 
-      if (values.subcategoryId) {
-        const subcategoryIsValid = filteredSubcategories.some(sc => sc.id === values.subcategoryId);
+      // If category is valid, check subcategory.
+      // If subcategory is no longer valid for the new category, just clear it as it's not required.
+      if (isValid && valuesToSubmit.subcategoryId) {
+        const subcategoryIsValid = filteredSubcategories.some(sc => sc.id === valuesToSubmit.subcategoryId);
         if (!subcategoryIsValid) {
-          // Instead of setting an error, just clear the value before submitting
-          values = { ...values, subcategoryId: '' };
+           valuesToSubmit.subcategoryId = ''; // Clear the invalid subcategory ID
+           (valuesToSubmit as any).subcategory = ''; // Clear the invalid subcategory name
         }
       }
 
       if (isValid) {
-        form.handleSubmit(() => onSubmit(values, status))();
+        form.handleSubmit(() => onSubmit(valuesToSubmit, status))();
       } else {
+        // Trigger validation to show all other errors
         form.trigger();
       }
   };
