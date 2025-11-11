@@ -292,11 +292,9 @@ export function ActionForm({
   };
 
   const handleFormSubmit = (status: 'Borrador' | 'Pendiente Análisis') => {
-      // Manual validation before submitting
-      const values = form.getValues();
+      let values = form.getValues();
       let isValid = true;
       
-      // Check if categoryId is valid for the selected typeId
       if (values.categoryId) {
         const categoryIsValid = filteredCategories.some(c => c.id === values.categoryId);
         if (!categoryIsValid) {
@@ -305,19 +303,17 @@ export function ActionForm({
         }
       }
 
-      // Check if subcategoryId is valid for the selected categoryId
       if (values.subcategoryId) {
         const subcategoryIsValid = filteredSubcategories.some(sc => sc.id === values.subcategoryId);
         if (!subcategoryIsValid) {
-          form.setError('subcategoryId', { type: 'manual', message: 'La clasificación ya no es válida para el origen seleccionado.' });
-          isValid = false;
+          // Instead of setting an error, just clear the value before submitting
+          values = { ...values, subcategoryId: '' };
         }
       }
 
       if (isValid) {
-        form.handleSubmit((validatedValues) => onSubmit(validatedValues, status))();
+        form.handleSubmit(() => onSubmit(values, status))();
       } else {
-        // Trigger validation to show all other errors
         form.trigger();
       }
   };
@@ -673,5 +669,3 @@ export function ActionForm({
     </>
   )
 }
-
-    
