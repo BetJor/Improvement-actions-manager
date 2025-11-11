@@ -1,5 +1,4 @@
 
-
 import { collection, doc, getDoc, getDocs, addDoc, updateDoc, query, orderBy, limit, arrayUnion, Timestamp, runTransaction, arrayRemove, where, writeBatch, setDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { format, parse, subDays, addDays } from 'date-fns';
@@ -8,7 +7,7 @@ import { planTraditionalActionWorkflow, getWorkflowSettings } from './workflow-s
 import { getUsers, getUserById } from './users-service';
 import { getCategories, getSubcategories, getAffectedAreas, getCenters, getActionTypes, getResponsibilityRoles } from './master-data-service';
 import { getPermissionRuleForState, resolveRoles } from './permissions-service';
-import { sendStateChangeEmail, sendProposedActionUpdateEmail } from './notification-service';
+import { sendStateChangeEmail, sendProposedActionUpdateEmail, sendBisCreationNotificationEmail } from './notification-service';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError, type SecurityRuleContext } from '@/firebase/errors';
 
@@ -468,6 +467,11 @@ export async function updateAction(
     const finalActionDoc = await getDoc(actionDocRef);
     const finalAction = { id: finalActionDoc.id, ...finalActionDoc.data() } as ImprovementAction;
 
+    // Call BIS creation logic AFTER the transaction is complete
+    if (data.closure?.isCompliant === false) {
+        bisCreationResult = await handleBisCreation(finalAction);
+    }
+
     return { updatedAction: finalAction, bisCreationResult, notificationResult: finalNotificationResult };
 }
 
@@ -548,31 +552,65 @@ async function getPermissionsForState(action: ImprovementAction, newStatus: Impr
     return { readers: combinedReaders, authors: [...new Set(newAuthors)] };
 }
 
+async function handleBisCreation(originalAction: ImprovementAction): Promise<{ createdBisTitle?: string, foundBisTitle?: string }> {
+    // Check if a BIS action already exists for this original action
+    const q = query(collection(db, 'actions'), where('originalActionId', '==', originalAction.id));
+    const existingBisSnapshot = await getDocs(q);
 
-    
+    if (!existingBisSnapshot.empty) {
+        const foundBis = existingBisSnapshot.docs[0].data();
+        console.log(`BIS action already exists: ${foundBis.actionId}`);
+        return { foundBisTitle: foundBis.actionId };
+    }
+
+    const masterData = {
+        origins: { data: await getCategories() },
+        classifications: { data: await getSubcategories() },
+        affectedAreas: await getAffectedAreas(),
+        centers: { data: await getCenters() },
+        ambits: { data: await getActionTypes() },
+        responsibilityRoles: { data: await getResponsibilityRoles() },
+    };
+
+    const bisActionData: CreateActionData = {
+        title: `${originalAction.title} (BIS)`,
+        description: `Acción creada automáticamente a partir del cierre no conforme de la acción ${originalAction.actionId}.\n\nObservaciones del cierre original:\n${originalAction.closure?.notes || 'N/A'}`,
+        status: 'Borrador',
+        creator: originalAction.creator,
+        assignedTo: originalAction.responsibleGroupId,
+        typeId: originalAction.typeId,
+        categoryId: originalAction.categoryId,
+        subcategoryId: originalAction.subcategoryId,
+        affectedAreasIds: originalAction.affectedAreasIds,
+        affectedCentersIds: originalAction.affectedCentersIds,
+        centerId: originalAction.centerId,
+        originalActionId: originalAction.id,
+        originalActionTitle: `${originalAction.actionId}: ${originalAction.title}`,
+    };
+
+    const newBisAction = await createAction(bisActionData, masterData);
+
+    await sendBisCreationNotificationEmail(newBisAction, originalAction);
+
+    return { createdBisTitle: newBisAction.actionId };
+}
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    
-
-    
-
-
-
-
-
-
-
+/**
+ * Isolated function to add a comment to an action.
+ * This uses arrayUnion to safely add a comment without overwriting the array.
+ */
+export async function addCommentToAction(actionId: string, comment: ActionComment): Promise<void> {
+    const actionDocRef = doc(db, 'actions', actionId);
+    await updateDoc(actionDocRef, {
+        comments: arrayUnion(comment)
+    }).catch(async (serverError) => {
+        const permissionError = new FirestorePermissionError({
+            path: actionDocRef.path,
+            operation: 'update',
+            requestResourceData: { newComment: comment },
+        } satisfies SecurityRuleContext);
+        errorEmitter.emit('permission-error', permissionError);
+        throw serverError;
+    });
+}

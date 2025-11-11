@@ -1,5 +1,4 @@
 
-
 'use server';
 /**
  * @fileOverview A service for handling notifications.
@@ -8,6 +7,7 @@
 import 'dotenv/config';
 import { ImprovementAction, User, ActionComment, ProposedAction } from '@/lib/types';
 import { getUserById, getUsers } from './users-service';
+import { addCommentToAction } from './actions-service';
 import nodemailer from 'nodemailer';
 import { format } from 'date-fns';
 import { safeParseDate } from '@/lib/utils';
@@ -82,11 +82,7 @@ async function getEmailDetailsForVerification(action: ImprovementAction): Promis
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9002';
     const actionUrl = `${appUrl}/actions/${action.id}`;
 
-    let recipientEmail = action.analysis?.verificationResponsibleUserEmail;
-    if (!recipientEmail && action.analysis?.verificationResponsibleUserId) {
-        const verifier = await getUserById(action.analysis.verificationResponsibleUserId);
-        recipientEmail = verifier?.email;
-    }
+    const recipientEmail = action.analysis?.verificationResponsibleUserEmail;
 
     if (!recipientEmail) {
         throw new Error("No se ha proporcionado el email del responsable de verificación.");
@@ -431,4 +427,51 @@ export async function sendProposedActionUpdateEmail(
             text: `Fallo al enviar notificación de actualización de estado a: ${verifierEmail}.`
         };
     }
+}
+
+
+export async function sendBisCreationNotificationEmail(bisAction: ImprovementAction, originalAction: ImprovementAction): Promise<void> {
+    const recipientEmail = bisAction.creator.email;
+    if (!recipientEmail) {
+        console.warn(`[sendBisCreationNotificationEmail] No se pudo encontrar el email del creador para la nueva acción BIS ${bisAction.actionId}.`);
+        return;
+    }
+
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9002';
+    const newActionUrl = `${appUrl}/actions/${bisAction.id}`;
+    const originalActionUrl = `${appUrl}/actions/${originalAction.id}`;
+
+    const subject = `Se ha creado una nueva Acción de Mejora (BIS) para tu revisión: ${bisAction.actionId}`;
+    const html = `
+      <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+        <div style="max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px;">
+          <h2 style="color: #00529B; border-bottom: 2px solid #00529B; padding-bottom: 10px;">Nueva Acción BIS en Borrador</h2>
+          <p>Hola ${bisAction.creator.name},</p>
+          <p>Se ha creado una nueva acción de mejora (BIS) en estado <strong>"Borrador"</strong> a partir del cierre no conforme de la acción <a href="${originalActionUrl}">${originalAction.actionId}</a>.</p>
+          
+          <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;">
+            <h3 style="margin-top: 0; color: #00529B;">Nueva Acción BIS: ${bisAction.actionId}</h3>
+             <p style="margin: 0; white-space: pre-wrap; font-style: italic;">${bisAction.description}</p>
+          </div>
+          
+          <p>Por favor, accede a la plataforma para revisar los detalles de esta nueva acción, completarla si es necesario y enviarla para su análisis.</p>
+          <a href="${newActionUrl}" style="background-color: #00529B; color: white; padding: 12px 20px; text-decoration: none; border-radius: 5px; display: inline-block; text-align: center; margin-top: 10px;">Revisar Acción BIS</a>
+        </div>
+      </div>
+    `;
+
+    const previewUrl = await sendEmail(recipientEmail, subject, html);
+    const commentText = previewUrl && !previewUrl.startsWith('FALLO_DE_ENVIO')
+        ? `Notificación de creación de acción BIS (${bisAction.actionId}) enviada a: ${recipientEmail}. ${previewUrl}`
+        : `Fallo al enviar notificación de creación de acción BIS a: ${recipientEmail}.`;
+
+    const comment: ActionComment = {
+        id: crypto.randomUUID(),
+        author: { id: 'system', name: 'Sistema' },
+        date: new Date().toISOString(),
+        text: commentText,
+    };
+    
+    // Add the comment to the ORIGINAL action to keep track of the event
+    await addCommentToAction(originalAction.id, comment);
 }
