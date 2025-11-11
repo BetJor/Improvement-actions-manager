@@ -378,6 +378,16 @@ export async function updateAction(
                 const newStatus = statusFromForm || data.status || oldStatus;
                 const isStatusChanging = newStatus !== oldStatus;
                 
+                // If form data is being saved (and masterData is available), update denormalized text fields
+                if (masterData) {
+                    if (data.typeId) dataToUpdate.type = masterData.ambits.data.find((t: any) => t.id === data.typeId)?.name || '';
+                    if (data.categoryId) dataToUpdate.category = masterData.origins.data.find((c: any) => c.id === data.categoryId)?.name || '';
+                    if (data.subcategoryId) dataToUpdate.subcategory = masterData.classifications.data.find((s: any) => s.id === data.subcategoryId)?.name || '';
+                    if (data.centerId) dataToUpdate.center = masterData.centers.data.find((c: any) => c.id === data.centerId)?.name || '';
+                    if (data.affectedAreasIds) dataToUpdate.affectedAreas = data.affectedAreasIds.map((id: string) => masterData.affectedAreas.find((a: any) => a.id === id)?.name || id);
+                    if (data.affectedCentersIds) dataToUpdate.affectedCenters = data.affectedCentersIds.map((id: string) => masterData.centers.data.find((c: any) => c.id === id)?.name || id);
+                }
+                
                 if (isStatusChanging) {
                     dataToUpdate.status = newStatus;
                     const workflowSettings = await getWorkflowSettings();
@@ -466,7 +476,7 @@ export async function updateAction(
 
     const finalActionDoc = await getDoc(actionDocRef);
     const finalAction = { id: finalActionDoc.id, ...finalActionDoc.data() } as ImprovementAction;
-
+    
     // Call BIS creation logic AFTER the transaction is complete
     if (data.closure?.isCompliant === false) {
         bisCreationResult = await handleBisCreation(finalAction);
@@ -475,6 +485,76 @@ export async function updateAction(
     return { updatedAction: finalAction, bisCreationResult, notificationResult: finalNotificationResult };
 }
 
+async function handleBisCreation(originalAction: ImprovementAction): Promise<{ createdBisTitle?: string, foundBisTitle?: string }> {
+    // 1. Check for duplicates
+    const q = query(collection(db, 'actions'), where('originalActionId', '==', originalAction.id));
+    const existingBisSnapshot = await getDocs(q);
+
+    if (!existingBisSnapshot.empty) {
+        const foundBis = existingBisSnapshot.docs[0].data();
+        console.log(`BIS action already exists: ${foundBis.actionId}`);
+        return { foundBisTitle: foundBis.actionId };
+    }
+
+    // 2. Prepare data for the new BIS action
+    const masterData = {
+        origins: { data: await getCategories() },
+        classifications: { data: await getSubcategories() },
+        affectedAreas: await getAffectedAreas(),
+        centers: { data: await getCenters() },
+        ambits: { data: await getActionTypes() },
+        responsibilityRoles: { data: await getResponsibilityRoles() },
+    };
+
+    const bisActionData: CreateActionData = {
+        title: `${originalAction.title} (BIS)`,
+        description: `Acción creada automáticamente a partir del cierre no conforme de la acción ${originalAction.actionId}.\n\nObservaciones del cierre original:\n${originalAction.closure?.notes || 'N/A'}`,
+        status: 'Borrador', // Always start as a draft
+        creator: {
+            id: originalAction.creator.id,
+            name: originalAction.creator.name,
+            avatar: originalAction.creator.avatar || "",
+            email: originalAction.creator.email || '',
+        },
+        assignedTo: originalAction.responsibleGroupId,
+        typeId: originalAction.typeId,
+        categoryId: originalAction.categoryId,
+        subcategoryId: originalAction.subcategoryId,
+        affectedAreasIds: originalAction.affectedAreasIds,
+        affectedCentersIds: originalAction.affectedCentersIds,
+        centerId: originalAction.centerId,
+        originalActionId: originalAction.id,
+        originalActionTitle: `${originalAction.actionId}: ${originalAction.title}`,
+    };
+
+    // 3. Create the BIS action
+    const newBisAction = await createAction(bisActionData, masterData);
+
+    // 4. Send notification and get the comment to be added
+    const notificationComment = await sendBisCreationNotificationEmail(newBisAction, originalAction);
+    
+    // 5. Add the comment to the ORIGINAL action
+    if (notificationComment) {
+        await addCommentToAction(originalAction.id, notificationComment);
+    }
+    
+    return { createdBisTitle: newBisAction.actionId };
+}
+
+export async function addCommentToAction(actionId: string, comment: ActionComment): Promise<void> {
+    const actionDocRef = doc(db, 'actions', actionId);
+    await updateDoc(actionDocRef, {
+        comments: arrayUnion(comment)
+    }).catch(async (serverError) => {
+        const permissionError = new FirestorePermissionError({
+            path: actionDocRef.path,
+            operation: 'update',
+            requestResourceData: { newComment: comment },
+        } satisfies SecurityRuleContext);
+        errorEmitter.emit('permission-error', permissionError);
+        throw serverError;
+    });
+}
 
 
 export async function toggleFollowAction(actionId: string, userId: string): Promise<void> {
@@ -550,80 +630,4 @@ async function getPermissionsForState(action: ImprovementAction, newStatus: Impr
     const combinedReaders = [...new Set([...newReaders, ...newAuthors])];
 
     return { readers: combinedReaders, authors: [...new Set(newAuthors)] };
-}
-
-
-/**
- * Handles the creation of a BIS action when an action is closed as non-compliant.
- * This function is designed to be called *after* the original action's transaction is complete.
- */
-async function handleBisCreation(originalAction: ImprovementAction): Promise<{ createdBisTitle?: string, foundBisTitle?: string }> {
-    // 1. Check for duplicates
-    const q = query(collection(db, 'actions'), where('originalActionId', '==', originalAction.id));
-    const existingBisSnapshot = await getDocs(q);
-
-    if (!existingBisSnapshot.empty) {
-        const foundBis = existingBisSnapshot.docs[0].data();
-        console.log(`BIS action already exists: ${foundBis.actionId}`);
-        return { foundBisTitle: foundBis.actionId };
-    }
-
-    // 2. Prepare data for the new BIS action
-    const masterData = {
-        origins: { data: await getCategories() },
-        classifications: { data: await getSubcategories() },
-        affectedAreas: await getAffectedAreas(),
-        centers: { data: await getCenters() },
-        ambits: { data: await getActionTypes() },
-        responsibilityRoles: { data: await getResponsibilityRoles() },
-    };
-
-    const bisActionData: CreateActionData = {
-        title: `${originalAction.title} (BIS)`,
-        description: `Acción creada automáticamente a partir del cierre no conforme de la acción ${originalAction.actionId}.\n\nObservaciones del cierre original:\n${originalAction.closure?.notes || 'N/A'}`,
-        status: 'Borrador', // Always start as a draft
-        creator: {
-            id: originalAction.creator.id,
-            name: originalAction.creator.name,
-            avatar: originalAction.creator.avatar || "",
-            email: originalAction.creator.email || '',
-        },
-        assignedTo: originalAction.responsibleGroupId,
-        typeId: originalAction.typeId,
-        categoryId: originalAction.categoryId,
-        subcategoryId: originalAction.subcategoryId,
-        affectedAreasIds: originalAction.affectedAreasIds,
-        affectedCentersIds: originalAction.affectedCentersIds,
-        centerId: originalAction.centerId,
-        originalActionId: originalAction.id,
-        originalActionTitle: `${originalAction.actionId}: ${originalAction.title}`,
-    };
-
-    // 3. Create the BIS action
-    const newBisAction = await createAction(bisActionData, masterData);
-
-    // 4. Send notification and get the comment text
-    const commentText = await sendBisCreationNotificationEmail(newBisAction, originalAction);
-    
-    // 5. Add the comment to the ORIGINAL action
-    if (commentText) {
-        await addCommentToAction(originalAction.id, commentText);
-    }
-    
-    return { createdBisTitle: newBisAction.actionId };
-}
-
-export async function addCommentToAction(actionId: string, comment: ActionComment): Promise<void> {
-    const actionDocRef = doc(db, 'actions', actionId);
-    await updateDoc(actionDocRef, {
-        comments: arrayUnion(comment)
-    }).catch(async (serverError) => {
-        const permissionError = new FirestorePermissionError({
-            path: actionDocRef.path,
-            operation: 'update',
-            requestResourceData: { newComment: comment },
-        } satisfies SecurityRuleContext);
-        errorEmitter.emit('permission-error', permissionError);
-        throw serverError;
-    });
 }
