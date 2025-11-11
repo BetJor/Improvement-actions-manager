@@ -163,7 +163,10 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
         try {
             
             const { updatedAction } = await updateAction(action.id, formData, masterData, status); 
-            setAction(updatedAction); // Immediately update local state
+            
+            // Update global and local state with the returned fresh data
+            setActions(prev => prev.map(a => a.id === updatedAction.id ? updatedAction : a));
+            setAction(updatedAction);
 
             toast({
                 title: "Acción guardada",
@@ -174,7 +177,6 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
                 closeCurrentTab();
             } else {
                 setIsEditing(false);
-                await handleActionUpdate(); // Force a full refresh from global state
             }
         } catch (error) {
             console.error("Error updating action:", error);
@@ -1036,7 +1038,7 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
                     <TabsContent value="details" className="mt-4">
                        <div className="space-y-6">
                             <ActionForm
-                                key={isEditing ? 'edit' : 'view'}
+                                key={action.id + (isEditing ? '-edit' : '-view')} // Force re-mount on mode change
                                 mode={isEditing ? 'edit' : 'view'}
                                 initialData={action}
                                 masterData={masterData}
