@@ -1,5 +1,3 @@
-
-
 "use client"
 
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -149,9 +147,6 @@ export function ActionForm({
   const { reset } = form;
 
   useEffect(() => {
-      // This effect ensures that if the underlying `initialData` prop changes
-      // (which happens after a save in `ActionDetailsTab`), the form is reset
-      // with the new values. This is key to preventing stale data on re-edit.
       reset(initialFormValues);
   }, [initialData, reset, initialFormValues]);
 
@@ -297,7 +292,34 @@ export function ActionForm({
   };
 
   const handleFormSubmit = (status: 'Borrador' | 'Pendiente Análisis') => {
-      form.handleSubmit((values) => onSubmit(values, status))();
+      // Manual validation before submitting
+      const values = form.getValues();
+      let isValid = true;
+      
+      // Check if categoryId is valid for the selected typeId
+      if (values.categoryId) {
+        const categoryIsValid = filteredCategories.some(c => c.id === values.categoryId);
+        if (!categoryIsValid) {
+          form.setError('categoryId', { type: 'manual', message: 'El origen ya no es válido para el ámbito seleccionado.' });
+          isValid = false;
+        }
+      }
+
+      // Check if subcategoryId is valid for the selected categoryId
+      if (values.subcategoryId) {
+        const subcategoryIsValid = filteredSubcategories.some(sc => sc.id === values.subcategoryId);
+        if (!subcategoryIsValid) {
+          form.setError('subcategoryId', { type: 'manual', message: 'La clasificación ya no es válida para el origen seleccionado.' });
+          isValid = false;
+        }
+      }
+
+      if (isValid) {
+        form.handleSubmit((validatedValues) => onSubmit(validatedValues, status))();
+      } else {
+        // Trigger validation to show all other errors
+        form.trigger();
+      }
   };
 
   const disableForm = isSubmitting || mode === 'view';
@@ -366,7 +388,11 @@ export function ActionForm({
                                     render={({ field }) => (
                                     <FormItem>
                                         <FormLabel>Ámbito</FormLabel>
-                                        <Select onValueChange={field.onChange} value={field.value} disabled={disableForm || !filteredAmbits || filteredAmbits.length === 0}>
+                                        <Select onValueChange={(value) => {
+                                            field.onChange(value);
+                                            form.setValue('categoryId', '');
+                                            form.setValue('subcategoryId', '');
+                                        }} value={field.value} disabled={disableForm || !filteredAmbits || filteredAmbits.length === 0}>
                                         <FormControl><SelectTrigger><SelectValue placeholder="Selecciona un ámbito" /></SelectTrigger></FormControl>
                                         <SelectContent>{filteredAmbits?.map((opt: any) => (<SelectItem key={opt.id} value={opt.id}>{opt.name}</SelectItem>))}</SelectContent>
                                         </Select>
@@ -381,7 +407,10 @@ export function ActionForm({
                                     render={({ field }) => (
                                     <FormItem>
                                         <FormLabel>Origen</FormLabel>
-                                        <Select onValueChange={field.onChange} value={field.value} disabled={disableForm || !filteredCategories || filteredCategories.length === 0}>
+                                        <Select onValueChange={(value) => {
+                                            field.onChange(value);
+                                            form.setValue('subcategoryId', '');
+                                        }} value={field.value} disabled={disableForm || !filteredCategories || filteredCategories.length === 0}>
                                         <FormControl><SelectTrigger><SelectValue placeholder="Selecciona un origen" /></SelectTrigger></FormControl>
                                         <SelectContent>{filteredCategories?.map((opt: any) => (<SelectItem key={opt.id} value={opt.id}>{opt.name}</SelectItem>))}</SelectContent>
                                         </Select>
@@ -644,3 +673,5 @@ export function ActionForm({
     </>
   )
 }
+
+    
