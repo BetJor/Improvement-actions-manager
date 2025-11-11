@@ -137,15 +137,18 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
     }, []);
 
     useEffect(() => {
-        const updatedAction = actions.find(a => a.id === initialAction.id);
-        setAction(updatedAction || initialAction);
-    }, [actions, initialAction]);
+        const updatedActionFromGlobalState = actions.find(a => a.id === action?.id);
+        if (updatedActionFromGlobalState && JSON.stringify(updatedActionFromGlobalState) !== JSON.stringify(action)) {
+            setAction(updatedActionFromGlobalState);
+        }
+    }, [actions, action]);
     
     const handleActionUpdate = async () => {
         if (!action) return;
         const updatedActionData = await getActionById(action.id);
         if (updatedActionData) {
             setActions(prev => prev.map(a => a.id === updatedActionData.id ? updatedActionData : a));
+            setAction(updatedActionData);
         }
     }
 
@@ -154,8 +157,9 @@ export function ActionDetailsTab({ initialAction, masterData: initialMasterData 
         setIsSubmitting(true);
         try {
             
-            await updateAction(action.id, formData, masterData, status); 
-            
+            const { updatedAction } = await updateAction(action.id, formData, masterData, status); 
+            setAction(updatedAction); // Immediately update local state
+
             toast({
                 title: "Acción guardada",
                 description: "Los cambios se han guardado correctamente.",
