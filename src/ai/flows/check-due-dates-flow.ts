@@ -30,12 +30,16 @@ const LogEntrySchema = z.object({
   details: z.string().optional(),
 });
 
+const ImprovementActionSchema = z.any(); // Use z.any() to pass raw action data
+
 const CheckDueDatesInputSchema = z.object({
     callingUser: z.object({
         email: z.string(),
         name: z.string(),
     }).optional(),
+    actions: z.array(ImprovementActionSchema).describe("The list of actions to process."),
 });
+
 
 const CheckDueDatesOutputSchema = z.object({
   checkedActions: z.number(),
@@ -53,8 +57,8 @@ export async function updateDueDateSettings(settings: DueDateSettings): Promise<
     return updateDueDateSettingsFlow(settings);
 }
 
-export async function checkDueDates(input?: z.infer<typeof CheckDueDatesInputSchema>): Promise<z.infer<typeof CheckDueDatesOutputSchema>> {
-    return checkDueDatesFlow(input || {});
+export async function checkDueDates(input: z.infer<typeof CheckDueDatesInputSchema>): Promise<z.infer<typeof CheckDueDatesOutputSchema>> {
+    return checkDueDatesFlow(input);
 }
 
 
@@ -63,9 +67,6 @@ const getDueDateSettingsFlow = ai.defineFlow(
         name: 'getDueDateSettingsFlow',
         inputSchema: z.void(),
         outputSchema: DueDateSettingsSchema,
-        auth: (auth, input) => {
-            auth.serviceAccount();
-        }
     },
     async () => {
         const docRef = doc(db, 'app_settings', 'due_date_reminders');
@@ -91,9 +92,6 @@ const updateDueDateSettingsFlow = ai.defineFlow(
         name: 'updateDueDateSettingsFlow',
         inputSchema: DueDateSettingsSchema,
         outputSchema: z.void(),
-        auth: (auth, input) => {
-            auth.serviceAccount();
-        }
     },
     async (settings) => {
         const docRef = doc(db, 'app_settings', 'due_date_reminders');
@@ -115,17 +113,9 @@ const checkDueDatesFlow = ai.defineFlow(
     name: 'checkDueDatesFlow',
     inputSchema: CheckDueDatesInputSchema,
     outputSchema: CheckDueDatesOutputSchema,
-    auth: (auth, input) => {
-        // Now allows either a service account OR an authenticated user.
-        if (!input.callingUser) {
-            auth.serviceAccount();
-        } else {
-            auth.authenticated();
-        }
-    },
   },
-  async (input, flow) => {
-    const callingUserEmail = input.callingUser?.email || flow.auth?.email || "Usuario de servidor desconocido";
+  async (input) => {
+    const callingUserEmail = input.callingUser?.email || "Usuario de servidor desconocido";
     const log: z.infer<typeof LogEntrySchema>[] = [{ step: 'Inicio del Proceso', status: 'info', details: `Ejecutando como '${callingUserEmail}'` }];
     
     let settings;
@@ -146,21 +136,11 @@ const checkDueDatesFlow = ai.defineFlow(
     
     let remindersSent = 0;
     const errors: string[] = [];
-    let actions: ImprovementAction[] = [];
     
-    try {
-        log.push({ step: `Consultando acciones pendientes como '${callingUserEmail}'`, status: 'info' });
-        
-        const q = query(collection(db, 'actions'), where('status', 'in', statusesToCkeck));
-        const querySnapshot = await getDocs(q);
-        actions = querySnapshot.docs.map(d => ({ ...d.data(), id: d.id })) as ImprovementAction[];
-        log.push({ step: 'Acciones obtenidas', status: 'success', details: `Se encontraron ${actions.length} acciones para revisar.` });
-    } catch(e: any) {
-        log.push({ step: 'Error al obtener acciones', status: 'failure', details: e.message });
-        return { checkedActions: 0, remindersSent: 0, errors: [e.message], log };
-    }
+    const actionsToProcess = input.actions.filter(action => statusesToCkeck.includes(action.status));
+    log.push({ step: 'Procesando acciones', status: 'info', details: `Se revisarán ${actionsToProcess.length} acciones.` });
 
-    for (const action of actions) {
+    for (const action of actionsToProcess) {
         try {
             const sentCount = await processAction(action, settings);
             remindersSent += sentCount;
@@ -171,7 +151,7 @@ const checkDueDatesFlow = ai.defineFlow(
     }
     
     log.push({ step: 'Proceso finalizado', status: 'info', details: `Se enviaron ${remindersSent} recordatorios.` });
-    return { checkedActions: actions.length, remindersSent, errors, log };
+    return { checkedActions: actionsToProcess.length, remindersSent, errors, log };
   }
 );
 
@@ -267,4 +247,3 @@ async function processAction(action: ImprovementAction, settings: DueDateSetting
 
     return sentCount;
 }
-

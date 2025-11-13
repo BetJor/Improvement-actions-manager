@@ -22,6 +22,7 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
+import { getActions } from "@/lib/data"; // Import getActions
 
 const dueDateSettingsSchema = z.object({
   daysUntilDue: z.coerce.number().int().positive(),
@@ -92,7 +93,16 @@ export default function DataLoadPage() {
     });
 
     try {
-        const result = await checkDueDates({ callingUser: { email: user.email, name: user.name } });
+        // Step 1: Fetch actions on the client with user's permissions
+        toast({ title: "Obteniendo acciones...", description: "Consultando la base de datos con tus permisos de administrador." });
+        const allActions = await getActions();
+        toast({ title: "Acciones obtenidas", description: `Se han encontrado ${allActions.length} acciones para procesar.` });
+
+        // Step 2: Pass the actions to the server-side flow
+        const result = await checkDueDates({ 
+            callingUser: { email: user.email, name: user.name },
+            actions: allActions // Pass the fetched actions
+        });
         
         for (const [index, logEntry] of result.log.entries()) {
             await new Promise(resolve => setTimeout(resolve, 800 * index));
