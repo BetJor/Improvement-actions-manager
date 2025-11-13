@@ -24,6 +24,9 @@ service cloud.firestore {
     }
     
     match /actions/{actionId} {
+      // LIST: Any signed-in user can query the collection.
+      allow list: if isSignedIn();
+      
       // READ: Anyone in the 'readers' array can read the document.
       allow read: if isSignedIn() && request.auth.token.email in resource.data.readers;
       
