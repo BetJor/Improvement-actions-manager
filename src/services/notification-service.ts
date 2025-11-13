@@ -25,7 +25,7 @@ let transporter: nodemailer.Transporter | null = null;
  * Creates and caches a Nodemailer transporter using a test Ethereal account.
  * This prevents creating a new account for every email sent.
  */
-async function getTestEmailTransporter(): Promise<nodemailer.Transporter> {
+export async function getTestEmailTransporter(): Promise<nodemailer.Transporter> {
     if (transporter) {
         return transporter;
     }
