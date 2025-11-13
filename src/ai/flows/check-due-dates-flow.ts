@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview A flow to check for upcoming due dates and send reminder notifications.
@@ -113,7 +114,7 @@ export const checkDueDates = ai.defineFlow(
         auth.serviceAccount();
     },
   },
-  async () => {
+  async (input, flow) => {
     const log: z.infer<typeof LogEntrySchema>[] = [{ step: 'Inicio del Proceso', status: 'info', details: 'Ejecutando con permisos de administrador.' }];
     
     let settings;
@@ -137,7 +138,9 @@ export const checkDueDates = ai.defineFlow(
     let actions: ImprovementAction[] = [];
     
     try {
-        log.push({ step: 'Consultando acciones pendientes', status: 'info' });
+        const callingUser = flow.auth?.email || "Usuario de servidor desconocido";
+        log.push({ step: `Consultando acciones pendientes como '${callingUser}'`, status: 'info' });
+        
         const q = query(collection(db, 'actions'), where('status', 'in', statusesToCkeck));
         const querySnapshot = await getDocs(q);
         actions = querySnapshot.docs.map(d => ({ ...d.data(), id: d.id })) as ImprovementAction[];
@@ -170,7 +173,7 @@ async function processAction(action: ImprovementAction, settings: DueDateSetting
     const commentsToAdd: any[] = [];
 
     const checkAndNotify = async (
-        dueDateStr: string,
+        dueDateStr: string | undefined,
         reminderType: keyof ImprovementAction['remindersSent'] | `proposedActions.${string}`,
         recipient: string | undefined, // Can be undefined now
         taskDescription: string,
@@ -246,3 +249,4 @@ async function processAction(action: ImprovementAction, settings: DueDateSetting
 
     return sentCount;
 }
+
