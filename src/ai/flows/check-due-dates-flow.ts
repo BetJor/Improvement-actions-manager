@@ -11,10 +11,9 @@ import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import { collection, getDocs, query, where, updateDoc, doc, getDoc, setDoc, arrayUnion } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import type { ImprovementAction } from '@/lib/types';
+import type { ImprovementAction, User } from '@/lib/types';
 import { differenceInDays, isFuture, parseISO } from 'date-fns';
 import { sendDueDateReminderEmail } from '@/services/notification-service';
-import { getUserById } from '@/services/users-service';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError, type SecurityRuleContext } from '@/firebase/errors';
 
@@ -110,6 +109,10 @@ export const checkDueDates = ai.defineFlow(
     
     let remindersSent = 0;
     const errors: string[] = [];
+
+    // Fetch all users once with admin privileges
+    const usersSnapshot = await getDocs(collection(db, 'users'));
+    const allUsers = usersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
     
     const q = query(collection(db, 'actions'), where('status', 'in', statusesToCkeck));
     const querySnapshot = await getDocs(q);
@@ -119,7 +122,7 @@ export const checkDueDates = ai.defineFlow(
 
     for (const action of actions) {
         try {
-            const sentCount = await processAction(action, settings);
+            const sentCount = await processAction(action, settings, allUsers);
             remindersSent += sentCount;
         } catch(e: any) {
             console.error(`[checkDueDates] Error processing action ${action.actionId}:`, e);
@@ -133,11 +136,15 @@ export const checkDueDates = ai.defineFlow(
 );
 
 
-async function processAction(action: ImprovementAction, settings: DueDateSettings): Promise<number> {
+async function processAction(action: ImprovementAction, settings: DueDateSettings, allUsers: User[]): Promise<number> {
     let sentCount = 0;
     const remindersSent = action.remindersSent || { analysis: false, verification: false, closure: false, proposedActions: {} };
     const updates: any = {};
     const commentsToAdd: any[] = [];
+
+    const getUserById = (userId: string): User | undefined => {
+        return allUsers.find(u => u.id === userId);
+    };
 
     const checkAndNotify = async (
         dueDateStr: string,
@@ -181,7 +188,7 @@ async function processAction(action: ImprovementAction, settings: DueDateSetting
             break;
         case 'Pendiente Comprobación':
             if(action.analysis?.verificationResponsibleUserId) {
-                 const verifier = await getUserById(action.analysis.verificationResponsibleUserId);
+                 const verifier = getUserById(action.analysis.verificationResponsibleUserId);
                  if(verifier?.email) {
                     await checkAndNotify(action.verificationDueDate, 'verification', verifier.email, 'realizar la Verificación de la Implantación');
                  }
