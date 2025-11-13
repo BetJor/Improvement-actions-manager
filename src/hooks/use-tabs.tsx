@@ -20,11 +20,12 @@ import UserManagementPage from '@/app/user-management/page';
 import ReportsPage from '@/app/reports/page';
 import FirestoreRulesPage from '@/app/firestore-rules/page';
 import WorkflowPage from '@/app/workflow/page';
+import DataLoadPage from '@/app/data-load/page'; // Import the new page
 import { getActionById, getActions, getActionTypes, getCategories, getSubcategories, getAffectedAreas, getCenters, getResponsibilityRoles } from '@/lib/data';
 import { ActionDetailsTab } from '@/components/action-details-tab';
 
 
-import { Home, ListChecks, Settings, Sparkles, Library, Route, Users, BarChart3, GanttChartSquare, FileLock2 } from 'lucide-react';
+import { Home, ListChecks, Settings, Sparkles, Library, Route, Users, BarChart3, GanttChartSquare, FileLock2, UploadCloud } from 'lucide-react';
 
 const pageComponentMapping: { [key: string]: { component: React.ComponentType<any>, title: string, icon: React.ElementType, isClosable: boolean} | undefined } = {
     '/dashboard': { component: DashboardPage, title: 'Panel de Control', icon: Home, isClosable: false },
@@ -37,6 +38,7 @@ const pageComponentMapping: { [key: string]: { component: React.ComponentType<an
     '/my-groups': { component: MyGroupsPage, title: 'Mis Grupos', icon: Users, isClosable: true },
     '/user-management': { component: UserManagementPage, title: 'Gestión de Usuarios', icon: Users, isClosable: true },
     '/firestore-rules': { component: FirestoreRulesPage, title: 'Reglas de Firestore', icon: FileLock2, isClosable: true },
+    '/data-load': { component: DataLoadPage, title: 'Càrrega de Dades', icon: UploadCloud, isClosable: true }, // Add new page to mapping
 };
 
 const getPageComponentInfo = (path: string): { component?: React.ComponentType<any>, title: string, icon: React.ElementType, isClosable: boolean, loader?: () => Promise<ReactNode> } | null => {

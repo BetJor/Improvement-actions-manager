@@ -159,9 +159,7 @@ export const getResponsibilityRoles = async (): Promise<ResponsibilityRole[]> =>
     return roles;
 };
 
-const enrichLocationsWithResponsibles = async () => {
-    if (hasEnrichedLocations) return;
-
+export const enrichLocationsWithResponsibles = async (): Promise<number> => {
     console.log("[enrichLocations] Starting process to enrich locations with responsibles...");
     const locationsCol = collection(db, 'locations');
     const locationsSnapshot = await getDocs(locationsCol);
@@ -604,9 +602,9 @@ const enrichLocationsWithResponsibles = async () => {
 9976;Depósito TIC Externo - EVOLUTIO;;DTIC_AG_Administrador@asepeyo.es;DTIC_AG_Administrador@asepeyo.es;DTIC_AG_Administrador@asepeyo.es;DTIC_AG_Administrador@asepeyo.es;DTIC_AG_Administrador@asepeyo.es;DTIC_AG_Administrador@asepeyo.es;DTIC_AG_Administrador@asepeyo.es;DTIC_AG_Administrador@asepeyo.es;DTIC_AG_Administrador@asepeyo.es;DTIC_AG_Administrador@asepeyo.es;DTIC_AG_Administrador@asepeyo.es;DTIC_AG_Administrador@asepeyo.es;DTIC_AG_Administrador@asepeyo.es;DTIC_AG_Administrador@asepeyo.es;DTIC_AG_Administrador@asepeyo.es;DTIC_AG_Administrador@asepeyo.es;;
 9977;Almacén TIC;Juan Luis Pages Lara;Roger Gimeno Sanjuan;DTIC_AG_Administrador@asepeyo.es;DTIC_AG_Administrador@asepeyo.es;DTIC_AG_Administrador@asepeyo.es;DTIC_AG_Administrador@asepeyo.es;DTIC_AG_Administrador@asepeyo.es;DTIC_AG_Administrador@asepeyo.es;DTIC_AG_Administrador@asepeyo.es;DTIC_AG_Administrador@asepeyo.es;DTIC_AG_Administrador@asepeyo.es;DTIC_AG_Administrador@asepeyo.es;DTIC_AG_Administrador@asepeyo.es;DTIC_AG_Administrador@asepeyo.es;DTIC_AG_Administrador@asepeyo.es;DTIC_AG_Administrador@asepeyo.es;DTIC_AG_Administrador@asepeyo.es;DTIC_AG_Administrador@asepeyo.es;;
 9988;Depósito TIC solicitud bajas;Juan Luis Pages Lara;Roger Gimeno Sanjuan;DTIC_AG_Administrador@asepeyo.es;DTIC_AG_Administrador@asepeyo.es;DTIC_AG_Administrador@asepeyo.es;DTIC_AG_Administrador@asepeyo.es;DTIC_AG_Administrador@asepeyo.es;DTIC_AG_Administrador@asepeyo.es;DTIC_AG_Administrador@asepeyo.es;DTIC_AG_Administrador@asepeyo.es;DTIC_AG_Administrador@asepeyo.es;DTIC_AG_Administrador@asepeyo.es;DTIC_AG_Administrador@asepeyo.es;DTIC_AG_Administrador@asepeyo.es;DTIC_AG_Administrador@asepeyo.es;DTIC_AG_Administrador@asepeyo.es;DTIC_AG_Administrador@asepeyo.es;DTIC_AG_Administrador@asepeyo.es;;
-9999;Depósito TIC no instalables;Juan Luis Pages Lara;Roger Gimeno Sanjuan;DTIC_AG_Administrador@asepeyo.es;DTIC_AG_Administrador@asepeyo.es;DTIC_AG_Administrador@asepeyo.es;DTIC_AG_Administrador@asepeyo.es;DTIC_AG_Administrador@asepeyo.es;DTIC_AG_Administrador@asepeyo.es;DTIC_AG_Administrador@asepeyo.es;DTIC_AG_Administrador@asepeyo.es;DTIC_AG_Administrador@asepeyo.es;DTIC_AG_Administrador@asepeyo.es;DTIC_AG_Administrador@asepeyo.es;DTIC_AG_Administrador@asepeyo.es;DTIC_AG_Administrador@asepeyo.es;DTIC_AG_Administrador@asepeyo.es;DTIC_AG_Administrador@asepeyo.es;DTIC_AG_Administrador@asepeyo.es;;
-`
+9999;Depósito TIC no instalables;Juan Luis Pages Lara;Roger Gimeno Sanjuan;DTIC_AG_Administrador@asepeyo.es;DTIC_AG_Administrador@asepeyo.es;DTIC_AG_Administrador@asepeyo.es;DTIC_AG_Administrador@asepeyo.es;DTIC_AG_Administrador@asepeyo.es;DTIC_AG_Administrador@asepeyo.es;DTIC_AG_Administrador@asepeyo.es;DTIC_AG_Administrador@asepeyo.es;DTIC_AG_Administrador@asepeyo.es;DTIC_AG_Administrador@asepeyo.es;DTIC_AG_Administrador@asepeyo.es;DTIC_AG_Administrador@asepeyo.es;DTIC_AG_Administrador@asepeyo.es;DTIC_AG_Administrador@asepeyo.es;DTIC_AG_Administrador@asepeyo.es;DTIC_AG_Administrador@asepeyo.es;;`;
     const batch = writeBatch(db);
+    let updatedCount = 0;
 
     const lines = data.trim().split('\n').slice(1); // Skip header row
     const headers = data.trim().split('\n')[0].split(';').map(h => h.trim());
@@ -627,15 +625,17 @@ const enrichLocationsWithResponsibles = async () => {
 
             const docRef = doc(db, 'locations', locationId);
             batch.update(docRef, { responsibles });
+            updatedCount++;
         }
     });
 
     try {
         await batch.commit();
-        hasEnrichedLocations = true;
-        console.log("[enrichLocations] Successfully updated existing locations with responsibles.");
+        console.log(`[enrichLocations] Successfully updated ${updatedCount} existing locations with responsibles.`);
+        return updatedCount;
     } catch (error) {
         console.error("[enrichLocations] Error committing batch update:", error);
+        throw error; // Re-throw to be caught by the page component
     }
 }
 
@@ -654,9 +654,6 @@ export const getCenters = async (): Promise<Center[]> => {
     }));
 
     centers.sort((a, b) => a.name.localeCompare(b.name));
-    
-    // Dispara l'enriquiment en segon pla, no cal esperar-lo.
-    enrichLocationsWithResponsibles();
     
     return centers;
 };

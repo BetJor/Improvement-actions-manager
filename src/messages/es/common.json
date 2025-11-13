@@ -19,7 +19,8 @@
       "myGroups": "Mis Grupos",
       "settings": "Configuración",
       "aiSettings": "Configuración IA",
-      "userManagement": "Gestión de Usuarios"
+      "userManagement": "Gestión de Usuarios",
+      "dataLoad": "Carga de Datos"
     },
     "RootLayout": {
       "title": "Gestor de Acciones de Mejora",

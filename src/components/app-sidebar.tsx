@@ -4,7 +4,7 @@
 
 import Link from "next/link"
 import { usePathname, useParams } from "next/navigation"
-import { Home, ListChecks, Settings, Sparkles, Library, GanttChartSquare, Users, BarChart3, TestTubeDiagonal, FileLock2 } from "lucide-react"
+import { Home, ListChecks, Settings, Sparkles, Library, GanttChartSquare, Users, BarChart3, TestTubeDiagonal, FileLock2, UploadCloud } from "lucide-react"
 import { useAuth } from "@/hooks/use-auth"
 import { cn } from "@/lib/utils"
 import { Sidebar, SidebarContent, SidebarHeader, SidebarMenu, SidebarMenuItem, SidebarMenuButton, useSidebar } from "./ui/sidebar"
@@ -56,6 +56,7 @@ export function AppSidebar() {
     { href: `/settings`, icon: Settings, label: "Configuración", isTab: true, show: canManageSettings },
     { href: `/ai-settings`, icon: Sparkles, label: "Configuración IA", isTab: true, show: isAdmin },    
     { href: `/user-management`, icon: Users, label: "Gestión de Usuarios", isTab: true, show: isAdmin },
+    { href: `/data-load`, icon: UploadCloud, label: "Càrrega de Dades", isTab: true, show: isAdmin },
   ]
 
 
@@ -83,3 +84,4 @@ export function AppSidebar() {
     </Sidebar>
   )
 }
+

@@ -1,5 +1,4 @@
 
-
 {
   "Common": {
     "Header": {
@@ -19,7 +18,8 @@
       "myGroups": "Els Meus Grups",
       "settings": "Configuració",
       "aiSettings": "Configuració IA",
-      "userManagement": "Gestió d'Usuaris"
+      "userManagement": "Gestió d'Usuaris",
+      "dataLoad": "Càrrega de Dades"
     },
     "RootLayout": {
       "title": "Gestor d'Accions de Millora",
