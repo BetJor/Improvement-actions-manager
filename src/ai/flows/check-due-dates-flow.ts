@@ -53,9 +53,18 @@ const getDueDateSettingsFlow = ai.defineFlow(
     },
     async () => {
         const docRef = doc(db, 'app_settings', 'due_date_reminders');
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
-            return DueDateSettingsSchema.parse(docSnap.data());
+        try {
+            const docSnap = await getDoc(docRef);
+            if (docSnap.exists()) {
+                return DueDateSettingsSchema.parse(docSnap.data());
+            }
+        } catch (serverError) {
+             const permissionError = new FirestorePermissionError({
+                path: docRef.path,
+                operation: 'get',
+            } satisfies SecurityRuleContext);
+            errorEmitter.emit('permission-error', permissionError);
+            throw serverError;
         }
         return { daysUntilDue: 10 }; // Default
     }
