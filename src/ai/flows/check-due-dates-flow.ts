@@ -80,7 +80,15 @@ const updateDueDateSettingsFlow = ai.defineFlow(
     },
     async (settings) => {
         const docRef = doc(db, 'app_settings', 'due_date_reminders');
-        await setDoc(docRef, settings, { merge: true });
+        await setDoc(docRef, settings, { merge: true }).catch(async (serverError) => {
+            const permissionError = new FirestorePermissionError({
+                path: docRef.path,
+                operation: 'update',
+                requestResourceData: settings,
+            } satisfies SecurityRuleContext);
+            errorEmitter.emit('permission-error', permissionError);
+            throw serverError;
+        });
     }
 );
 
@@ -211,7 +219,15 @@ async function processAction(action: ImprovementAction, settings: DueDateSetting
     if (sentCount > 0) {
         const actionRef = doc(db, 'actions', action.id);
         const finalUpdates = { ...updates, comments: arrayUnion(...commentsToAdd) };
-        await updateDoc(actionRef, finalUpdates);
+        await updateDoc(actionRef, finalUpdates).catch(async (serverError) => {
+            const permissionError = new FirestorePermissionError({
+                path: actionRef.path,
+                operation: 'update',
+                requestResourceData: finalUpdates,
+            } satisfies SecurityRuleContext);
+            errorEmitter.emit('permission-error', permissionError);
+            throw serverError;
+        });
     }
 
     return sentCount;
