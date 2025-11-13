@@ -1,4 +1,3 @@
-
 'use server';
 /**
  * @fileOverview A flow to check for upcoming due dates and send reminder notifications.
@@ -10,42 +9,25 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
-import { collection, getDocs, query, where, updateDoc, doc, getDoc, setDoc, arrayUnion } from 'firebase/firestore';
+import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import type { ImprovementAction, User, ActionComment } from '@/lib/types';
+import type { ImprovementAction, User, ActionComment, SentEmailInfo } from '@/lib/types';
 import { differenceInDays, isFuture, parseISO } from 'date-fns';
 import { sendDueDateReminderEmail } from '@/services/notification-service';
-import { errorEmitter } from '@/firebase/error-emitter';
-import { FirestorePermissionError, type SecurityRuleContext } from '@/firebase/errors';
-
 
 const DueDateSettingsSchema = z.object({
   daysUntilDue: z.number().int().positive().default(10),
 });
 export type DueDateSettings = z.infer<typeof DueDateSettingsSchema>;
 
-const LogEntrySchema = z.object({
-  step: z.string(),
-  status: z.enum(['success', 'failure', 'info']),
-  details: z.string().optional(),
-});
-
-const ImprovementActionSchema = z.any(); // Use z.any() to pass raw action data
-
 const CheckDueDatesInputSchema = z.object({
-    callingUser: z.object({
-        email: z.string(),
-        name: z.string(),
-    }).optional(),
-    actions: z.array(ImprovementActionSchema).describe("The list of actions to process."),
+    actions: z.array(z.any()).describe("The list of actions to process."),
 });
-
 
 const CheckDueDatesOutputSchema = z.object({
   checkedActions: z.number(),
-  remindersSent: z.number(),
+  sentEmails: z.array(z.custom<SentEmailInfo>()),
   errors: z.array(z.string()),
-  log: z.array(z.infer<typeof LogEntrySchema>),
 });
 
 
@@ -61,7 +43,6 @@ export async function checkDueDates(input: z.infer<typeof CheckDueDatesInputSche
     return checkDueDatesFlow(input);
 }
 
-
 const getDueDateSettingsFlow = ai.defineFlow(
     {
         name: 'getDueDateSettingsFlow',
@@ -70,18 +51,9 @@ const getDueDateSettingsFlow = ai.defineFlow(
     },
     async () => {
         const docRef = doc(db, 'app_settings', 'due_date_reminders');
-        try {
-            const docSnap = await getDoc(docRef);
-            if (docSnap.exists()) {
-                return DueDateSettingsSchema.parse(docSnap.data());
-            }
-        } catch (serverError) {
-             const permissionError = new FirestorePermissionError({
-                path: docRef.path,
-                operation: 'get',
-            } satisfies SecurityRuleContext);
-            errorEmitter.emit('permission-error', permissionError);
-            throw serverError;
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+            return DueDateSettingsSchema.parse(docSnap.data());
         }
         return { daysUntilDue: 10 }; // Default
     }
@@ -95,18 +67,9 @@ const updateDueDateSettingsFlow = ai.defineFlow(
     },
     async (settings) => {
         const docRef = doc(db, 'app_settings', 'due_date_reminders');
-        await setDoc(docRef, settings, { merge: true }).catch(async (serverError) => {
-            const permissionError = new FirestorePermissionError({
-                path: docRef.path,
-                operation: 'update',
-                requestResourceData: settings,
-            } satisfies SecurityRuleContext);
-            errorEmitter.emit('permission-error', permissionError);
-            throw serverError;
-        });
+        await setDoc(docRef, settings, { merge: true });
     }
 );
-
 
 const checkDueDatesFlow = ai.defineFlow(
   {
@@ -115,17 +78,12 @@ const checkDueDatesFlow = ai.defineFlow(
     outputSchema: CheckDueDatesOutputSchema,
   },
   async (input) => {
-    const callingUserEmail = input.callingUser?.email || "Usuario de servidor desconocido";
-    const log: z.infer<typeof LogEntrySchema>[] = [{ step: 'Inicio del Proceso', status: 'info', details: `Ejecutando como '${callingUserEmail}'` }];
-    
     let settings;
     try {
-        log.push({ step: 'Obteniendo configuración', status: 'info' });
         settings = await getDueDateSettingsFlow();
-        log.push({ step: 'Configuración obtenida', status: 'success', details: `Se notificará a los ${settings.daysUntilDue} días.` });
     } catch (e: any) {
-        log.push({ step: 'Error al obtener configuración', status: 'failure', details: e.message });
-        return { checkedActions: 0, remindersSent: 0, errors: [e.message], log };
+        console.error(`[checkDueDatesFlow] Error getting settings:`, e);
+        return { checkedActions: 0, sentEmails: [], errors: [`Error al obtenir la configuració: ${e.message}`] };
     }
 
     const statusesToCkeck: ImprovementAction['status'][] = [
@@ -134,116 +92,83 @@ const checkDueDatesFlow = ai.defineFlow(
         'Pendiente de Cierre'
     ];
     
-    let remindersSent = 0;
+    const sentEmails: SentEmailInfo[] = [];
     const errors: string[] = [];
     
     const actionsToProcess = input.actions.filter(action => statusesToCkeck.includes(action.status));
-    log.push({ step: 'Procesando acciones', status: 'info', details: `Se revisarán ${actionsToProcess.length} acciones.` });
 
     for (const action of actionsToProcess) {
         try {
-            const sentCount = await processAction(action, settings);
-            remindersSent += sentCount;
+            const emailsSentForAction = await processAction(action, settings);
+            sentEmails.push(...emailsSentForAction);
         } catch(e: any) {
             console.error(`[checkDueDates] Error processing action ${action.actionId}:`, e);
             errors.push(`Acción ${action.actionId}: ${e.message}`);
         }
     }
     
-    log.push({ step: 'Proceso finalizado', status: 'info', details: `Se enviaron ${remindersSent} recordatorios.` });
-    return { checkedActions: actionsToProcess.length, remindersSent, errors, log };
+    return { checkedActions: actionsToProcess.length, sentEmails, errors };
   }
 );
 
 
-async function processAction(action: ImprovementAction, settings: DueDateSettings): Promise<number> {
-    let sentCount = 0;
-    const remindersSent = action.remindersSent || { analysis: false, verification: false, closure: false, proposedActions: {} };
-    const updates: any = {};
-    const commentsToAdd: ActionComment[] = [];
+async function processAction(action: ImprovementAction, settings: DueDateSettings): Promise<SentEmailInfo[]> {
+    const sentEmailsForAction: SentEmailInfo[] = [];
 
     const checkAndNotify = async (
         dueDateStr: string | undefined,
-        reminderType: 'analysis' | 'verification' | 'closure' | `proposedActions.${string}`,
         recipient: string | undefined,
         taskDescription: string,
     ) => {
         if (!recipient) {
-            console.warn(`[processAction] No recipient email for ${reminderType} on action ${action.actionId}. Skipping notification.`);
+            console.warn(`[processAction] No recipient email for task "${taskDescription}" on action ${action.actionId}. Skipping notification.`);
             return;
         }
         if (!dueDateStr || !isFuture(parseISO(dueDateStr))) return;
-
-        const reminderKey = reminderType.toString();
         
-        let wasSent = false;
-        if (reminderKey.startsWith('proposedActions.')) {
-            const paId = reminderKey.split('.')[1];
-            wasSent = remindersSent.proposedActions?.[paId] ?? false;
-        } else {
-            wasSent = remindersSent[reminderType as keyof typeof remindersSent] ?? false;
-        }
-
-        if (wasSent) return;
-
         const daysLeft = differenceInDays(parseISO(dueDateStr), new Date());
         if (daysLeft <= settings.daysUntilDue) {
-            console.log(`[processAction] Sending reminder for ${reminderType} on action ${action.actionId} to ${recipient}`);
+            console.log(`[processAction] Sending reminder for task "${taskDescription}" on action ${action.actionId} to ${recipient}`);
             
             const notificationComment = await sendDueDateReminderEmail(action, taskDescription, dueDateStr, recipient);
             
-            if (notificationComment) {
-                commentsToAdd.push(notificationComment);
+            if (notificationComment?.text.includes("Fallo de envío")) {
+                 console.error(`Failed to send email for ${action.actionId}: ${notificationComment.text}`);
+            } else if (notificationComment) {
+                // Extract URL from comment text
+                const urlMatch = notificationComment.text.match(/https?:\/\/[^\s]+/);
+                const previewUrl = urlMatch ? urlMatch[0] : null;
+                
+                sentEmailsForAction.push({
+                    actionId: action.actionId,
+                    taskDescription,
+                    recipient,
+                    previewUrl,
+                });
             }
-            
-            if (reminderKey.startsWith('proposedActions.')) {
-                if (!updates['remindersSent.proposedActions']) updates['remindersSent.proposedActions'] = {};
-                updates[`remindersSent.proposedActions.${reminderKey.split('.')[1]}`] = true;
-            } else {
-                 updates[`remindersSent.${reminderKey}`] = true;
-            }
-            sentCount++;
         }
     };
     
     switch (action.status) {
         case 'Pendiente Análisis':
-            await checkAndNotify(action.analysisDueDate, 'analysis', action.responsibleGroupId, 'completar el Análisis de Causas');
+            await checkAndNotify(action.analysisDueDate, action.responsibleGroupId, 'completar el Análisis de Causas');
             break;
         case 'Pendiente Comprobación':
             if(action.analysis?.verificationResponsibleUserEmail) {
-                await checkAndNotify(action.verificationDueDate, 'verification', action.analysis.verificationResponsibleUserEmail, 'realizar la Verificación de la Implantación');
+                await checkAndNotify(action.verificationDueDate, action.analysis.verificationResponsibleUserEmail, 'realizar la Verificación de la Implantación');
             }
             if (action.analysis?.proposedActions) {
                 for (const pa of action.analysis.proposedActions) {
                     if (pa.status !== 'Implementada') {
-                         await checkAndNotify(pa.dueDate as string, `proposedActions.${pa.id}`, pa.responsibleUserEmail, `implementar la acción: "${pa.description}"`);
+                         await checkAndNotify(pa.dueDate as string, pa.responsibleUserEmail, `implementar la acción: "${pa.description}"`);
                     }
                 }
             }
             break;
         case 'Pendiente de Cierre':
-             await checkAndNotify(action.closureDueDate, 'closure', action.creator.email, 'realizar el Cierre Final de la acción');
+             await checkAndNotify(action.closureDueDate, action.creator.email, 'realizar el Cierre Final de la acción');
             break;
     }
 
-    if (sentCount > 0) {
-        const actionRef = doc(db, 'actions', action.id);
-        const finalUpdates: { [key: string]: any } = { ...updates };
-        if (commentsToAdd.length > 0) {
-            finalUpdates.comments = arrayUnion(...commentsToAdd);
-        }
-        
-        await updateDoc(actionRef, finalUpdates).catch(async (serverError) => {
-            const permissionError = new FirestorePermissionError({
-                path: actionRef.path,
-                operation: 'update',
-                requestResourceData: finalUpdates,
-            } satisfies SecurityRuleContext);
-            errorEmitter.emit('permission-error', permissionError);
-            throw serverError;
-        });
-    }
-
-    return sentCount;
+    return sentEmailsForAction;
 }

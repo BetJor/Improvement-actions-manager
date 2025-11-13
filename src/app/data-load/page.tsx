@@ -14,7 +14,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { enrichLocationsWithResponsibles } from "@/services/master-data-service";
 import { getDueDateSettings, updateDueDateSettings, checkDueDates } from "@/ai/flows/check-due-dates-flow";
-import { Loader2, UploadCloud, Send, Settings, AlertTriangle } from "lucide-react";
+import { Loader2, UploadCloud, Send, Settings, AlertTriangle, ExternalLink } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
@@ -22,7 +22,8 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
-import { getActions } from "@/lib/data"; // Import getActions
+import { getActions } from "@/lib/data";
+import type { SentEmailInfo } from "@/lib/types";
 
 const dueDateSettingsSchema = z.object({
   daysUntilDue: z.coerce.number().int().positive(),
@@ -38,6 +39,7 @@ export default function DataLoadPage() {
   const [isSavingSettings, setIsSavingSettings] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [errorDetails, setErrorDetails] = useState<string[]>([]);
+  const [sentEmails, setSentEmails] = useState<SentEmailInfo[]>([]);
 
 
   const form = useForm<DueDateSettingsFormValues>({
@@ -91,35 +93,33 @@ export default function DataLoadPage() {
     setIsCheckingDues(true);
     setError(null);
     setErrorDetails([]);
+    setSentEmails([]);
     toast({
         title: "Iniciando proceso...",
         description: "Se está ejecutando la verificación de vencimientos.",
     });
 
     try {
-        // Step 1: Fetch actions on the client with user's permissions
-        toast({ title: "Obteniendo acciones...", description: "Consultando la base de datos con tus permisos de administrador." });
         const allActions = await getActions();
-        toast({ title: "Acciones obtenidas", description: `Se han encontrado ${allActions.length} acciones para procesar.` });
+        
+        const result = await checkDueDates({ actions: allActions });
 
-        // Step 2: Pass the actions to the server-side flow
-        const result = await checkDueDates({ 
-            callingUser: { email: user.email, name: user.name },
-            actions: allActions // Pass the fetched actions
-        });
-        
-        for (const [index, logEntry] of result.log.entries()) {
-            await new Promise(resolve => setTimeout(resolve, 800 * index));
-            toast({
-                variant: logEntry.status === 'failure' ? 'destructive' : 'default',
-                title: `${logEntry.step} (${logEntry.status})`,
-                description: logEntry.details,
-            });
-        }
-        
         if (result.errors.length > 0) {
           setError(`Se produjeron errores en ${result.errors.length} acciones.`);
           setErrorDetails(result.errors);
+        }
+        
+        if (result.sentEmails.length > 0) {
+            setSentEmails(result.sentEmails);
+            toast({
+              title: "Proceso finalizado",
+              description: `Se han enviado ${result.sentEmails.length} recordatorios.`,
+            });
+        } else {
+             toast({
+              title: "Proceso finalizado",
+              description: "No se ha enviado ningún recordatorio.",
+            });
         }
 
     } catch (err: any) {
@@ -240,6 +240,28 @@ export default function DataLoadPage() {
                   </ul>
                 </AlertDescription>
               )}
+            </Alert>
+          )}
+
+          {sentEmails.length > 0 && (
+             <Alert variant="default" className="border-green-500">
+                <Send className="h-4 w-4" />
+                <AlertTitle className="text-green-700">Recordatoris Enviats</AlertTitle>
+                <AlertDescription>
+                  <p>S'han enviat els següents recordatoris per correu electrònic:</p>
+                  <ul className="list-disc pl-5 mt-2 space-y-2">
+                    {sentEmails.map((email, index) => (
+                      <li key={index} className="text-xs">
+                        <strong>Acció {email.actionId}:</strong> "{email.taskDescription}" enviat a {email.recipient}.
+                        {email.previewUrl && (
+                          <a href={email.previewUrl} target="_blank" rel="noopener noreferrer" className="ml-2 inline-flex items-center gap-1 text-blue-600 hover:underline">
+                            Veure correu <ExternalLink className="h-3 w-3" />
+                          </a>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                </AlertDescription>
             </Alert>
           )}
         </CardContent>

@@ -125,6 +125,13 @@ export interface PermissionRule {
   authorRoleIds: string[];
 }
 
+export interface SentEmailInfo {
+  actionId: string;
+  taskDescription: string;
+  recipient: string;
+  previewUrl: string | null;
+}
+
 
 export interface ImprovementAction {
   id: string; // Firestore document ID
