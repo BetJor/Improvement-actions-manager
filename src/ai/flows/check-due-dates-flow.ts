@@ -1,0 +1,165 @@
+'use server';
+/**
+ * @fileOverview A flow to check for upcoming due dates and send reminder notifications.
+ *
+ * - checkDueDates - The main function to trigger the check.
+ * - getDueDateSettings - Retrieves the configuration for the check.
+ * - updateDueDateSettings - Updates the configuration.
+ */
+
+import { ai } from '@/ai/genkit';
+import { z } from 'genkit';
+import { collection, getDocs, query, where, updateDoc, doc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import type { ImprovementAction } from '@/lib/types';
+import { differenceInDays, isFuture, parseISO } from 'date-fns';
+import { sendDueDateReminderEmail } from '@/services/notification-service';
+
+const DueDateSettingsSchema = z.object({
+  daysUntilDue: z.number().int().positive().default(10),
+  // In a real scenario, you'd have cron configuration here.
+  // For this demo, we'll just store the days.
+});
+export type DueDateSettings = z.infer<typeof DueDateSettingsSchema>;
+
+const CheckDueDatesOutputSchema = z.object({
+  checkedActions: z.number(),
+  remindersSent: z.number(),
+  errors: z.array(z.string()),
+});
+
+// --- Flow to get and update settings ---
+
+export async function getDueDateSettings(): Promise<DueDateSettings> {
+  const docRef = doc(db, 'app_settings', 'due_date_reminders');
+  const docSnap = await getDoc(docRef);
+  if (docSnap.exists()) {
+    return DueDateSettingsSchema.parse(docSnap.data());
+  }
+  return { daysUntilDue: 10 }; // Default
+}
+
+export async function updateDueDateSettings(settings: DueDateSettings): Promise<void> {
+  const docRef = doc(db, 'app_settings', 'due_date_reminders');
+  await setDoc(docRef, settings, { merge: true });
+}
+
+
+// --- Main Flow to Check Due Dates ---
+
+export const checkDueDates = ai.defineFlow(
+  {
+    name: 'checkDuedates',
+    inputSchema: z.void(),
+    outputSchema: CheckDueDatesOutputSchema,
+  },
+  async () => {
+    console.log('[checkDueDates] Starting flow...');
+    const settings = await getDueDateSettings();
+    const statusesToCkeck: ImprovementAction['status'][] = [
+        'Pendiente Análisis', 
+        'Pendiente Comprobación', 
+        'Pendiente de Cierre'
+    ];
+    
+    let remindersSent = 0;
+    const errors: string[] = [];
+    
+    const q = query(collection(db, 'actions'), where('status', 'in', statusesToCkeck));
+    const querySnapshot = await getDocs(q);
+    const actions = querySnapshot.docs.map(d => ({ ...d.data(), id: d.id })) as ImprovementAction[];
+    
+    console.log(`[checkDueDates] Found ${actions.length} actions to check.`);
+
+    for (const action of actions) {
+        try {
+            const sentCount = await processAction(action, settings);
+            remindersSent += sentCount;
+        } catch(e: any) {
+            console.error(`[checkDueDates] Error processing action ${action.actionId}:`, e);
+            errors.push(`Acción ${action.actionId}: ${e.message}`);
+        }
+    }
+    
+    console.log(`[checkDueDates] Flow finished. Sent ${remindersSent} reminders.`);
+    return { checkedActions: actions.length, remindersSent, errors };
+  }
+);
+
+
+async function processAction(action: ImprovementAction, settings: DueDateSettings): Promise<number> {
+    let sentCount = 0;
+    const remindersSent = action.remindersSent || { analysis: false, verification: false, closure: false, proposedActions: {} };
+    const updates: any = {};
+    const commentsToAdd: any[] = [];
+
+    const checkAndNotify = async (
+        dueDateStr: string,
+        reminderType: keyof ImprovementAction['remindersSent'] | `proposedActions.${string}`,
+        recipient: string,
+        taskDescription: string,
+    ) => {
+        if (!dueDateStr || !isFuture(parseISO(dueDateStr))) return;
+
+        const reminderKey = reminderType.toString();
+        const wasSent = reminderKey.startsWith('proposedActions.') 
+            ? remindersSent.proposedActions?.[reminderKey.split('.')[1]] 
+            : remindersSent[reminderType as keyof typeof remindersSent];
+
+        if (wasSent) return;
+
+        const daysLeft = differenceInDays(parseISO(dueDateStr), new Date());
+        if (daysLeft <= settings.daysUntilDue) {
+            console.log(`[processAction] Sending reminder for ${reminderType} on action ${action.actionId} to ${recipient}`);
+            
+            const notificationComment = await sendDueDateReminderEmail(action, taskDescription, dueDateStr, recipient);
+            
+            if (notificationComment) {
+                commentsToAdd.push(notificationComment);
+            }
+            
+            // Mark as sent
+            if (reminderKey.startsWith('proposedActions.')) {
+                if (!updates['remindersSent.proposedActions']) updates['remindersSent.proposedActions'] = {};
+                updates[`remindersSent.proposedActions.${reminderKey.split('.')[1]}`] = true;
+            } else {
+                 updates[`remindersSent.${reminderKey}`] = true;
+            }
+            sentCount++;
+        }
+    };
+    
+    switch (action.status) {
+        case 'Pendiente Análisis':
+            await checkAndNotify(action.analysisDueDate, 'analysis', action.responsibleGroupId, 'completar el Análisis de Causas');
+            break;
+        case 'Pendiente Comprobación':
+            if(action.analysis?.verificationResponsibleUserId) {
+                 const verifier = await getUserById(action.analysis.verificationResponsibleUserId);
+                 if(verifier?.email) {
+                    await checkAndNotify(action.verificationDueDate, 'verification', verifier.email, 'realizar la Verificación de la Implantación');
+                 }
+            }
+            if (action.analysis?.proposedActions) {
+                for (const pa of action.analysis.proposedActions) {
+                    if (pa.status !== 'Implementada') {
+                         await checkAndNotify(pa.dueDate as string, `proposedActions.${pa.id}`, pa.responsibleUserEmail, `implementar la acción: "${pa.description}"`);
+                    }
+                }
+            }
+            break;
+        case 'Pendiente de Cierre':
+             if (action.creator.email) {
+                await checkAndNotify(action.closureDueDate, 'closure', action.creator.email, 'realizar el Cierre Final de la acción');
+            }
+            break;
+    }
+
+    if (sentCount > 0) {
+        const actionRef = doc(db, 'actions', action.id);
+        const finalUpdates = { ...updates, comments: arrayUnion(...commentsToAdd) };
+        await updateDoc(actionRef, finalUpdates);
+    }
+
+    return sentCount;
+}

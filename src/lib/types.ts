@@ -88,6 +88,7 @@ export interface ProposedAction {
   id: string;
   description: string;
   responsibleUserId: string;
+  responsibleUserEmail: string; // Add email for easier access
   dueDate: Date | string; // Acceptem string per a la inicialització des de Firestore
   status?: ProposedActionStatus;
   statusUpdateDate?: string; // ISO String
@@ -169,11 +170,20 @@ export interface ImprovementAction {
   // Followers
   followers?: string[]; // Array of user IDs
 
+  // Reminder tracking
+  remindersSent?: {
+    analysis?: boolean;
+    verification?: boolean;
+    closure?: boolean;
+    proposedActions?: { [key: string]: boolean };
+  }
+
   // Optional detailed sections
   analysis?: {
     causes: string;
     proposedActions: ProposedAction[];
     verificationResponsibleUserId: string;
+    verificationResponsibleUserEmail: string; // Add email for easier access
     analysisResponsible: ActionUserInfo;
     analysisDate: string;
   };
