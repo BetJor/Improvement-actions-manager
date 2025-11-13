@@ -31,8 +31,8 @@ service cloud.firestore {
     }
     
     match /actions/{actionId} {
-      // LIST: Allow admins or signed-in users to perform queries.
-      allow list: if isAdmin() || isSignedIn();
+      // LIST: Allow admins to list all actions, other users can only list actions where they are readers.
+      allow list: if isAdmin() || (isSignedIn() && request.auth.token.email in resource.data.readers);
       
       // READ: Admins can read everything. Other users must be in the 'readers' array.
       allow read: if isAdmin() || (isSignedIn() && request.auth.token.email in resource.data.readers);
