@@ -86,13 +86,21 @@ export default function DataLoadPage() {
 
     try {
         const result = await checkDueDates();
-        toast({
-            title: "Verificación completada",
-            description: `Se han revisado ${result.checkedActions} acciones y se han enviado ${result.remindersSent} recordatorios.`,
-        });
+        
+        // Display detailed log as toasts
+        for (const [index, logEntry] of result.log.entries()) {
+            await new Promise(resolve => setTimeout(resolve, 800 * index));
+            toast({
+                variant: logEntry.status === 'failure' ? 'destructive' : 'default',
+                title: `${logEntry.step} (${logEntry.status})`,
+                description: logEntry.details,
+            });
+        }
+        
         if (result.errors.length > 0) {
           setError(`Se produjeron errores en ${result.errors.length} acciones.`);
         }
+
     } catch (err: any) {
         console.error("Error checking due dates:", err);
         setError("Error al ejecutar el proceso de verificación de vencimientos.");

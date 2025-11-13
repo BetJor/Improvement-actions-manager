@@ -23,10 +23,17 @@ const DueDateSettingsSchema = z.object({
 });
 export type DueDateSettings = z.infer<typeof DueDateSettingsSchema>;
 
+const LogEntrySchema = z.object({
+  step: z.string(),
+  status: z.enum(['success', 'failure', 'info']),
+  details: z.string().optional(),
+});
+
 const CheckDueDatesOutputSchema = z.object({
   checkedActions: z.number(),
   remindersSent: z.number(),
   errors: z.array(z.string()),
+  log: z.array(LogEntrySchema),
 });
 
 // --- Wrapper functions for frontend to call flows ---
@@ -107,8 +114,18 @@ export const checkDueDates = ai.defineFlow(
     },
   },
   async () => {
-    console.log('[checkDueDates] Starting flow with admin privileges...');
-    const settings = await getDueDateSettingsFlow();
+    const log: z.infer<typeof LogEntrySchema>[] = [{ step: 'Inicio del Proceso', status: 'info', details: 'Ejecutando con permisos de administrador.' }];
+    
+    let settings;
+    try {
+        log.push({ step: 'Obteniendo configuración', status: 'info' });
+        settings = await getDueDateSettingsFlow();
+        log.push({ step: 'Configuración obtenida', status: 'success', details: `Se notificará a los ${settings.daysUntilDue} días.` });
+    } catch (e: any) {
+        log.push({ step: 'Error al obtener configuración', status: 'failure', details: e.message });
+        return { checkedActions: 0, remindersSent: 0, errors: [e.message], log };
+    }
+
     const statusesToCkeck: ImprovementAction['status'][] = [
         'Pendiente Análisis', 
         'Pendiente Comprobación', 
@@ -117,16 +134,29 @@ export const checkDueDates = ai.defineFlow(
     
     let remindersSent = 0;
     const errors: string[] = [];
+    let allUsers: User[] = [];
+    let actions: ImprovementAction[] = [];
 
-    // Fetch all users once with admin privileges
-    const usersSnapshot = await getDocs(collection(db, 'users'));
-    const allUsers = usersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
+    try {
+        log.push({ step: 'Obteniendo todos los usuarios', status: 'info' });
+        const usersSnapshot = await getDocs(collection(db, 'users'));
+        allUsers = usersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
+        log.push({ step: 'Usuarios obtenidos', status: 'success', details: `Se encontraron ${allUsers.length} usuarios.` });
+    } catch(e: any) {
+        log.push({ step: 'Error al obtener usuarios', status: 'failure', details: e.message });
+        return { checkedActions: 0, remindersSent: 0, errors: [e.message], log };
+    }
     
-    const q = query(collection(db, 'actions'), where('status', 'in', statusesToCkeck));
-    const querySnapshot = await getDocs(q);
-    const actions = querySnapshot.docs.map(d => ({ ...d.data(), id: d.id })) as ImprovementAction[];
-    
-    console.log(`[checkDueDates] Found ${actions.length} actions to check.`);
+    try {
+        log.push({ step: 'Consultando acciones pendientes', status: 'info' });
+        const q = query(collection(db, 'actions'), where('status', 'in', statusesToCkeck));
+        const querySnapshot = await getDocs(q);
+        actions = querySnapshot.docs.map(d => ({ ...d.data(), id: d.id })) as ImprovementAction[];
+        log.push({ step: 'Acciones obtenidas', status: 'success', details: `Se encontraron ${actions.length} acciones para revisar.` });
+    } catch(e: any) {
+        log.push({ step: 'Error al obtener acciones', status: 'failure', details: e.message });
+        return { checkedActions: 0, remindersSent: 0, errors: [e.message], log };
+    }
 
     for (const action of actions) {
         try {
@@ -138,8 +168,8 @@ export const checkDueDates = ai.defineFlow(
         }
     }
     
-    console.log(`[checkDueDates] Flow finished. Sent ${remindersSent} reminders.`);
-    return { checkedActions: actions.length, remindersSent, errors };
+    log.push({ step: 'Proceso finalizado', status: 'info', details: `Se enviaron ${remindersSent} recordatorios.` });
+    return { checkedActions: actions.length, remindersSent, errors, log };
   }
 );
 
