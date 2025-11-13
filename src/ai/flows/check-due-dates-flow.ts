@@ -12,7 +12,7 @@ import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import { collection, getDocs, query, where, updateDoc, doc, getDoc, setDoc, arrayUnion } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import type { ImprovementAction, User } from '@/lib/types';
+import type { ImprovementAction, User, ActionComment } from '@/lib/types';
 import { differenceInDays, isFuture, parseISO } from 'date-fns';
 import { sendDueDateReminderEmail } from '@/services/notification-service';
 import { errorEmitter } from '@/firebase/error-emitter';
@@ -30,6 +30,13 @@ const LogEntrySchema = z.object({
   details: z.string().optional(),
 });
 
+const CheckDueDatesInputSchema = z.object({
+    callingUser: z.object({
+        email: z.string(),
+        name: z.string(),
+    }).optional(),
+});
+
 const CheckDueDatesOutputSchema = z.object({
   checkedActions: z.number(),
   remindersSent: z.number(),
@@ -44,6 +51,10 @@ export async function getDueDateSettings(): Promise<DueDateSettings> {
 
 export async function updateDueDateSettings(settings: DueDateSettings): Promise<void> {
     return updateDueDateSettingsFlow(settings);
+}
+
+export async function checkDueDates(input?: z.infer<typeof CheckDueDatesInputSchema>): Promise<z.infer<typeof CheckDueDatesOutputSchema>> {
+    return checkDueDatesFlow(input || {});
 }
 
 
@@ -99,17 +110,23 @@ const updateDueDateSettingsFlow = ai.defineFlow(
 );
 
 
-export const checkDueDates = ai.defineFlow(
+const checkDueDatesFlow = ai.defineFlow(
   {
-    name: 'checkDuedates',
-    inputSchema: z.void(),
+    name: 'checkDueDatesFlow',
+    inputSchema: CheckDueDatesInputSchema,
     outputSchema: CheckDueDatesOutputSchema,
     auth: (auth, input) => {
-        auth.serviceAccount();
+        // Now allows either a service account OR an authenticated user.
+        if (!input.callingUser) {
+            auth.serviceAccount();
+        } else {
+            auth.authenticated();
+        }
     },
   },
   async (input, flow) => {
-    const log: z.infer<typeof LogEntrySchema>[] = [{ step: 'Inicio del Proceso', status: 'info', details: 'Ejecutando con permisos de administrador.' }];
+    const callingUserEmail = input.callingUser?.email || flow.auth?.email || "Usuario de servidor desconocido";
+    const log: z.infer<typeof LogEntrySchema>[] = [{ step: 'Inicio del Proceso', status: 'info', details: `Ejecutando como '${callingUserEmail}'` }];
     
     let settings;
     try {
@@ -132,8 +149,7 @@ export const checkDueDates = ai.defineFlow(
     let actions: ImprovementAction[] = [];
     
     try {
-        const callingUser = flow.auth?.email || "Usuario de servidor desconocido";
-        log.push({ step: `Consultando acciones pendientes como '${callingUser}'`, status: 'info' });
+        log.push({ step: `Consultando acciones pendientes como '${callingUserEmail}'`, status: 'info' });
         
         const q = query(collection(db, 'actions'), where('status', 'in', statusesToCkeck));
         const querySnapshot = await getDocs(q);
@@ -164,11 +180,11 @@ async function processAction(action: ImprovementAction, settings: DueDateSetting
     let sentCount = 0;
     const remindersSent = action.remindersSent || { analysis: false, verification: false, closure: false, proposedActions: {} };
     const updates: any = {};
-    const commentsToAdd: any[] = [];
+    const commentsToAdd: ActionComment[] = [];
 
     const checkAndNotify = async (
         dueDateStr: string | undefined,
-        reminderType: keyof ImprovementAction['remindersSent'] | `proposedActions.${string}`,
+        reminderType: 'analysis' | 'verification' | 'closure' | `proposedActions.${string}`,
         recipient: string | undefined,
         taskDescription: string,
     ) => {
@@ -179,9 +195,14 @@ async function processAction(action: ImprovementAction, settings: DueDateSetting
         if (!dueDateStr || !isFuture(parseISO(dueDateStr))) return;
 
         const reminderKey = reminderType.toString();
-        const wasSent = reminderKey.startsWith('proposedActions.') 
-            ? remindersSent.proposedActions?.[reminderKey.split('.')[1]] 
-            : remindersSent[reminderType as keyof typeof remindersSent];
+        
+        let wasSent = false;
+        if (reminderKey.startsWith('proposedActions.')) {
+            const paId = reminderKey.split('.')[1];
+            wasSent = remindersSent.proposedActions?.[paId] ?? false;
+        } else {
+            wasSent = remindersSent[reminderType as keyof typeof remindersSent] ?? false;
+        }
 
         if (wasSent) return;
 
@@ -228,7 +249,11 @@ async function processAction(action: ImprovementAction, settings: DueDateSetting
 
     if (sentCount > 0) {
         const actionRef = doc(db, 'actions', action.id);
-        const finalUpdates = { ...updates, comments: arrayUnion(...commentsToAdd) };
+        const finalUpdates: { [key: string]: any } = { ...updates };
+        if (commentsToAdd.length > 0) {
+            finalUpdates.comments = arrayUnion(...commentsToAdd);
+        }
+        
         await updateDoc(actionRef, finalUpdates).catch(async (serverError) => {
             const permissionError = new FirestorePermissionError({
                 path: actionRef.path,

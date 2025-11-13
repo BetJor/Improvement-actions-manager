@@ -21,6 +21,7 @@ import { Input } from "@/components/ui/input";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect } from "react";
+import { useAuth } from "@/hooks/use-auth";
 
 const dueDateSettingsSchema = z.object({
   daysUntilDue: z.coerce.number().int().positive(),
@@ -30,6 +31,7 @@ type DueDateSettingsFormValues = z.infer<typeof dueDateSettingsSchema>;
 
 export default function DataLoadPage() {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [isLoadingResponsibles, setIsLoadingResponsibles] = useState(false);
   const [isCheckingDues, setIsCheckingDues] = useState(false);
   const [isSavingSettings, setIsSavingSettings] = useState(false);
@@ -77,6 +79,11 @@ export default function DataLoadPage() {
   };
 
   const handleCheckDues = async () => {
+    if (!user) {
+        toast({ variant: "destructive", title: "Error de autenticación", description: "No se ha encontrado un usuario autenticado." });
+        return;
+    }
+
     setIsCheckingDues(true);
     setError(null);
     toast({
@@ -85,9 +92,8 @@ export default function DataLoadPage() {
     });
 
     try {
-        const result = await checkDueDates();
+        const result = await checkDueDates({ callingUser: { email: user.email, name: user.name } });
         
-        // Display detailed log as toasts
         for (const [index, logEntry] of result.log.entries()) {
             await new Promise(resolve => setTimeout(resolve, 800 * index));
             toast({
