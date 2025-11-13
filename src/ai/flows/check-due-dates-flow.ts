@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview A flow to check for upcoming due dates and send reminder notifications.
@@ -9,7 +10,7 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
-import { collection, getDocs, query, where } from 'firebase/firestore';
+import { collection, getDocs, query, where, doc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { ImprovementAction, User, ActionComment, SentEmailInfo } from '@/lib/types';
 import { differenceInDays, isFuture, parseISO } from 'date-fns';
