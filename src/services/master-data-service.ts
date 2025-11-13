@@ -168,6 +168,7 @@ export const enrichLocationsWithResponsibles = async (): Promise<number> => {
 0101;Llodio;Jose Luis Rituerto Martinez;Llodio_CA_Director@asepeyo.es;PAIS_VASCO_DT_Director@asepeyo.es;PAIS_VASCO_DT_Director@asepeyo.es;DT_AREA_NORTE_Director@asepeyo.es;PAIS_VASCO_DT_Coordinador-RRHH@asepeyo.es;PAIS_VASCO_DT_Coordinador-PR@asepeyo.es;PAIS_VASCO_DT_Coordinador-PV@asepeyo.es;;PAIS VASCO DAS_Coordinador-CMCP;ASEPEYO GESTIONES DGCMA;Llodio_CA_Direccion@asepeyo.es;Proas Pais Vasco_Coordinador;MIGUEL ECHEANDIA RENTERIA;ALFREDO MARTIN GONZALEZ;JAVIER GRANDA LOPEZ;Vitoria_PV_Personal@asepeyo.es;;`;
     const batch = writeBatch(db);
     let updatedCount = 0;
+    let updatePayloads: { path: string, data: any }[] = [];
 
     const lines = data.trim().split('\n').slice(1); // Skip header row
     const headers = data.trim().split('\n')[0].split(';').map(h => h.trim());
@@ -187,19 +188,28 @@ export const enrichLocationsWithResponsibles = async (): Promise<number> => {
             });
 
             const docRef = doc(db, 'locations', locationId);
-            batch.update(docRef, { responsibles });
+            const payload = { responsibles };
+            batch.update(docRef, payload);
+            updatePayloads.push({ path: docRef.path, data: payload });
             updatedCount++;
         }
     });
 
-    try {
-        await batch.commit();
-        console.log(`[enrichLocations] Successfully updated ${updatedCount} existing locations with responsibles.`);
-        return updatedCount;
-    } catch (error) {
-        console.error("[enrichLocations] Error committing batch update:", error);
-        throw error; // Re-throw to be caught by the page component
-    }
+    batch.commit()
+      .then(() => {
+          console.log(`[enrichLocations] Successfully updated ${updatedCount} existing locations with responsibles.`);
+      })
+      .catch(async (serverError) => {
+          const permissionError = new FirestorePermissionError({
+              path: '/locations (batch update)',
+              operation: 'update',
+              requestResourceData: updatePayloads, 
+          } satisfies SecurityRuleContext);
+          errorEmitter.emit('permission-error', permissionError);
+          // We don't re-throw the original error here to let the emitter handle it.
+      });
+
+    return updatedCount;
 }
 
 export const getCenters = async (): Promise<Center[]> => {
@@ -286,5 +296,3 @@ export async function deleteMasterDataItem(collectionName: string, itemId: strin
         throw serverError;
     }
 }
-
-    
