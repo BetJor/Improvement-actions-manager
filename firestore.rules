@@ -12,9 +12,10 @@ service cloud.firestore {
     }
 
     function isAdmin() {
-      // Allow access if the user is an admin based on the service account email.
-      // Replace with your actual service account email if different.
-      return request.auth.token.email == "firebase-service-account@local-dev.iam.gserviceaccount.com";
+      // Un usuari és admin si el seu email és el del compte de servei
+      // O si el seu document d'usuari a la col·lecció 'users' té el camp role == 'Admin'.
+      return request.auth.token.email == "firebase-service-account@local-dev.iam.gserviceaccount.com"
+             || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'Admin';
     }
 
     match /app_settings/{setting} {
@@ -26,11 +27,11 @@ service cloud.firestore {
        // Allow any client to read user profiles (for names, emails, etc.)
        allow read: if true;
        // Only allow a user to write to their own profile
-       allow write: if isUser(userId);
+       allow write: if isUser(userId) || isAdmin();
     }
     
     match /actions/{actionId} {
-      // LIST: Allow admins or signed-in users to perform queries. The 'read' rule will still be enforced on the results for non-admins.
+      // LIST: Allow admins or signed-in users to perform queries.
       allow list: if isAdmin() || isSignedIn();
       
       // READ: Admins can read everything. Other users must be in the 'readers' array.
@@ -40,7 +41,7 @@ service cloud.firestore {
       allow create: if isSignedIn();
       
       // UPDATE: Only users in the 'authors' array can update the document.
-      allow update: if isSignedIn() && request.auth.token.email in resource.data.authors;
+      allow update: if isSignedIn() && (isAdmin() || request.auth.token.email in resource.data.authors);
       
       // DELETE: Not allowed for now. Actions should be 'Anulada' instead.
       allow delete: if false;
