@@ -21,8 +21,6 @@ import { FirestorePermissionError, type SecurityRuleContext } from '@/firebase/e
 
 const DueDateSettingsSchema = z.object({
   daysUntilDue: z.number().int().positive().default(10),
-  // In a real scenario, you'd have cron configuration here.
-  // For this demo, we'll just store the days.
 });
 export type DueDateSettings = z.infer<typeof DueDateSettingsSchema>;
 
@@ -32,40 +30,51 @@ const CheckDueDatesOutputSchema = z.object({
   errors: z.array(z.string()),
 });
 
-// --- Flow to get and update settings ---
-
+// --- Wrapper functions for frontend to call flows ---
 export async function getDueDateSettings(): Promise<DueDateSettings> {
-  const docRef = doc(db, 'app_settings', 'due_date_reminders');
-  try {
-    const docSnap = await getDoc(docRef);
-    if (docSnap.exists()) {
-      return DueDateSettingsSchema.parse(docSnap.data());
-    }
-  } catch (serverError) {
-    const permissionError = new FirestorePermissionError({
-      path: docRef.path,
-      operation: 'get',
-    } satisfies SecurityRuleContext);
-    errorEmitter.emit('permission-error', permissionError);
-    throw serverError;
-  }
-  return { daysUntilDue: 10 }; // Default
+    return getDueDateSettingsFlow();
 }
-
 
 export async function updateDueDateSettings(settings: DueDateSettings): Promise<void> {
-  const docRef = doc(db, 'app_settings', 'due_date_reminders');
-  await setDoc(docRef, settings, { merge: true })
-    .catch(async (serverError) => {
-        const permissionError = new FirestorePermissionError({
-            path: docRef.path,
-            operation: 'update',
-            requestResourceData: settings,
-        } satisfies SecurityRuleContext);
-        errorEmitter.emit('permission-error', permissionError);
-        throw serverError;
-      });
+    return updateDueDateSettingsFlow(settings);
 }
+
+
+// --- Admin-privileged flows ---
+
+const getDueDateSettingsFlow = ai.defineFlow(
+    {
+        name: 'getDueDateSettingsFlow',
+        inputSchema: z.void(),
+        outputSchema: DueDateSettingsSchema,
+        auth: (auth, input) => {
+            auth.serviceAccount(); // Run with admin privileges
+        }
+    },
+    async () => {
+        const docRef = doc(db, 'app_settings', 'due_date_reminders');
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+            return DueDateSettingsSchema.parse(docSnap.data());
+        }
+        return { daysUntilDue: 10 }; // Default
+    }
+);
+
+const updateDueDateSettingsFlow = ai.defineFlow(
+    {
+        name: 'updateDueDateSettingsFlow',
+        inputSchema: DueDateSettingsSchema,
+        outputSchema: z.void(),
+        auth: (auth, input) => {
+            auth.serviceAccount(); // Run with admin privileges
+        }
+    },
+    async (settings) => {
+        const docRef = doc(db, 'app_settings', 'due_date_reminders');
+        await setDoc(docRef, settings, { merge: true });
+    }
+);
 
 
 // --- Main Flow to Check Due Dates ---
@@ -83,7 +92,7 @@ export const checkDueDates = ai.defineFlow(
   },
   async () => {
     console.log('[checkDueDates] Starting flow with admin privileges...');
-    const settings = await getDueDateSettings();
+    const settings = await getDueDateSettingsFlow();
     const statusesToCkeck: ImprovementAction['status'][] = [
         'Pendiente Análisis', 
         'Pendiente Comprobación', 
