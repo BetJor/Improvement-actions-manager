@@ -37,6 +37,8 @@ export default function DataLoadPage() {
   const [isCheckingDues, setIsCheckingDues] = useState(false);
   const [isSavingSettings, setIsSavingSettings] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [errorDetails, setErrorDetails] = useState<string[]>([]);
+
 
   const form = useForm<DueDateSettingsFormValues>({
     resolver: zodResolver(dueDateSettingsSchema),
@@ -60,6 +62,7 @@ export default function DataLoadPage() {
   const handleLoadResponsibles = async () => {
     setIsLoadingResponsibles(true);
     setError(null);
+    setErrorDetails([]);
     try {
       const updatedCount = await enrichLocationsWithResponsibles();
       toast({
@@ -87,6 +90,7 @@ export default function DataLoadPage() {
 
     setIsCheckingDues(true);
     setError(null);
+    setErrorDetails([]);
     toast({
         title: "Iniciando proceso...",
         description: "Se está ejecutando la verificación de vencimientos.",
@@ -115,6 +119,7 @@ export default function DataLoadPage() {
         
         if (result.errors.length > 0) {
           setError(`Se produjeron errores en ${result.errors.length} acciones.`);
+          setErrorDetails(result.errors);
         }
 
     } catch (err: any) {
@@ -133,6 +138,7 @@ export default function DataLoadPage() {
   const handleSaveSettings = async (values: DueDateSettingsFormValues) => {
     setIsSavingSettings(true);
     setError(null);
+    setErrorDetails([]);
     try {
         await updateDueDateSettings({ daysUntilDue: values.daysUntilDue });
         toast({
@@ -224,8 +230,16 @@ export default function DataLoadPage() {
           {error && (
             <Alert variant="destructive">
               <AlertTriangle className="h-4 w-4" />
-              <AlertTitle>Error</AlertTitle>
-              <AlertDescription>{error}</AlertDescription>
+              <AlertTitle>{error}</AlertTitle>
+              {errorDetails.length > 0 && (
+                <AlertDescription>
+                  <ul className="list-disc pl-5 mt-2 space-y-1">
+                    {errorDetails.map((detail, index) => (
+                      <li key={index} className="text-xs">{detail}</li>
+                    ))}
+                  </ul>
+                </AlertDescription>
+              )}
             </Alert>
           )}
         </CardContent>
