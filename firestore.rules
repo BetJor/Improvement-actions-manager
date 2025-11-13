@@ -17,8 +17,8 @@ service cloud.firestore {
     }
     
     match /users/{userId} {
-       // Allow any authenticated user to read user profiles (for names, emails, etc.)
-       allow read: if isSignedIn();
+       // Allow any client to read user profiles (for names, emails, etc.)
+       allow read: if true;
        // Only allow a user to write to their own profile
        allow write: if isUser(userId);
     }
