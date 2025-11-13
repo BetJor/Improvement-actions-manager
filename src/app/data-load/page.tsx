@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState } from "react";
@@ -26,16 +25,16 @@ export default function DataLoadPage() {
     try {
       const updatedCount = await enrichLocationsWithResponsibles();
       toast({
-        title: "Càrrega completada",
-        description: `S'han actualitzat ${updatedCount} centres amb les dades de responsables.`,
+        title: "Carga completada",
+        description: `Se han actualizado ${updatedCount} centros con los datos de responsables.`,
       });
     } catch (err: any) {
       console.error("Error loading responsibles:", err);
-      setError("Error en carregar les dades de responsables.");
+      setError("Error al cargar los datos de responsables.");
       toast({
         variant: "destructive",
-        title: "Error de càrrega",
-        description: "No s'han pogut actualitzar els responsables dels centres.",
+        title: "Error de carga",
+        description: "No se han podido actualizar los responsables de los centros.",
       });
     } finally {
       setIsLoading(false);
@@ -46,18 +45,18 @@ export default function DataLoadPage() {
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>Càrrega de Dades Manual</CardTitle>
+          <CardTitle>Carga de Datos Manual</CardTitle>
           <CardDescription>
-            Aquesta secció permet executar processos de càrrega i actualització de dades a la base de dades.
+            Esta sección permite ejecutar procesos de carga y actualización de datos en la base de datos.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
            <Alert>
                 <UploadCloud className="h-4 w-4" />
-                <AlertTitle>Carregar Responsables de Centres</AlertTitle>
+                <AlertTitle>Cargar Responsables de Centros</AlertTitle>
                 <AlertDescription>
                    <p className="mb-4">
-                     Aquest procés actualitzarà tots els centres existents a la base de dades amb la informació de responsables (Dependència, Àrea, Coordinadors, etc.) continguda al fitxer intern. Aquesta operació és segura i es pot executar múltiples vegades.
+                     Este proceso actualizará todos los centros existentes en la base de datos con la información de responsables (Dependencia, Área, Coordinadores, etc.) contenida en el fichero interno. Esta operación es segura y se puede ejecutar múltiples veces.
                    </p>
                     <Button onClick={handleLoadResponsibles} disabled={isLoading}>
                     {isLoading ? (
@@ -65,7 +64,7 @@ export default function DataLoadPage() {
                     ) : (
                       <UploadCloud className="mr-2 h-4 w-4" />
                     )}
-                    {isLoading ? "Carregant..." : "Carregar Responsables de Centres"}
+                    {isLoading ? "Cargando..." : "Cargar Responsables de Centros"}
                   </Button>
                 </AlertDescription>
             </Alert>
