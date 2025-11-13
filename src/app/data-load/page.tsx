@@ -1,6 +1,8 @@
+
 "use client";
 
 import { useState } from "react";
+import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -11,16 +13,49 @@ import {
 } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { enrichLocationsWithResponsibles } from "@/services/master-data-service";
-import { Loader2, UploadCloud } from "lucide-react";
+import { getDueDateSettings, updateDueDateSettings, checkDueDates } from "@/ai/flows/check-due-dates-flow";
+import { Loader2, UploadCloud, Send, Settings, AlertTriangle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useEffect } from "react";
+
+const dueDateSettingsSchema = z.object({
+  daysUntilDue: z.coerce.number().int().positive(),
+});
+
+type DueDateSettingsFormValues = z.infer<typeof dueDateSettingsSchema>;
 
 export default function DataLoadPage() {
   const { toast } = useToast();
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingResponsibles, setIsLoadingResponsibles] = useState(false);
+  const [isCheckingDues, setIsCheckingDues] = useState(false);
+  const [isSavingSettings, setIsSavingSettings] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const form = useForm<DueDateSettingsFormValues>({
+    resolver: zodResolver(dueDateSettingsSchema),
+    defaultValues: {
+      daysUntilDue: 10,
+    },
+  });
+
+  useEffect(() => {
+    async function loadSettings() {
+      try {
+        const settings = await getDueDateSettings();
+        form.setValue("daysUntilDue", settings.daysUntilDue);
+      } catch (err) {
+        console.error("Error loading due date settings:", err);
+      }
+    }
+    loadSettings();
+  }, [form]);
+
   const handleLoadResponsibles = async () => {
-    setIsLoading(true);
+    setIsLoadingResponsibles(true);
     setError(null);
     try {
       const updatedCount = await enrichLocationsWithResponsibles();
@@ -37,7 +72,54 @@ export default function DataLoadPage() {
         description: "No se han podido actualizar los responsables de los centros.",
       });
     } finally {
-      setIsLoading(false);
+      setIsLoadingResponsibles(false);
+    }
+  };
+
+  const handleCheckDues = async () => {
+    setIsCheckingDues(true);
+    setError(null);
+    try {
+        const result = await checkDueDates();
+        toast({
+            title: "Verificación completada",
+            description: `Se han revisado ${result.checkedActions} acciones y se han enviado ${result.remindersSent} recordatorios.`,
+        });
+        if (result.errors.length > 0) {
+          setError(`Se produjeron errores en ${result.errors.length} acciones.`);
+        }
+    } catch (err: any) {
+        console.error("Error checking due dates:", err);
+        setError("Error al ejecutar el proceso de verificación de vencimientos.");
+        toast({
+            variant: "destructive",
+            title: "Error de Proceso",
+            description: "No se ha podido completar la verificación de vencimientos.",
+        });
+    } finally {
+        setIsCheckingDues(false);
+    }
+  };
+
+  const handleSaveSettings = async (values: DueDateSettingsFormValues) => {
+    setIsSavingSettings(true);
+    setError(null);
+    try {
+        await updateDueDateSettings({ daysUntilDue: values.daysUntilDue });
+        toast({
+            title: "Configuración guardada",
+            description: "Los ajustes de los recordatorios de vencimiento se han guardado.",
+        });
+    } catch (err: any) {
+        console.error("Error saving due date settings:", err);
+        setError("Error al guardar la configuración.");
+        toast({
+            variant: "destructive",
+            title: "Error al guardar",
+            description: "No se pudo guardar la configuración de vencimientos.",
+        });
+    } finally {
+        setIsSavingSettings(false);
     }
   };
 
@@ -45,32 +127,74 @@ export default function DataLoadPage() {
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>Carga de Datos Manual</CardTitle>
+          <CardTitle>Procesos Manuales</CardTitle>
           <CardDescription>
-            Esta sección permite ejecutar procesos de carga y actualización de datos en la base de datos.
+            Esta sección permite ejecutar procesos de carga y mantenimiento de datos en la base de datos.
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-6">
            <Alert>
                 <UploadCloud className="h-4 w-4" />
                 <AlertTitle>Cargar Responsables de Centros</AlertTitle>
-                <AlertDescription>
-                   <p className="mb-4">
+                <AlertDescription className="flex flex-col gap-4">
+                   <p>
                      Este proceso actualizará todos los centros existentes en la base de datos con la información de responsables (Dependencia, Área, Coordinadores, etc.) contenida en el fichero interno. Esta operación es segura y se puede ejecutar múltiples veces.
                    </p>
-                    <Button onClick={handleLoadResponsibles} disabled={isLoading}>
-                    {isLoading ? (
+                    <Button onClick={handleLoadResponsibles} disabled={isLoadingResponsibles} className="w-fit">
+                    {isLoadingResponsibles ? (
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     ) : (
                       <UploadCloud className="mr-2 h-4 w-4" />
                     )}
-                    {isLoading ? "Cargando..." : "Cargar Responsables de Centros"}
+                    {isLoadingResponsibles ? "Cargando..." : "Cargar Responsables de Centros"}
                   </Button>
                 </AlertDescription>
             </Alert>
           
+            <Alert>
+                <Send className="h-4 w-4" />
+                <AlertTitle>Verificación de Vencimientos</AlertTitle>
+                <AlertDescription className="flex flex-col gap-4">
+                    <p>
+                        Ejecuta manualmente el proceso que revisa las acciones con fechas de vencimiento próximas y envía recordatorios por correo electrónico a los responsables.
+                    </p>
+                     <Form {...form}>
+                        <form onSubmit={form.handleSubmit(handleSaveSettings)} className="flex items-end gap-4">
+                             <FormField
+                                control={form.control}
+                                name="daysUntilDue"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Avisar cuando falten (días)</FormLabel>
+                                        <FormControl>
+                                            <Input type="number" className="w-32" {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                             <Button type="submit" variant="secondary" disabled={isSavingSettings}>
+                                {isSavingSettings ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Settings className="mr-2 h-4 w-4" />}
+                                Guardar Ajuste
+                             </Button>
+                        </form>
+                    </Form>
+
+                    <Button onClick={handleCheckDues} disabled={isCheckingDues}>
+                        {isCheckingDues ? (
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        ) : (
+                            <Send className="mr-2 h-4 w-4" />
+                        )}
+                        {isCheckingDues ? "Verificando..." : "Ejecutar Verificación de Vencimientos"}
+                    </Button>
+
+                </AlertDescription>
+            </Alert>
+
           {error && (
             <Alert variant="destructive">
+              <AlertTriangle className="h-4 w-4" />
               <AlertTitle>Error</AlertTitle>
               <AlertDescription>{error}</AlertDescription>
             </Alert>

@@ -12,14 +12,14 @@
     "AppSidebar": {
       "title": "Accions de Millora",
       "toggleNotifications": "Activar/desactivar notificacions",
-      "dashboard": "Panel de Control",
+      "dashboard": "Panell de Control",
       "actions": "Accions",
       "reports": "Informes",
       "myGroups": "Els Meus Grups",
       "settings": "Configuració",
       "aiSettings": "Configuració IA",
       "userManagement": "Gestió d'Usuaris",
-      "dataLoad": "Càrrega de Dades"
+      "dataLoad": "Processos Manuals"
     },
     "RootLayout": {
       "title": "Gestor d'Accions de Millora",

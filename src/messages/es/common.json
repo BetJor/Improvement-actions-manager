@@ -19,7 +19,7 @@
       "settings": "Configuración",
       "aiSettings": "Configuración IA",
       "userManagement": "Gestión de Usuarios",
-      "dataLoad": "Carga de Datos"
+      "dataLoad": "Procesos Manuales"
     },
     "RootLayout": {
       "title": "Gestor de Acciones de Mejora",
