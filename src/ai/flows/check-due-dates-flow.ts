@@ -37,7 +37,7 @@ const CheckDueDatesOutputSchema = z.object({
   log: z.array(z.infer<typeof LogEntrySchema>),
 });
 
-// --- Wrapper functions for frontend to call flows ---
+
 export async function getDueDateSettings(): Promise<DueDateSettings> {
     return getDueDateSettingsFlow();
 }
@@ -47,15 +47,13 @@ export async function updateDueDateSettings(settings: DueDateSettings): Promise<
 }
 
 
-// --- Admin-privileged flows ---
-
 const getDueDateSettingsFlow = ai.defineFlow(
     {
         name: 'getDueDateSettingsFlow',
         inputSchema: z.void(),
         outputSchema: DueDateSettingsSchema,
         auth: (auth, input) => {
-            auth.serviceAccount(); // Run with admin privileges
+            auth.serviceAccount();
         }
     },
     async () => {
@@ -83,7 +81,7 @@ const updateDueDateSettingsFlow = ai.defineFlow(
         inputSchema: DueDateSettingsSchema,
         outputSchema: z.void(),
         auth: (auth, input) => {
-            auth.serviceAccount(); // Run with admin privileges
+            auth.serviceAccount();
         }
     },
     async (settings) => {
@@ -101,16 +99,12 @@ const updateDueDateSettingsFlow = ai.defineFlow(
 );
 
 
-// --- Main Flow to Check Due Dates ---
-
 export const checkDueDates = ai.defineFlow(
   {
     name: 'checkDuedates',
     inputSchema: z.void(),
     outputSchema: CheckDueDatesOutputSchema,
     auth: (auth, input) => {
-        // This policy allows the flow to run with service account credentials
-        // Bypassing user-based security rules for this administrative task.
         auth.serviceAccount();
     },
   },
@@ -175,7 +169,7 @@ async function processAction(action: ImprovementAction, settings: DueDateSetting
     const checkAndNotify = async (
         dueDateStr: string | undefined,
         reminderType: keyof ImprovementAction['remindersSent'] | `proposedActions.${string}`,
-        recipient: string | undefined, // Can be undefined now
+        recipient: string | undefined,
         taskDescription: string,
     ) => {
         if (!recipient) {
@@ -201,7 +195,6 @@ async function processAction(action: ImprovementAction, settings: DueDateSetting
                 commentsToAdd.push(notificationComment);
             }
             
-            // Mark as sent
             if (reminderKey.startsWith('proposedActions.')) {
                 if (!updates['remindersSent.proposedActions']) updates['remindersSent.proposedActions'] = {};
                 updates[`remindersSent.proposedActions.${reminderKey.split('.')[1]}`] = true;
