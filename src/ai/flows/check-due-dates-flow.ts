@@ -53,9 +53,14 @@ export const checkDueDates = ai.defineFlow(
     name: 'checkDuedates',
     inputSchema: z.void(),
     outputSchema: CheckDueDatesOutputSchema,
+    auth: (auth, input) => {
+        // This policy allows the flow to run with service account credentials
+        // Bypassing user-based security rules for this administrative task.
+        auth.serviceAccount();
+    },
   },
   async () => {
-    console.log('[checkDueDates] Starting flow...');
+    console.log('[checkDueDates] Starting flow with admin privileges...');
     const settings = await getDueDateSettings();
     const statusesToCkeck: ImprovementAction['status'][] = [
         'Pendiente Análisis', 

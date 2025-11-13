@@ -31,22 +31,37 @@ async function getTestEmailTransporter(): Promise<nodemailer.Transporter> {
     }
 
     try {
-        const testAccount = await nodemailer.createTestAccount();
-        console.log('[NotificationService] Created Ethereal test account:', testAccount.user);
+        // If environment variables for a real SMTP server are set, use them.
+        if (process.env.SMTP_HOST && process.env.SMTP_PORT && process.env.SMTP_USER && process.env.SMTP_PASS) {
+             transporter = nodemailer.createTransport({
+                host: process.env.SMTP_HOST,
+                port: parseInt(process.env.SMTP_PORT, 10),
+                secure: parseInt(process.env.SMTP_PORT, 10) === 465,
+                auth: {
+                    user: process.env.SMTP_USER,
+                    pass: process.env.SMTP_PASS,
+                },
+            });
+            console.log('[NotificationService] Using configured SMTP server.');
+        } else {
+            // Otherwise, fall back to a test Ethereal account.
+            const testAccount = await nodemailer.createTestAccount();
+            console.log('[NotificationService] Created Ethereal test account:', testAccount.user);
 
-        transporter = nodemailer.createTransport({
-            host: "smtp.ethereal.email",
-            port: 587,
-            secure: false, // true for 465, false for other ports
-            auth: {
-                user: testAccount.user,
-                pass: testAccount.pass,
-            },
-        });
+            transporter = nodemailer.createTransport({
+                host: "smtp.ethereal.email",
+                port: 587,
+                secure: false, // true for 465, false for other ports
+                auth: {
+                    user: testAccount.user,
+                    pass: testAccount.pass,
+                },
+            });
+        }
         
         return transporter;
     } catch (error) {
-        console.error('[NotificationService] Failed to create Ethereal test account:', error);
+        console.error('[NotificationService] Failed to create email transporter:', error);
         throw error;
     }
 }
@@ -481,6 +496,58 @@ export async function sendBisCreationNotificationEmail(bisAction: ImprovementAct
             author: { id: 'system', name: 'Sistema' },
             date: new Date().toISOString(),
             text: `Fallo al enviar notificación de creación de acción BIS a: ${recipientEmail}.`
+        };
+    }
+}
+
+
+/**
+ * Sends a due date reminder email for a specific task within an action.
+ * @returns An ActionComment to be added to the action, or null if no email was sent.
+ */
+export async function sendDueDateReminderEmail(
+    action: ImprovementAction,
+    taskDescription: string,
+    dueDate: string,
+    recipientEmail: string
+): Promise<ActionComment | null> {
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9002';
+    const actionUrl = `${appUrl}/actions/${action.id}`;
+    
+    const subject = `Recordatorio: Tarea próxima a vencer en la acción ${action.actionId}`;
+    const html = `
+      <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+        <div style="max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px;">
+          <h2 style="color: #D35400; border-bottom: 2px solid #D35400; padding-bottom: 10px;">Recordatorio de Vencimiento</h2>
+          <p>Hola,</p>
+          <p>Este es un recordatorio de que tienes una tarea pendiente en la acción de mejora <strong>${action.actionId}: ${action.title}</strong> que está próxima a su fecha de vencimiento.</p>
+          
+          <div style="background-color: #fef5f0; border-left: 4px solid #D35400; padding: 15px; margin: 20px 0;">
+            <p style="margin: 0;"><strong>Tarea pendiente:</strong> ${taskDescription}</p>
+            <p style="margin: 10px 0 0; font-size: 1.1em; color: #555;">Fecha de vencimiento: <strong>${format(safeParseDate(dueDate)!, 'dd/MM/yyyy')}</strong></p>
+          </div>
+          
+          <p>Por favor, accede a la plataforma para completar la tarea asignada.</p>
+          <a href="${actionUrl}" style="background-color: #00529B; color: white; padding: 12px 20px; text-decoration: none; border-radius: 5px; display: inline-block; text-align: center;">Acceder a la Acción</a>
+        </div>
+      </div>
+    `;
+
+    const previewUrl = await sendEmail(recipientEmail, subject, html);
+
+    if (previewUrl && !previewUrl.startsWith('FALLO_DE_ENVIO')) {
+        return {
+            id: crypto.randomUUID(),
+            author: { id: 'system', name: 'Sistema' },
+            date: new Date().toISOString(),
+            text: `Recordatorio de vencimiento para "${taskDescription}" enviado a: ${recipientEmail}. ${previewUrl}`
+        };
+    } else {
+        return {
+            id: crypto.randomUUID(),
+            author: { id: 'system', name: 'Sistema' },
+            date: new Date().toISOString(),
+            text: `Fallo al enviar recordatorio de vencimiento a: ${recipientEmail}.`
         };
     }
 }
