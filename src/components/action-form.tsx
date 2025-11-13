@@ -191,13 +191,13 @@ export function ActionForm({
         const role: ResponsibilityRole | undefined = masterData.responsibilityRoles?.data.find((r: any) => r.id === roleId);
         if (role) {
             if (role.type === 'Fixed' && role.email) {
-                options.push({ value: role.email, label: `${''}'${role.name}' (${''}'${role.email}')` });
+                options.push({ value: role.email, label: `${role.name} (${role.email})` });
             } else if (role.type === 'Pattern' && role.emailPattern) {
                 const center: Center | undefined = masterData.centers?.data.find((c: any) => c.id === selectedCenterId);
                 const context = { action: { creator: user, center: center, affectedAreasIds: selectedAffectedAreasIds } };
                 const resolvedEmails = evaluatePattern(role.emailPattern, context);
                 resolvedEmails.forEach(email => {
-                    if (email && !email.includes('{')) options.push({ value: email, label: `${''}'${role.name}' (${''}'${email}')` });
+                    if (email && !email.includes('{')) options.push({ value: email, label: `${role.name} (${email})` });
                 });
             }
         }
@@ -293,8 +293,9 @@ export function ActionForm({
 
   const handleFormSubmit = (status: 'Borrador' | 'Pendiente Análisis') => {
       // Manual validation before submitting
-      let valuesToSubmit = { ...form.getValues() };
+      const values = form.getValues();
       let isValid = true;
+      let valuesToSubmit = { ...values };
       
       // Check if categoryId is valid for the selected typeId
       if (valuesToSubmit.categoryId) {
@@ -311,7 +312,7 @@ export function ActionForm({
         const subcategoryIsValid = filteredSubcategories.some(sc => sc.id === valuesToSubmit.subcategoryId);
         if (!subcategoryIsValid) {
            valuesToSubmit.subcategoryId = ''; // Clear the invalid subcategory ID
-           valuesToSubmit.subcategory = ''; // Clear the invalid subcategory name
+           (valuesToSubmit as any).subcategory = ''; // Clear the invalid subcategory name
         }
       }
 
@@ -484,7 +485,7 @@ export function ActionForm({
                                             <DropdownMenuTrigger asChild>
                                                 <FormControl>
                                                     <Button variant="outline" disabled={disableForm} className={cn("w-full justify-start text-left font-normal", !field.value?.length && "text-muted-foreground")}>
-                                                        <span className="truncate">{field.value?.length > 0 ? `${''}'${field.value.length}' área(s) seleccionada(s)` : "Selecciona áreas"}</span>
+                                                        <span className="truncate">{field.value?.length > 0 ? `${field.value.length} área(s) seleccionada(s)` : "Selecciona áreas"}</span>
                                                         <ChevronsUpDown className="ml-auto h-4 w-4 shrink-0 opacity-50" />
                                                     </Button>
                                                 </FormControl>
@@ -533,7 +534,7 @@ export function ActionForm({
                                                 <FormControl>
                                                     <Button variant="outline" disabled={disableForm} className={cn("w-full justify-start text-left font-normal", !field.value?.length && "text-muted-foreground")}>
                                                         <span className="truncate">
-                                                            {field.value?.length > 0 ? `${''}'${field.value.length}' centro(s) seleccionado(s)` : "Selecciona centros"}
+                                                            {field.value?.length > 0 ? `${field.value.length} centro(s) seleccionado(s)` : "Selecciona centros"}
                                                         </span>
                                                         <ChevronsUpDown className="ml-auto h-4 w-4 shrink-0 opacity-50" />
                                                     </Button>
