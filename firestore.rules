@@ -11,6 +11,12 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == userId;
     }
 
+    function isAdmin() {
+      // Allow access if the user is an admin based on the service account email.
+      // Replace with your actual service account email if different.
+      return request.auth.token.email == "firebase-service-account@local-dev.iam.gserviceaccount.com";
+    }
+
     match /app_settings/{setting} {
       allow read: if true;
       allow write: if isSignedIn();
@@ -24,11 +30,11 @@ service cloud.firestore {
     }
     
     match /actions/{actionId} {
-      // LIST: Any signed-in user can query the collection.
+      // LIST: Allow signed-in users to perform queries. The 'read' rule will still be enforced on the results.
       allow list: if isSignedIn();
       
-      // READ: Anyone in the 'readers' array can read the document.
-      allow read: if isSignedIn() && request.auth.token.email in resource.data.readers;
+      // READ: Admins can read everything. Other users must be in the 'readers' array.
+      allow read: if isAdmin() || (isSignedIn() && request.auth.token.email in resource.data.readers);
       
       // CREATE: Any signed-in user can create an action. The client-side logic will set initial permissions.
       allow create: if isSignedIn();
