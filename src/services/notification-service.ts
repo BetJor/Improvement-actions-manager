@@ -96,9 +96,7 @@ async function getEmailDetailsForVerification(action: ImprovementAction): Promis
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9002';
     const actionUrl = `${appUrl}/actions/${action.id}`;
 
-    let recipientEmail = action.analysis?.verificationResponsibleUserEmail;
-    // THIS IS THE LINE THAT WAS CAUSING THE PROBLEM. REMOVED THE DB LOOKUP.
-    // The email is now guaranteed to be in the action object.
+    const recipientEmail = action.analysis?.verificationResponsibleUserEmail;
     
     if (!recipientEmail) {
         throw new Error("No se ha proporcionado el email del responsable de verificación.");
@@ -151,11 +149,7 @@ async function getEmailDetailsForProposedAction(action: ImprovementAction, propo
     const actionUrl = `${appUrl}/actions/${action.id}`;
 
     if (!proposedAction.responsibleUserEmail) {
-        const responsibleUser = await getUserById(proposedAction.responsibleUserId);
-        if(!responsibleUser || !responsibleUser.email) {
-            throw new Error(`La acción propuesta '${proposedAction.description.substring(0, 30)}...' no tiene un responsable con email.`);
-        }
-        proposedAction.responsibleUserEmail = responsibleUser.email;
+        throw new Error(`La acción propuesta '${proposedAction.description.substring(0, 30)}...' no tiene un responsable con email.`);
     }
     const recipientEmail = proposedAction.responsibleUserEmail;
 
@@ -286,20 +280,18 @@ export async function sendStateChangeEmail(details: { action: ImprovementAction,
         case 'Pendiente Análisis':
             notificationSummary = 'Notificación de análisis enviada a:';
             emailInfoGenerator = getEmailDetailsForAnalysis;
-            recipients = [action.responsibleGroupId];
+            if (action.responsibleGroupId) {
+                recipients = [action.responsibleGroupId];
+            }
             break;
         case 'Pendiente Comprobación':
              notificationSummary = 'Notificaciones de implementación/verificación enviadas a:';
             if (action.analysis) {
-                const responsibleEmails = [...new Set(action.analysis.proposedActions.map(pa => pa.responsibleUserEmail))];
+                const responsibleEmails = [...new Set(action.analysis.proposedActions.map(pa => pa.responsibleUserEmail).filter(Boolean))];
                 recipients.push(...responsibleEmails);
 
-                let verifierEmail = action.analysis.verificationResponsibleUserEmail;
-                 if (!verifierEmail && action.analysis.verificationResponsibleUserId) {
-                    const verifier = await getUserById(action.analysis.verificationResponsibleUserId);
-                    if (verifier?.email) recipients.push(verifier.email);
-                } else if(verifierEmail) {
-                    recipients.push(verifierEmail);
+                if (action.analysis.verificationResponsibleUserEmail) {
+                    recipients.push(action.analysis.verificationResponsibleUserEmail);
                 }
             }
             break;

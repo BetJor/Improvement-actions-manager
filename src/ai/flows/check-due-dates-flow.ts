@@ -33,7 +33,7 @@ const CheckDueDatesOutputSchema = z.object({
   checkedActions: z.number(),
   remindersSent: z.number(),
   errors: z.array(z.string()),
-  log: z.array(LogEntrySchema),
+  log: z.array(z.infer<typeof LogEntrySchema>),
 });
 
 // --- Wrapper functions for frontend to call flows ---
@@ -134,18 +134,7 @@ export const checkDueDates = ai.defineFlow(
     
     let remindersSent = 0;
     const errors: string[] = [];
-    let allUsers: User[] = [];
     let actions: ImprovementAction[] = [];
-
-    try {
-        log.push({ step: 'Obteniendo todos los usuarios', status: 'info' });
-        const usersSnapshot = await getDocs(collection(db, 'users'));
-        allUsers = usersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
-        log.push({ step: 'Usuarios obtenidos', status: 'success', details: `Se encontraron ${allUsers.length} usuarios.` });
-    } catch(e: any) {
-        log.push({ step: 'Error al obtener usuarios', status: 'failure', details: e.message });
-        return { checkedActions: 0, remindersSent: 0, errors: [e.message], log };
-    }
     
     try {
         log.push({ step: 'Consultando acciones pendientes', status: 'info' });
@@ -160,7 +149,7 @@ export const checkDueDates = ai.defineFlow(
 
     for (const action of actions) {
         try {
-            const sentCount = await processAction(action, settings, allUsers);
+            const sentCount = await processAction(action, settings);
             remindersSent += sentCount;
         } catch(e: any) {
             console.error(`[checkDueDates] Error processing action ${action.actionId}:`, e);
@@ -174,22 +163,22 @@ export const checkDueDates = ai.defineFlow(
 );
 
 
-async function processAction(action: ImprovementAction, settings: DueDateSettings, allUsers: User[]): Promise<number> {
+async function processAction(action: ImprovementAction, settings: DueDateSettings): Promise<number> {
     let sentCount = 0;
     const remindersSent = action.remindersSent || { analysis: false, verification: false, closure: false, proposedActions: {} };
     const updates: any = {};
     const commentsToAdd: any[] = [];
 
-    const getUserById = (userId: string): User | undefined => {
-        return allUsers.find(u => u.id === userId);
-    };
-
     const checkAndNotify = async (
         dueDateStr: string,
         reminderType: keyof ImprovementAction['remindersSent'] | `proposedActions.${string}`,
-        recipient: string,
+        recipient: string | undefined, // Can be undefined now
         taskDescription: string,
     ) => {
+        if (!recipient) {
+            console.warn(`[processAction] No recipient email for ${reminderType} on action ${action.actionId}. Skipping notification.`);
+            return;
+        }
         if (!dueDateStr || !isFuture(parseISO(dueDateStr))) return;
 
         const reminderKey = reminderType.toString();
@@ -225,11 +214,8 @@ async function processAction(action: ImprovementAction, settings: DueDateSetting
             await checkAndNotify(action.analysisDueDate, 'analysis', action.responsibleGroupId, 'completar el Análisis de Causas');
             break;
         case 'Pendiente Comprobación':
-            if(action.analysis?.verificationResponsibleUserId) {
-                 const verifier = getUserById(action.analysis.verificationResponsibleUserId);
-                 if(verifier?.email) {
-                    await checkAndNotify(action.verificationDueDate, 'verification', verifier.email, 'realizar la Verificación de la Implantación');
-                 }
+            if(action.analysis?.verificationResponsibleUserEmail) {
+                await checkAndNotify(action.verificationDueDate, 'verification', action.analysis.verificationResponsibleUserEmail, 'realizar la Verificación de la Implantación');
             }
             if (action.analysis?.proposedActions) {
                 for (const pa of action.analysis.proposedActions) {
@@ -240,9 +226,7 @@ async function processAction(action: ImprovementAction, settings: DueDateSetting
             }
             break;
         case 'Pendiente de Cierre':
-             if (action.creator.email) {
-                await checkAndNotify(action.closureDueDate, 'closure', action.creator.email, 'realizar el Cierre Final de la acción');
-            }
+             await checkAndNotify(action.closureDueDate, 'closure', action.creator.email, 'realizar el Cierre Final de la acción');
             break;
     }
 
