@@ -30,8 +30,8 @@ service cloud.firestore {
     }
     
     match /actions/{actionId} {
-      // LIST: Allow signed-in users to perform queries. The 'read' rule will still be enforced on the results.
-      allow list: if isSignedIn();
+      // LIST: Allow admins or signed-in users to perform queries. The 'read' rule will still be enforced on the results for non-admins.
+      allow list: if isAdmin() || isSignedIn();
       
       // READ: Admins can read everything. Other users must be in the 'readers' array.
       allow read: if isAdmin() || (isSignedIn() && request.auth.token.email in resource.data.readers);
