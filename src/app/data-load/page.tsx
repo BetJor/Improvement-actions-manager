@@ -79,6 +79,11 @@ export default function DataLoadPage() {
   const handleCheckDues = async () => {
     setIsCheckingDues(true);
     setError(null);
+    toast({
+        title: "Iniciando proceso...",
+        description: "Se está ejecutando la verificación de vencimientos.",
+    });
+
     try {
         const result = await checkDueDates();
         toast({
