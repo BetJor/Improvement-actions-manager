@@ -9,11 +9,12 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
-import { collection, getDocs, query, where, updateDoc, doc } from 'firebase/firestore';
+import { collection, getDocs, query, where, updateDoc, doc, getDoc, setDoc, arrayUnion } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { ImprovementAction } from '@/lib/types';
 import { differenceInDays, isFuture, parseISO } from 'date-fns';
 import { sendDueDateReminderEmail } from '@/services/notification-service';
+import { getUserById } from '@/services/users-service';
 
 const DueDateSettingsSchema = z.object({
   daysUntilDue: z.number().int().positive().default(10),
