@@ -161,7 +161,18 @@ export const getResponsibilityRoles = async (): Promise<ResponsibilityRole[]> =>
 export const enrichLocationsWithResponsibles = async (): Promise<number> => {
     console.log("[enrichLocations] Starting process to enrich locations with responsibles...");
     const locationsCol = collection(db, 'locations');
-    const locationsSnapshot = await getDocs(locationsCol);
+    let locationsSnapshot;
+    try {
+        locationsSnapshot = await getDocs(locationsCol);
+    } catch (serverError) {
+        const permissionError = new FirestorePermissionError({
+            path: '/locations',
+            operation: 'list',
+        } satisfies SecurityRuleContext);
+        errorEmitter.emit('permission-error', permissionError);
+        throw serverError;
+    }
+
     const existingLocations = new Map(locationsSnapshot.docs.map(doc => [doc.id, doc.data()]));
 
     const data = `Código;Nombre;Titular/es;Dependencia;Area;C_Autonoma;Organizacion_Territorial;RRHH_Territorial;Prestaciones_Territorial;Prevencion_Territorial;Area_F_Territorial;Coordinador_Sanitario;Gestion_Calidad;Administracion;Proas_Territorial;Coordinador_Informatico;SPP_Territorial;Coordinador_Instalaciones;Consultor_Prevencion;Gestion_Afiliacion;Gestion_Pago_Delegado
@@ -195,21 +206,20 @@ export const enrichLocationsWithResponsibles = async (): Promise<number> => {
         }
     });
 
-    batch.commit()
-      .then(() => {
-          console.log(`[enrichLocations] Successfully updated ${updatedCount} existing locations with responsibles.`);
-      })
-      .catch(async (serverError) => {
-          const permissionError = new FirestorePermissionError({
-              path: '/locations (batch update)',
-              operation: 'update',
-              requestResourceData: updatePayloads, 
-          } satisfies SecurityRuleContext);
-          errorEmitter.emit('permission-error', permissionError);
-          // We don't re-throw the original error here to let the emitter handle it.
-      });
-
-    return updatedCount;
+    try {
+        await batch.commit();
+        console.log(`[enrichLocations] Successfully updated ${updatedCount} existing locations with responsibles.`);
+        return updatedCount;
+    } catch (serverError) {
+        console.error("[enrichLocations] Error committing batch update:", serverError);
+        const permissionError = new FirestorePermissionError({
+            path: '/locations (batch update)',
+            operation: 'update',
+            requestResourceData: updatePayloads,
+        } satisfies SecurityRuleContext);
+        errorEmitter.emit('permission-error', permissionError);
+        throw serverError;
+    }
 }
 
 export const getCenters = async (): Promise<Center[]> => {
