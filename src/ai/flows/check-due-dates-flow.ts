@@ -15,6 +15,9 @@ import type { ImprovementAction } from '@/lib/types';
 import { differenceInDays, isFuture, parseISO } from 'date-fns';
 import { sendDueDateReminderEmail } from '@/services/notification-service';
 import { getUserById } from '@/services/users-service';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError, type SecurityRuleContext } from '@/firebase/errors';
+
 
 const DueDateSettingsSchema = z.object({
   daysUntilDue: z.number().int().positive().default(10),
@@ -33,16 +36,35 @@ const CheckDueDatesOutputSchema = z.object({
 
 export async function getDueDateSettings(): Promise<DueDateSettings> {
   const docRef = doc(db, 'app_settings', 'due_date_reminders');
-  const docSnap = await getDoc(docRef);
-  if (docSnap.exists()) {
-    return DueDateSettingsSchema.parse(docSnap.data());
+  try {
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+      return DueDateSettingsSchema.parse(docSnap.data());
+    }
+  } catch (serverError) {
+    const permissionError = new FirestorePermissionError({
+      path: docRef.path,
+      operation: 'get',
+    } satisfies SecurityRuleContext);
+    errorEmitter.emit('permission-error', permissionError);
+    throw serverError;
   }
   return { daysUntilDue: 10 }; // Default
 }
 
+
 export async function updateDueDateSettings(settings: DueDateSettings): Promise<void> {
   const docRef = doc(db, 'app_settings', 'due_date_reminders');
-  await setDoc(docRef, settings, { merge: true });
+  await setDoc(docRef, settings, { merge: true })
+    .catch(async (serverError) => {
+        const permissionError = new FirestorePermissionError({
+            path: docRef.path,
+            operation: 'update',
+            requestResourceData: settings,
+        } satisfies SecurityRuleContext);
+        errorEmitter.emit('permission-error', permissionError);
+        throw serverError;
+      });
 }
 
 
