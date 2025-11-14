@@ -1,28 +1,25 @@
-"use client";
+import './globals.css';
+import { Inter } from 'next/font/google';
+import { AppProvider } from '@/components/app-provider';
+import type { Metadata } from 'next';
 
-import "./globals.css"
-import { Inter } from 'next/font/google'
-import { AuthProvider } from "@/hooks/use-auth"
-import { Toaster } from "@/components/ui/toaster"
-import { AppContent } from "@/components/app-content";
+const inter = Inter({ subsets: ['latin'] });
 
-const inter = Inter({ subsets: ['latin'] })
+export const metadata: Metadata = {
+  title: 'Gestor de Acciones de Mejora',
+  description: 'Gestiona y sigue las acciones de mejora en toda tu organización.',
+};
 
 export default function RootLayout({
   children,
 }: {
-  children: React.ReactNode,
+  children: React.ReactNode;
 }) {
   return (
     <html lang="ca">
       <body className={inter.className}>
-          <AuthProvider>
-            <AppContent>
-              {children}
-            </AppContent>
-            <Toaster />
-          </AuthProvider>
+        <AppProvider>{children}</AppProvider>
       </body>
     </html>
-  )
+  );
 }
