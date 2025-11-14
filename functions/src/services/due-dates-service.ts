@@ -1,14 +1,14 @@
 
 'use server';
 
-import { doc, getDoc, setDoc, runTransaction } from 'firebase/firestore';
+import { doc, getDoc, setDoc, runTransaction, DocumentData } from 'firebase-admin/firestore';
 import * as admin from "firebase-admin";
 import { z } from 'zod';
 import { differenceInDays, isFuture, parseISO } from 'date-fns';
-import type { ImprovementAction, SentEmailInfo, ProposedAction } from "../lib/types";
+import type { ImprovementAction, SentEmailInfo } from "../lib/types";
 import { sendDueDateReminderEmail } from "./notification-service";
 
-// This file runs in the Cloud Function environment, so it uses the Admin SDK.
+// This file runs ONLY in the Cloud Function environment, so it uses the Admin SDK.
 const db = admin.firestore();
 
 // Schemas and Types
@@ -75,13 +75,14 @@ async function processAction(action: ImprovementAction, settings: DueDateSetting
             } else if (notificationComment) {
                 // If it's not a dry run, update the document
                 if (!isDryRun) {
-                    const actionDocRef = db.collection('actions').doc(action.id);
+                    const actionDocRef = doc(db, 'actions', action.id);
                     await runTransaction(db, async (transaction) => {
                         const freshActionDoc = await transaction.get(actionDocRef);
                         if (!freshActionDoc.exists) { throw "Document does not exist!"; }
                         
-                        const currentComments = freshActionDoc.data()?.comments || [];
-                        const currentReminders = freshActionDoc.data()?.remindersSent || {};
+                        const currentData: DocumentData = freshActionDoc.data() || {};
+                        const currentComments: any[] = currentData.comments || [];
+                        const currentReminders: object = currentData.remindersSent || {};
 
                         transaction.update(actionDocRef, {
                             comments: [...currentComments, notificationComment],

@@ -1,38 +1,33 @@
-
+"use strict";
 'use server';
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.getTestEmailTransporter = getTestEmailTransporter;
+exports.sendStateChangeEmail = sendStateChangeEmail;
+exports.sendProposedActionUpdateEmail = sendProposedActionUpdateEmail;
+exports.sendBisCreationNotificationEmail = sendBisCreationNotificationEmail;
+exports.sendDueDateReminderEmail = sendDueDateReminderEmail;
 /**
  * @fileOverview A service for handling notifications.
  * This service uses Nodemailer with an Ethereal test account to send emails.
  */
-import 'dotenv/config';
-import { ImprovementAction, ActionComment, ProposedAction } from '../lib/types';
-import * as nodemailer from 'nodemailer';
-import { format } from 'date-fns';
-import { safeParseDate } from '../lib/utils';
-
-interface EmailInfo {
-    recipient: string;
-    subject: string;
-    html: string;
-    actionUrl: string;
-}
-
+require("dotenv/config");
+const nodemailer = require("nodemailer");
+const date_fns_1 = require("date-fns");
+const utils_1 = require("../lib/utils");
 // Cached transporter object.
-let transporter: nodemailer.Transporter | null = null;
-
+let transporter = null;
 /**
  * Creates and caches a Nodemailer transporter using a test Ethereal account.
  * This prevents creating a new account for every email sent.
  */
-export async function getTestEmailTransporter(): Promise<nodemailer.Transporter> {
+async function getTestEmailTransporter() {
     if (transporter) {
         return transporter;
     }
-
     try {
         // If environment variables for a real SMTP server are set, use them.
         if (process.env.SMTP_HOST && process.env.SMTP_PORT && process.env.SMTP_USER && process.env.SMTP_PASS) {
-             transporter = nodemailer.createTransport({
+            transporter = nodemailer.createTransport({
                 host: process.env.SMTP_HOST,
                 port: parseInt(process.env.SMTP_PORT, 10),
                 secure: parseInt(process.env.SMTP_PORT, 10) === 465,
@@ -42,11 +37,11 @@ export async function getTestEmailTransporter(): Promise<nodemailer.Transporter>
                 },
             });
             console.log('[NotificationService] Using configured SMTP server.');
-        } else {
+        }
+        else {
             // Otherwise, fall back to a test Ethereal account.
             const testAccount = await nodemailer.createTestAccount();
             console.log('[NotificationService] Created Ethereal test account:', testAccount.user);
-
             transporter = nodemailer.createTransport({
                 host: "smtp.ethereal.email",
                 port: 587,
@@ -57,59 +52,51 @@ export async function getTestEmailTransporter(): Promise<nodemailer.Transporter>
                 },
             });
         }
-        
         return transporter;
-    } catch (error) {
+    }
+    catch (error) {
         console.error('[NotificationService] Failed to create email transporter:', error);
         throw error;
     }
 }
-
 /**
  * Sends a single email notification using a test Ethereal account.
  * @returns The preview URL if successful, otherwise null.
  */
-async function sendEmail(recipient: string, subject: string, html: string): Promise<string | null> {
-  try {
-    const mailTransporter = await getTestEmailTransporter();
-    
-    const info = await mailTransporter.sendMail({
-      from: '"Gestor de Acciones" <no-reply@example.com>',
-      to: recipient,
-      subject: subject,
-      html: html,
-    });
-    
-    const previewUrl = nodemailer.getTestMessageUrl(info);
-    console.log(`[NotificationService] Email sent to ${recipient}. Preview URL: ${previewUrl}`);
-    return previewUrl || null;
-
-  } catch (error) {
-    console.error(`[NotificationService] Failed to send email to ${recipient}:`, error);
-    // Return a specific string to indicate failure
-    return `FALLO_DE_ENVIO: ${error instanceof Error ? error.message : String(error)}`;
-  }
+async function sendEmail(recipient, subject, html) {
+    try {
+        const mailTransporter = await getTestEmailTransporter();
+        const info = await mailTransporter.sendMail({
+            from: '"Gestor de Acciones" <no-reply@example.com>',
+            to: recipient,
+            subject: subject,
+            html: html,
+        });
+        const previewUrl = nodemailer.getTestMessageUrl(info);
+        console.log(`[NotificationService] Email sent to ${recipient}. Preview URL: ${previewUrl}`);
+        return previewUrl;
+    }
+    catch (error) {
+        console.error(`[NotificationService] Failed to send email to ${recipient}:`, error);
+        // Return a specific string to indicate failure
+        return `FALLO_DE_ENVIO: ${error instanceof Error ? error.message : String(error)}`;
+    }
 }
-
-async function getEmailDetailsForVerification(action: ImprovementAction): Promise<EmailInfo> {
+async function getEmailDetailsForVerification(action) {
+    var _a, _b;
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9002';
     const actionUrl = `${appUrl}/actions/${action.id}`;
-
-    const recipientEmail = action.analysis?.verificationResponsibleUserEmail;
-    
+    const recipientEmail = (_a = action.analysis) === null || _a === void 0 ? void 0 : _a.verificationResponsibleUserEmail;
     if (!recipientEmail) {
         throw new Error("No se ha proporcionado el email del responsable de verificación.");
     }
-    
     const subject = `Asignado como verificador para la acción: ${action.actionId}`;
-    
-    const proposedActionsHtml = action.analysis?.proposedActions.map((pa: ProposedAction) => `
+    const proposedActionsHtml = ((_b = action.analysis) === null || _b === void 0 ? void 0 : _b.proposedActions.map((pa) => `
         <div style="padding: 10px; border: 1px solid #eee; border-radius: 4px; margin-bottom: 10px;">
             <p style="margin:0; font-weight: bold;">${pa.description}</p>
-            <p style="margin:5px 0 0; font-size: 0.9em; color: #555;">Responsable: ${pa.responsibleUserEmail} | Fecha Límite: ${pa.dueDate ? format(safeParseDate(pa.dueDate)!, 'dd/MM/yyyy') : 'N/D'}</p>
+            <p style="margin:5px 0 0; font-size: 0.9em; color: #555;">Responsable: ${pa.responsibleUserEmail} | Fecha Límite: ${pa.dueDate ? (0, date_fns_1.format)((0, utils_1.safeParseDate)(pa.dueDate), 'dd/MM/yyyy') : 'N/D'}</p>
         </div>
-    `).join('') || '<p>No se han definido acciones.</p>';
-
+    `).join('')) || '<p>No se han definido acciones.</p>';
     const html = `
       <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
         <div style="max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px;">
@@ -139,21 +126,16 @@ async function getEmailDetailsForVerification(action: ImprovementAction): Promis
         </div>
       </div>
     `;
-    
     return { recipient: recipientEmail, subject, html, actionUrl };
 }
-
-async function getEmailDetailsForProposedAction(action: ImprovementAction, proposedAction: ProposedAction): Promise<EmailInfo> {
+async function getEmailDetailsForProposedAction(action, proposedAction) {
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9002';
     const actionUrl = `${appUrl}/actions/${action.id}`;
-
     if (!proposedAction.responsibleUserEmail) {
         throw new Error(`La acción propuesta '${proposedAction.description.substring(0, 30)}...' no tiene un responsable con email.`);
     }
     const recipientEmail = proposedAction.responsibleUserEmail;
-
-    const dueDate = proposedAction.dueDate ? format(safeParseDate(proposedAction.dueDate)!, 'dd/MM/yyyy') : 'N/D';
-    
+    const dueDate = proposedAction.dueDate ? (0, date_fns_1.format)((0, utils_1.safeParseDate)(proposedAction.dueDate), 'dd/MM/yyyy') : 'N/D';
     const subject = `Nueva tarea asignada en la acción de mejora: ${action.actionId}`;
     const html = `
       <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
@@ -184,21 +166,16 @@ async function getEmailDetailsForProposedAction(action: ImprovementAction, propo
         </div>
       </div>
     `;
-
     return { recipient: recipientEmail, subject, html, actionUrl };
 }
-
-async function getEmailDetailsForAnalysis(action: ImprovementAction): Promise<EmailInfo> {
+async function getEmailDetailsForAnalysis(action) {
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9002';
     const actionUrl = `${appUrl}/actions/${action.id}`;
-
     const recipientEmail = action.responsibleGroupId;
     if (!recipientEmail) {
         throw new Error("No se ha proporcionado el email del responsable del análisis.");
     }
-
-    const dueDate = action.analysisDueDate ? format(safeParseDate(action.analysisDueDate)!, 'dd/MM/yyyy') : 'No definida';
-    
+    const dueDate = action.analysisDueDate ? (0, date_fns_1.format)((0, utils_1.safeParseDate)(action.analysisDueDate), 'dd/MM/yyyy') : 'No definida';
     const subject = `Nueva acción de mejora asignada para análisis: ${action.actionId}`;
     const html = `
       <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
@@ -224,21 +201,17 @@ async function getEmailDetailsForAnalysis(action: ImprovementAction): Promise<Em
         </div>
       </div>
     `;
-
     return { recipient: recipientEmail, subject, html, actionUrl };
 }
-
-async function getEmailDetailsForClosure(action: ImprovementAction): Promise<EmailInfo> {
+async function getEmailDetailsForClosure(action) {
+    var _a, _b, _c;
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9002';
     const actionUrl = `${appUrl}/actions/${action.id}`;
-
     const recipientEmail = action.creator.email;
     if (!recipientEmail) {
         throw new Error(`No se pudo encontrar el email del creador para la acción ${action.actionId}.`);
     }
-
-    const dueDate = action.closureDueDate ? format(safeParseDate(action.closureDueDate)!, 'dd/MM/yyyy') : 'No definida';
-    
+    const dueDate = action.closureDueDate ? (0, date_fns_1.format)((0, utils_1.safeParseDate)(action.closureDueDate), 'dd/MM/yyyy') : 'No definida';
     const subject = `Acción pendiente de cierre: ${action.actionId}`;
     const html = `
       <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
@@ -249,10 +222,10 @@ async function getEmailDetailsForClosure(action: ImprovementAction): Promise<Ema
           
           <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;">
             <h3 style="margin-top: 0; color: #00529B;">Resumen de la Verificación</h3>
-            <p style="margin-top: 10px;"><strong>Verificado por:</strong> ${action.verification?.verificationResponsible.name || 'N/D'}</p>
-            <p><strong>Fecha de Verificación:</strong> ${action.verification?.verificationDate ? format(safeParseDate(action.verification.verificationDate)!, 'dd/MM/yyyy') : 'N/D'}</p>
+            <p style="margin-top: 10px;"><strong>Verificado por:</strong> ${((_a = action.verification) === null || _a === void 0 ? void 0 : _a.verificationResponsible.name) || 'N/D'}</p>
+            <p><strong>Fecha de Verificación:</strong> ${((_b = action.verification) === null || _b === void 0 ? void 0 : _b.verificationDate) ? (0, date_fns_1.format)((0, utils_1.safeParseDate)(action.verification.verificationDate), 'dd/MM/yyyy') : 'N/D'}</p>
             <h4 style="margin-top: 15px; margin-bottom: 5px; color: #333;">Observaciones de la Verificación:</h4>
-            <p style="margin: 0; white-space: pre-wrap; font-style: italic;">${action.verification?.notes || 'Sin observaciones.'}</p>
+            <p style="margin: 0; white-space: pre-wrap; font-style: italic;">${((_c = action.verification) === null || _c === void 0 ? void 0 : _c.notes) || 'Sin observaciones.'}</p>
           </div>
           
           <p>Por favor, accede a la plataforma para revisar la verificación y proceder con el cierre conforme o no conforme de la acción.</p>
@@ -262,19 +235,16 @@ async function getEmailDetailsForClosure(action: ImprovementAction): Promise<Ema
     `;
     return { recipient: recipientEmail, subject, html, actionUrl };
 }
-
 /**
  * Handles sending email notifications based on the state change.
  * @returns An ActionComment to be added to the action, or null if no email was sent.
  */
-export async function sendStateChangeEmail(details: { action: ImprovementAction, oldStatus: string, newStatus: string }): Promise<ActionComment | null> {
+async function sendStateChangeEmail(details) {
     const { action, newStatus } = details;
-    
-    let emailTasks: Promise<{ recipient: string, url: string | null }>[] = [];
+    let emailTasks = [];
     let notificationSummary = '';
-    let emailInfoGenerator: ((action: ImprovementAction) => Promise<EmailInfo>) | null = null;
-    let recipients: string[] = [];
-
+    let emailInfoGenerator = null;
+    let recipients = [];
     switch (newStatus) {
         case 'Pendiente Análisis':
             notificationSummary = 'Notificación de análisis enviada a:';
@@ -284,11 +254,10 @@ export async function sendStateChangeEmail(details: { action: ImprovementAction,
             }
             break;
         case 'Pendiente Comprobación':
-             notificationSummary = 'Notificaciones de implementación/verificación enviadas a:';
+            notificationSummary = 'Notificaciones de implementación/verificación enviadas a:';
             if (action.analysis) {
-                const responsibleEmails = [...new Set(action.analysis.proposedActions.map((pa: ProposedAction) => pa.responsibleUserEmail).filter(Boolean))];
-                recipients.push(...responsibleEmails as string[]);
-
+                const responsibleEmails = [...new Set(action.analysis.proposedActions.map((pa) => pa.responsibleUserEmail).filter(Boolean))];
+                recipients.push(...responsibleEmails);
                 if (action.analysis.verificationResponsibleUserEmail) {
                     recipients.push(action.analysis.verificationResponsibleUserEmail);
                 }
@@ -304,81 +273,74 @@ export async function sendStateChangeEmail(details: { action: ImprovementAction,
         default:
             return null;
     }
-     
     if (newStatus === 'Pendiente Comprobación' && action.analysis) {
         for (const email of [...new Set(recipients)]) {
-            const userFirstAction = action.analysis.proposedActions.find((pa: ProposedAction) => pa.responsibleUserEmail === email);
+            const userFirstAction = action.analysis.proposedActions.find((pa) => pa.responsibleUserEmail === email);
             if (userFirstAction) {
                 try {
                     const emailInfo = await getEmailDetailsForProposedAction(action, userFirstAction);
                     emailTasks.push(sendEmail(emailInfo.recipient, emailInfo.subject, emailInfo.html).then(url => ({ recipient: emailInfo.recipient, url })));
-                } catch (error: any) { return { id: crypto.randomUUID(), author: { id: 'system', name: 'Sistema' }, date: new Date().toISOString(), text: `Error al preparar email de acción propuesta: ${error.message}` }; }
-            } else if (email === action.analysis.verificationResponsibleUserEmail) {
-                 try {
+                }
+                catch (error) {
+                    return { id: crypto.randomUUID(), author: { id: 'system', name: 'Sistema' }, date: new Date().toISOString(), text: `Error al preparar email de acción propuesta: ${error.message}` };
+                }
+            }
+            else if (email === action.analysis.verificationResponsibleUserEmail) {
+                try {
                     const emailInfo = await getEmailDetailsForVerification(action);
                     emailTasks.push(sendEmail(emailInfo.recipient, emailInfo.subject, emailInfo.html).then(url => ({ recipient: emailInfo.recipient, url })));
-                } catch (error: any) { return { id: crypto.randomUUID(), author: { id: 'system', name: 'Sistema' }, date: new Date().toISOString(), text: `Error al preparar email de verificación: ${error.message}` }; }
+                }
+                catch (error) {
+                    return { id: crypto.randomUUID(), author: { id: 'system', name: 'Sistema' }, date: new Date().toISOString(), text: `Error al preparar email de verificación: ${error.message}` };
+                }
             }
         }
-    } else if (emailInfoGenerator && recipients.length > 0) {
+    }
+    else if (emailInfoGenerator && recipients.length > 0) {
         for (const recipient of recipients) {
-             try {
+            try {
                 const emailInfo = await emailInfoGenerator(action);
                 emailTasks.push(sendEmail(recipient, emailInfo.subject, emailInfo.html).then(url => ({ recipient, url })));
-            } catch (error: any) {
+            }
+            catch (error) {
                 return { id: crypto.randomUUID(), author: { id: 'system', name: 'Sistema' }, date: new Date().toISOString(), text: `Error al preparar la notificación: ${error.message}` };
             }
         }
     }
-    
     if (emailTasks.length === 0) {
         return { id: crypto.randomUUID(), author: { id: 'system', name: 'Sistema' }, date: new Date().toISOString(), text: 'No se encontraron destinatarios para la notificación.' };
     }
-
     const results = await Promise.all(emailTasks);
-    
     const successfulSends = results.filter(r => r.url && !r.url.startsWith('FALLO_DE_ENVIO'));
     const failedSends = results.filter(r => !r.url || r.url.startsWith('FALLO_DE_ENVIO'));
-
     let commentText = '';
     if (successfulSends.length > 0) {
         const uniqueRecipients = [...new Set(successfulSends.map(r => r.recipient))];
         const previews = successfulSends.map(r => r.url).join(' ');
         commentText = `${notificationSummary} ${uniqueRecipients.join(', ')}. ${previews}`;
     }
-    
     if (failedSends.length > 0) {
         const failedRecipients = failedSends.map(r => r.recipient).join(', ');
         commentText += `\nFallo de envío a: ${failedRecipients}.`;
     }
-
     return { id: crypto.randomUUID(), author: { id: 'system', name: 'Sistema' }, date: new Date().toISOString(), text: commentText.trim() };
 }
-
-
 /**
  * Sends a notification email when a proposed action's status is updated.
  */
-export async function sendProposedActionUpdateEmail(
-    action: ImprovementAction,
-    updatedProposedActionId: string,
-    verifierEmail: string
-): Promise<ActionComment | null> {
-    const updatedAction = action.analysis?.proposedActions.find((p: ProposedAction) => p.id === updatedProposedActionId);
+async function sendProposedActionUpdateEmail(action, updatedProposedActionId, verifierEmail) {
+    var _a;
+    const updatedAction = (_a = action.analysis) === null || _a === void 0 ? void 0 : _a.proposedActions.find((p) => p.id === updatedProposedActionId);
     if (!updatedAction || !action.analysis) {
         return null; // Should not happen
     }
-
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9002';
     const actionUrl = `${appUrl}/actions/${action.id}`;
-    
     const subject = `Actualización de tarea en la acción de mejora: ${action.actionId}`;
-    
-    const allActionsCompleted = action.analysis.proposedActions.every((pa: ProposedAction) => pa.status === 'Implementada');
-
-    const statusListHtml = action.analysis.proposedActions.map((pa: ProposedAction) => {
+    const allActionsCompleted = action.analysis.proposedActions.every((pa) => pa.status === 'Implementada');
+    const statusListHtml = action.analysis.proposedActions.map((pa) => {
         const isUpdated = pa.id === updatedProposedActionId;
-        const dueDate = pa.dueDate ? format(safeParseDate(pa.dueDate)!, 'dd/MM/yyyy') : 'N/D';
+        const dueDate = pa.dueDate ? (0, date_fns_1.format)((0, utils_1.safeParseDate)(pa.dueDate), 'dd/MM/yyyy') : 'N/D';
         return `
             <li style="margin-bottom: 8px; ${isUpdated ? 'font-weight: bold;' : ''}">
                 ${pa.description} - 
@@ -388,14 +350,13 @@ export async function sendProposedActionUpdateEmail(
             </li>
         `;
     }).join('');
-
     let additionalInfo = '';
     if (allActionsCompleted) {
         additionalInfo = `<p style="margin-top: 20px; font-weight: bold; color: #28a745;">¡Todas las acciones propuestas han sido implementadas! Ya puedes proceder a la verificación final.</p>`;
-    } else {
+    }
+    else {
         additionalInfo = `<p style="margin-top: 20px;">Todavía quedan acciones pendientes en este plan.</p>`;
     }
-
     const html = `
       <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
         <div style="max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px;">
@@ -415,10 +376,8 @@ export async function sendProposedActionUpdateEmail(
         </div>
       </div>
     `;
-
     const previewUrl = await sendEmail(verifierEmail, subject, html);
-    const paIndex = action.analysis.proposedActions.findIndex((p: ProposedAction) => p.id === updatedProposedActionId) + 1;
-    
+    const paIndex = action.analysis.proposedActions.findIndex((p) => p.id === updatedProposedActionId) + 1;
     if (previewUrl && !previewUrl.startsWith('FALLO_DE_ENVIO')) {
         return {
             id: crypto.randomUUID(),
@@ -426,8 +385,9 @@ export async function sendProposedActionUpdateEmail(
             date: new Date().toISOString(),
             text: `Notificación de actualización de estado de la acción propuesta ${paIndex} enviada a: ${verifierEmail}. ${previewUrl}`
         };
-    } else {
-         return {
+    }
+    else {
+        return {
             id: crypto.randomUUID(),
             author: { id: 'system', name: 'Sistema' },
             date: new Date().toISOString(),
@@ -435,23 +395,20 @@ export async function sendProposedActionUpdateEmail(
         };
     }
 }
-
 /**
  * Sends a notification to the creator when a BIS action is created from a non-compliant closure.
  * This function is completely isolated and does not modify the action itself.
  * @returns The text for the comment to be added to the *original* action.
  */
-export async function sendBisCreationNotificationEmail(bisAction: ImprovementAction, originalAction: ImprovementAction): Promise<ActionComment | null> {
+async function sendBisCreationNotificationEmail(bisAction, originalAction) {
     const recipientEmail = bisAction.creator.email;
     if (!recipientEmail) {
         console.warn(`[sendBisCreationNotificationEmail] No se pudo encontrar el email del creador para la nueva acción BIS ${bisAction.actionId}.`);
         return null;
     }
-
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9002';
     const newActionUrl = `${appUrl}/actions/${bisAction.id}`;
     const originalActionUrl = `${appUrl}/actions/${originalAction.id}`;
-
     const subject = `Se ha creado una nueva Acción de Mejora (BIS) para tu revisión: ${bisAction.actionId}`;
     const html = `
       <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
@@ -470,9 +427,7 @@ export async function sendBisCreationNotificationEmail(bisAction: ImprovementAct
         </div>
       </div>
     `;
-
     const previewUrl = await sendEmail(recipientEmail, subject, html);
-    
     // This function now returns the comment object to be added by the calling service.
     if (previewUrl && !previewUrl.startsWith('FALLO_DE_ENVIO')) {
         return {
@@ -481,7 +436,8 @@ export async function sendBisCreationNotificationEmail(bisAction: ImprovementAct
             date: new Date().toISOString(),
             text: `Notificación de creación de acción BIS (${bisAction.actionId}) enviada a: ${recipientEmail}. ${previewUrl}`
         };
-    } else {
+    }
+    else {
         return {
             id: crypto.randomUUID(),
             author: { id: 'system', name: 'Sistema' },
@@ -490,21 +446,13 @@ export async function sendBisCreationNotificationEmail(bisAction: ImprovementAct
         };
     }
 }
-
-
 /**
  * Sends a due date reminder email for a specific task within an action.
  * @returns An ActionComment to be added to the action, or null if no email was sent.
  */
-export async function sendDueDateReminderEmail(
-    action: ImprovementAction,
-    taskDescription: string,
-    dueDate: string,
-    recipientEmail: string
-): Promise<ActionComment | null> {
+async function sendDueDateReminderEmail(action, taskDescription, dueDate, recipientEmail) {
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9002';
     const actionUrl = `${appUrl}/actions/${action.id}`;
-    
     const subject = `Recordatorio: Tarea próxima a vencer en la acción ${action.actionId}`;
     const html = `
       <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
@@ -515,7 +463,7 @@ export async function sendDueDateReminderEmail(
           
           <div style="background-color: #fef5f0; border-left: 4px solid #D35400; padding: 15px; margin: 20px 0;">
             <p style="margin: 0;"><strong>Tarea pendiente:</strong> ${taskDescription}</p>
-            <p style="margin: 10px 0 0; font-size: 1.1em; color: #555;">Fecha de vencimiento: <strong>${format(safeParseDate(dueDate)!, 'dd/MM/yyyy')}</strong></p>
+            <p style="margin: 10px 0 0; font-size: 1.1em; color: #555;">Fecha de vencimiento: <strong>${(0, date_fns_1.format)((0, utils_1.safeParseDate)(dueDate), 'dd/MM/yyyy')}</strong></p>
           </div>
           
           <p>Por favor, accede a la plataforma para completar la tarea asignada.</p>
@@ -523,9 +471,7 @@ export async function sendDueDateReminderEmail(
         </div>
       </div>
     `;
-
     const previewUrl = await sendEmail(recipientEmail, subject, html);
-
     if (previewUrl && !previewUrl.startsWith('FALLO_DE_ENVIO')) {
         return {
             id: crypto.randomUUID(),
@@ -533,7 +479,8 @@ export async function sendDueDateReminderEmail(
             date: new Date().toISOString(),
             text: `Recordatorio de vencimiento para "${taskDescription}" enviado a: ${recipientEmail}. ${previewUrl}`
         };
-    } else {
+    }
+    else {
         return {
             id: crypto.randomUUID(),
             author: { id: 'system', name: 'Sistema' },
@@ -542,3 +489,4 @@ export async function sendDueDateReminderEmail(
         };
     }
 }
+//# sourceMappingURL=notification-service.js.map

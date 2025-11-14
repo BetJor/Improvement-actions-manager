@@ -1,6 +1,6 @@
 
 
-import { collection, getDocs, doc, getDoc, addDoc, query, orderBy, writeBatch, updateDoc, deleteDoc, setDoc } from 'firebase/firestore';
+import { collection, getDocs, doc, getDoc, query, orderBy, writeBatch, updateDoc, deleteDoc, setDoc } from 'firebase/firestore';
 import { db, auth } from '@/lib/firebase';
 import { users as mockUsers } from '@/lib/static-data';
 import type { User } from '@/lib/types';
@@ -15,7 +15,7 @@ export async function getUsers(): Promise<User[]> {
     if (snapshot.empty) {
         console.log("Users collection is empty. Populating from static data...");
         const batch = writeBatch(db);
-        mockUsers.forEach(user => {
+        mockUsers.forEach((user: User) => {
             const docRef = doc(usersCol, user.id);
             batch.set(docRef, user);
         });
