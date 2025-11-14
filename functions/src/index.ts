@@ -1,7 +1,7 @@
 
 import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
-import { checkDueDates as checkDueDatesFlow } from "../../src/services/due-dates-service";
+import { checkDueDates as checkDueDatesFlow } from "./services/due-dates-service";
 
 admin.initializeApp();
 const db = admin.firestore();
