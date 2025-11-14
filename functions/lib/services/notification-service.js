@@ -74,7 +74,7 @@ async function sendEmail(recipient, subject, html) {
         });
         const previewUrl = nodemailer.getTestMessageUrl(info);
         console.log(`[NotificationService] Email sent to ${recipient}. Preview URL: ${previewUrl}`);
-        return previewUrl;
+        return previewUrl || null;
     }
     catch (error) {
         console.error(`[NotificationService] Failed to send email to ${recipient}:`, error);

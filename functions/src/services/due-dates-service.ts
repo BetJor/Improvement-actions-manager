@@ -1,7 +1,7 @@
 
 'use server';
 
-import { doc, getDoc, setDoc, runTransaction, DocumentData } from 'firebase-admin/firestore';
+import { DocumentData } from 'firebase-admin/firestore';
 import * as admin from "firebase-admin";
 import { z } from 'zod';
 import { differenceInDays, isFuture, parseISO } from 'date-fns';
@@ -30,17 +30,17 @@ const CheckDueDatesOutputSchema = z.object({
 
 // Helper flows
 export async function getDueDateSettings(): Promise<DueDateSettings> {
-    const docRef = doc(db, 'app_settings', 'due_date_reminders');
-    const docSnap = await getDoc(docRef);
-    if (docSnap.exists()) {
+    const docRef = db.doc('app_settings/due_date_reminders');
+    const docSnap = await docRef.get();
+    if (docSnap.exists) {
         return DueDateSettingsSchema.parse(docSnap.data());
     }
     return { daysUntilDue: 10 }; // Default
 }
 
 export async function updateDueDateSettings(settings: DueDateSettings): Promise<void> {
-    const docRef = doc(db, 'app_settings', 'due_date_reminders');
-    await setDoc(docRef, settings, { merge: true });
+    const docRef = db.doc('app_settings/due_date_reminders');
+    await docRef.set(settings, { merge: true });
 }
 
 async function processAction(action: ImprovementAction, settings: DueDateSettings, isDryRun: boolean): Promise<SentEmailInfo[]> {
@@ -75,8 +75,8 @@ async function processAction(action: ImprovementAction, settings: DueDateSetting
             } else if (notificationComment) {
                 // If it's not a dry run, update the document
                 if (!isDryRun) {
-                    const actionDocRef = doc(db, 'actions', action.id);
-                    await runTransaction(db, async (transaction) => {
+                    const actionDocRef = db.doc(`actions/${action.id}`);
+                    await db.runTransaction(async (transaction) => {
                         const freshActionDoc = await transaction.get(actionDocRef);
                         if (!freshActionDoc.exists) { throw "Document does not exist!"; }
                         

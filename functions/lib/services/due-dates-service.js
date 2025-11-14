@@ -4,12 +4,12 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.getDueDateSettings = getDueDateSettings;
 exports.updateDueDateSettings = updateDueDateSettings;
 exports.checkDueDates = checkDueDates;
-const firestore_1 = require("firebase/firestore");
+const firestore_1 = require("firebase-admin/firestore");
 const admin = require("firebase-admin");
 const zod_1 = require("zod");
 const date_fns_1 = require("date-fns");
 const notification_service_1 = require("./notification-service");
-// This file runs in the Cloud Function environment, so it uses the Admin SDK.
+// This file runs ONLY in the Cloud Function environment, so it uses the Admin SDK.
 const db = admin.firestore();
 // Schemas and Types
 const DueDateSettingsSchema = zod_1.z.object({
@@ -61,15 +61,15 @@ async function processAction(action, settings, isDryRun) {
             else if (notificationComment) {
                 // If it's not a dry run, update the document
                 if (!isDryRun) {
-                    const actionDocRef = db.collection('actions').doc(action.id);
+                    const actionDocRef = (0, firestore_1.doc)(db, 'actions', action.id);
                     await (0, firestore_1.runTransaction)(db, async (transaction) => {
-                        var _a, _b;
                         const freshActionDoc = await transaction.get(actionDocRef);
                         if (!freshActionDoc.exists) {
                             throw "Document does not exist!";
                         }
-                        const currentComments = ((_a = freshActionDoc.data()) === null || _a === void 0 ? void 0 : _a.comments) || [];
-                        const currentReminders = ((_b = freshActionDoc.data()) === null || _b === void 0 ? void 0 : _b.remindersSent) || {};
+                        const currentData = freshActionDoc.data() || {};
+                        const currentComments = currentData.comments || [];
+                        const currentReminders = currentData.remindersSent || {};
                         transaction.update(actionDocRef, {
                             comments: [...currentComments, notificationComment],
                             remindersSent: Object.assign(Object.assign({}, currentReminders), { [reminderKey]: true })
