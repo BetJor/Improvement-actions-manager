@@ -12,3 +12,4 @@ export * from '@/services/permissions-service';
 export * from '@/services/workflow-service';
 export * from '@/services/notification-service';
 export * from '@/services/acl-service';
+export * from '@/services/due-dates-service';

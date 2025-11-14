@@ -13,8 +13,7 @@ import {
 } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { enrichLocationsWithResponsibles } from "@/services/master-data-service";
-import { getDueDateSettings, updateDueDateSettings } from "@/ai/flows/check-due-dates-flow";
-import { checkDueDates as checkDueDatesFlow } from "@/ai/flows/check-due-dates-flow";
+import { getDueDateSettings, updateDueDateSettings, checkDueDates as checkDueDatesFlow } from "@/services/due-dates-service";
 import { Loader2, UploadCloud, Send, Settings, AlertTriangle, ExternalLink } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
