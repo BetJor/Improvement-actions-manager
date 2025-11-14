@@ -1,7 +1,6 @@
-
 'use server';
 
-import { DocumentData } from 'firebase-admin/firestore';
+import type { DocumentData } from 'firebase-admin/firestore';
 import * as admin from "firebase-admin";
 import { z } from 'zod';
 import { differenceInDays, isFuture, parseISO } from 'date-fns';
@@ -77,7 +76,7 @@ async function processAction(db: admin.firestore.Firestore, action: ImprovementA
                         const freshActionDoc = await transaction.get(actionDocRef);
                         if (!freshActionDoc.exists) { throw "Document does not exist!"; }
                         
-                        const currentData = freshActionDoc.data() || {};
+                        const currentData = freshActionDoc.data() as DocumentData || {};
                         const currentComments = currentData.comments || [];
                         const currentReminders = currentData.remindersSent || {};
 
