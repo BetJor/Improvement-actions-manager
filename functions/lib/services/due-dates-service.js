@@ -7,6 +7,7 @@ exports.checkDueDates = checkDueDates;
 const zod_1 = require("zod");
 const date_fns_1 = require("date-fns");
 const notification_service_1 = require("./notification-service");
+const firebase_admin_1 = require("../lib/firebase-admin"); // Use the central db instance
 // Schemas and Types
 const DueDateSettingsSchema = zod_1.z.object({
     daysUntilDue: zod_1.z.number().int().positive().default(10),
@@ -21,19 +22,19 @@ const CheckDueDatesOutputSchema = zod_1.z.object({
     errors: zod_1.z.array(zod_1.z.string()),
 });
 // Helper flows
-async function getDueDateSettings(db) {
-    const docRef = db.doc('app_settings/due_date_reminders');
+async function getDueDateSettings() {
+    const docRef = firebase_admin_1.db.doc('app_settings/due_date_reminders');
     const docSnap = await docRef.get();
     if (docSnap.exists) {
         return DueDateSettingsSchema.parse(docSnap.data());
     }
     return { daysUntilDue: 10 }; // Default
 }
-async function updateDueDateSettings(db, settings) {
-    const docRef = db.doc('app_settings/due_date_reminders');
+async function updateDueDateSettings(settings) {
+    const docRef = firebase_admin_1.db.doc('app_settings/due_date_reminders');
     await docRef.set(settings, { merge: true });
 }
-async function processAction(db, action, settings, isDryRun) {
+async function processAction(action, settings, isDryRun) {
     var _a, _b;
     const sentEmailsForAction = [];
     const checkAndNotify = async (dueDateStr, recipient, taskDescription, reminderKey) => {
@@ -57,8 +58,8 @@ async function processAction(db, action, settings, isDryRun) {
             else if (notificationComment) {
                 // If it's not a dry run, update the document
                 if (!isDryRun) {
-                    const actionDocRef = db.doc(`actions/${action.id}`);
-                    await db.runTransaction(async (transaction) => {
+                    const actionDocRef = firebase_admin_1.db.doc(`actions/${action.id}`);
+                    await firebase_admin_1.db.runTransaction(async (transaction) => {
                         const freshActionDoc = await transaction.get(actionDocRef);
                         if (!freshActionDoc.exists) {
                             throw "Document does not exist!";
@@ -106,10 +107,10 @@ async function processAction(db, action, settings, isDryRun) {
     return sentEmailsForAction;
 }
 // Main logic
-async function checkDueDates(db, input) {
+async function checkDueDates(input) {
     let settings;
     try {
-        settings = await getDueDateSettings(db);
+        settings = await getDueDateSettings();
     }
     catch (e) {
         console.error(`[checkDueDates] Error getting settings:`, e);
@@ -125,7 +126,7 @@ async function checkDueDates(db, input) {
     const actionsToProcess = input.actions.filter(action => statusesToCkeck.includes(action.status));
     for (const action of actionsToProcess) {
         try {
-            const emailsSentForAction = await processAction(db, action, settings, input.isDryRun);
+            const emailsSentForAction = await processAction(action, settings, input.isDryRun);
             sentEmails.push(...emailsSentForAction);
         }
         catch (e) {
