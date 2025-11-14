@@ -13,7 +13,8 @@ import {
 } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { enrichLocationsWithResponsibles } from "@/services/master-data-service";
-import { getDueDateSettings, updateDueDateSettings, checkDueDates } from "@/ai/flows/check-due-dates-flow";
+import { getDueDateSettings, updateDueDateSettings } from "@/ai/flows/check-due-dates-flow";
+import { checkDueDates as checkDueDatesFlow } from "@/ai/flows/check-due-dates-flow";
 import { Loader2, UploadCloud, Send, Settings, AlertTriangle, ExternalLink } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -102,7 +103,7 @@ export default function DataLoadPage() {
     try {
         const allActions = await getActions();
         
-        const result = await checkDueDates({ actions: allActions, isDryRun: true });
+        const result = await checkDueDatesFlow({ actions: allActions, isDryRun: true });
 
         if (result.errors.length > 0) {
           setError(`Se produjeron errores en ${result.errors.length} acciones.`);
@@ -113,12 +114,12 @@ export default function DataLoadPage() {
             setSentEmails(result.sentEmails);
             toast({
               title: "Proceso finalizado",
-              description: `Se han enviado ${result.sentEmails.length} recordatorios.`,
+              description: `Se simularía el envío de ${result.sentEmails.length} recordatorios.`,
             });
         } else {
              toast({
               title: "Proceso finalizado",
-              description: "No se ha enviado ningún recordatorio.",
+              description: "No se encontró ninguna acción que requiera un recordatorio.",
             });
         }
 
@@ -246,7 +247,7 @@ export default function DataLoadPage() {
           {sentEmails.length > 0 && (
              <Alert variant="default" className="border-green-500">
                 <Send className="h-4 w-4" />
-                <AlertTitle className="text-green-700">Recordatoris Enviats</AlertTitle>
+                <AlertTitle className="text-green-700">Recordatorios Enviados</AlertTitle>
                 <AlertDescription>
                   <p>S'han enviat els següents recordatoris per correu electrònic:</p>
                   <ul className="list-disc pl-5 mt-2 space-y-2">
