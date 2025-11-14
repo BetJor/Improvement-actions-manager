@@ -41,7 +41,7 @@ export async function updateDueDateSettings(settings: DueDateSettings): Promise<
 
 // Main logic
 export async function checkDueDates(input: z.infer<typeof CheckDueDatesInputSchema>): Promise<z.infer<typeof CheckDueDatesOutputSchema>> {
-    console.warn("checkDueDates is being called from the client. This is for dry-run purposes only.");
+    console.warn("checkDueDates is being called from the client. This is for dry-run purposes only and does not reflect a real execution.");
     
     // On the client, we cannot safely import and run the full server-side logic
     // without causing dependency issues. This function on the client-side
@@ -50,7 +50,7 @@ export async function checkDueDates(input: z.infer<typeof CheckDueDatesInputSche
     // We will return a simulated message.
     
     return { 
-        checkedActions: input.actions.length, 
+        checkedActions: 0, 
         sentEmails: [], 
         errors: ["La ejecución real solo ocurre en el servidor programado. Este es un resultado de simulación desde el cliente."] 
     };
