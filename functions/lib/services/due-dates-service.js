@@ -4,7 +4,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.getDueDateSettings = getDueDateSettings;
 exports.updateDueDateSettings = updateDueDateSettings;
 exports.checkDueDates = checkDueDates;
-const firestore_1 = require("firebase-admin/firestore");
 const admin = require("firebase-admin");
 const zod_1 = require("zod");
 const date_fns_1 = require("date-fns");
@@ -26,16 +25,16 @@ const CheckDueDatesOutputSchema = zod_1.z.object({
 });
 // Helper flows
 async function getDueDateSettings() {
-    const docRef = (0, firestore_1.doc)(db, 'app_settings', 'due_date_reminders');
-    const docSnap = await (0, firestore_1.getDoc)(docRef);
-    if (docSnap.exists()) {
+    const docRef = db.doc('app_settings/due_date_reminders');
+    const docSnap = await docRef.get();
+    if (docSnap.exists) {
         return DueDateSettingsSchema.parse(docSnap.data());
     }
     return { daysUntilDue: 10 }; // Default
 }
 async function updateDueDateSettings(settings) {
-    const docRef = (0, firestore_1.doc)(db, 'app_settings', 'due_date_reminders');
-    await (0, firestore_1.setDoc)(docRef, settings, { merge: true });
+    const docRef = db.doc('app_settings/due_date_reminders');
+    await docRef.set(settings, { merge: true });
 }
 async function processAction(action, settings, isDryRun) {
     var _a, _b;
@@ -61,8 +60,8 @@ async function processAction(action, settings, isDryRun) {
             else if (notificationComment) {
                 // If it's not a dry run, update the document
                 if (!isDryRun) {
-                    const actionDocRef = (0, firestore_1.doc)(db, 'actions', action.id);
-                    await (0, firestore_1.runTransaction)(db, async (transaction) => {
+                    const actionDocRef = db.doc(`actions/${action.id}`);
+                    await db.runTransaction(async (transaction) => {
                         const freshActionDoc = await transaction.get(actionDocRef);
                         if (!freshActionDoc.exists) {
                             throw "Document does not exist!";

@@ -8,9 +8,6 @@ import { differenceInDays, isFuture, parseISO } from 'date-fns';
 import type { ImprovementAction, SentEmailInfo } from "../lib/types";
 import { sendDueDateReminderEmail } from "./notification-service";
 
-// This file runs ONLY in the Cloud Function environment, so it uses the Admin SDK.
-const db = admin.firestore();
-
 // Schemas and Types
 const DueDateSettingsSchema = z.object({
   daysUntilDue: z.number().int().positive().default(10),
@@ -29,7 +26,7 @@ const CheckDueDatesOutputSchema = z.object({
 });
 
 // Helper flows
-export async function getDueDateSettings(): Promise<DueDateSettings> {
+export async function getDueDateSettings(db: admin.firestore.Firestore): Promise<DueDateSettings> {
     const docRef = db.doc('app_settings/due_date_reminders');
     const docSnap = await docRef.get();
     if (docSnap.exists) {
@@ -38,12 +35,12 @@ export async function getDueDateSettings(): Promise<DueDateSettings> {
     return { daysUntilDue: 10 }; // Default
 }
 
-export async function updateDueDateSettings(settings: DueDateSettings): Promise<void> {
+export async function updateDueDateSettings(db: admin.firestore.Firestore, settings: DueDateSettings): Promise<void> {
     const docRef = db.doc('app_settings/due_date_reminders');
     await docRef.set(settings, { merge: true });
 }
 
-async function processAction(action: ImprovementAction, settings: DueDateSettings, isDryRun: boolean): Promise<SentEmailInfo[]> {
+async function processAction(db: admin.firestore.Firestore, action: ImprovementAction, settings: DueDateSettings, isDryRun: boolean): Promise<SentEmailInfo[]> {
     const sentEmailsForAction: SentEmailInfo[] = [];
 
     const checkAndNotify = async (
@@ -80,9 +77,9 @@ async function processAction(action: ImprovementAction, settings: DueDateSetting
                         const freshActionDoc = await transaction.get(actionDocRef);
                         if (!freshActionDoc.exists) { throw "Document does not exist!"; }
                         
-                        const currentData: DocumentData = freshActionDoc.data() || {};
-                        const currentComments: any[] = currentData.comments || [];
-                        const currentReminders: object = currentData.remindersSent || {};
+                        const currentData = freshActionDoc.data() || {};
+                        const currentComments = currentData.comments || [];
+                        const currentReminders = currentData.remindersSent || {};
 
                         transaction.update(actionDocRef, {
                             comments: [...currentComments, notificationComment],
@@ -129,10 +126,10 @@ async function processAction(action: ImprovementAction, settings: DueDateSetting
 }
 
 // Main logic
-export async function checkDueDates(input: z.infer<typeof CheckDueDatesInputSchema>): Promise<z.infer<typeof CheckDueDatesOutputSchema>> {
+export async function checkDueDates(db: admin.firestore.Firestore, input: z.infer<typeof CheckDueDatesInputSchema>): Promise<z.infer<typeof CheckDueDatesOutputSchema>> {
     let settings;
     try {
-        settings = await getDueDateSettings();
+        settings = await getDueDateSettings(db);
     } catch (e: any) {
         console.error(`[checkDueDates] Error getting settings:`, e);
         return { checkedActions: 0, sentEmails: [], errors: [`Error al obtenir la configuració: ${e.message}`] };
@@ -151,7 +148,7 @@ export async function checkDueDates(input: z.infer<typeof CheckDueDatesInputSche
 
     for (const action of actionsToProcess) {
         try {
-            const emailsSentForAction = await processAction(action, settings, input.isDryRun);
+            const emailsSentForAction = await processAction(db, action, settings, input.isDryRun);
             sentEmails.push(...emailsSentForAction);
         } catch(e: any) {
             console.error(`[checkDueDates] Error processing action ${action.actionId}:`, e);

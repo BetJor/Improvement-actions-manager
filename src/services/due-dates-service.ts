@@ -1,12 +1,12 @@
+
 'use server';
 
-import { doc, getDoc, setDoc, runTransaction, Firestore } from 'firebase/firestore';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { db as clientDb } from '@/lib/firebase';
 import { z } from 'zod';
 import type { SentEmailInfo } from "@/lib/types";
 
 // This file is for CLIENT-SIDE execution only, specifically for dry runs.
-// It will never write to the database.
 
 const DueDateSettingsSchema = z.object({
   daysUntilDue: z.number().int().positive().default(10),
@@ -41,17 +41,17 @@ export async function updateDueDateSettings(settings: DueDateSettings): Promise<
 
 // Main logic
 export async function checkDueDates(input: z.infer<typeof CheckDueDatesInputSchema>): Promise<z.infer<typeof CheckDueDatesOutputSchema>> {
-    // This is a client-side call, so we must dynamically import the server-side logic
-    // which is now correctly placed within the /functions directory.
-    // NOTE: This approach is complex. A simpler way would be to have a dedicated
-    // Genkit flow that is *only* called from the client, but for this fix,
-    // we'll keep the logic here to show how a dry-run could work.
-
     console.warn("checkDueDates is being called from the client. This is for dry-run purposes only.");
     
-    // As we cannot call the function directory logic from here,
-    // we will simulate the check and return an empty result for the dry-run.
-    // The actual logic lives in the Cloud Function.
+    // On the client, we cannot safely import and run the full server-side logic
+    // without causing dependency issues. This function on the client-side
+    // is now primarily for displaying UI and triggering the *actual* logic which
+    // runs scheduled on the server.
+    // We will return a simulated message.
     
-    return { checkedActions: 0, sentEmails: [], errors: ["La ejecución real solo ocurre en el servidor programado."] };
+    return { 
+        checkedActions: input.actions.length, 
+        sentEmails: [], 
+        errors: ["La ejecución real solo ocurre en el servidor programado. Este es un resultado de simulación desde el cliente."] 
+    };
 }

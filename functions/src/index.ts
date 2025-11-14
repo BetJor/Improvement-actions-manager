@@ -19,8 +19,8 @@ export const checkDueDatesScheduled = functions
         const actionsSnapshot = await db.collection('actions').get();
         const allActions = actionsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
-        // Call the core logic, allowing it to write to the database.
-        const result = await checkDueDatesFlow({ actions: allActions, isDryRun: false });
+        // Call the core logic, passing the db instance, and allowing it to write to the database.
+        const result = await checkDueDatesFlow(db, { actions: allActions, isDryRun: false });
 
         console.log(`Scheduled check finished. Checked ${result.checkedActions} actions.`);
         if (result.sentEmails.length > 0) {
