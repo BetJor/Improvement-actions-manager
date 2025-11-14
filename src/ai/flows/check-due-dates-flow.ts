@@ -10,7 +10,7 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
-import { collection, getDocs, query, where, doc, getDoc, setDoc } from 'firebase/firestore';
+import { collection, getDocs, query, where, doc, getDoc, setDoc, runTransaction } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { ImprovementAction, User, ActionComment, SentEmailInfo } from '@/lib/types';
 import { differenceInDays, isFuture, parseISO } from 'date-fns';
@@ -23,6 +23,7 @@ export type DueDateSettings = z.infer<typeof DueDateSettingsSchema>;
 
 const CheckDueDatesInputSchema = z.object({
     actions: z.array(z.any()).describe("The list of actions to process."),
+    isDryRun: z.boolean().optional().default(true).describe("If true, it will not write to the database."),
 });
 
 const CheckDueDatesOutputSchema = z.object({
@@ -100,7 +101,7 @@ const checkDueDatesFlow = ai.defineFlow(
 
     for (const action of actionsToProcess) {
         try {
-            const emailsSentForAction = await processAction(action, settings);
+            const emailsSentForAction = await processAction(action, settings, input.isDryRun);
             sentEmails.push(...emailsSentForAction);
         } catch(e: any) {
             console.error(`[checkDueDates] Error processing action ${action.actionId}:`, e);
@@ -112,22 +113,28 @@ const checkDueDatesFlow = ai.defineFlow(
   }
 );
 
-
-async function processAction(action: ImprovementAction, settings: DueDateSettings): Promise<SentEmailInfo[]> {
+async function processAction(action: ImprovementAction, settings: DueDateSettings, isDryRun: boolean): Promise<SentEmailInfo[]> {
     const sentEmailsForAction: SentEmailInfo[] = [];
 
     const checkAndNotify = async (
         dueDateStr: string | undefined,
         recipient: string | undefined,
         taskDescription: string,
+        reminderKey: string
     ) => {
         if (!recipient) {
             console.warn(`[processAction] No recipient email for task "${taskDescription}" on action ${action.actionId}. Skipping notification.`);
             return;
         }
         if (!dueDateStr || !isFuture(parseISO(dueDateStr))) return;
+
+        // Check if reminder was already sent
+        if (action.remindersSent && action.remindersSent[reminderKey]) {
+            return;
+        }
         
         const daysLeft = differenceInDays(parseISO(dueDateStr), new Date());
+
         if (daysLeft <= settings.daysUntilDue) {
             console.log(`[processAction] Sending reminder for task "${taskDescription}" on action ${action.actionId} to ${recipient}`);
             
@@ -136,7 +143,23 @@ async function processAction(action: ImprovementAction, settings: DueDateSetting
             if (notificationComment?.text.includes("Fallo de envío")) {
                  console.error(`Failed to send email for ${action.actionId}: ${notificationComment.text}`);
             } else if (notificationComment) {
-                // Extract URL from comment text
+                // If it's not a dry run, update the document
+                if (!isDryRun) {
+                    const actionDocRef = doc(db, 'actions', action.id);
+                    await runTransaction(db, async (transaction) => {
+                        const freshActionDoc = await transaction.get(actionDocRef);
+                        if (!freshActionDoc.exists()) { throw "Document does not exist!"; }
+                        
+                        const currentComments = freshActionDoc.data().comments || [];
+                        const currentReminders = freshActionDoc.data().remindersSent || {};
+
+                        transaction.update(actionDocRef, {
+                            comments: [...currentComments, notificationComment],
+                            remindersSent: { ...currentReminders, [reminderKey]: true }
+                        });
+                    });
+                }
+                
                 const urlMatch = notificationComment.text.match(/https?:\/\/[^\s]+/);
                 const previewUrl = urlMatch ? urlMatch[0] : null;
                 
@@ -152,22 +175,22 @@ async function processAction(action: ImprovementAction, settings: DueDateSetting
     
     switch (action.status) {
         case 'Pendiente Análisis':
-            await checkAndNotify(action.analysisDueDate, action.responsibleGroupId, 'completar el Análisis de Causas');
+            await checkAndNotify(action.analysisDueDate, action.responsibleGroupId, 'completar el Análisis de Causas', 'analysis');
             break;
         case 'Pendiente Comprobación':
             if(action.analysis?.verificationResponsibleUserEmail) {
-                await checkAndNotify(action.verificationDueDate, action.analysis.verificationResponsibleUserEmail, 'realizar la Verificación de la Implantación');
+                await checkAndNotify(action.verificationDueDate, action.analysis.verificationResponsibleUserEmail, 'realizar la Verificación de la Implantación', 'verification');
             }
             if (action.analysis?.proposedActions) {
                 for (const pa of action.analysis.proposedActions) {
                     if (pa.status !== 'Implementada') {
-                         await checkAndNotify(pa.dueDate as string, pa.responsibleUserEmail, `implementar la acción: "${pa.description}"`);
+                         await checkAndNotify(pa.dueDate as string, pa.responsibleUserEmail, `implementar la acción: "${pa.description}"`, `pa_${pa.id}`);
                     }
                 }
             }
             break;
         case 'Pendiente de Cierre':
-             await checkAndNotify(action.closureDueDate, action.creator.email, 'realizar el Cierre Final de la acción');
+             await checkAndNotify(action.closureDueDate, action.creator.email, 'realizar el Cierre Final de la acción', 'closure');
             break;
     }
 

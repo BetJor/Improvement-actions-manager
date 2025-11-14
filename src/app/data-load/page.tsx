@@ -102,7 +102,7 @@ export default function DataLoadPage() {
     try {
         const allActions = await getActions();
         
-        const result = await checkDueDates({ actions: allActions });
+        const result = await checkDueDates({ actions: allActions, isDryRun: true });
 
         if (result.errors.length > 0) {
           setError(`Se produjeron errores en ${result.errors.length} acciones.`);
