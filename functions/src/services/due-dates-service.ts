@@ -1,12 +1,11 @@
-
 'use server';
 
 import type { DocumentData } from 'firebase-admin/firestore';
-import * as admin from "firebase-admin";
 import { z } from 'zod';
 import { differenceInDays, isFuture, parseISO } from 'date-fns';
 import type { ImprovementAction, SentEmailInfo } from "../lib/types";
 import { sendDueDateReminderEmail } from "./notification-service";
+import { db } from '../lib/firebase-admin'; // Use the central db instance
 
 
 // Schemas and Types
@@ -27,7 +26,7 @@ const CheckDueDatesOutputSchema = z.object({
 });
 
 // Helper flows
-export async function getDueDateSettings(db: admin.firestore.Firestore): Promise<DueDateSettings> {
+export async function getDueDateSettings(): Promise<DueDateSettings> {
     const docRef = db.doc('app_settings/due_date_reminders');
     const docSnap = await docRef.get();
     if (docSnap.exists) {
@@ -36,12 +35,12 @@ export async function getDueDateSettings(db: admin.firestore.Firestore): Promise
     return { daysUntilDue: 10 }; // Default
 }
 
-export async function updateDueDateSettings(db: admin.firestore.Firestore, settings: DueDateSettings): Promise<void> {
+export async function updateDueDateSettings(settings: DueDateSettings): Promise<void> {
     const docRef = db.doc('app_settings/due_date_reminders');
     await docRef.set(settings, { merge: true });
 }
 
-async function processAction(db: admin.firestore.Firestore, action: ImprovementAction, settings: DueDateSettings, isDryRun: boolean): Promise<SentEmailInfo[]> {
+async function processAction(action: ImprovementAction, settings: DueDateSettings, isDryRun: boolean): Promise<SentEmailInfo[]> {
     const sentEmailsForAction: SentEmailInfo[] = [];
 
     const checkAndNotify = async (
@@ -127,10 +126,10 @@ async function processAction(db: admin.firestore.Firestore, action: ImprovementA
 }
 
 // Main logic
-export async function checkDueDates(db: admin.firestore.Firestore, input: z.infer<typeof CheckDueDatesInputSchema>): Promise<z.infer<typeof CheckDueDatesOutputSchema>> {
+export async function checkDueDates(input: z.infer<typeof CheckDueDatesInputSchema>): Promise<z.infer<typeof CheckDueDatesOutputSchema>> {
     let settings;
     try {
-        settings = await getDueDateSettings(db);
+        settings = await getDueDateSettings();
     } catch (e: any) {
         console.error(`[checkDueDates] Error getting settings:`, e);
         return { checkedActions: 0, sentEmails: [], errors: [`Error al obtenir la configuració: ${e.message}`] };
@@ -149,7 +148,7 @@ export async function checkDueDates(db: admin.firestore.Firestore, input: z.infe
 
     for (const action of actionsToProcess) {
         try {
-            const emailsSentForAction = await processAction(db, action, settings, input.isDryRun);
+            const emailsSentForAction = await processAction(action, settings, input.isDryRun);
             sentEmails.push(...emailsSentForAction);
         } catch(e: any) {
             console.error(`[checkDueDates] Error processing action ${action.actionId}:`, e);

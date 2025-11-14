@@ -4,12 +4,9 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.getDueDateSettings = getDueDateSettings;
 exports.updateDueDateSettings = updateDueDateSettings;
 exports.checkDueDates = checkDueDates;
-const admin = require("firebase-admin");
 const zod_1 = require("zod");
 const date_fns_1 = require("date-fns");
 const notification_service_1 = require("./notification-service");
-// This file runs ONLY in the Cloud Function environment, so it uses the Admin SDK.
-const db = admin.firestore();
 // Schemas and Types
 const DueDateSettingsSchema = zod_1.z.object({
     daysUntilDue: zod_1.z.number().int().positive().default(10),
@@ -24,7 +21,7 @@ const CheckDueDatesOutputSchema = zod_1.z.object({
     errors: zod_1.z.array(zod_1.z.string()),
 });
 // Helper flows
-async function getDueDateSettings() {
+async function getDueDateSettings(db) {
     const docRef = db.doc('app_settings/due_date_reminders');
     const docSnap = await docRef.get();
     if (docSnap.exists) {
@@ -32,11 +29,11 @@ async function getDueDateSettings() {
     }
     return { daysUntilDue: 10 }; // Default
 }
-async function updateDueDateSettings(settings) {
+async function updateDueDateSettings(db, settings) {
     const docRef = db.doc('app_settings/due_date_reminders');
     await docRef.set(settings, { merge: true });
 }
-async function processAction(action, settings, isDryRun) {
+async function processAction(db, action, settings, isDryRun) {
     var _a, _b;
     const sentEmailsForAction = [];
     const checkAndNotify = async (dueDateStr, recipient, taskDescription, reminderKey) => {
@@ -109,10 +106,10 @@ async function processAction(action, settings, isDryRun) {
     return sentEmailsForAction;
 }
 // Main logic
-async function checkDueDates(input) {
+async function checkDueDates(db, input) {
     let settings;
     try {
-        settings = await getDueDateSettings();
+        settings = await getDueDateSettings(db);
     }
     catch (e) {
         console.error(`[checkDueDates] Error getting settings:`, e);
@@ -128,7 +125,7 @@ async function checkDueDates(input) {
     const actionsToProcess = input.actions.filter(action => statusesToCkeck.includes(action.status));
     for (const action of actionsToProcess) {
         try {
-            const emailsSentForAction = await processAction(action, settings, input.isDryRun);
+            const emailsSentForAction = await processAction(db, action, settings, input.isDryRun);
             sentEmails.push(...emailsSentForAction);
         }
         catch (e) {

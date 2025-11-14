@@ -1,10 +1,12 @@
+import * as admin from 'firebase-admin';
+
+// Initialize Firebase Admin SDK. This must be done once.
+admin.initializeApp();
 
 import * as functions from "firebase-functions";
-import * as admin from "firebase-admin";
 import { checkDueDates as checkDueDatesFlow } from "./services/due-dates-service";
+import { db } from './lib/firebase-admin';
 
-admin.initializeApp();
-const db = admin.firestore();
 
 // Exported Cloud Function
 export const checkDueDatesScheduled = functions
@@ -14,13 +16,12 @@ export const checkDueDatesScheduled = functions
     console.log('Starting scheduled check for due dates...');
 
     try {
-        // Fetch all actions from Firestore.
-        // We use the Admin SDK here, which bypasses security rules.
+        // Fetch all actions from Firestore using the pre-initialized db instance.
         const actionsSnapshot = await db.collection('actions').get();
         const allActions = actionsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
         // Call the core logic, passing the db instance, and allowing it to write to the database.
-        const result = await checkDueDatesFlow(db, { actions: allActions, isDryRun: false });
+        const result = await checkDueDatesFlow({ actions: allActions, isDryRun: false });
 
         console.log(`Scheduled check finished. Checked ${result.checkedActions} actions.`);
         if (result.sentEmails.length > 0) {

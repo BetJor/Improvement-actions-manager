@@ -17,8 +17,8 @@ exports.checkDueDatesScheduled = functions
         // We use the Admin SDK here, which bypasses security rules.
         const actionsSnapshot = await db.collection('actions').get();
         const allActions = actionsSnapshot.docs.map(doc => (Object.assign({ id: doc.id }, doc.data())));
-        // Call the core logic, allowing it to write to the database.
-        const result = await (0, due_dates_service_1.checkDueDates)({ actions: allActions, isDryRun: false });
+        // Call the core logic, passing the db instance, and allowing it to write to the database.
+        const result = await (0, due_dates_service_1.checkDueDates)(db, { actions: allActions, isDryRun: false });
         console.log(`Scheduled check finished. Checked ${result.checkedActions} actions.`);
         if (result.sentEmails.length > 0) {
             console.log(`Successfully sent ${result.sentEmails.length} reminder emails.`);
