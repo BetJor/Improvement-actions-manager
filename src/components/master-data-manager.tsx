@@ -74,6 +74,7 @@ const responsibleLocationFields = [
 
 
 export function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, title, onSave, extraData, isPermissionDialog = false, userIsAdmin = false }: MasterDataFormDialogProps) {
+  const { toast } = useToast();
   const [formData, setFormData] = useState<MasterDataItem>({ id: "", name: "" });
 
   const [isLocationPopoverOpen, setIsLocationPopoverOpen] = useState(false);
@@ -109,6 +110,22 @@ export function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, 
         // No toast for validation
         return;
     }
+
+    toast({
+      title: "Guardando datos...",
+      description: (
+        <pre className="mt-2 w-[340px] rounded-md bg-slate-950 p-4">
+          <code className="text-white">
+            {JSON.stringify({
+              collection: collectionName,
+              item: formData,
+            }, null, 2)}
+          </code>
+        </pre>
+      ),
+      duration: 10000, // Show for a longer time
+    });
+
     await onSave(collectionName, formData);
     setIsOpen(false);
   };
@@ -120,23 +137,22 @@ export function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, 
   };
   
   const handleRoleTypeChange = (value: ResponsibilityRole['type']) => {
-    setFormData(prevData => {
-        const newFormData: Partial<ResponsibilityRole> = {
-            id: prevData.id,
-            name: prevData.name,
-            order: prevData.order,
-            type: value,
-        };
+    // Start with a clean slate but keep essential info
+    const newFormData: Partial<ResponsibilityRole> = {
+        id: formData.id,
+        name: formData.name,
+        order: formData.order,
+        type: value,
+        // Explicitly set all optional fields to undefined
+        email: undefined,
+        emailPattern: undefined,
+        fixedLocationId: undefined,
+        locationResponsibleField: undefined,
+    };
 
-        // Explicitly set unused fields to undefined to ensure they are removed by Firestore
-        if (value !== 'Fixed') newFormData.email = undefined;
-        if (value !== 'Pattern') newFormData.emailPattern = undefined;
-        if (value !== 'FixedLocation') newFormData.fixedLocationId = undefined;
-        if (value !== 'Location' && value !== 'FixedLocation') newFormData.locationResponsibleField = undefined;
+    setFormData(newFormData as MasterDataItem);
+};
 
-        return newFormData as MasterDataItem;
-    });
-  };
 
   const renderSpecificFields = () => {
     const actionTypeData = formData as ImprovementActionType;
