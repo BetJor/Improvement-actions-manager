@@ -107,27 +107,37 @@ export function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, 
 
   const handleSave = async () => {
     if (!isPermissionDialog && !formData.name) {
-        return;
+      return;
     }
 
-    let dataToSave: Partial<ResponsibilityRole> = { ...formData };
-    
+    // New, robust logic: build the save object from scratch.
+    let dataToSave: Partial<ResponsibilityRole> = {
+      id: formData.id,
+      name: formData.name,
+      order: formData.order,
+      type: (formData as ResponsibilityRole).type
+    };
+
     if (collectionName === 'responsibilityRoles') {
-        const roleType = dataToSave.type;
-        
-        // Correctly delete fields that DO NOT correspond to the selected type
-        if (roleType !== 'Fixed') {
-            delete dataToSave.email;
+        const roleData = formData as ResponsibilityRole;
+        switch (roleData.type) {
+            case 'Fixed':
+                dataToSave.email = roleData.email;
+                break;
+            case 'Pattern':
+                dataToSave.emailPattern = roleData.emailPattern;
+                break;
+            case 'FixedLocation':
+                dataToSave.fixedLocationId = roleData.fixedLocationId;
+                dataToSave.locationResponsibleField = roleData.locationResponsibleField;
+                break;
+            case 'Location':
+                dataToSave.locationResponsibleField = roleData.locationResponsibleField;
+                break;
         }
-        if (roleType !== 'Pattern') {
-            delete dataToSave.emailPattern;
-        }
-        if (roleType !== 'FixedLocation') {
-            delete dataToSave.fixedLocationId;
-        }
-        if (roleType !== 'Location' && roleType !== 'FixedLocation') {
-            delete dataToSave.locationResponsibleField;
-        }
+    } else {
+        // For other collections, just copy the whole thing for now
+        dataToSave = { ...formData };
     }
     
     toast({
@@ -156,7 +166,12 @@ export function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, 
   };
   
   const handleRoleTypeChange = (value: ResponsibilityRole['type']) => {
-    const newFormData: Partial<ResponsibilityRole> = { ...formData, type: value };
+    const newFormData: Partial<ResponsibilityRole> = { 
+        id: formData.id,
+        name: formData.name,
+        order: formData.order,
+        type: value 
+    };
     setFormData(newFormData as MasterDataItem);
   };
 
@@ -351,7 +366,7 @@ export function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, 
                                 <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                             </Button>
                         </PopoverTrigger>
-                        <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                        <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
                             <Command>
                                 <CommandInput placeholder="Busca un centro..." />
                                 <CommandList>
@@ -527,3 +542,5 @@ export function MasterDataTable({ data, columns, onEdit, onDelete, isLoading, ca
     </div>
   );
 }
+
+    
