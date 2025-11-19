@@ -103,7 +103,9 @@ export default function SettingsPage() {
             
             const rolesWithDetails = responsibilityRoles.map(role => ({
                 ...role,
-                displayType: role.type === 'Location' ? `${role.type} (${role.locationResponsibleField})` : role.type
+                type: role.type === 'Location' && role.locationResponsibleField 
+                    ? `Location (${role.locationResponsibleField})` 
+                    : role.type
             }));
 
             const data: any = {
@@ -115,7 +117,7 @@ export default function SettingsPage() {
                     data: rolesWithDetails, 
                     columns: [
                         { key: 'name', label: 'Nombre' },
-                        { key: 'displayType', label: 'Tipo' },
+                        { key: 'type', label: 'Tipo' },
                         { key: 'email', label: 'Email' },
                         { key: 'emailPattern', label: 'Patrón Email' },
                     ] 
