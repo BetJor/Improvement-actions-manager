@@ -104,9 +104,13 @@ export default function SettingsPage() {
             ]);
             
             const rolesWithDetails = responsibilityRoles.map(role => {
-                const displayType = role.type === 'Location' 
-                    ? `Location (${role.locationResponsibleField})`
-                    : role.type;
+                let displayType = role.type;
+                 if (role.type === 'Location' && role.locationResponsibleField) {
+                    displayType = `Centro Acción (${role.locationResponsibleField})`;
+                } else if (role.type === 'FixedLocation' && role.fixedLocationId) {
+                    const locationName = locations.find(l => l.id === role.fixedLocationId)?.descripcion_centro || role.fixedLocationId;
+                    displayType = `Centro Específico: ${locationName} (${role.locationResponsibleField || 'N/A'})`;
+                }
                 return { ...role, type: displayType };
             });
 
@@ -124,7 +128,7 @@ export default function SettingsPage() {
                         { key: 'emailPattern', label: 'Patrón Email' },
                     ] 
                 },
-                locations: { data: locations },
+                locations: locations, // Keep raw locations data
             };
             setMasterData(data);
 
@@ -460,7 +464,7 @@ export default function SettingsPage() {
                             categories: masterData.origins?.data,
                             actionTypes: masterData.ambits?.data,
                             responsibilityRoles: masterData.responsibilityRoles?.data,
-                            locations: masterData.locations?.data,
+                            locations: masterData.locations,
                         }}
                         userIsAdmin={isAdmin}
                     />

@@ -12,7 +12,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Loader2, Pencil, PlusCircle, Trash2, ChevronsUpDown, Info, ExternalLink } from "lucide-react";
+import { Loader2, Pencil, PlusCircle, Trash2, ChevronsUpDown, Info, ExternalLink, Check } from "lucide-react";
 import type { MasterDataItem, ResponsibilityRole, ImprovementActionType, PermissionRule, ActionCategory, ActionSubcategory } from "@/lib/types";
 import {
   Dialog,
@@ -43,6 +43,8 @@ import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMe
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 import { Separator } from "./ui/separator";
 import { cn } from "@/lib/utils";
+import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "./ui/command";
 
 interface MasterDataFormDialogProps {
   isOpen: boolean;
@@ -74,6 +76,9 @@ const responsibleLocationFields = [
 
 export function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, title, onSave, extraData, isPermissionDialog = false, userIsAdmin = false }: MasterDataFormDialogProps) {
   const [formData, setFormData] = useState<MasterDataItem>({ id: "", name: "" });
+
+  const [isLocationPopoverOpen, setIsLocationPopoverOpen] = useState(false);
+  const [isFieldPopoverOpen, setIsFieldPopoverOpen] = useState(false);
 
   useEffect(() => {
     let defaultData: MasterDataItem = { id: "", name: "" };
@@ -255,8 +260,8 @@ export function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, 
               <SelectContent>
                 <SelectItem value="Fixed">Fijo</SelectItem>
                 <SelectItem value="Pattern">Patrón</SelectItem>
-                <SelectItem value="Location">Búsqueda en Centro (Acción)</SelectItem>
-                <SelectItem value="FixedLocation">Búsqueda en Centro Específico</SelectItem>
+                <SelectItem value="Location">Centro Acción</SelectItem>
+                <SelectItem value="FixedLocation">Centro Específico</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -280,7 +285,7 @@ export function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, 
                 value={roleData.emailPattern || ''}
                 onChange={(e) => setFormData({ ...formData, emailPattern: e.target.value, email: '', locationResponsibleField: '' })}
                 className="col-span-3"
-                placeholder="ej., direccion-0101@example.com"
+                placeholder="ej., direccion-{{action.center.id}}@example.com"
               />
               <p className="col-start-2 col-span-3 text-xs text-muted-foreground">
                 Puedes usar placeholders como `{'{{action.center.id}}'}` o emails estáticos.
@@ -292,36 +297,62 @@ export function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, 
               {roleData.type === 'FixedLocation' && (
                   <div className="grid grid-cols-4 items-center gap-4">
                       <Label htmlFor="fixedLocationId" className="text-right">Centro Específico</Label>
-                      <Select
-                          value={roleData.fixedLocationId || ''}
-                          onValueChange={(value) => setFormData({ ...formData, fixedLocationId: value })}
-                      >
-                          <SelectTrigger className="col-span-3">
-                              <SelectValue placeholder="Selecciona un centro fijo" />
-                          </SelectTrigger>
-                          <SelectContent>
-                              {extraData?.locations?.map(location => (
-                                  <SelectItem key={location.id} value={location.id}>{location.descripcion_centro} ({location.id})</SelectItem>
-                              ))}
-                          </SelectContent>
-                      </Select>
+                      <Popover open={isLocationPopoverOpen} onOpenChange={setIsLocationPopoverOpen}>
+                        <PopoverTrigger asChild>
+                            <Button variant="outline" role="combobox" aria-expanded={isLocationPopoverOpen} className="col-span-3 justify-between">
+                                <span className="truncate">
+                                {roleData.fixedLocationId && extraData?.locations ? extraData.locations.find((l: any) => l.id === roleData.fixedLocationId)?.descripcion_centro : "Selecciona un centro"}
+                                </span>
+                                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                            </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                            <Command>
+                                <CommandInput placeholder="Busca un centro..." />
+                                <CommandList>
+                                    <CommandEmpty>No se encontró ningún centro.</CommandEmpty>
+                                    <CommandGroup>
+                                        {extraData?.locations?.map((location: any) => (
+                                        <CommandItem key={location.id} value={location.descripcion_centro} onSelect={() => { setFormData({ ...formData, fixedLocationId: location.id }); setIsLocationPopoverOpen(false); }}>
+                                            <Check className={cn("mr-2 h-4 w-4", roleData.fixedLocationId === location.id ? "opacity-100" : "opacity-0")} />
+                                            {location.descripcion_centro}
+                                        </CommandItem>
+                                        ))}
+                                    </CommandGroup>
+                                </CommandList>
+                            </Command>
+                        </PopoverContent>
+                      </Popover>
                   </div>
               )}
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="locationResponsibleField" className="text-right">Campo de Responsable</Label>
-                 <Select
-                  value={roleData.locationResponsibleField || ''}
-                  onValueChange={(value) => setFormData({ ...formData, locationResponsibleField: value, email: '', emailPattern: '' })}
-                >
-                  <SelectTrigger className="col-span-3">
-                    <SelectValue placeholder="Selecciona un campo de responsable" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {responsibleLocationFields.map(field => (
-                      <SelectItem key={field} value={field}>{field}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Label htmlFor="locationResponsibleField" className="text-right">Búsqueda Responsable de Centro</Label>
+                <Popover open={isFieldPopoverOpen} onOpenChange={setIsFieldPopoverOpen}>
+                    <PopoverTrigger asChild>
+                        <Button variant="outline" role="combobox" aria-expanded={isFieldPopoverOpen} className="col-span-3 justify-between">
+                            <span className="truncate">
+                            {roleData.locationResponsibleField || "Selecciona un campo"}
+                            </span>
+                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                        <Command>
+                            <CommandInput placeholder="Busca un campo..." />
+                             <CommandList>
+                                <CommandEmpty>No se encontró ningún campo.</CommandEmpty>
+                                <CommandGroup>
+                                    {responsibleLocationFields.map(field => (
+                                    <CommandItem key={field} value={field} onSelect={() => { setFormData({ ...formData, locationResponsibleField: field, email: '', emailPattern: '' }); setIsFieldPopoverOpen(false); }}>
+                                        <Check className={cn("mr-2 h-4 w-4", roleData.locationResponsibleField === field ? "opacity-100" : "opacity-0")} />
+                                        {field}
+                                    </CommandItem>
+                                    ))}
+                                </CommandGroup>
+                            </CommandList>
+                        </Command>
+                    </PopoverContent>
+                </Popover>
                  <p className="col-start-2 col-span-3 text-xs text-muted-foreground">
                   {roleData.type === 'Location' ? "Busca el email en el centro de la acción." : "Busca el email en el centro específico seleccionado arriba."}
                 </p>
