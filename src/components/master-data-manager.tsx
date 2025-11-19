@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
@@ -263,7 +264,7 @@ export function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, 
               <Input
                 id="email"
                 value={roleData.email || ''}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value, locationResponsibleField: '' })}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value, emailPattern: '', locationResponsibleField: '' })}
                 className="col-span-3"
                 placeholder="ej., calidad@ejemplo.com"
               />
@@ -275,10 +276,13 @@ export function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, 
               <Input
                 id="emailPattern"
                 value={roleData.emailPattern || ''}
-                onChange={(e) => setFormData({ ...formData, emailPattern: e.target.value, locationResponsibleField: '' })}
+                onChange={(e) => setFormData({ ...formData, emailPattern: e.target.value, email: '', locationResponsibleField: '' })}
                 className="col-span-3"
                 placeholder="ej., direccion-{{center.id}}@ejemplo.com"
               />
+              <p className="col-start-2 col-span-3 text-xs text-muted-foreground">
+                Puedes usar placeholders como `{'{{center.id}}'}` o emails estàtics com `director-0101@example.com`.
+              </p>
             </div>
           )}
            {roleData.type === 'Location' && (
