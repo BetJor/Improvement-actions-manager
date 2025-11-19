@@ -114,10 +114,20 @@ export function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, 
     
     if (collectionName === 'responsibilityRoles') {
         const roleType = dataToSave.type;
-        if (roleType !== 'Fixed') delete dataToSave.email;
-        if (roleType !== 'Pattern') delete dataToSave.emailPattern;
-        if (roleType !== 'FixedLocation') delete dataToSave.fixedLocationId;
-        if (roleType !== 'Location' && roleType !== 'FixedLocation') delete dataToSave.locationResponsibleField;
+        
+        // Correctly delete fields that DO NOT correspond to the selected type
+        if (roleType !== 'Fixed') {
+            delete dataToSave.email;
+        }
+        if (roleType !== 'Pattern') {
+            delete dataToSave.emailPattern;
+        }
+        if (roleType !== 'FixedLocation') {
+            delete dataToSave.fixedLocationId;
+        }
+        if (roleType !== 'Location' && roleType !== 'FixedLocation') {
+            delete dataToSave.locationResponsibleField;
+        }
     }
     
     toast({
@@ -517,5 +527,3 @@ export function MasterDataTable({ data, columns, onEdit, onDelete, isLoading, ca
     </div>
   );
 }
-
-    
