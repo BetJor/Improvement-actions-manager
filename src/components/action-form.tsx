@@ -466,7 +466,7 @@ export function ActionForm({
                                         <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
                                             <Command>
                                                 <CommandInput placeholder="Cerca un centre..." />
-                                                <CommandList className="max-h-72">
+                                                <CommandList className="max-h-56">
                                                     <CommandEmpty>No se ha trobat cap centre.</CommandEmpty>
                                                     <CommandGroup>
                                                         {masterData?.centers?.data?.map((center: Center) => (
@@ -553,7 +553,7 @@ export function ActionForm({
                                             <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
                                                 <Command>
                                                     <CommandInput placeholder="Busca un centro..." />
-                                                    <CommandList className="max-h-72">
+                                                    <CommandList className="max-h-56">
                                                         <CommandEmpty>No se encontraron centros.</CommandEmpty>
                                                         <CommandGroup>
                                                             {masterData?.centers?.data?.map((center: Center) => (

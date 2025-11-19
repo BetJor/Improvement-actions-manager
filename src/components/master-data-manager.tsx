@@ -142,22 +142,7 @@ export function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, 
       // For other collections, just copy the whole thing for now
       dataToSave = { ...formData };
     }
-  
-    toast({
-      title: "Guardando datos...",
-      description: (
-        <pre className="mt-2 w-[340px] rounded-md bg-slate-950 p-4">
-          <code className="text-white">
-            {JSON.stringify({
-              collection: collectionName,
-              item: dataToSave,
-            }, null, 2)}
-          </code>
-        </pre>
-      ),
-      duration: 10000,
-    });
-  
+    
     await onSave(collectionName, dataToSave);
     setIsOpen(false);
   };
