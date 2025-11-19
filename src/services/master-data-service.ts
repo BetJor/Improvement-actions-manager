@@ -1,4 +1,5 @@
 
+
 import { collection, getDocs, doc, addDoc, query, orderBy, updateDoc, deleteDoc, writeBatch, where, getDoc, setDoc, limit, arrayRemove } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { ImprovementActionType, ActionCategory, ActionSubcategory, AffectedArea, MasterDataItem, ResponsibilityRole, Center } from '@/lib/types';
@@ -10,6 +11,29 @@ import { FirestorePermissionError, type SecurityRuleContext } from '@/firebase/e
 // Variable global per a prevenir la execució múltiple del seeder
 let isSeedingMasterData = false;
 let hasEnrichedLocations = false;
+
+// Function to recursively remove undefined values from an object
+function sanitizeDataForFirestore<T extends object>(data: T): T {
+    const sanitizedData = JSON.parse(JSON.stringify(data));
+    const clean = (obj: any) => {
+        if (obj === null || typeof obj !== 'object') return;
+        for (const key in obj) {
+            if (obj.hasOwnProperty(key)) {
+                if (obj[key] === undefined) {
+                    delete obj[key];
+                } else if (typeof obj[key] === 'object') {
+                    if(Array.isArray(obj[key])) {
+                        obj[key].forEach((item: any) => clean(item));
+                    } else {
+                        clean(obj[key]);
+                    }
+                }
+            }
+        }
+    };
+    clean(sanitizedData);
+    return sanitizedData;
+}
 
 
 export const getActionTypes = async (): Promise<ImprovementActionType[]> => {
@@ -251,12 +275,13 @@ export const getCenters = async (): Promise<Center[]> => {
 // Generic function to add a new item
 export async function addMasterDataItem(collectionName: string, item: Omit<MasterDataItem, 'id'>): Promise<string> {
   const collectionRef = collection(db, collectionName);
-  const docRef = await addDoc(collectionRef, item)
+  const dataToSave = sanitizeDataForFirestore(item);
+  const docRef = await addDoc(collectionRef, dataToSave)
     .catch(async (serverError) => {
         const permissionError = new FirestorePermissionError({
             path: `/${collectionName}/<new>`,
             operation: 'create',
-            requestResourceData: item,
+            requestResourceData: dataToSave,
         } satisfies SecurityRuleContext);
         errorEmitter.emit('permission-error', permissionError);
         throw serverError;
@@ -267,12 +292,13 @@ export async function addMasterDataItem(collectionName: string, item: Omit<Maste
 // Generic function to update an item
 export async function updateMasterDataItem(collectionName: string, itemId: string, item: Partial<Omit<MasterDataItem, 'id'>>): Promise<void> {
   const docRef = doc(db, collectionName, itemId);
-  await updateDoc(docRef, item)
+  const dataToSave = sanitizeDataForFirestore(item);
+  await updateDoc(docRef, dataToSave)
     .catch(async (serverError) => {
         const permissionError = new FirestorePermissionError({
             path: docRef.path,
             operation: 'update',
-            requestResourceData: item,
+            requestResourceData: dataToSave,
         } satisfies SecurityRuleContext);
         errorEmitter.emit('permission-error', permissionError);
         throw serverError;
