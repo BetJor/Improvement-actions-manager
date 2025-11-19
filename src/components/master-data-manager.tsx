@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
@@ -109,37 +110,39 @@ export function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, 
     if (!isPermissionDialog && !formData.name) {
       return;
     }
-
-    // New, robust logic: build the save object from scratch.
-    let dataToSave: Partial<ResponsibilityRole> = {
+  
+    // Build a new clean object based on the role type
+    const baseData: Partial<ResponsibilityRole> = {
       id: formData.id,
       name: formData.name,
       order: formData.order,
       type: (formData as ResponsibilityRole).type
     };
-
+  
+    let dataToSave: Partial<ResponsibilityRole> = { ...baseData };
+  
     if (collectionName === 'responsibilityRoles') {
-        const roleData = formData as ResponsibilityRole;
-        switch (roleData.type) {
-            case 'Fixed':
-                dataToSave.email = roleData.email;
-                break;
-            case 'Pattern':
-                dataToSave.emailPattern = roleData.emailPattern;
-                break;
-            case 'FixedLocation':
-                dataToSave.fixedLocationId = roleData.fixedLocationId;
-                dataToSave.locationResponsibleField = roleData.locationResponsibleField;
-                break;
-            case 'Location':
-                dataToSave.locationResponsibleField = roleData.locationResponsibleField;
-                break;
-        }
+      const roleData = formData as ResponsibilityRole;
+      switch (roleData.type) {
+        case 'Fixed':
+          dataToSave.email = roleData.email;
+          break;
+        case 'Pattern':
+          dataToSave.emailPattern = roleData.emailPattern;
+          break;
+        case 'FixedLocation':
+          dataToSave.fixedLocationId = roleData.fixedLocationId;
+          dataToSave.locationResponsibleField = roleData.locationResponsibleField;
+          break;
+        case 'Location':
+          dataToSave.locationResponsibleField = roleData.locationResponsibleField;
+          break;
+      }
     } else {
-        // For other collections, just copy the whole thing for now
-        dataToSave = { ...formData };
+      // For other collections, just copy the whole thing for now
+      dataToSave = { ...formData };
     }
-    
+  
     toast({
       title: "Guardando datos...",
       description: (
@@ -152,9 +155,9 @@ export function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, 
           </code>
         </pre>
       ),
-      duration: 10000, 
+      duration: 10000,
     });
-
+  
     await onSave(collectionName, dataToSave);
     setIsOpen(false);
   };
@@ -166,13 +169,12 @@ export function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, 
   };
   
   const handleRoleTypeChange = (value: ResponsibilityRole['type']) => {
-    const newFormData: Partial<ResponsibilityRole> = { 
-        id: formData.id,
-        name: formData.name,
-        order: formData.order,
-        type: value 
-    };
-    setFormData(newFormData as MasterDataItem);
+    setFormData(prev => ({
+        id: prev.id,
+        name: prev.name,
+        order: prev.order,
+        type: value
+    }));
   };
 
 

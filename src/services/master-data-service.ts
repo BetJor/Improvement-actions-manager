@@ -289,15 +289,16 @@ export async function addMasterDataItem(collectionName: string, item: Omit<Maste
   return docRef.id;
 }
 
-// Generic function to update an item
+// Generic function to update an item, replacing it completely.
 export async function updateMasterDataItem(collectionName: string, itemId: string, item: Partial<Omit<MasterDataItem, 'id'>>): Promise<void> {
   const docRef = doc(db, collectionName, itemId);
   const dataToSave = sanitizeDataForFirestore(item);
-  await updateDoc(docRef, dataToSave)
+  // Use setDoc without merge to overwrite the document, effectively deleting old fields.
+  await setDoc(docRef, dataToSave)
     .catch(async (serverError) => {
         const permissionError = new FirestorePermissionError({
             path: docRef.path,
-            operation: 'update',
+            operation: 'write', // 'write' covers setDoc
             requestResourceData: dataToSave,
         } satisfies SecurityRuleContext);
         errorEmitter.emit('permission-error', permissionError);
