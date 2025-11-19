@@ -81,23 +81,28 @@ export function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, 
   const [isFieldPopoverOpen, setIsFieldPopoverOpen] = useState(false);
 
   useEffect(() => {
-    let defaultData: MasterDataItem = { id: "", name: "" };
-    if (collectionName === 'responsibilityRoles') {
-      defaultData = { ...defaultData, type: "Fixed" };
+    if (isOpen) {
+        let defaultData: MasterDataItem = { id: "", name: "" };
+
+        if (collectionName === 'responsibilityRoles') {
+            defaultData = { ...defaultData, type: "Fixed" };
+        }
+        if (collectionName === 'ambits') {
+            defaultData = { ...defaultData, configAdminRoleIds: [], possibleCreationRoles: [], possibleAnalysisRoles: [] };
+        }
+        if (collectionName === 'origins') {
+            const parentAmbitId = extraData?.parentItemId;
+            defaultData = { ...defaultData, actionTypeIds: parentAmbitId ? [parentAmbitId] : [] };
+        }
+        if (collectionName === 'classifications') {
+            const parentOrigenId = extraData?.parentItemId;
+            defaultData = { ...defaultData, categoryId: parentOrigenId || '' };
+        }
+        
+        // If editing, use the provided item, otherwise use the default structure
+        setFormData(item || defaultData);
     }
-    if (collectionName === 'ambits') { // Correspon a 'ambits'
-      defaultData = { ...defaultData, configAdminRoleIds: [], possibleCreationRoles: [], possibleAnalysisRoles: [] };
-    }
-    if (collectionName === 'origins') {
-      const parentAmbitId = extraData?.parentItemId;
-      defaultData = { ...defaultData, actionTypeIds: parentAmbitId ? [parentAmbitId] : [] };
-    }
-    if (collectionName === 'classifications') {
-       const parentOrigenId = extraData?.parentItemId;
-       defaultData = { ...defaultData, categoryId: parentOrigenId || '' };
-    }
-    setFormData(item || defaultData);
-  }, [item, collectionName, extraData]);
+  }, [item, isOpen, collectionName, extraData]);
 
   const handleSave = async () => {
     if (!isPermissionDialog && !formData.name) {
@@ -113,6 +118,17 @@ export function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, 
     // Permet valors buits per a esborrar, però desa com a número si és vàlid
     const numericValue = value === '' ? undefined : parseInt(value, 10);
     setFormData({ ...formData, [name]: isNaN(numericValue!) ? undefined : numericValue });
+  };
+  
+  const handleRoleTypeChange = (value: ResponsibilityRole['type']) => {
+    // Reset specific fields when type changes to avoid keeping irrelevant data
+    const baseData = { ...formData, type: value };
+    if (value !== 'Fixed') delete baseData.email;
+    if (value !== 'Pattern') delete baseData.emailPattern;
+    if (value !== 'Location' && value !== 'FixedLocation') delete baseData.locationResponsibleField;
+    if (value !== 'FixedLocation') delete baseData.fixedLocationId;
+    
+    setFormData(baseData);
   };
 
   const renderSpecificFields = () => {
@@ -252,7 +268,7 @@ export function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, 
             <Label htmlFor="type" className="text-right">Tipo</Label>
             <Select
               value={roleData.type}
-              onValueChange={(value) => setFormData({ ...formData, type: value as ResponsibilityRole['type'] })}
+              onValueChange={(value) => handleRoleTypeChange(value as ResponsibilityRole['type'])}
             >
               <SelectTrigger className="col-span-3">
                 <SelectValue placeholder="Selecciona un tipo" />
@@ -271,7 +287,7 @@ export function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, 
               <Input
                 id="email"
                 value={roleData.email || ''}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value, emailPattern: '', locationResponsibleField: '' })}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 className="col-span-3"
                 placeholder="ej., calidad@ejemplo.com"
               />
@@ -283,7 +299,7 @@ export function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, 
               <Input
                 id="emailPattern"
                 value={roleData.emailPattern || ''}
-                onChange={(e) => setFormData({ ...formData, emailPattern: e.target.value, email: '', locationResponsibleField: '' })}
+                onChange={(e) => setFormData({ ...formData, emailPattern: e.target.value })}
                 className="col-span-3"
                 placeholder="ej., direccion-{{action.center.id}}@example.com"
               />
@@ -343,7 +359,7 @@ export function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, 
                                 <CommandEmpty>No se encontró ningún campo.</CommandEmpty>
                                 <CommandGroup>
                                     {responsibleLocationFields.map(field => (
-                                    <CommandItem key={field} value={field} onSelect={() => { setFormData({ ...formData, locationResponsibleField: field, email: '', emailPattern: '' }); setIsFieldPopoverOpen(false); }}>
+                                    <CommandItem key={field} value={field} onSelect={() => { setFormData({ ...formData, locationResponsibleField: field }); setIsFieldPopoverOpen(false); }}>
                                         <Check className={cn("mr-2 h-4 w-4", roleData.locationResponsibleField === field ? "opacity-100" : "opacity-0")} />
                                         {field}
                                     </CommandItem>
