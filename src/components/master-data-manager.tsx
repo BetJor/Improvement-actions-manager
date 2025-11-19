@@ -60,6 +60,16 @@ interface MasterDataFormDialogProps {
   userIsAdmin?: boolean; // Pass admin status
 }
 
+const responsibleLocationFields = [
+    "Titular/es", "Dependencia", "Area", "C_Autonoma", "Organizacion_Territorial",
+    "RRHH_Territorial", "Prestaciones_Territorial", "Prevencion_Territorial",
+    "Area_F_Territorial", "Coordinador_Sanitario", "Gestion_Calidad",
+    "Administracion", "Proas_Territorial", "Coordinador_Informatico",
+    "SPP_Territorial", "Coordinador_Instalaciones", "Consultor_Prevencion",
+    "Gestion_Afiliacion", "Gestion_Pago_Delegado"
+];
+
+
 export function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, title, onSave, extraData, isPermissionDialog = false, userIsAdmin = false }: MasterDataFormDialogProps) {
   const [formData, setFormData] = useState<MasterDataItem>({ id: "", name: "" });
 
@@ -273,14 +283,20 @@ export function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, 
           )}
            {roleData.type === 'Location' && (
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="locationResponsibleField" className="text-right">Campo en Location</Label>
-              <Input
-                id="locationResponsibleField"
+              <Label htmlFor="locationResponsibleField" className="text-right">Búsqueda Responsable de Centro</Label>
+               <Select
                 value={roleData.locationResponsibleField || ''}
-                onChange={(e) => setFormData({ ...formData, locationResponsibleField: e.target.value, email: '', emailPattern: '' })}
-                className="col-span-3"
-                placeholder="Ej: Administracion"
-              />
+                onValueChange={(value) => setFormData({ ...formData, locationResponsibleField: value, email: '', emailPattern: '' })}
+              >
+                <SelectTrigger className="col-span-3">
+                  <SelectValue placeholder="Selecciona un campo de responsable" />
+                </SelectTrigger>
+                <SelectContent>
+                  {responsibleLocationFields.map(field => (
+                    <SelectItem key={field} value={field}>{field}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           )}
         </>

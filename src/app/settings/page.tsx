@@ -101,16 +101,21 @@ export default function SettingsPage() {
                 getWorkflowSettings(),
             ]);
             
+            const rolesWithDetails = responsibilityRoles.map(role => ({
+                ...role,
+                displayType: role.type === 'Location' ? `${role.type} (${role.locationResponsibleField})` : role.type
+            }));
+
             const data: any = {
                 ambits: { data: actionTypes },
                 origins: { data: categories },
                 classifications: { data: subcategories },
                 responsibilityRoles: { 
                     title: "Roles de Responsabilidad", 
-                    data: responsibilityRoles, 
+                    data: rolesWithDetails, 
                     columns: [
                         { key: 'name', label: 'Nombre' },
-                        { key: 'type', label: 'Tipo' },
+                        { key: 'displayType', label: 'Tipo' },
                         { key: 'email', label: 'Email' },
                         { key: 'emailPattern', label: 'Patrón Email' },
                     ] 
@@ -190,7 +195,7 @@ export default function SettingsPage() {
             } else {
                 const { id, ...dataToSave } = item as any;
                 
-                const propertiesToRemove = ['categoryName', 'creationRoleNames', 'analysisRoleNames', 'closureRoleNames', 'actionTypeNames', 'configAdminRoleNames'];
+                const propertiesToRemove = ['categoryName', 'creationRoleNames', 'analysisRoleNames', 'closureRoleNames', 'actionTypeNames', 'configAdminRoleNames', 'displayType'];
                 propertiesToRemove.forEach(prop => {
                     if (prop in dataToSave) {
                         delete dataToSave[prop];
