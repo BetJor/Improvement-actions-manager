@@ -105,13 +105,22 @@ export default function SettingsPage() {
             
             const rolesWithDetails = responsibilityRoles.map(role => {
                 let displayType = role.type;
-                 if (role.type === 'Location' && role.locationResponsibleField) {
-                    displayType = `Centro Acción (${role.locationResponsibleField})`;
+                let centerName = '';
+                let fieldName = role.locationResponsibleField || '';
+    
+                if (role.type === 'Location') {
+                    displayType = `Centro Acción (${fieldName})`;
                 } else if (role.type === 'FixedLocation' && role.fixedLocationId) {
-                    const locationName = locations.find(l => l.id === role.fixedLocationId)?.descripcion_centro || role.fixedLocationId;
-                    displayType = `Centro Específico: ${locationName} (${role.locationResponsibleField || 'N/A'})`;
+                    centerName = locations.find(l => l.id === role.fixedLocationId)?.descripcion_centro || role.fixedLocationId;
+                    displayType = `Centro Específico: ${centerName} (${fieldName})`;
                 }
-                return { ...role, type: displayType };
+                
+                return { 
+                    ...role, 
+                    displayType: displayType, 
+                    centerName: centerName,
+                    fieldName: fieldName,
+                };
             });
 
             const data: any = {
@@ -123,7 +132,7 @@ export default function SettingsPage() {
                     data: rolesWithDetails, 
                     columns: [
                         { key: 'name', label: 'Nombre' },
-                        { key: 'type', label: 'Tipo' },
+                        { key: 'displayType', label: 'Tipo' },
                         { key: 'email', label: 'Email' },
                         { key: 'emailPattern', label: 'Patrón Email' },
                     ] 
@@ -204,7 +213,7 @@ export default function SettingsPage() {
             } else {
                 const { id, ...dataToSave } = item as any;
                 
-                const propertiesToRemove = ['categoryName', 'creationRoleNames', 'analysisRoleNames', 'closureRoleNames', 'actionTypeNames', 'configAdminRoleNames', 'displayType'];
+                const propertiesToRemove = ['categoryName', 'creationRoleNames', 'analysisRoleNames', 'closureRoleNames', 'actionTypeNames', 'configAdminRoleNames', 'displayType', 'centerName', 'fieldName'];
                 propertiesToRemove.forEach(prop => {
                     if (prop in dataToSave) {
                         delete dataToSave[prop];
@@ -317,6 +326,15 @@ export default function SettingsPage() {
         return true;
     }, [isAdmin, userRoles, activeTab]);
 
+    const responsibilityRolesColumns = [
+        { key: 'name', label: 'Nombre' },
+        { key: 'type', label: 'Tipo' },
+        { key: 'centerName', label: 'Centro' },
+        { key: 'fieldName', label: 'Campo Responsable' },
+        { key: 'email', label: 'Email' },
+        { key: 'emailPattern', label: 'Patrón Email' },
+    ];
+
 
     return (
         <div className="flex flex-col gap-4 h-full">
@@ -380,7 +398,7 @@ export default function SettingsPage() {
                                     </div>
                                     <MasterDataTable
                                         data={masterData.responsibilityRoles?.data || []}
-                                        columns={masterData.responsibilityRoles?.columns || []}
+                                        columns={responsibilityRolesColumns}
                                         onEdit={handleEdit}
                                         onDelete={(item) => handleDelete('responsibilityRoles', item.id!)}
                                         isLoading={isLoading}
