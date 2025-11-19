@@ -1,3 +1,4 @@
+
 "use client"
 
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -181,33 +182,38 @@ export function ActionForm({
   }, [selectedCategoryId, masterData]);
   
   const responsibleOptions = useMemo(() => {
-    if (!selectedActionTypeId || !masterData || !user) return [];
-    const actionType: ImprovementActionType | undefined = masterData.ambits?.data.find((t: any) => t.id === selectedActionTypeId);
-    if (!actionType?.possibleAnalysisRoles) return [];
-
-    const options: { value: string, label: string }[] = [];
-    
-    actionType.possibleAnalysisRoles.forEach(roleId => {
-        const role: ResponsibilityRole | undefined = masterData.responsibilityRoles?.data.find((r: any) => r.id === roleId);
-        if (role) {
-            if (role.type === 'Fixed' && role.email) {
-                options.push({ value: role.email, label: `${role.name} (${role.email})` });
-            } else if (role.type === 'Pattern' && role.emailPattern) {
-                const center: Center | undefined = masterData.centers?.data.find((c: any) => c.id === selectedCenterId);
-                const context = { action: { creator: user, center: center, affectedAreasIds: selectedAffectedAreasIds } };
-                const resolvedEmails = evaluatePattern(role.emailPattern, context);
-                resolvedEmails.forEach(email => {
-                    if (email && !email.includes('{')) options.push({ value: email, label: `${role.name} (${email})` });
-                });
-            }
-        }
-    });
-
-    if ((mode === 'edit' || mode === 'view') && initialData?.assignedTo && !options.some(opt => opt.value === initialData.assignedTo)) {
-        options.push({ value: initialData.assignedTo, label: initialData.assignedTo });
-    }
-
-    return options.filter((option, index, self) => index === self.findIndex((t) => (t.value === option.value)));
+      if (!selectedActionTypeId || !masterData || !user) return [];
+      const actionType: ImprovementActionType | undefined = masterData.ambits?.data.find((t: any) => t.id === selectedActionTypeId);
+      if (!actionType?.possibleAnalysisRoles) return [];
+  
+      const options: { value: string, label: string }[] = [];
+      const center: Center | undefined = masterData.centers?.data.find((c: any) => c.id === selectedCenterId);
+      const context = { action: { creator: user, center: center, affectedAreasIds: selectedAffectedAreasIds } };
+  
+      actionType.possibleAnalysisRoles.forEach(roleId => {
+          const role: ResponsibilityRole | undefined = masterData.responsibilityRoles?.data.find((r: any) => r.id === roleId);
+          if (role) {
+              if (role.type === 'Fixed' && role.email) {
+                  options.push({ value: role.email, label: `${role.name} (${role.email})` });
+              } else if (role.type === 'Pattern' && role.emailPattern) {
+                  const resolvedEmails = evaluatePattern(role.emailPattern, context);
+                  resolvedEmails.forEach(email => {
+                      if (email && !email.includes('{')) options.push({ value: email, label: `${role.name} (${email})` });
+                  });
+              } else if (role.type === 'Location' && role.locationResponsibleField && center?.responsibles) {
+                  const responsibleEmail = center.responsibles[role.locationResponsibleField];
+                  if (responsibleEmail) {
+                      options.push({ value: responsibleEmail, label: `${role.name} (${responsibleEmail})` });
+                  }
+              }
+          }
+      });
+  
+      if ((mode === 'edit' || mode === 'view') && initialData?.assignedTo && !options.some(opt => opt.value === initialData.assignedTo)) {
+          options.push({ value: initialData.assignedTo, label: initialData.assignedTo });
+      }
+  
+      return options.filter((option, index, self) => index === self.findIndex((t) => (t.value === option.value)));
   }, [selectedActionTypeId, selectedCenterId, selectedAffectedAreasIds, masterData, user, initialData, mode]);
   
 
@@ -675,3 +681,5 @@ export function ActionForm({
     </>
   )
 }
+
+    
