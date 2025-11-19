@@ -55,6 +55,7 @@ interface MasterDataFormDialogProps {
     categories?: ActionCategory[];
     actionTypes?: ImprovementActionType[];
     responsibilityRoles?: ResponsibilityRole[];
+    locations?: any[]; // To select a fixed location
     parentItemId?: string; // For adding children
   };
   isPermissionDialog?: boolean;
@@ -254,7 +255,8 @@ export function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, 
               <SelectContent>
                 <SelectItem value="Fixed">Fijo</SelectItem>
                 <SelectItem value="Pattern">Patrón</SelectItem>
-                <SelectItem value="Location">Búsqueda en Centro (Location)</SelectItem>
+                <SelectItem value="Location">Búsqueda en Centro (Acción)</SelectItem>
+                <SelectItem value="FixedLocation">Búsqueda en Centro Específico</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -278,30 +280,53 @@ export function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, 
                 value={roleData.emailPattern || ''}
                 onChange={(e) => setFormData({ ...formData, emailPattern: e.target.value, email: '', locationResponsibleField: '' })}
                 className="col-span-3"
-                placeholder="ej., direccion-{{center.id}}@ejemplo.com"
+                placeholder="ej., direccion-0101@ejemplo.com"
               />
               <p className="col-start-2 col-span-3 text-xs text-muted-foreground">
-                Puedes usar placeholders como `{'{{center.id}}'}` o emails estàtics com `director-0101@example.com`.
+                Puedes usar placeholders como `{'{{action.center.id}}'}` o emails estáticos.
               </p>
             </div>
           )}
-           {roleData.type === 'Location' && (
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="locationResponsibleField" className="text-right">Búsqueda Responsable de Centro</Label>
-               <Select
-                value={roleData.locationResponsibleField || ''}
-                onValueChange={(value) => setFormData({ ...formData, locationResponsibleField: value, email: '', emailPattern: '' })}
-              >
-                <SelectTrigger className="col-span-3">
-                  <SelectValue placeholder="Selecciona un campo de responsable" />
-                </SelectTrigger>
-                <SelectContent>
-                  {responsibleLocationFields.map(field => (
-                    <SelectItem key={field} value={field}>{field}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+           {(roleData.type === 'Location' || roleData.type === 'FixedLocation') && (
+            <>
+              {roleData.type === 'FixedLocation' && (
+                  <div className="grid grid-cols-4 items-center gap-4">
+                      <Label htmlFor="fixedLocationId" className="text-right">Centro Específico</Label>
+                      <Select
+                          value={roleData.fixedLocationId || ''}
+                          onValueChange={(value) => setFormData({ ...formData, fixedLocationId: value })}
+                      >
+                          <SelectTrigger className="col-span-3">
+                              <SelectValue placeholder="Selecciona un centro fijo" />
+                          </SelectTrigger>
+                          <SelectContent>
+                              {extraData?.locations?.map(location => (
+                                  <SelectItem key={location.id} value={location.id}>{location.descripcion_centro} ({location.id})</SelectItem>
+                              ))}
+                          </SelectContent>
+                      </Select>
+                  </div>
+              )}
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="locationResponsibleField" className="text-right">Campo de Responsable</Label>
+                 <Select
+                  value={roleData.locationResponsibleField || ''}
+                  onValueChange={(value) => setFormData({ ...formData, locationResponsibleField: value, email: '', emailPattern: '' })}
+                >
+                  <SelectTrigger className="col-span-3">
+                    <SelectValue placeholder="Selecciona un campo de responsable" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {responsibleLocationFields.map(field => (
+                      <SelectItem key={field} value={field}>{field}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                 <p className="col-start-2 col-span-3 text-xs text-muted-foreground">
+                  {roleData.type === 'Location' ? "Busca el email en el centro de la acción." : "Busca el email en el centro específico seleccionado arriba."}
+                </p>
+              </div>
+            </>
           )}
         </>
       );
