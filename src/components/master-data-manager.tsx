@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
@@ -121,23 +120,13 @@ export function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, 
   };
   
   const handleRoleTypeChange = (value: ResponsibilityRole['type']) => {
-    // Keep base data and only clean up fields that are not relevant for the new type
+    // Start with a clean slate, preserving only core fields
     const newFormData: Partial<ResponsibilityRole> = {
       id: formData.id,
       name: formData.name,
-      type: value,
       order: formData.order,
+      type: value,
     };
-  
-    // Preserve data if it's relevant to the new type
-    const currentRoleData = formData as ResponsibilityRole;
-    if (value === 'Fixed' && currentRoleData.email) newFormData.email = currentRoleData.email;
-    if (value === 'Pattern' && currentRoleData.emailPattern) newFormData.emailPattern = currentRoleData.emailPattern;
-    if (value === 'Location' && currentRoleData.locationResponsibleField) newFormData.locationResponsibleField = currentRoleData.locationResponsibleField;
-    if (value === 'FixedLocation') {
-      if(currentRoleData.fixedLocationId) newFormData.fixedLocationId = currentRoleData.fixedLocationId;
-      if(currentRoleData.locationResponsibleField) newFormData.locationResponsibleField = currentRoleData.locationResponsibleField;
-    }
     
     setFormData(newFormData as MasterDataItem);
   };
@@ -311,7 +300,7 @@ export function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, 
                 value={roleData.emailPattern || ''}
                 onChange={(e) => setFormData({ ...formData, emailPattern: e.target.value })}
                 className="col-span-3"
-                placeholder="ej., direccion-{{action.center.id}}@example.com"
+                placeholder="ej., direccion-0101@example.com"
               />
               <p className="col-start-2 col-span-3 text-xs text-muted-foreground">
                 Puedes usar placeholders como `{'{{action.center.id}}'}` o emails estáticos.
