@@ -82,8 +82,12 @@ export function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, 
 
   useEffect(() => {
     if (isOpen) {
+      if (item) {
+        // If editing, use the provided item.
+        setFormData(item);
+      } else {
+        // If creating new, set up default structure.
         let defaultData: MasterDataItem = { id: "", name: "" };
-
         if (collectionName === 'responsibilityRoles') {
             defaultData = { ...defaultData, type: "Fixed" };
         }
@@ -98,9 +102,8 @@ export function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, 
             const parentOrigenId = extraData?.parentItemId;
             defaultData = { ...defaultData, categoryId: parentOrigenId || '' };
         }
-        
-        // If editing, use the provided item, otherwise use the default structure
-        setFormData(item || defaultData);
+        setFormData(defaultData);
+      }
     }
   }, [item, isOpen, collectionName, extraData]);
 
@@ -121,14 +124,19 @@ export function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, 
   };
   
   const handleRoleTypeChange = (value: ResponsibilityRole['type']) => {
-    // Reset specific fields when type changes to avoid keeping irrelevant data
-    const baseData = { ...formData, type: value };
-    if (value !== 'Fixed') delete baseData.email;
-    if (value !== 'Pattern') delete baseData.emailPattern;
-    if (value !== 'Location' && value !== 'FixedLocation') delete baseData.locationResponsibleField;
-    if (value !== 'FixedLocation') delete baseData.fixedLocationId;
+    // Keep base data and type, then clean up fields that don't belong to the new type
+    const newFormData: MasterDataItem = {
+      id: formData.id,
+      name: formData.name,
+      type: value
+    };
+
+    if (value === 'Fixed') newFormData.email = (formData as ResponsibilityRole).email || '';
+    if (value === 'Pattern') newFormData.emailPattern = (formData as ResponsibilityRole).emailPattern || '';
+    if (value === 'Location' || value === 'FixedLocation') newFormData.locationResponsibleField = (formData as ResponsibilityRole).locationResponsibleField || '';
+    if (value === 'FixedLocation') newFormData.fixedLocationId = (formData as ResponsibilityRole).fixedLocationId || '';
     
-    setFormData(baseData);
+    setFormData(newFormData);
   };
 
   const renderSpecificFields = () => {
@@ -301,7 +309,7 @@ export function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, 
                 value={roleData.emailPattern || ''}
                 onChange={(e) => setFormData({ ...formData, emailPattern: e.target.value })}
                 className="col-span-3"
-                placeholder="ej., direccion-{{action.center.id}}@example.com"
+                placeholder="ej., direccion-{{center.id}}@example.com"
               />
               <p className="col-start-2 col-span-3 text-xs text-muted-foreground">
                 Puedes usar placeholders como `{'{{action.center.id}}'}` o emails estáticos.
