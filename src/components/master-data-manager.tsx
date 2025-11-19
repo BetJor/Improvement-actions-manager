@@ -107,10 +107,19 @@ export function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, 
 
   const handleSave = async () => {
     if (!isPermissionDialog && !formData.name) {
-        // No toast for validation
         return;
     }
 
+    let dataToSave: Partial<ResponsibilityRole> = { ...formData };
+    
+    if (collectionName === 'responsibilityRoles') {
+        const roleType = dataToSave.type;
+        if (roleType !== 'Fixed') delete dataToSave.email;
+        if (roleType !== 'Pattern') delete dataToSave.emailPattern;
+        if (roleType !== 'FixedLocation') delete dataToSave.fixedLocationId;
+        if (roleType !== 'Location' && roleType !== 'FixedLocation') delete dataToSave.locationResponsibleField;
+    }
+    
     toast({
       title: "Guardando datos...",
       description: (
@@ -118,15 +127,15 @@ export function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, 
           <code className="text-white">
             {JSON.stringify({
               collection: collectionName,
-              item: formData,
+              item: dataToSave,
             }, null, 2)}
           </code>
         </pre>
       ),
-      duration: 10000, // Show for a longer time
+      duration: 10000, 
     });
 
-    await onSave(collectionName, formData);
+    await onSave(collectionName, dataToSave);
     setIsOpen(false);
   };
   
@@ -137,21 +146,9 @@ export function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, 
   };
   
   const handleRoleTypeChange = (value: ResponsibilityRole['type']) => {
-    // Start with a clean slate but keep essential info
-    const newFormData: Partial<ResponsibilityRole> = {
-        id: formData.id,
-        name: formData.name,
-        order: formData.order,
-        type: value,
-        // Explicitly set all optional fields to undefined
-        email: undefined,
-        emailPattern: undefined,
-        fixedLocationId: undefined,
-        locationResponsibleField: undefined,
-    };
-
+    const newFormData: Partial<ResponsibilityRole> = { ...formData, type: value };
     setFormData(newFormData as MasterDataItem);
-};
+  };
 
 
   const renderSpecificFields = () => {
@@ -323,7 +320,7 @@ export function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, 
                 value={roleData.emailPattern || ''}
                 onChange={(e) => setFormData({ ...formData, emailPattern: e.target.value })}
                 className="col-span-3"
-                placeholder="ej., direccion-{{action.center.id}}@example.com"
+                placeholder="ej., direccion-0101@example.com"
               />
               <p className="col-start-2 col-span-3 text-xs text-muted-foreground">
                 Puedes usar placeholders como `{'{{action.center.id}}'}` o emails estáticos.
@@ -374,7 +371,7 @@ export function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, 
                             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                         </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                    <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
                         <Command>
                             <CommandInput placeholder="Busca un campo..." />
                              <CommandList>
@@ -520,3 +517,5 @@ export function MasterDataTable({ data, columns, onEdit, onDelete, isLoading, ca
     </div>
   );
 }
+
+    
