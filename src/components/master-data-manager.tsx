@@ -120,15 +120,22 @@ export function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, 
   };
   
   const handleRoleTypeChange = (value: ResponsibilityRole['type']) => {
-    // Start with a clean slate, preserving only core fields
-    const newFormData: Partial<ResponsibilityRole> = {
-      id: formData.id,
-      name: formData.name,
-      order: formData.order,
-      type: value,
-    };
-    
-    setFormData(newFormData as MasterDataItem);
+    setFormData(prevData => {
+        const newFormData: Partial<ResponsibilityRole> = {
+            id: prevData.id,
+            name: prevData.name,
+            order: prevData.order,
+            type: value,
+        };
+
+        // Explicitly set unused fields to undefined to ensure they are removed by Firestore
+        if (value !== 'Fixed') newFormData.email = undefined;
+        if (value !== 'Pattern') newFormData.emailPattern = undefined;
+        if (value !== 'FixedLocation') newFormData.fixedLocationId = undefined;
+        if (value !== 'Location' && value !== 'FixedLocation') newFormData.locationResponsibleField = undefined;
+
+        return newFormData as MasterDataItem;
+    });
   };
 
   const renderSpecificFields = () => {
@@ -300,7 +307,7 @@ export function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, 
                 value={roleData.emailPattern || ''}
                 onChange={(e) => setFormData({ ...formData, emailPattern: e.target.value })}
                 className="col-span-3"
-                placeholder="ej., direccion-0101@example.com"
+                placeholder="ej., direccion-{{action.center.id}}@example.com"
               />
               <p className="col-start-2 col-span-3 text-xs text-muted-foreground">
                 Puedes usar placeholders como `{'{{action.center.id}}'}` o emails estáticos.
@@ -341,7 +348,7 @@ export function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, 
                   </div>
               )}
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="locationResponsibleField" className="text-right">Búsqueda Responsable de Centro</Label>
+                <Label htmlFor="locationResponsibleField" className="text-right">Campo Responsable</Label>
                 <Popover open={isFieldPopoverOpen} onOpenChange={setIsFieldPopoverOpen}>
                     <PopoverTrigger asChild>
                         <Button variant="outline" role="combobox" aria-expanded={isFieldPopoverOpen} className="col-span-3 justify-between">
