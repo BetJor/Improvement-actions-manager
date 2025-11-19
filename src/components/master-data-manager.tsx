@@ -280,7 +280,7 @@ export function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, 
                 value={roleData.emailPattern || ''}
                 onChange={(e) => setFormData({ ...formData, emailPattern: e.target.value, email: '', locationResponsibleField: '' })}
                 className="col-span-3"
-                placeholder="ej., direccion-0101@ejemplo.com"
+                placeholder="ej., direccion-0101@example.com"
               />
               <p className="col-start-2 col-span-3 text-xs text-muted-foreground">
                 Puedes usar placeholders como `{'{{action.center.id}}'}` o emails estáticos.

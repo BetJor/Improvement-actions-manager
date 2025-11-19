@@ -17,6 +17,7 @@ import {
     getResponsibilityRoles,
     getWorkflowSettings,
     updateWorkflowSettings,
+    getLocations,
 } from "@/lib/data";
 import type { MasterDataItem, ActionCategory, ResponsibilityRole, ImprovementActionType, ActionSubcategory } from "@/lib/types";
 import { Loader2 } from "lucide-react";
@@ -93,20 +94,21 @@ export default function SettingsPage() {
     const loadData = useCallback(async (currentTab?: string) => {
         setIsLoading(true);
         try {
-            const [categories, subcategories, actionTypes, responsibilityRoles, workflowSettings] = await Promise.all([
+            const [categories, subcategories, actionTypes, responsibilityRoles, workflowSettings, locations] = await Promise.all([
                 getCategories(),
                 getSubcategories(),
                 getActionTypes(),
                 getResponsibilityRoles(),
                 getWorkflowSettings(),
+                getLocations(),
             ]);
             
-            const rolesWithDetails = responsibilityRoles.map(role => ({
-                ...role,
-                type: role.type === 'Location' && role.locationResponsibleField 
-                    ? `Location (${role.locationResponsibleField})` 
-                    : role.type
-            }));
+            const rolesWithDetails = responsibilityRoles.map(role => {
+                const displayType = role.type === 'Location' 
+                    ? `Location (${role.locationResponsibleField})`
+                    : role.type;
+                return { ...role, type: displayType };
+            });
 
             const data: any = {
                 ambits: { data: actionTypes },
@@ -122,6 +124,7 @@ export default function SettingsPage() {
                         { key: 'emailPattern', label: 'Patrón Email' },
                     ] 
                 },
+                locations: { data: locations },
             };
             setMasterData(data);
 
@@ -457,6 +460,7 @@ export default function SettingsPage() {
                             categories: masterData.origins?.data,
                             actionTypes: masterData.ambits?.data,
                             responsibilityRoles: masterData.responsibilityRoles?.data,
+                            locations: masterData.locations?.data,
                         }}
                         userIsAdmin={isAdmin}
                     />
