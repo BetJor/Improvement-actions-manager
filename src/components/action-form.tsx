@@ -181,40 +181,44 @@ export function ActionForm({
     return masterData.classifications.data.filter((sc: ActionSubcategory) => sc.categoryId === selectedCategoryId);
   }, [selectedCategoryId, masterData]);
   
-  const responsibleOptions = useMemo(() => {
-      if (!selectedActionTypeId || !masterData || !user) return [];
-      const actionType: ImprovementActionType | undefined = masterData.ambits?.data.find((t: any) => t.id === selectedActionTypeId);
-      if (!actionType?.possibleAnalysisRoles) return [];
-  
-      const options: { value: string, label: string }[] = [];
-      const center: Center | undefined = masterData.centers?.data.find((c: any) => c.id === selectedCenterId);
-      const context = { action: { creator: user, center: center, affectedAreasIds: selectedAffectedAreasIds } };
-  
-      actionType.possibleAnalysisRoles.forEach(roleId => {
-          const role: ResponsibilityRole | undefined = masterData.responsibilityRoles?.data.find((r: any) => r.id === roleId);
-          if (role) {
-              if (role.type === 'Fixed' && role.email) {
-                  options.push({ value: role.email, label: `${role.name} (${role.email})` });
-              } else if (role.type === 'Pattern' && role.emailPattern) {
-                  const resolvedEmails = evaluatePattern(role.emailPattern, context);
-                  resolvedEmails.forEach(email => {
-                      if (email && !email.includes('{')) options.push({ value: email, label: `${role.name} (${email})` });
-                  });
-              } else if (role.type === 'Location' && role.locationResponsibleField && center?.responsibles) {
-                  const responsibleEmail = center.responsibles[role.locationResponsibleField];
-                  if (responsibleEmail) {
-                      options.push({ value: responsibleEmail, label: `${role.name} (${responsibleEmail})` });
-                  }
-              }
-          }
-      });
-  
-      if ((mode === 'edit' || mode === 'view') && initialData?.assignedTo && !options.some(opt => opt.value === initialData.assignedTo)) {
-          options.push({ value: initialData.assignedTo, label: initialData.assignedTo });
-      }
-  
-      return options.filter((option, index, self) => index === self.findIndex((t) => (t.value === option.value)));
-  }, [selectedActionTypeId, selectedCenterId, selectedAffectedAreasIds, masterData, user, initialData, mode]);
+ const responsibleOptions = useMemo(() => {
+    if (!selectedActionTypeId || !masterData || !user) return [];
+    const actionType: ImprovementActionType | undefined = masterData.ambits?.data.find((t: any) => t.id === selectedActionTypeId);
+    if (!actionType?.possibleAnalysisRoles) return [];
+
+    const options: { value: string, label: string }[] = [];
+    const center: Center | undefined = masterData.centers?.data.find((c: any) => c.id === selectedCenterId);
+    
+    // Find the full location document to get 'responsibles'
+    const location = masterData.locations?.find((l: any) => l.id === selectedCenterId);
+    
+    const context = { action: { creator: user, center: center, affectedAreasIds: selectedAffectedAreasIds } };
+
+    actionType.possibleAnalysisRoles.forEach(roleId => {
+        const role: ResponsibilityRole | undefined = masterData.responsibilityRoles?.data.find((r: any) => r.id === roleId);
+        if (role) {
+            if (role.type === 'Fixed' && role.email) {
+                options.push({ value: role.email, label: `${role.name} (${role.email})` });
+            } else if (role.type === 'Pattern' && role.emailPattern) {
+                const resolvedEmails = evaluatePattern(role.emailPattern, context);
+                resolvedEmails.forEach(email => {
+                    if (email && !email.includes('{')) options.push({ value: email, label: `${role.name} (${email})` });
+                });
+            } else if (role.type === 'Location' && role.locationResponsibleField && location?.responsibles) {
+                const responsibleEmail = location.responsibles[role.locationResponsibleField];
+                if (responsibleEmail) {
+                    options.push({ value: responsibleEmail, label: `${role.name} (${responsibleEmail})` });
+                }
+            }
+        }
+    });
+
+    if ((mode === 'edit' || mode === 'view') && initialData?.assignedTo && !options.some(opt => opt.value === initialData.assignedTo)) {
+        options.push({ value: initialData.assignedTo, label: initialData.assignedTo });
+    }
+
+    return options.filter((option, index, self) => index === self.findIndex((t) => (t.value === option.value)));
+}, [selectedActionTypeId, selectedCenterId, selectedAffectedAreasIds, masterData, user, initialData, mode]);
   
 
   useEffect(() => {
@@ -681,5 +685,3 @@ export function ActionForm({
     </>
   )
 }
-
-    

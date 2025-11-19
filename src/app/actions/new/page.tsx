@@ -5,7 +5,7 @@ import { useState, useEffect } from "react"
 import { useToast } from "@/hooks/use-toast"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/hooks/use-auth"
-import { createAction, getActionTypes, getCategories, getSubcategories, getAffectedAreas, getResponsibilityRoles, getCenters } from "@/lib/data"
+import { createAction, getActionTypes, getCategories, getSubcategories, getAffectedAreas, getResponsibilityRoles, getCenters, getLocations } from "@/lib/data"
 import { ActionForm } from "@/components/action-form"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Loader2 } from "lucide-react"
@@ -29,13 +29,14 @@ export default function NewActionPage() {
     async function loadMasterData() {
       try {
         setIsLoadingData(true);
-        const [types, cats, subcats, areas, roles, centers] = await Promise.all([
+        const [types, cats, subcats, areas, roles, centers, locations] = await Promise.all([
           getActionTypes(),
           getCategories(),
           getSubcategories(),
           getAffectedAreas(),
           getResponsibilityRoles(),
           getCenters(),
+          getLocations(),
         ]);
         setMasterData({
             ambits: { data: types },
@@ -44,6 +45,7 @@ export default function NewActionPage() {
             affectedAreas: areas,
             responsibilityRoles: { data: roles },
             centers: { data: centers },
+            locations: locations, // Add full locations data
         })
       } catch (error) {
         console.error("Failed to load master data", error);

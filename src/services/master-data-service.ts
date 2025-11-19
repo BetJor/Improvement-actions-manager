@@ -158,6 +158,13 @@ export const getResponsibilityRoles = async (): Promise<ResponsibilityRole[]> =>
     return roles;
 };
 
+export async function getLocations(): Promise<any[]> {
+    const locationsCol = collection(db, 'locations');
+    const snapshot = await getDocs(locationsCol);
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+}
+
+
 export const enrichLocationsWithResponsibles = async (): Promise<number> => {
     console.log("[enrichLocations] Starting process to enrich locations with responsibles...");
     const locationsCol = collection(db, 'locations');
@@ -183,7 +190,7 @@ export const enrichLocationsWithResponsibles = async (): Promise<number> => {
 
     const lines = data.trim().split('\n').slice(1); // Skip header row
     const headers = data.trim().split('\n')[0].split(';').map(h => h.trim());
-    const responsibleHeaders = headers.slice(3); // Start from the 4th column
+    const responsibleHeaders = headers.slice(2); // Start from the 3rd column now
 
     lines.forEach(line => {
         const values = line.split(';');
@@ -192,7 +199,7 @@ export const enrichLocationsWithResponsibles = async (): Promise<number> => {
         if (existingLocations.has(locationId)) {
             const responsibles: { [key: string]: string } = {};
             responsibleHeaders.forEach((header, index) => {
-                const responsibleValue = values[index + 3]?.trim();
+                const responsibleValue = values[index + 2]?.trim();
                 if (responsibleValue) {
                     responsibles[header] = responsibleValue;
                 }
