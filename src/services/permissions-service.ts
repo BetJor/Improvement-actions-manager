@@ -56,14 +56,17 @@ export async function resolveRoles(
 
     // Pre-fetch context data to avoid multiple DB calls inside the loop
     const allCenters = await getCenters();
-    const center = allCenters.find((c: Center) => c.id === action.centerId);
+    const centerDoc = action.centerId ? allCenters.find((c: Center) => c.id === action.centerId) : null;
+    
+    // Get the full center document from 'locations' to access 'responsibles'
+    const locationDoc = action.centerId ? doc(db, 'locations', action.centerId) : null;
+
     const creator = await getUserById(action.creator.id);
     
-    // Build the context object for the pattern evaluator
     const context = {
         action: {
             ...action,
-            center: center,
+            center: centerDoc,
             creator: creator
         }
     };
@@ -78,9 +81,23 @@ export async function resolveRoles(
                 break;
             case 'Pattern':
                 if (role.emailPattern) {
-                    const resolvedEmail = evaluatePattern(role.emailPattern, context);
-                    if (resolvedEmail && !resolvedEmail.includes('{{')) {
-                        resolvedEmails.push(resolvedEmail);
+                    const resolved = evaluatePattern(role.emailPattern, context);
+                    resolvedEmails.push(...resolved.filter(email => !email.includes('{{')));
+                }
+                break;
+            case 'Location':
+                if (role.locationResponsibleField && locationDoc) {
+                    try {
+                        const locationSnap = await getDocs(query(collection(db, 'locations'), where('__name__', '==', locationDoc.id)));
+                        if (!locationSnap.empty) {
+                            const locationData = locationSnap.docs[0].data();
+                            const responsibleEmail = locationData.responsibles?.[role.locationResponsibleField];
+                            if (responsibleEmail) {
+                                resolvedEmails.push(responsibleEmail);
+                            }
+                        }
+                    } catch (error) {
+                        console.error(`Error fetching location document for role resolution:`, error);
                     }
                 }
                 break;

@@ -114,7 +114,7 @@ export function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, 
       };
 
       return (
-        <div className="grid grid-cols-4 items-center gap-4">
+        <div class="grid grid-cols-4 items-center gap-4">
           <Label htmlFor="actionTypeIds" className="text-right">Ámbitos Relacionados</Label>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -150,7 +150,7 @@ export function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, 
 
     if (collectionName === 'classifications' && extraData?.categories) {
       return (
-        <div className="grid grid-cols-4 items-center gap-4">
+        <div class="grid grid-cols-4 items-center gap-4">
           <Label htmlFor={'categoryId'} className="text-right">Origen</Label>
           <Select
             value={subcategoryData.categoryId}
@@ -182,7 +182,7 @@ export function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, 
         const renderDropdown = (fieldName: keyof ImprovementActionType, label: string, disabled: boolean = false) => {
             const selectedRoles = (actionTypeData[fieldName] || []) as string[];
             return (
-              <div className="grid grid-cols-4 items-center gap-4">
+              <div class="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor={fieldName} className="text-right">{label}</Label>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -217,10 +217,10 @@ export function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, 
         };
         
         return (
-            <div className="space-y-4">
+            <div class="space-y-4">
                 {renderDropdown('configAdminRoleIds', 'Admins de Configuración', !userIsAdmin)}
                 <Separator />
-                <h4 className="font-semibold text-center text-muted-foreground">Permisos de Workflow</h4>
+                <h4 class="font-semibold text-center text-muted-foreground">Permisos de Workflow</h4>
                 {renderDropdown('possibleCreationRoles', 'Roles de Creación')}
                 {renderDropdown('possibleAnalysisRoles', 'Roles de Análisis')}
             </div>
@@ -232,7 +232,7 @@ export function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, 
       const roleData = formData as ResponsibilityRole;
       return (
         <>
-          <div className="grid grid-cols-4 items-center gap-4">
+          <div class="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="type" className="text-right">Tipo</Label>
             <Select
               value={roleData.type}
@@ -244,30 +244,43 @@ export function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, 
               <SelectContent>
                 <SelectItem value="Fixed">Fijo</SelectItem>
                 <SelectItem value="Pattern">Patrón</SelectItem>
+                <SelectItem value="Location">Búsqueda en Centro (Location)</SelectItem>
               </SelectContent>
             </Select>
           </div>
           {roleData.type === 'Fixed' && (
-            <div className="grid grid-cols-4 items-center gap-4">
+            <div class="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="email" className="text-right">Email</Label>
               <Input
                 id="email"
                 value={roleData.email || ''}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value, locationResponsibleField: '' })}
                 className="col-span-3"
                 placeholder="ej., calidad@ejemplo.com"
               />
             </div>
           )}
           {roleData.type === 'Pattern' && (
-            <div className="grid grid-cols-4 items-center gap-4">
+            <div class="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="emailPattern" className="text-right">Patrón de Email</Label>
               <Input
                 id="emailPattern"
                 value={roleData.emailPattern || ''}
-                onChange={(e) => setFormData({ ...formData, emailPattern: e.target.value })}
+                onChange={(e) => setFormData({ ...formData, emailPattern: e.target.value, locationResponsibleField: '' })}
                 className="col-span-3"
                 placeholder="ej., direccion-{{center.id}}@ejemplo.com"
+              />
+            </div>
+          )}
+           {roleData.type === 'Location' && (
+            <div class="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="locationResponsibleField" className="text-right">Campo en Location</Label>
+              <Input
+                id="locationResponsibleField"
+                value={roleData.locationResponsibleField || ''}
+                onChange={(e) => setFormData({ ...formData, locationResponsibleField: e.target.value, email: '', emailPattern: '' })}
+                className="col-span-3"
+                placeholder="Ej: Administracion"
               />
             </div>
           )}
@@ -295,9 +308,9 @@ export function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, 
                 : "Rellena los detalles a continuación."}
           </DialogDescription>
         </DialogHeader>
-        <div className="grid gap-4 py-4">
+        <div class="grid gap-4 py-4">
           {!isPermissionDialog && (
-             <div className="grid grid-cols-4 items-center gap-4">
+             <div class="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="name" className="text-right">{nameFieldLabel}</Label>
               <Input
                 id="name"
@@ -330,7 +343,7 @@ interface MasterDataTableProps {
 
 export function MasterDataTable({ data, columns, onEdit, onDelete, isLoading, canEdit, canDelete = true }: MasterDataTableProps) {
   return (
-    <div className="rounded-md border">
+    <div class="rounded-md border">
       <Table>
         <TableHeader>
           <TableRow>

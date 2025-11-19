@@ -14,9 +14,10 @@ export interface ImprovementActionType extends MasterDataItem {
 }
 
 export interface ResponsibilityRole extends MasterDataItem {
-    type: 'Pattern' | 'Fixed';
+    type: 'Pattern' | 'Fixed' | 'Location';
     emailPattern?: string; // e.g., "direccion-{{center.id}}@example.com"
     email?: string; // e.g., "calidad.global@example.com"
+    locationResponsibleField?: string; // e.g., "Administracion"
 }
 
 export interface Center extends MasterDataItem {
