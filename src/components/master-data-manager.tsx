@@ -217,6 +217,7 @@ export function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, 
                 <DropdownMenuCheckboxItem
                   key={at.id}
                   checked={categoryData.actionTypeIds?.includes(at.id!)}
+                  onSelect={(e) => e.preventDefault()}
                   onCheckedChange={() => handleActionTypeSelection(at.id!)}
                 >
                   {at.name}
@@ -284,6 +285,7 @@ export function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, 
                       <DropdownMenuCheckboxItem
                         key={role.id}
                         checked={selectedRoles.includes(role.id!)}
+                        onSelect={(e) => e.preventDefault()}
                         onCheckedChange={() => handleRoleSelection(role.id!, fieldName)}
                       >
                         {role.name}
