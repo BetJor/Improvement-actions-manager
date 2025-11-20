@@ -70,7 +70,7 @@ const responsibleLocationFields = [
     "Area_F_Territorial", "Coordinador_Sanitario", "Gestion_Calidad",
     "Administracion", "Proas_Territorial", "Coordinador_Informatico",
     "SPP_Territorial", "Coordinador_Instalaciones", "Consultor_Prevencion",
-    "Gestion_Afiliacion", "Gestion_Pago_Delegado"
+    "Gestion_Afiliacion", "Gestion_Pago_Delegado", "Personal"
 ];
 
 
@@ -123,7 +123,7 @@ export function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, 
     
     if (collectionName === 'responsibilityRoles') {
       const roleData = formData as ResponsibilityRole;
-      // Add only the fields relevant to the selected type
+      
       switch (roleData.type) {
         case 'Fixed':
           dataToSave.email = roleData.email;
@@ -136,8 +136,8 @@ export function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, 
           dataToSave.locationResponsibleField = roleData.locationResponsibleField;
           break;
         case 'Location':
-          dataToSave.locationResponsibleField = roleData.locationResponsibleField;
           dataToSave.actionFieldSource = roleData.actionFieldSource;
+          dataToSave.locationResponsibleField = roleData.locationResponsibleField;
           break;
       }
     } else {
@@ -155,13 +155,11 @@ export function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, 
   };
   
   const handleRoleTypeChange = (value: ResponsibilityRole['type']) => {
-    // Reset to a clean slate, preserving only basic info
     setFormData(prev => ({
         id: prev.id,
         name: prev.name,
         order: prev.order,
-        type: value // Set the new type
-        // All other specific fields (email, emailPattern, etc.) are discarded
+        type: value 
     }));
   };
 
@@ -356,7 +354,7 @@ export function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, 
                                 <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                             </Button>
                         </PopoverTrigger>
-                        <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
+                        <PopoverContent className="w-[--radix-popover-trigger-width] max-h-56 p-0">
                             <Command>
                                 <CommandInput placeholder="Busca un centro..." />
                                 <CommandList>
@@ -404,7 +402,7 @@ export function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, 
                             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                         </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
+                    <PopoverContent className="w-[var(--radix-popover-trigger-width)] max-h-56 p-0">
                         <Command>
                             <CommandInput placeholder="Busca un campo..." />
                              <CommandList>
@@ -552,3 +550,4 @@ export function MasterDataTable({ data, columns, onEdit, onDelete, isLoading, ca
 }
 
     
+
