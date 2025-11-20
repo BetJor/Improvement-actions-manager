@@ -253,6 +253,59 @@ export const enrichLocationsWithResponsibles = async (): Promise<number> => {
     }
 }
 
+export const addPersonalResponsibleToLocations = async (): Promise<number> => {
+    console.log("[addPersonalResponsibleToLocations] Starting process...");
+    const locationsCol = collection(db, 'locations');
+    let locationsSnapshot;
+    try {
+        locationsSnapshot = await getDocs(locationsCol);
+    } catch (serverError) {
+        const permissionError = new FirestorePermissionError({
+            path: '/locations',
+            operation: 'list',
+        } satisfies SecurityRuleContext);
+        errorEmitter.emit('permission-error', permissionError);
+        throw serverError;
+    }
+
+    const batch = writeBatch(db);
+    let updatedCount = 0;
+
+    locationsSnapshot.docs.forEach(doc => {
+        const data = doc.data();
+        const dependenciaEmail = data.responsibles?.Dependencia;
+
+        if (dependenciaEmail && typeof dependenciaEmail === 'string' && dependenciaEmail.endsWith('CA_Director@asepeyo.es')) {
+            const newPersonalEmail = dependenciaEmail.replace('CA_Director@asepeyo.es', 'Llodio_CA_Personal@asepeyo.es');
+            
+            const docRef = doc.ref;
+            batch.update(docRef, { 'responsibles.Personal': newPersonalEmail });
+            updatedCount++;
+        }
+    });
+
+    if (updatedCount === 0) {
+        console.log("[addPersonalResponsibleToLocations] No locations found matching the criteria. Nothing to update.");
+        return 0;
+    }
+
+    try {
+        await batch.commit();
+        console.log(`[addPersonalResponsibleToLocations] Successfully updated ${updatedCount} locations.`);
+        return updatedCount;
+    } catch (serverError) {
+        console.error("[addPersonalResponsibleToLocations] Error committing batch update:", serverError);
+        const permissionError = new FirestorePermissionError({
+            path: '/locations (batch update)',
+            operation: 'update',
+            requestResourceData: { custom_process: 'addPersonalResponsibleToLocations' },
+        } satisfies SecurityRuleContext);
+        errorEmitter.emit('permission-error', permissionError);
+        throw serverError;
+    }
+};
+
+
 export const getCenters = async (): Promise<Center[]> => {
     // Aquesta funció ara només obté els centres, l'enriquiment es fa apart.
     const locationsCol = collection(db, 'locations');
@@ -292,14 +345,12 @@ export async function addMasterDataItem(collectionName: string, item: Omit<Maste
 // Generic function to update an item, replacing it completely.
 export async function updateMasterDataItem(collectionName: string, itemId: string, item: Partial<Omit<MasterDataItem, 'id'>>): Promise<void> {
   const docRef = doc(db, collectionName, itemId);
-  const dataToSave = sanitizeDataForFirestore(item);
-  // Use setDoc without merge to overwrite the document, effectively deleting old fields.
-  await setDoc(docRef, dataToSave)
+  await setDoc(docRef, item, { merge: false })
     .catch(async (serverError) => {
         const permissionError = new FirestorePermissionError({
             path: docRef.path,
             operation: 'write', // 'write' covers setDoc
-            requestResourceData: dataToSave,
+            requestResourceData: item,
         } satisfies SecurityRuleContext);
         errorEmitter.emit('permission-error', permissionError);
         throw serverError;

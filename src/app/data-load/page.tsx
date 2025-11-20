@@ -12,9 +12,9 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { enrichLocationsWithResponsibles } from "@/services/master-data-service";
+import { enrichLocationsWithResponsibles, addPersonalResponsibleToLocations } from "@/services/master-data-service";
 import { getDueDateSettings, updateDueDateSettings, checkDueDates as checkDueDatesFlow } from "@/services/due-dates-service";
-import { Loader2, UploadCloud, Send, Settings, AlertTriangle, ExternalLink } from "lucide-react";
+import { Loader2, UploadCloud, Send, Settings, AlertTriangle, ExternalLink, UserPlus } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
@@ -35,6 +35,7 @@ export default function DataLoadPage() {
   const { toast } = useToast();
   const { user } = useAuth();
   const [isLoadingResponsibles, setIsLoadingResponsibles] = useState(false);
+  const [isLoadingPersonal, setIsLoadingPersonal] = useState(false);
   const [isCheckingDues, setIsCheckingDues] = useState(false);
   const [isSavingSettings, setIsSavingSettings] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -81,6 +82,29 @@ export default function DataLoadPage() {
       });
     } finally {
       setIsLoadingResponsibles(false);
+    }
+  };
+
+  const handleLoadPersonalResponsibles = async () => {
+    setIsLoadingPersonal(true);
+    setError(null);
+    setErrorDetails([]);
+    try {
+      const updatedCount = await addPersonalResponsibleToLocations();
+      toast({
+        title: "Asignación completada",
+        description: `Se ha asignado el responsable de 'Personal' a ${updatedCount} centros.`,
+      });
+    } catch (err: any) {
+      console.error("Error assigning personal responsibles:", err);
+      setError("Error al asignar los responsables de Personal.");
+      toast({
+        variant: "destructive",
+        title: "Error de asignación",
+        description: "No se ha podido completar la asignación de responsables.",
+      });
+    } finally {
+      setIsLoadingPersonal(false);
     }
   };
 
@@ -182,6 +206,24 @@ export default function DataLoadPage() {
                       <UploadCloud className="mr-2 h-4 w-4" />
                     )}
                     {isLoadingResponsibles ? "Cargando..." : "Cargar Responsables de Centros"}
+                  </Button>
+                </AlertDescription>
+            </Alert>
+
+            <Alert>
+                <UserPlus className="h-4 w-4" />
+                <AlertTitle>Asignar Responsable de Personal</AlertTitle>
+                <AlertDescription className="flex flex-col gap-4">
+                   <p>
+                     Este proceso asignará un responsable de 'Personal' a los centros cuya 'Dependencia' termine en "CA_Director@asepeyo.es". El nuevo email será el de la dependencia sustituyendo el final por "Llodio_CA_Personal@asepeyo.es".
+                   </p>
+                    <Button onClick={handleLoadPersonalResponsibles} disabled={isLoadingPersonal} className="w-fit">
+                    {isLoadingPersonal ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <UserPlus className="mr-2 h-4 w-4" />
+                    )}
+                    {isLoadingPersonal ? "Asignando..." : "Asignar Responsable de Personal"}
                   </Button>
                 </AlertDescription>
             </Alert>
