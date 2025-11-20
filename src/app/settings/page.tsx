@@ -108,8 +108,10 @@ export default function SettingsPage() {
                 let centerName = '';
 
                 if (role.type === 'FixedLocation' && role.fixedLocationId) {
-                    centerName = locations.find(l => l.id === role.fixedLocationId)?.descripcion_centro || role.fixedLocationId;
-                    displayType = `Centro Específico: ${centerName}`;
+                    const location = locations.find(l => l.id === role.fixedLocationId);
+                    centerName = location?.descripcion_centro || role.fixedLocationId;
+                    const centerCode = location?.id || '';
+                    displayType = `Centro Específico: ${centerCode} - ${centerName}`;
                 } else if (role.type === 'Location' && role.actionFieldSource) {
                     const fieldLabels: Record<string, string> = {
                         centerId: 'Centro Principal',
