@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
@@ -205,8 +204,7 @@ export function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, 
                         <CommandItem
                             key={at.id}
                             value={at.name}
-                            onSelect={(e) => {
-                                e.preventDefault();
+                            onSelect={() => {
                                 const currentIds = actionTypeData.actionTypeIds || [];
                                 const newIds = currentIds.includes(at.id!)
                                     ? currentIds.filter((id: string) => id !== at.id)
@@ -283,7 +281,7 @@ export function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, 
                                     <CommandItem
                                     key={role.id}
                                     value={role.name}
-                                    onSelect={(e) => { e.preventDefault(); handleRoleSelection(role.id!, fieldName); }}
+                                    onSelect={() => { handleRoleSelection(role.id!, fieldName); }}
                                     >
                                     <Check className={cn("mr-2 h-4 w-4", selectedRoles.includes(role.id!) ? "opacity-100" : "opacity-0")} />
                                     {role.name}
@@ -305,7 +303,7 @@ export function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, 
                                         <button
                                             type="button"
                                             className="ml-1 rounded-full p-0.5 hover:bg-background/80"
-                                            onClick={(e) => { e.preventDefault(); handleRoleSelection(roleId, fieldName); }}
+                                            onClick={() => { handleRoleSelection(roleId, fieldName); }}
                                             disabled={disabled}
                                         >
                                             <X className="h-3 w-3" />
