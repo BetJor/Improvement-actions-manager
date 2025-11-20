@@ -215,7 +215,7 @@ export default function DataLoadPage() {
                 <AlertTitle>Asignar Responsable de Personal</AlertTitle>
                 <AlertDescription className="flex flex-col gap-4">
                    <p>
-                     Este proceso asignará un responsable de 'Personal' a los centros cuya 'Dependencia' termine en "CA_Director@asepeyo.es". El nuevo email será el de la dependencia sustituyendo el final por "Llodio_CA_Personal@asepeyo.es".
+                     Este proceso asignará un responsable de 'Personal' a los centros cuya 'Dependencia' termine en "CA_Director@asepeyo.es". El nuevo email será el de la dependencia sustituyendo el final por "CA_Personal@asepeyo.es".
                    </p>
                     <Button onClick={handleLoadPersonalResponsibles} disabled={isLoadingPersonal} className="w-fit">
                     {isLoadingPersonal ? (

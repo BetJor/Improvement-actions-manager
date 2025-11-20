@@ -1,5 +1,4 @@
 
-
 import { collection, getDocs, doc, addDoc, query, orderBy, updateDoc, deleteDoc, writeBatch, where, getDoc, setDoc, limit, arrayRemove } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { ImprovementActionType, ActionCategory, ActionSubcategory, AffectedArea, MasterDataItem, ResponsibilityRole, Center } from '@/lib/types';
@@ -276,7 +275,7 @@ export const addPersonalResponsibleToLocations = async (): Promise<number> => {
         const dependenciaEmail = data.responsibles?.Dependencia;
 
         if (dependenciaEmail && typeof dependenciaEmail === 'string' && dependenciaEmail.endsWith('CA_Director@asepeyo.es')) {
-            const newPersonalEmail = dependenciaEmail.replace('CA_Director@asepeyo.es', 'Llodio_CA_Personal@asepeyo.es');
+            const newPersonalEmail = dependenciaEmail.replace('CA_Director@asepeyo.es', 'CA_Personal@asepeyo.es');
             
             const docRef = doc.ref;
             batch.update(docRef, { 'responsibles.Personal': newPersonalEmail });
@@ -342,15 +341,16 @@ export async function addMasterDataItem(collectionName: string, item: Omit<Maste
   return docRef.id;
 }
 
-// Generic function to update an item, replacing it completely.
+// Generic function to update an item
 export async function updateMasterDataItem(collectionName: string, itemId: string, item: Partial<Omit<MasterDataItem, 'id'>>): Promise<void> {
   const docRef = doc(db, collectionName, itemId);
-  await setDoc(docRef, item, { merge: false })
+  const dataToSave = sanitizeDataForFirestore(item);
+  await setDoc(docRef, dataToSave, { merge: false })
     .catch(async (serverError) => {
         const permissionError = new FirestorePermissionError({
             path: docRef.path,
-            operation: 'write', // 'write' covers setDoc
-            requestResourceData: item,
+            operation: 'write', // Using write because setDoc can overwrite
+            requestResourceData: dataToSave,
         } satisfies SecurityRuleContext);
         errorEmitter.emit('permission-error', permissionError);
         throw serverError;
