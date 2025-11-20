@@ -106,20 +106,23 @@ export default function SettingsPage() {
             const rolesWithDetails = responsibilityRoles.map(role => {
                 let displayType = role.type;
                 let centerName = '';
-                let fieldName = role.locationResponsibleField || '';
-    
-                if (role.type === 'Location') {
-                    displayType = `Centro Acción (${fieldName})`;
-                } else if (role.type === 'FixedLocation' && role.fixedLocationId) {
+
+                if (role.type === 'FixedLocation' && role.fixedLocationId) {
                     centerName = locations.find(l => l.id === role.fixedLocationId)?.descripcion_centro || role.fixedLocationId;
-                    displayType = `Centro Específico: ${centerName} (${fieldName})`;
+                    displayType = `Centro Específico: ${centerName}`;
+                } else if (role.type === 'Location' && role.actionFieldSource) {
+                    const fieldLabels: Record<string, string> = {
+                        centerId: 'Centro Principal',
+                        affectedAreasIds: 'Áreas Implicadas',
+                        affectedCentersIds: 'Centros Afectados'
+                    }
+                    displayType = `Centro Acción (${fieldLabels[role.actionFieldSource] || role.actionFieldSource})`;
                 }
                 
                 return { 
                     ...role, 
                     displayType: displayType, 
                     centerName: centerName,
-                    fieldName: fieldName,
                 };
             });
 
@@ -135,6 +138,7 @@ export default function SettingsPage() {
                         { key: 'displayType', label: 'Tipo' },
                         { key: 'email', label: 'Email' },
                         { key: 'emailPattern', label: 'Patrón Email' },
+                        { key: 'locationResponsibleField', label: 'Campo Responsable' },
                     ] 
                 },
                 locations: locations, // Keep raw locations data
@@ -328,11 +332,10 @@ export default function SettingsPage() {
 
     const responsibilityRolesColumns = [
         { key: 'name', label: 'Nombre' },
-        { key: 'type', label: 'Tipo' },
-        { key: 'centerName', label: 'Centro' },
-        { key: 'fieldName', label: 'Campo Responsable' },
+        { key: 'displayType', label: 'Tipo' },
         { key: 'email', label: 'Email' },
         { key: 'emailPattern', label: 'Patrón Email' },
+        { key: 'locationResponsibleField', label: 'Campo Responsable'},
     ];
 
 
@@ -494,3 +497,4 @@ export default function SettingsPage() {
         </div>
     );
 }
+

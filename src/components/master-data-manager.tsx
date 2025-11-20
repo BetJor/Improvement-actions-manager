@@ -106,23 +106,24 @@ export function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, 
     }
   }, [item, isOpen, collectionName, extraData]);
 
-  const handleSave = async () => {
+ const handleSave = async () => {
     if (!isPermissionDialog && !formData.name) {
       return;
     }
-  
-    // Build a new clean object based on the role type
+    
+    // Start with a clean base object containing only common fields
     const baseData: Partial<ResponsibilityRole> = {
       id: formData.id,
       name: formData.name,
       order: formData.order,
       type: (formData as ResponsibilityRole).type
     };
-  
+
     let dataToSave: Partial<ResponsibilityRole> = { ...baseData };
-  
+    
     if (collectionName === 'responsibilityRoles') {
       const roleData = formData as ResponsibilityRole;
+      // Add only the fields relevant to the selected type
       switch (roleData.type) {
         case 'Fixed':
           dataToSave.email = roleData.email;
@@ -136,13 +137,13 @@ export function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, 
           break;
         case 'Location':
           dataToSave.locationResponsibleField = roleData.locationResponsibleField;
+          dataToSave.actionFieldSource = roleData.actionFieldSource;
           break;
       }
     } else {
-      // For other collections, just copy the whole thing for now
       dataToSave = { ...formData };
     }
-    
+
     await onSave(collectionName, dataToSave);
     setIsOpen(false);
   };
@@ -154,11 +155,13 @@ export function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, 
   };
   
   const handleRoleTypeChange = (value: ResponsibilityRole['type']) => {
+    // Reset to a clean slate, preserving only basic info
     setFormData(prev => ({
         id: prev.id,
         name: prev.name,
         order: prev.order,
-        type: value
+        type: value // Set the new type
+        // All other specific fields (email, emailPattern, etc.) are discarded
     }));
   };
 
@@ -332,7 +335,7 @@ export function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, 
                 value={roleData.emailPattern || ''}
                 onChange={(e) => setFormData({ ...formData, emailPattern: e.target.value })}
                 className="col-span-3"
-                placeholder="ej., direccion-0101@example.com"
+                placeholder="ej., direccion-{{center.id}}@example.com"
               />
               <p className="col-start-2 col-span-3 text-xs text-muted-foreground">
                 Puedes usar placeholders como `{'{{action.center.id}}'}` o emails estáticos.
@@ -372,6 +375,24 @@ export function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, 
                       </Popover>
                   </div>
               )}
+               {roleData.type === 'Location' && (
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="actionFieldSource" className="text-right">Campo Origen Acción</Label>
+                  <Select
+                    value={roleData.actionFieldSource}
+                    onValueChange={(value) => setFormData({ ...formData, actionFieldSource: value })}
+                  >
+                    <SelectTrigger className="col-span-3">
+                      <SelectValue placeholder="Selecciona un campo de origen" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="centerId">Centro Principal</SelectItem>
+                      <SelectItem value="affectedAreasIds">Áreas Funcionales Implicadas</SelectItem>
+                      <SelectItem value="affectedCentersIds">Centros afectados</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="locationResponsibleField" className="text-right">Campo Responsable</Label>
                 <Popover open={isFieldPopoverOpen} onOpenChange={setIsFieldPopoverOpen}>
@@ -401,7 +422,7 @@ export function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, 
                     </PopoverContent>
                 </Popover>
                  <p className="col-start-2 col-span-3 text-xs text-muted-foreground">
-                  {roleData.type === 'Location' ? "Busca el email en el centro de la acción." : "Busca el email en el centro específico seleccionado arriba."}
+                  {roleData.type === 'Location' ? "Busca el email en el centro/área de la acción." : "Busca el email en el centro específico seleccionado arriba."}
                 </p>
               </div>
             </>
