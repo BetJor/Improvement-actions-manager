@@ -54,22 +54,9 @@ export async function resolveRoles(
 
     let resolvedEmails: string[] = [];
 
-    // Pre-fetch context data to avoid multiple DB calls inside the loop
-    const allCenters = await getCenters();
-    const centerDoc = action.centerId ? allCenters.find((c: Center) => c.id === action.centerId) : null;
-    
-    // Get the full center document from 'locations' to access 'responsibles'
-    const locationDoc = action.centerId ? doc(db, 'locations', action.centerId) : null;
-
+    // Pre-fetch creator data once
     const creator = await getUserById(action.creator.id);
-    
-    const context = {
-        action: {
-            ...action,
-            center: centerDoc,
-            creator: creator
-        }
-    };
+    const context = { action: { ...action, creator: creator } };
 
     for (const roleId of roleIds) {
         const role = allRoles.find(r => r.id === roleId);
@@ -86,18 +73,26 @@ export async function resolveRoles(
                 }
                 break;
             case 'Location':
-                if (role.locationResponsibleField && locationDoc) {
-                    try {
-                        const locationSnap = await getDocs(query(collection(db, 'locations'), where('__name__', '==', locationDoc.id)));
-                        if (!locationSnap.empty) {
-                            const locationData = locationSnap.docs[0].data();
-                            const responsibleEmail = locationData.responsibles?.[role.locationResponsibleField];
-                            if (responsibleEmail) {
-                                resolvedEmails.push(responsibleEmail);
+                if (role.locationResponsibleField && role.actionFieldSource) {
+                    // Get the ID(s) from the specified field in the action
+                    const sourceIds = action[role.actionFieldSource as keyof ImprovementAction];
+                    const locationIds = Array.isArray(sourceIds) ? sourceIds : [sourceIds];
+
+                    for (const locationId of locationIds) {
+                        if (!locationId) continue;
+                        const locationDocRef = doc(db, 'locations', locationId);
+                        try {
+                            const locationSnap = await getDoc(locationDocRef);
+                            if (locationSnap.exists()) {
+                                const locationData = locationSnap.data();
+                                const responsibleEmail = locationData.responsibles?.[role.locationResponsibleField];
+                                if (responsibleEmail) {
+                                    resolvedEmails.push(responsibleEmail);
+                                }
                             }
+                        } catch (error) {
+                             console.error(`Error fetching location document for role resolution:`, error);
                         }
-                    } catch (error) {
-                        console.error(`Error fetching location document for role resolution:`, error);
                     }
                 }
                 break;
