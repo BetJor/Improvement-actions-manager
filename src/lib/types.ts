@@ -14,8 +14,7 @@ export interface ImprovementActionType extends MasterDataItem {
 }
 
 export interface ResponsibilityRole extends MasterDataItem {
-    type: 'Pattern' | 'Fixed' | 'Location' | 'FixedLocation';
-    emailPattern?: string; // e.g., "direccion-{{center.id}}@example.com"
+    type: 'Fixed' | 'Location' | 'FixedLocation';
     email?: string; // e.g., "calidad.global@example.com"
     actionFieldSource?: 'centerId' | 'affectedAreasIds' | 'affectedCentersIds'; // New field to specify source
     locationResponsibleField?: string; // e.g., "Administracion"
@@ -214,4 +213,3 @@ export interface ImprovementAction {
   comments?: ActionComment[];
   attachments?: ActionAttachment[];
 };
-

@@ -1,7 +1,7 @@
-import { collection, doc, getDocs, addDoc, updateDoc, deleteDoc, query, where } from 'firebase/firestore';
+import { collection, doc, getDocs, addDoc, updateDoc, deleteDoc, query, where, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { PermissionRule, ResponsibilityRole, ImprovementAction, ImprovementActionStatus, Center } from '@/lib/types';
-import { evaluatePattern } from '@/lib/pattern-evaluator';
+import { evaluatePattern } from '@/services/pattern-evaluator';
 import { getCenters } from './master-data-service';
 import { getUserById } from './users-service';
 
@@ -65,12 +65,6 @@ export async function resolveRoles(
         switch (role.type) {
             case 'Fixed':
                 if (role.email) resolvedEmails.push(role.email);
-                break;
-            case 'Pattern':
-                if (role.emailPattern) {
-                    const resolved = evaluatePattern(role.emailPattern, context);
-                    resolvedEmails.push(...resolved.filter(email => !email.includes('{{')));
-                }
                 break;
             case 'Location':
                 if (role.locationResponsibleField && role.actionFieldSource) {

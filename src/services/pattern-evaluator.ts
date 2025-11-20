@@ -23,51 +23,27 @@ export function evaluatePattern(pattern: string, data: any): string[] {
     let patternsToProcess = [pattern];
     let finalResults: string[] = [];
 
-    // Regex to find all {{...}} placeholders
-    const placeholders = pattern.match(/\{\{([^}]+)\}\}/g) || [];
-    
-    // Find the first placeholder that resolves to an array
-    const arrayPlaceholder = placeholders.find(p => {
-        const path = p.replace(/[{}]/g, '').trim();
-        const value = getProperty(data, path);
-        return Array.isArray(value);
-    });
+    // This logic is now part of the services that call this function,
+    // as it's more context-specific. This function will now just resolve patterns.
 
-    if (arrayPlaceholder) {
-        const path = arrayPlaceholder.replace(/[{}]/g, '').trim();
-        const arrayValue = getProperty(data, path);
-        // Create a new pattern for each item in the array
-        patternsToProcess = arrayValue.map((item: any) => pattern.replace(arrayPlaceholder, String(item)));
-    }
-    
     patternsToProcess.forEach(p => {
         let hasUnresolvedPlaceholders = false;
-        // Regex to find all {{...}} placeholders
         const evaluatedString = p.replace(/\{\{([^}]+)\}\}/g, (match, path) => {
-            // Trim whitespace from the path inside the braces
             const cleanPath = path.trim();
-            
-            // Resolve the value from the data object
             const value = getProperty(data, cleanPath);
             
             if (value !== undefined) {
                 return String(value);
             } else {
                 hasUnresolvedPlaceholders = true;
-                return match; // Keep the original placeholder if value not found
+                return match; // Keep placeholder if value not found
             }
         });
 
-        // Only add to results if all placeholders were resolved
         if (!hasUnresolvedPlaceholders) {
             finalResults.push(evaluatedString);
         }
     });
-
-    // If there were no placeholders at all, the original pattern is a valid static email
-    if (placeholders.length === 0 && pattern.includes('@')) {
-        finalResults.push(pattern);
-    }
 
     return [...new Set(finalResults)];
 }

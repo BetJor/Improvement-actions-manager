@@ -128,9 +128,6 @@ export function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, 
         case 'Fixed':
           dataToSave.email = roleData.email;
           break;
-        case 'Pattern':
-          dataToSave.emailPattern = roleData.emailPattern;
-          break;
         case 'FixedLocation':
           dataToSave.fixedLocationId = roleData.fixedLocationId;
           dataToSave.locationResponsibleField = roleData.locationResponsibleField;
@@ -155,13 +152,31 @@ export function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, 
   };
   
   const handleRoleTypeChange = (value: ResponsibilityRole['type']) => {
-    setFormData(prev => ({
-        id: prev.id,
-        name: prev.name,
-        order: prev.order,
+    const baseData = {
+        id: formData.id,
+        name: formData.name,
+        order: formData.order,
         type: value 
-    }));
-  };
+    };
+
+    let newData: Partial<ResponsibilityRole> = baseData;
+
+    switch (value) {
+        case 'Fixed':
+            newData.email = (formData as ResponsibilityRole).email || '';
+            break;
+        case 'FixedLocation':
+            newData.fixedLocationId = (formData as ResponsibilityRole).fixedLocationId || '';
+            newData.locationResponsibleField = (formData as ResponsibilityRole).locationResponsibleField || '';
+            break;
+        case 'Location':
+            newData.actionFieldSource = (formData as ResponsibilityRole).actionFieldSource || 'centerId';
+            newData.locationResponsibleField = (formData as ResponsibilityRole).locationResponsibleField || '';
+            break;
+    }
+    
+    setFormData(newData);
+};
 
 
   const renderSpecificFields = () => {
@@ -307,7 +322,6 @@ export function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, 
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="Fixed">Fijo</SelectItem>
-                <SelectItem value="Pattern">Patrón</SelectItem>
                 <SelectItem value="Location">Centro Acción</SelectItem>
                 <SelectItem value="FixedLocation">Centro Específico</SelectItem>
               </SelectContent>
@@ -323,21 +337,6 @@ export function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, 
                 className="col-span-3"
                 placeholder="ej., calidad@ejemplo.com"
               />
-            </div>
-          )}
-          {roleData.type === 'Pattern' && (
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="emailPattern" className="text-right">Patrón de Email</Label>
-              <Input
-                id="emailPattern"
-                value={roleData.emailPattern || ''}
-                onChange={(e) => setFormData({ ...formData, emailPattern: e.target.value })}
-                className="col-span-3"
-                placeholder="ej., direccion-{{center.id}}@example.com"
-              />
-              <p className="col-start-2 col-span-3 text-xs text-muted-foreground">
-                Puedes usar placeholders como `{'{{action.center.id}}'}` o emails estáticos.
-              </p>
             </div>
           )}
            {(roleData.type === 'Location' || roleData.type === 'FixedLocation') && (
@@ -548,6 +547,3 @@ export function MasterDataTable({ data, columns, onEdit, onDelete, isLoading, ca
     </div>
   );
 }
-
-    
-
