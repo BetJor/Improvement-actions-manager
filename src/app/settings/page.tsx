@@ -109,8 +109,8 @@ export default function SettingsPage() {
 
                 if (role.type === 'FixedLocation' && role.fixedLocationId) {
                     const location = locations.find(l => l.id === role.fixedLocationId);
-                    centerName = location?.descripcion_centro || role.fixedLocationId;
                     const centerCode = location?.id || '';
+                    centerName = location?.descripcion_centro || role.fixedLocationId;
                     displayType = `Centro Específico: ${centerCode} - ${centerName}`;
                 } else if (role.type === 'Location' && role.actionFieldSource) {
                     const fieldLabels: Record<string, string> = {
@@ -173,11 +173,20 @@ export default function SettingsPage() {
         }
 
         const getRoleNames = (roleIds: string[] | undefined) => {
-            if (!roleIds) return '';
-            return roleIds
+            if (!roleIds || roleIds.length === 0) return null;
+            const names = roleIds
                 .map(roleId => masterData.responsibilityRoles.data.find((r: ResponsibilityRole) => r.id === roleId)?.name)
-                .filter(Boolean)
-                .join(', ');
+                .filter(Boolean);
+            
+            if (names.length === 0) return null;
+
+            return (
+                <div>
+                    {names.map((name, index) => (
+                        <div key={index}>{name}</div>
+                    ))}
+                </div>
+            );
         };
 
         const actionTypesWithRoleNames = masterData.ambits.data.map((at: ImprovementActionType) => ({
