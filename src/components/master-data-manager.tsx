@@ -259,51 +259,57 @@ export function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, 
             setFormData({ ...formData, [fieldName]: newRoles });
         };
         
-        const renderDropdown = (fieldName: keyof ImprovementActionType, label: string, disabled: boolean = false) => {
+        const renderMultiSelect = (fieldName: keyof ImprovementActionType, label: string, disabled: boolean = false) => {
             const selectedRoles = (actionTypeData[fieldName] || []) as string[];
+            const selectedRoleNames = extraData.responsibilityRoles!
+                .filter(r => selectedRoles.includes(r.id!))
+                .map(r => r.name)
+                .join(', ');
+
             return (
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor={fieldName} className="text-right">{label}</Label>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" className="col-span-3 justify-between" disabled={disabled}>
+              <div className="grid grid-cols-4 items-start gap-4">
+                <Label htmlFor={fieldName} className="text-right pt-2">{label}</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className="col-span-3 justify-between text-left font-normal" disabled={disabled}>
                       <span className="truncate">
-                        {selectedRoles.length > 0
-                          ? extraData.responsibilityRoles!
-                              .filter(r => selectedRoles.includes(r.id!))
-                              .map(r => r.name)
-                              .join(', ')
-                          : "Selecciona roles"}
+                        {selectedRoleNames || "Selecciona roles"}
                       </span>
                       <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                     </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent className="w-[300px]">
-                    <DropdownMenuLabel>{label}</DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    {extraData.responsibilityRoles!.map((role) => (
-                      <DropdownMenuCheckboxItem
-                        key={role.id}
-                        checked={selectedRoles.includes(role.id!)}
-                        onSelect={(e) => e.preventDefault()}
-                        onCheckedChange={() => handleRoleSelection(role.id!, fieldName)}
-                      >
-                        {role.name}
-                      </DropdownMenuCheckboxItem>
-                    ))}
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                    <Command>
+                      <CommandInput placeholder="Buscar rol..." />
+                      <CommandList className="max-h-56">
+                        <CommandEmpty>No se encontraron roles.</CommandEmpty>
+                        <CommandGroup>
+                          {extraData.responsibilityRoles!.map((role) => (
+                            <CommandItem
+                              key={role.id}
+                              value={role.name}
+                              onSelect={() => handleRoleSelection(role.id!, fieldName)}
+                            >
+                              <Check className={cn("mr-2 h-4 w-4", selectedRoles.includes(role.id!) ? "opacity-100" : "opacity-0")} />
+                              {role.name}
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
               </div>
             );
         };
         
         return (
             <div className="space-y-4">
-                {renderDropdown('configAdminRoleIds', 'Admins de Configuración', !userIsAdmin)}
+                {renderMultiSelect('configAdminRoleIds', 'Admins de Configuración', !userIsAdmin)}
                 <Separator />
                 <h4 className="font-semibold text-center text-muted-foreground">Permisos de Workflow</h4>
-                {renderDropdown('possibleCreationRoles', 'Roles de Creación')}
-                {renderDropdown('possibleAnalysisRoles', 'Roles de Análisis')}
+                {renderMultiSelect('possibleCreationRoles', 'Roles de Creación')}
+                {renderMultiSelect('possibleAnalysisRoles', 'Roles de Análisis')}
             </div>
         );
     }
@@ -355,7 +361,7 @@ export function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, 
                                 <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                             </Button>
                         </PopoverTrigger>
-                        <PopoverContent className="w-[--radix-popover-trigger-width] max-h-56 p-0">
+                        <PopoverContent className="w-[var(--radix-popover-trigger-width)] max-h-56 p-0">
                             <Command>
                                 <CommandInput placeholder="Busca un centro..." />
                                 <CommandList>
