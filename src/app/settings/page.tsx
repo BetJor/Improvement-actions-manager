@@ -137,7 +137,6 @@ export default function SettingsPage() {
                         { key: 'name', label: 'Nombre' },
                         { key: 'displayType', label: 'Tipo' },
                         { key: 'email', label: 'Email' },
-                        { key: 'emailPattern', label: 'Patrón Email' },
                         { key: 'locationResponsibleField', label: 'Campo Responsable' },
                     ] 
                 },
@@ -334,7 +333,6 @@ export default function SettingsPage() {
         { key: 'name', label: 'Nombre' },
         { key: 'displayType', label: 'Tipo' },
         { key: 'email', label: 'Email' },
-        { key: 'emailPattern', label: 'Patrón Email' },
         { key: 'locationResponsibleField', label: 'Campo Responsable'},
     ];
 
