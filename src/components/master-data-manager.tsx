@@ -12,7 +12,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Loader2, Pencil, PlusCircle, Trash2, ChevronsUpDown, Info, ExternalLink, Check } from "lucide-react";
+import { Loader2, Pencil, PlusCircle, Trash2, ChevronsUpDown, Info, ExternalLink, Check, X } from "lucide-react";
 import type { MasterDataItem, ResponsibilityRole, ImprovementActionType, PermissionRule, ActionCategory, ActionSubcategory } from "@/lib/types";
 import {
   Dialog,
@@ -39,12 +39,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
-import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "./ui/dropdown-menu";
+import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "./ui/command";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 import { Separator } from "./ui/separator";
 import { cn } from "@/lib/utils";
-import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "./ui/command";
+import { Badge } from "./ui/badge";
 
 interface MasterDataFormDialogProps {
   isOpen: boolean;
@@ -107,10 +107,6 @@ export function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, 
   }, [item, isOpen, collectionName, extraData]);
 
  const handleSave = async () => {
-    if (!isPermissionDialog && !formData.name) {
-      return;
-    }
-    
     // Start with a clean base object containing only common fields
     const baseData: Partial<ResponsibilityRole> = {
       id: formData.id,
@@ -185,48 +181,50 @@ export function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, 
     const subcategoryData = formData as ActionSubcategory;
 
     if (collectionName === 'origins' && extraData?.actionTypes) {
-      const handleActionTypeSelection = (actionTypeId: string) => {
-        const currentIds = categoryData.actionTypeIds || [];
-        const newIds = currentIds.includes(actionTypeId)
-          ? currentIds.filter((id: string) => id !== actionTypeId)
-          : [...currentIds, actionTypeId];
-        setFormData({ ...formData, actionTypeIds: newIds });
-      };
-
-      return (
-        <div className="grid grid-cols-4 items-center gap-4">
-          <Label htmlFor="actionTypeIds" className="text-right">Ámbitos Relacionados</Label>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="col-span-3 justify-between">
-                <span className="truncate">
-                  {categoryData.actionTypeIds && categoryData.actionTypeIds.length > 0
-                    ? extraData.actionTypes
-                        .filter(at => categoryData.actionTypeIds!.includes(at.id!))
-                        .map(at => at.name)
-                        .join(', ')
-                    : "Selecciona ámbitos"}
-                </span>
-                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-[300px]">
-              <DropdownMenuLabel>Ámbitos</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              {extraData.actionTypes.map((at) => (
-                <DropdownMenuCheckboxItem
-                  key={at.id}
-                  checked={categoryData.actionTypeIds?.includes(at.id!)}
-                  onSelect={(e) => e.preventDefault()}
-                  onCheckedChange={() => handleActionTypeSelection(at.id!)}
-                >
-                  {at.name}
-                </DropdownMenuCheckboxItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      );
+        return (
+            <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="actionTypeIds" className="text-right">Ámbitos Relacionados</Label>
+            <Popover>
+                <PopoverTrigger asChild>
+                <Button variant="outline" className="col-span-3 justify-between">
+                    <span className="truncate">
+                    {actionTypeData.actionTypeIds && actionTypeData.actionTypeIds.length > 0
+                        ? `${actionTypeData.actionTypeIds.length} ámbito(s) seleccionado(s)`
+                        : "Selecciona ámbitos"}
+                    </span>
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                <Command>
+                    <CommandInput placeholder="Buscar ámbito..." />
+                    <CommandList className="max-h-56">
+                    <CommandEmpty>No se encontraron ámbitos.</CommandEmpty>
+                    <CommandGroup>
+                        {extraData.actionTypes.map((at) => (
+                        <CommandItem
+                            key={at.id}
+                            value={at.name}
+                            onSelect={(e) => {
+                                e.preventDefault();
+                                const currentIds = actionTypeData.actionTypeIds || [];
+                                const newIds = currentIds.includes(at.id!)
+                                    ? currentIds.filter((id: string) => id !== at.id)
+                                    : [...currentIds, at.id!];
+                                setFormData({ ...formData, actionTypeIds: newIds });
+                            }}
+                        >
+                            <Check className={cn("mr-2 h-4 w-4", actionTypeData.actionTypeIds?.includes(at.id!) ? "opacity-100" : "opacity-0")} />
+                            {at.name}
+                        </CommandItem>
+                        ))}
+                    </CommandGroup>
+                    </CommandList>
+                </Command>
+                </PopoverContent>
+            </Popover>
+            </div>
+        );
     }
 
     if (collectionName === 'classifications' && extraData?.categories) {
@@ -261,44 +259,63 @@ export function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, 
         
         const renderMultiSelect = (fieldName: keyof ImprovementActionType, label: string, disabled: boolean = false) => {
             const selectedRoles = (actionTypeData[fieldName] || []) as string[];
-            const selectedRoleNames = extraData.responsibilityRoles!
-                .filter(r => selectedRoles.includes(r.id!))
-                .map(r => r.name)
-                .join(', ');
 
             return (
               <div className="grid grid-cols-4 items-start gap-4">
                 <Label htmlFor={fieldName} className="text-right pt-2">{label}</Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button variant="outline" className="col-span-3 justify-between text-left font-normal" disabled={disabled}>
-                      <span className="truncate">
-                        {selectedRoleNames || "Selecciona roles"}
-                      </span>
-                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
-                    <Command>
-                      <CommandInput placeholder="Buscar rol..." />
-                      <CommandList className="max-h-56">
-                        <CommandEmpty>No se encontraron roles.</CommandEmpty>
-                        <CommandGroup>
-                          {extraData.responsibilityRoles!.map((role) => (
-                            <CommandItem
-                              key={role.id}
-                              value={role.name}
-                              onSelect={() => handleRoleSelection(role.id!, fieldName)}
-                            >
-                              <Check className={cn("mr-2 h-4 w-4", selectedRoles.includes(role.id!) ? "opacity-100" : "opacity-0")} />
-                              {role.name}
-                            </CommandItem>
-                          ))}
-                        </CommandGroup>
-                      </CommandList>
-                    </Command>
-                  </PopoverContent>
-                </Popover>
+                <div className="col-span-3 space-y-2">
+                    <Popover>
+                        <PopoverTrigger asChild>
+                            <Button variant="outline" className="w-full justify-between text-left font-normal" disabled={disabled}>
+                            <span className="truncate">
+                                {`${selectedRoles.length} rol(es) seleccionado(s)`}
+                            </span>
+                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                            </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                            <Command>
+                            <CommandInput placeholder="Buscar rol..." />
+                            <CommandList className="max-h-56">
+                                <CommandEmpty>No se encontraron roles.</CommandEmpty>
+                                <CommandGroup>
+                                {extraData.responsibilityRoles!.map((role) => (
+                                    <CommandItem
+                                    key={role.id}
+                                    value={role.name}
+                                    onSelect={(e) => { e.preventDefault(); handleRoleSelection(role.id!, fieldName); }}
+                                    >
+                                    <Check className={cn("mr-2 h-4 w-4", selectedRoles.includes(role.id!) ? "opacity-100" : "opacity-0")} />
+                                    {role.name}
+                                    </CommandItem>
+                                ))}
+                                </CommandGroup>
+                            </CommandList>
+                            </Command>
+                        </PopoverContent>
+                    </Popover>
+                    {selectedRoles.length > 0 && (
+                        <div className="flex flex-wrap gap-1">
+                            {selectedRoles.map(roleId => {
+                                const role = extraData.responsibilityRoles!.find(r => r.id === roleId);
+                                if (!role) return null;
+                                return (
+                                    <Badge key={roleId} variant="secondary" className="pl-2 pr-1">
+                                        {role.name}
+                                        <button
+                                            type="button"
+                                            className="ml-1 rounded-full p-0.5 hover:bg-background/80"
+                                            onClick={(e) => { e.preventDefault(); handleRoleSelection(roleId, fieldName); }}
+                                            disabled={disabled}
+                                        >
+                                            <X className="h-3 w-3" />
+                                        </button>
+                                    </Badge>
+                                );
+                            })}
+                        </div>
+                    )}
+                </div>
               </div>
             );
         };
@@ -447,7 +464,9 @@ export function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, 
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className={cn(
+          collectionName === 'ambits' ? 'sm:max-w-2xl' : 'sm:max-w-md'
+      )}>
         <DialogHeader>
           <DialogTitle>{item ? (isPermissionDialog ? title : "Editar " + title) : "Añadir " + title}</DialogTitle>
           <DialogDescription>
