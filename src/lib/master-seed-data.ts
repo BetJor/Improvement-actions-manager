@@ -18,8 +18,8 @@ export const seedActionTypes: Omit<ImprovementActionType, 'id'>[] = [
     { name: 'ENS', order: 4 },
     { name: 'Seguridad y Salud Laboral', order: 5 },
     { name: 'Riesgos de Seguridad del Paciente', order: 6 },
-    { name: 'Riesgos Penales', order: 7 },
-    { name: 'Auditoría Interna', order: 8 },
+    { name: 'Riesgos Penales', order: 8 },
+    { name: 'Auditoría Interna', order: 9 },
 ];
 
 
