@@ -1,4 +1,5 @@
 // src/lib/pattern-evaluator.ts
+import type { ResponsibilityRole } from "./types";
 
 /**
  * Resolves a dot-notation path from an object.
@@ -9,45 +10,46 @@ function getProperty(obj: any, path: string): any {
 }
 
 /**
- * Evaluates a pattern string with placeholders like {{object.property}}
- * against a data object.
- * @param pattern The string containing placeholders (e.g., "user-{{creator.id}}@example.com").
- * @param data The data object (e.g., the improvement action object).
- * @returns An array of evaluated strings with placeholders replaced by values.
+ * Evaluates a role's resolution logic based on its type and pattern.
+ * @param role The ResponsibilityRole object to evaluate.
+ * @param context The context object containing action and locations data.
+ * @returns An array of evaluated email strings.
  */
-export function evaluatePattern(pattern: string, data: any): string[] {
-    if (!pattern) return [];
+export function evaluatePattern(role: ResponsibilityRole, context: any): string[] {
+    if (!role) return [];
 
-    let patternsToProcess = [pattern];
-    let finalResults: string[] = [];
-    let hasArrayPlaceholder = false;
+    const { action, locations } = context;
 
-    // Find array placeholders like {{action.affectedAreasIds}}
-    const arrayMatch = pattern.match(/\{\{([^}]+)\}\}/);
-    if (arrayMatch) {
-        const path = arrayMatch[1].trim();
-        const value = getProperty(data, path);
-        if (Array.isArray(value)) {
-            hasArrayPlaceholder = true;
-            // Create a pattern for each item in the array
-            patternsToProcess = value.map(item => pattern.replace(arrayMatch[0], String(item)));
+    switch (role.type) {
+        case 'Fixed':
+            return role.email ? [role.email] : [];
+        
+        case 'FixedLocation': {
+            if (!role.fixedLocationId || !role.locationResponsibleField) return [];
+            const location = locations.find((l: any) => l.id === role.fixedLocationId);
+            if (location?.responsibles?.[role.locationResponsibleField]) {
+                return [location.responsibles[role.locationResponsibleField]];
+            }
+            return [];
         }
-    }
-    
-    patternsToProcess.forEach(p => {
-        // Regex to find all {{...}} placeholders
-        const evaluatedString = p.replace(/\{\{([^}]+)\}\}/g, (match, path) => {
-            // Trim whitespace from the path inside the braces
-            const cleanPath = path.trim();
-            
-            // Resolve the value from the data object
-            const value = getProperty(data, cleanPath);
-            
-            // If the value is found, return it, otherwise return the original placeholder
-            return value !== undefined ? String(value) : match;
-        });
-        finalResults.push(evaluatedString);
-    });
 
-    return finalResults;
+        case 'Location': {
+            if (!role.actionFieldSource || !role.locationResponsibleField) return [];
+            
+            const sourceIds = getProperty(action, role.actionFieldSource);
+            const locationIds = Array.isArray(sourceIds) ? sourceIds : [sourceIds].filter(Boolean);
+            
+            if (!locationIds || locationIds.length === 0) return [];
+            
+            const emails = locationIds.map(locId => {
+                const location = locations.find((l: any) => l.id === locId);
+                return location?.responsibles?.[role.locationResponsibleField];
+            }).filter(Boolean); // Filter out any undefined emails
+            
+            return [...new Set(emails)]; // Return unique emails
+        }
+
+        default:
+            return [];
+    }
 }
