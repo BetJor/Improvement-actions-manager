@@ -1,4 +1,5 @@
 
+
 'use server';
 /**
  * @fileOverview A service for handling notifications.
@@ -571,8 +572,8 @@ export async function sendCreationInformationEmail(action: ImprovementAction, re
               <tr style="border-bottom: 1px solid #eee;"><td style="padding: 6px 0; font-weight: bold; width: 150px;">Origen:</td><td>${action.category}</td></tr>
               <tr style="border-bottom: 1px solid #eee;"><td style="padding: 6px 0; font-weight: bold; width: 150px;">Clasificación:</td><td>${action.subcategory || 'N/A'}</td></tr>
               <tr style="border-bottom: 1px solid #eee;"><td style="padding: 6px 0; font-weight: bold; width: 150px;">Centro Principal:</td><td>${action.center || 'N/A'}</td></tr>
-              <tr style="border-bottom: 1px solid #eee;"><td style="padding: 6px 0; font-weight: bold; vertical-align: top; width: 150px;">Áreas Implicadas:</td><td>${action.affectedAreas?.join(', ') || 'N/A'}</td></tr>
-              <tr style="border-bottom: 1px solid #eee;"><td style="padding: 6px 0; font-weight: bold; vertical-align: top; width: 150px;">Centros Afectados:</td><td>${action.affectedCenters?.join(', ') || 'N/A'}</td></tr>
+              <tr style="border-bottom: 1px solid #eee;"><td style="padding: 6px 0; font-weight: bold; vertical-align: top; width: 150px;">Áreas Implicadas:</td><td>${action.affectedAreas?.join('<br>') || 'N/A'}</td></tr>
+              <tr style="border-bottom: 1px solid #eee;"><td style="padding: 6px 0; font-weight: bold; vertical-align: top; width: 150px;">Centros Afectados:</td><td>${action.affectedCenters?.join('<br>') || 'N/A'}</td></tr>
             </table>
             <h4 style="margin-top: 15px; margin-bottom: 5px; color: #333;">Observaciones:</h4>
             <p style="margin: 0; white-space: pre-wrap; font-style: italic;">${action.description}</p>
