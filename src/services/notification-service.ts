@@ -587,7 +587,9 @@ export async function sendCreationInformationEmail(action: ImprovementAction, re
 
     let commentText = '';
     if (successfulSends.length > 0) {
-        commentText = `Notificación informativa de creación enviada a: ${successfulSends.map(r => r.recipient).join(', ')}.`;
+        const uniqueRecipients = [...new Set(successfulSends.map(r => r.recipient))];
+        const previews = successfulSends.map(r => r.url).join(' ');
+        commentText = `Notificación informativa de creación enviada a: ${uniqueRecipients.join(', ')}. ${previews}`;
     }
     if (failedSends.length > 0) {
         commentText += `\nFallo de envío informativo a: ${failedSends.map(r => r.recipient).join(', ')}.`;
