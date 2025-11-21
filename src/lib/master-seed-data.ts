@@ -1,3 +1,4 @@
+
 import type { ActionCategory, ActionSubcategory, Center, ImprovementActionType } from './types';
 
 // Add ambitName to seed interface
