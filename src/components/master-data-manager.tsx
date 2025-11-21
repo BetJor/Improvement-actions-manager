@@ -90,7 +90,7 @@ export function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, 
             defaultData = { ...defaultData, type: "Fixed" };
         }
         if (collectionName === 'ambits') {
-            defaultData = { ...defaultData, configAdminRoleIds: [], possibleCreationRoles: [], possibleAnalysisRoles: [] };
+            defaultData = { ...defaultData, configAdminRoleIds: [], possibleCreationRoles: [], possibleAnalysisRoles: [], notificationOnCreationRoles: [] };
         }
         if (collectionName === 'origins') {
             const parentAmbitId = extraData?.parentItemId;
@@ -325,6 +325,7 @@ export function MasterDataFormDialog({ isOpen, setIsOpen, item, collectionName, 
                 <h4 className="font-semibold text-center text-muted-foreground">Permisos de Workflow</h4>
                 {renderMultiSelect('possibleCreationRoles', 'Roles de Creación')}
                 {renderMultiSelect('possibleAnalysisRoles', 'Roles de Análisis')}
+                {renderMultiSelect('notificationOnCreationRoles', 'Informar a (al crear)')}
             </div>
         );
     }

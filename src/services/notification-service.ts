@@ -543,3 +543,55 @@ export async function sendDueDateReminderEmail(
         };
     }
 }
+
+
+/**
+ * Sends a purely informational email when an action is created.
+ */
+export async function sendCreationInformationEmail(action: ImprovementAction, recipients: string[]): Promise<ActionComment | null> {
+    if (recipients.length === 0) return null;
+
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9002';
+    const actionUrl = `${appUrl}/actions/${action.id}`;
+    const subject = `Nueva acción de mejora creada: ${action.actionId} - ${action.title}`;
+
+    const html = `
+      <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+        <div style="max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px;">
+          <h2 style="color: #00529B; border-bottom: 2px solid #00529B; padding-bottom: 10px;">Nueva Acción de Mejora Creada (Informativo)</h2>
+          <p>Se ha creado una nueva acción de mejora que puede ser de tu interés:</p>
+          
+          <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;">
+            <h3 style="margin-top: 0; color: #00529B;">${action.actionId}: ${action.title}</h3>
+            <table style="width: 100%; border-collapse: collapse;">
+              <tr style="border-bottom: 1px solid #eee;"><td style="padding: 8px 0; font-weight: bold; width: 120px;">Creador/a:</td><td>${action.creator.name}</td></tr>
+              <tr style="border-bottom: 1px solid #eee;"><td style="padding: 8px 0; font-weight: bold;">Ámbito:</td><td>${action.type}</td></tr>
+              <tr style="border-bottom: 1px solid #eee;"><td style="padding: 8px 0; font-weight: bold;">Origen:</td><td>${action.category}</td></tr>
+              <tr style="border-bottom: 1px solid #eee;"><td style="padding: 8px 0; font-weight: bold;">Estado:</td><td>${action.status}</td></tr>
+            </table>
+          </div>
+          
+          <p>Puedes revisar los detalles completos de la acción en la plataforma.</p>
+          <a href="${actionUrl}" style="background-color: #6c757d; color: white; padding: 12px 20px; text-decoration: none; border-radius: 5px; display: inline-block; text-align: center;">Ver Acción</a>
+        </div>
+      </div>
+    `;
+
+    const emailTasks = recipients.map(recipient => 
+        sendEmail(recipient, subject, html).then(url => ({ recipient, url }))
+    );
+    
+    const results = await Promise.all(emailTasks);
+    const successfulSends = results.filter(r => r.url && !r.url.startsWith('FALLO_DE_ENVIO'));
+    const failedSends = results.filter(r => !r.url || r.url.startsWith('FALLO_DE_ENVIO'));
+
+    let commentText = '';
+    if (successfulSends.length > 0) {
+        commentText = `Notificación informativa de creación enviada a: ${successfulSends.map(r => r.recipient).join(', ')}.`;
+    }
+    if (failedSends.length > 0) {
+        commentText += `\nFallo de envío informativo a: ${failedSends.map(r => r.recipient).join(', ')}.`;
+    }
+    
+    return commentText ? { id: crypto.randomUUID(), author: { id: 'system', name: 'Sistema' }, date: new Date().toISOString(), text: commentText.trim() } : null;
+}

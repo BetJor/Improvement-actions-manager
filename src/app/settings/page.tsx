@@ -194,6 +194,7 @@ export default function SettingsPage() {
             configAdminRoleNames: getRoleNames(at.configAdminRoleIds),
             creationRoleNames: getRoleNames(at.possibleCreationRoles),
             analysisRoleNames: getRoleNames(at.possibleAnalysisRoles),
+            notificationOnCreationRoleNames: getRoleNames(at.notificationOnCreationRoles),
         }));
 
         const sortedActionTypes = [...actionTypesWithRoleNames].sort((a, b) => (a.order ?? 0) - (b.order ?? 0) || a.name.localeCompare(b.name));
@@ -207,9 +208,10 @@ export default function SettingsPage() {
             data: filteredActionTypes,
             columns: [
                 { key: 'name', label: "Ámbito" },
-                { key: 'configAdminRoleNames', label: "Admins de Configuración" },
                 { key: 'creationRoleNames', label: "Roles Creación" },
                 { key: 'analysisRoleNames', label: "Roles Análisis" },
+                { key: 'notificationOnCreationRoleNames', label: "Informar a (al crear)" },
+                { key: 'configAdminRoleNames', label: "Admins de Configuración" },
             ]
         };
     }, [masterData, isAdmin, userRoles]);
@@ -227,7 +229,7 @@ export default function SettingsPage() {
             } else {
                 const { id, ...dataToSave } = item as any;
                 
-                const propertiesToRemove = ['categoryName', 'creationRoleNames', 'analysisRoleNames', 'closureRoleNames', 'actionTypeNames', 'configAdminRoleNames', 'displayType', 'centerName', 'fieldName'];
+                const propertiesToRemove = ['categoryName', 'creationRoleNames', 'analysisRoleNames', 'closureRoleNames', 'actionTypeNames', 'configAdminRoleNames', 'displayType', 'centerName', 'fieldName', 'notificationOnCreationRoleNames'];
                 propertiesToRemove.forEach(prop => {
                     if (prop in dataToSave) {
                         delete dataToSave[prop];
@@ -384,7 +386,7 @@ export default function SettingsPage() {
                     </TabsContent>
 
                     <TabsContent value="workflow" className="flex-grow mt-4">
-                        <Card>
+                        <Card className="shadow-lg">
                             <CardContent className="p-0">
                                 <MasterDataTable
                                     data={sortedWorkflowAmbits.data}
