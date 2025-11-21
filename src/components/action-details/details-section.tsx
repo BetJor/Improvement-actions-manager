@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { ActionStatusBadge } from "@/components/action-status-badge"
 import { Separator } from "@/components/ui/separator"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { CircleUser, Calendar, Users, Tag, CalendarClock, Info, ChevronRight } from "lucide-react"
+import { CircleUser, Calendar, Users, Tag, CalendarClock, Info, ChevronRight, CheckCircle2 } from "lucide-react"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { Button } from "@/components/ui/button"
 import { format, parseISO } from "date-fns"
@@ -51,6 +51,17 @@ interface DetailsSectionProps {
 
 export function DetailsSection({ action }: DetailsSectionProps) {
 
+  const statusOrder: ImprovementAction["status"][] = [
+    'Borrador',
+    'Pendiente Análisis',
+    'Pendiente Comprobación',
+    'Pendiente de Cierre',
+    'Finalizada',
+    'Anulada'
+  ];
+
+  const currentStatusIndex = statusOrder.indexOf(action.status);
+
   return (
     <Card>
       <Collapsible defaultOpen>
@@ -91,10 +102,28 @@ export function DetailsSection({ action }: DetailsSectionProps) {
             />
             <Separator />
             <DetailRow icon={Calendar} label="Fecha Creación" value={action.creationDate} isDate />
-            <DetailRow icon={CalendarClock} label="Vencimiento Análisis" value={action.analysisDueDate} isDate />
-            <DetailRow icon={CalendarClock} label="Vencimiento Implantación" value={action.implementationDueDate} isDate />
-            <DetailRow icon={CalendarClock} label="Vencimiento Verificación" value={action.verificationDueDate} isDate />
-            <DetailRow icon={CalendarClock} label="Vencimiento Cierre" value={action.closureDueDate} isDate />
+            
+            {/* Analysis Date */}
+            {action.analysis?.analysisDate ? (
+                 <DetailRow icon={CheckCircle2} label="Fecha Análisis" value={action.analysis.analysisDate} isDate />
+            ) : currentStatusIndex >= statusOrder.indexOf('Pendiente Análisis') && (
+                 <DetailRow icon={CalendarClock} label="Vencimiento Análisis" value={action.analysisDueDate} isDate />
+            )}
+
+            {/* Verification Date */}
+            {action.verification?.verificationDate ? (
+                 <DetailRow icon={CheckCircle2} label="Fecha Verificación" value={action.verification.verificationDate} isDate />
+            ) : currentStatusIndex >= statusOrder.indexOf('Pendiente Comprobación') && (
+                 <DetailRow icon={CalendarClock} label="Vencimiento Verificación" value={action.verificationDueDate} isDate />
+            )}
+
+            {/* Closure Date */}
+            {action.closure?.date ? (
+                 <DetailRow icon={CheckCircle2} label="Fecha Cierre" value={action.closure.date} isDate />
+            ) : currentStatusIndex >= statusOrder.indexOf('Pendiente de Cierre') && (
+                 <DetailRow icon={CalendarClock} label="Vencimiento Cierre" value={action.closureDueDate} isDate />
+            )}
+            
           </CardContent>
         </CollapsibleContent>
       </Collapsible>
