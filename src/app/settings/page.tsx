@@ -208,10 +208,10 @@ export default function SettingsPage() {
             data: filteredActionTypes,
             columns: [
                 { key: 'name', label: "Ámbito" },
-                { key: 'creationRoleNames', label: "Roles Creación" },
-                { key: 'analysisRoleNames', label: "Roles Análisis" },
-                { key: 'notificationOnCreationRoleNames', label: "Informar a (al crear)" },
                 { key: 'configAdminRoleNames', label: "Admins de Configuración" },
+                { key: 'creationRoleNames', label: "Roles Creación" },
+                { key: 'notificationOnCreationRoleNames', label: "Informar a (al crear)" },
+                { key: 'analysisRoleNames', label: "Roles Análisis" },
             ]
         };
     }, [masterData, isAdmin, userRoles]);
@@ -508,4 +508,3 @@ export default function SettingsPage() {
         </div>
     );
 }
-
