@@ -39,10 +39,7 @@ export const seedCategories: SeedCategory[] = [
     // Responsabilidad social
     { name: 'SR10 - Auditoría Interna', order: 0, ambitName: 'Responsabilidad social' },
     { name: 'SR10 - Auditoría Externa', order: 1, ambitName: 'Responsabilidad social' },
-    { name: 'Planes de mejora de gestión de Riesgos Penales', order: 2, ambitName: 'Responsabilidad social' },
-    { name: 'Auditoría interna', order: 3, ambitName: 'Responsabilidad social' },
-    { name: 'Otros', order: 4, ambitName: 'Responsabilidad social' },
-
+    
     // Seguridad de la Información
     { name: 'ISO 27001 - Auditoría Interna', order: 0, ambitName: 'Seguridad de la Información' },
     { name: 'ISO 27001 - Auditoría Externa', order: 1, ambitName: 'Seguridad de la Información' },
@@ -66,6 +63,12 @@ export const seedCategories: SeedCategory[] = [
     { name: 'ISO 179003 - Auditoría Externa', order: 1, ambitName: 'Riesgos de Seguridad del Paciente' },
     { name: 'Planes de acción de gestión de riesgos', order: 2, ambitName: 'Riesgos de Seguridad del Paciente' },
     { name: 'Otros', order: 3, ambitName: 'Riesgos de Seguridad del Paciente' },
+
+    // Riesgos Penales
+    { name: 'Planes de mejora de gestión de Riesgos Penales', order: 0, ambitName: 'Riesgos Penales' },
+
+    // Auditoría Interna
+    { name: 'Auditoría interna', order: 0, ambitName: 'Auditoría Interna' },
 ];
 
 const calidadClassifications = [
@@ -158,7 +161,11 @@ const riesgosPenalesClassifications = [
 ];
 
 const auditoriaInternaRiesgosClassifications = [
-    "Auditoría interna de riesgos penales"
+    "Auditoría Organización Territorail",
+    "Auditoría Organización Funcional",
+    "Auditoría Seguimiento Externas",
+    "Auditoría Híbridas",
+    "Auditoría Riesgos Penales"
 ];
 
 const seguridadInformacionClassifications = [
@@ -296,20 +303,6 @@ export const seedSubcategories: SeedSubcategory[] = [
         ambitName: 'Responsabilidad social',
         originName: 'SR10 - Auditoría Externa'
     })),
-    // Responsabilidad Social -> Planes de mejora de gestión de Riesgos Penales
-    ...riesgosPenalesClassifications.map((name, index) => ({
-        name: name,
-        order: index,
-        ambitName: 'Responsabilidad social',
-        originName: 'Planes de mejora de gestión de Riesgos Penales'
-    })),
-    // Responsabilidad Social -> Auditoría interna
-    ...auditoriaInternaRiesgosClassifications.map((name, index) => ({
-        name: name,
-        order: index,
-        ambitName: 'Responsabilidad social',
-        originName: 'Auditoría interna'
-    })),
     // Seguridad de la Información -> ISO 27001 - Auditoría Interna
     ...seguridadInformacionClassifications.map((name, index) => ({
         name: name,
@@ -372,5 +365,19 @@ export const seedSubcategories: SeedSubcategory[] = [
         order: index,
         ambitName: 'Riesgos de Seguridad del Paciente',
         originName: 'ISO 179003 - Auditoría Externa'
+    })),
+    // Riesgos Penales -> Planes de mejora de gestión de Riesgos Penales
+    ...riesgosPenalesClassifications.map((name, index) => ({
+        name: name,
+        order: index,
+        ambitName: 'Riesgos Penales',
+        originName: 'Planes de mejora de gestión de Riesgos Penales'
+    })),
+    // Auditoría Interna -> Auditoría interna
+    ...auditoriaInternaRiesgosClassifications.map((name, index) => ({
+        name: name,
+        order: index,
+        ambitName: 'Auditoría Interna',
+        originName: 'Auditoría interna'
     })),
 ];
