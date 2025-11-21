@@ -101,7 +101,7 @@ const calidadClassifications = [
 ];
 
 const medioambienteClassifications = [
-    "Política Ambiental",
+    "1. Política Ambiental",
     "2. Aspectos Ambientales",
     "3. Requisitos legales y otros requisitos - Evaluación del cumplimiento de la legislación",
     "4. Objetivos,metas y programas",
@@ -114,7 +114,7 @@ const medioambienteClassifications = [
     "11. No conformidad, acción correctiva",
     "12. Control de los registros",
     "13. Auditoría interna",
-    "14. Revisión por la Dirección",
+    "14. Revisión por la Dirección"
 ];
 
 const responsabilidadSocialClassifications = [
