@@ -211,11 +211,14 @@ async function getEmailDetailsForAnalysis(action: ImprovementAction): Promise<Em
           
           <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;">
             <h3 style="margin-top: 0; color: #00529B;">Detalles de la Acción</h3>
-            <table style="width: 100%; border-collapse: collapse;">
-              <tr style="border-bottom: 1px solid #eee;"><td style="padding: 8px 0; font-weight: bold; width: 120px;">Creador/a:</td><td>${action.creator.name}</td></tr>
-              <tr style="border-bottom: 1px solid #eee;"><td style="padding: 8px 0; font-weight: bold;">Ámbito:</td><td>${action.type}</td></tr>
-              <tr style="border-bottom: 1px solid #eee;"><td style="padding: 8px 0; font-weight: bold;">Origen:</td><td>${action.category}</td></tr>
-              <tr style="border-bottom: 1px solid #eee;"><td style="padding: 8px 0; font-weight: bold;">Centro:</td><td>${action.center || 'No especificado'}</td></tr>
+            <table style="width: 100%; border-collapse: collapse; font-size: 0.9em;">
+              <tr style="border-bottom: 1px solid #eee;"><td style="padding: 6px 0; font-weight: bold; width: 150px;">Creador/a:</td><td>${action.creator.name}</td></tr>
+              <tr style="border-bottom: 1px solid #eee;"><td style="padding: 6px 0; font-weight: bold; width: 150px;">Ámbito:</td><td>${action.type}</td></tr>
+              <tr style="border-bottom: 1px solid #eee;"><td style="padding: 6px 0; font-weight: bold; width: 150px;">Origen:</td><td>${action.category}</td></tr>
+              <tr style="border-bottom: 1px solid #eee;"><td style="padding: 6px 0; font-weight: bold; width: 150px;">Clasificación:</td><td>${action.subcategory || 'N/A'}</td></tr>
+              <tr style="border-bottom: 1px solid #eee;"><td style="padding: 6px 0; font-weight: bold; width: 150px;">Centro Principal:</td><td>${action.center || 'N/A'}</td></tr>
+              <tr style="border-bottom: 1px solid #eee;"><td style="padding: 6px 0; font-weight: bold; vertical-align: top; width: 150px;">Áreas Implicadas:</td><td>${action.affectedAreas?.join('<br>') || 'N/A'}</td></tr>
+              <tr style="border-bottom: 1px solid #eee;"><td style="padding: 6px 0; font-weight: bold; vertical-align: top; width: 150px;">Centros Afectados:</td><td>${action.affectedCenters?.join('<br>') || 'N/A'}</td></tr>
             </table>
             <h4 style="margin-top: 15px; margin-bottom: 5px; color: #333;">Observaciones:</h4>
             <p style="margin: 0; white-space: pre-wrap; font-style: italic;">${action.description}</p>
@@ -345,7 +348,7 @@ export async function sendStateChangeEmail(details: { action: ImprovementAction,
     let commentText = '';
     if (successfulSends.length > 0) {
         const uniqueRecipients = [...new Set(successfulSends.map(r => r.recipient))];
-        const previews = successfulSends.map(r => r.url).join(' ');
+        const previews = successfulSends.map(r => r.url).filter(Boolean).join(' ');
         commentText = `${notificationSummary} ${uniqueRecipients.join(', ')}. ${previews}`;
     }
     
