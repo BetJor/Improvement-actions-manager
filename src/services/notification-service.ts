@@ -595,7 +595,7 @@ export async function sendCreationInformationEmail(action: ImprovementAction, re
     let commentText = '';
     if (successfulSends.length > 0) {
         const uniqueRecipients = [...new Set(successfulSends.map(r => r.recipient))];
-        const previews = successfulSends.map(r => `<a href="${r.url}" target="_blank" rel="noopener noreferrer" style="color: #00529B;">Previsualización</a>`).join(', ');
+        const previews = successfulSends.map(r => r.url).filter(Boolean).join(' ');
         commentText = `Notificación informativa de creación enviada a: ${uniqueRecipients.join(', ')}. ${previews}`;
     }
     if (failedSends.length > 0) {
@@ -604,5 +604,3 @@ export async function sendCreationInformationEmail(action: ImprovementAction, re
     
     return commentText ? { id: crypto.randomUUID(), author: { id: 'system', name: 'Sistema' }, date: new Date().toISOString(), text: commentText.trim() } : null;
 }
-
-    
