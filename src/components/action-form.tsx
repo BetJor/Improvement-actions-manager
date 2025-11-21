@@ -520,9 +520,9 @@ export function ActionForm({
                                         {selectedAffectedAreasIds && selectedAffectedAreasIds.length > 0 && (
                                             <div className="p-2 border rounded-md text-sm text-muted-foreground space-y-1">
                                                 {selectedAffectedAreasIds.map(id => (
-                                                    <div key={id} className="flex items-center justify-between">
+                                                    <div key={id} className="group flex items-center justify-between hover:bg-muted/50 rounded-sm px-1 -mx-1">
                                                         <span>{masterData.affectedAreas.find((a: AffectedArea) => a.id === id)?.name}</span>
-                                                        <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => field.onChange(field.value.filter(v => v !== id))}>
+                                                        <Button variant="ghost" size="icon" className="h-5 w-5 opacity-0 group-hover:opacity-100" onClick={() => field.onChange(field.value.filter(v => v !== id))}>
                                                             <X className="h-3 w-3" />
                                                         </Button>
                                                     </div>
@@ -581,9 +581,9 @@ export function ActionForm({
                                         {selectedAffectedCentersIds && selectedAffectedCentersIds.length > 0 && (
                                             <div className="p-2 border rounded-md text-sm text-muted-foreground space-y-1 max-h-32 overflow-y-auto">
                                                 {selectedAffectedCentersIds.map(id => (
-                                                     <div key={id} className="flex items-center justify-between">
+                                                     <div key={id} className="group flex items-center justify-between hover:bg-muted/50 rounded-sm px-1 -mx-1">
                                                         <span>{masterData.centers.data.find((c: Center) => c.id === id)?.name}</span>
-                                                        <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => field.onChange(field.value.filter(v => v !== id))}>
+                                                        <Button variant="ghost" size="icon" className="h-5 w-5 opacity-0 group-hover:opacity-100" onClick={() => field.onChange(field.value.filter(v => v !== id))}>
                                                             <X className="h-3 w-3" />
                                                         </Button>
                                                     </div>
