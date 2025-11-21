@@ -8,7 +8,7 @@ import { planTraditionalActionWorkflow, getWorkflowSettings } from './workflow-s
 import { getUsers, getUserById } from './users-service';
 import { getCategories, getSubcategories, getAffectedAreas, getCenters, getActionTypes, getResponsibilityRoles } from './master-data-service';
 import { getPermissionRuleForState, resolveRoles } from './permissions-service';
-import { sendStateChangeEmail, sendProposedActionUpdateEmail, sendBisCreationNotificationEmail } from './notification-service';
+import { sendStateChangeEmail, sendProposedActionUpdateEmail, sendBisCreationNotificationEmail, sendCreationInformationEmail } from './notification-service';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError, type SecurityRuleContext } from '@/firebase/errors';
 
@@ -206,6 +206,8 @@ export async function createAction(data: CreateActionData, masterData: any): Pro
     const centerName = masterData.centers.data.find((c: any) => c.id === data.centerId)?.name || '';
     const affectedCentersNames = data.affectedCentersIds?.map(id => masterData.centers.data.find((c: any) => c.id === id)?.name || id);
     const typeName = masterData.ambits.data.find((t: any) => t.id === data.typeId)?.name || '';
+    const actionType: ImprovementActionType | undefined = masterData.ambits.data.find((t: ImprovementActionType) => t.id === data.typeId);
+
 
     const workflowSettings = await getWorkflowSettings();
 
@@ -253,13 +255,25 @@ export async function createAction(data: CreateActionData, masterData: any): Pro
 
     // If status is 'Pendiente Análisis', send email and add comment *before* writing to DB
     if (newActionData.status === 'Pendiente Análisis') {
-        const notificationResult = await sendStateChangeEmail({
+        const commentsToAdd: ActionComment[] = [];
+
+        const taskNotificationResult = await sendStateChangeEmail({
             action: newActionData,
             oldStatus: 'Borrador',
             newStatus: 'Pendiente Análisis'
         });
-        if (notificationResult) {
-            newActionData.comments = [notificationResult];
+        if (taskNotificationResult) commentsToAdd.push(taskNotificationResult);
+        
+        // Handle informational notification
+        if (actionType?.notificationOnCreationRoles && actionType.notificationOnCreationRoles.length > 0) {
+            const allRoles = await getResponsibilityRoles();
+            const recipients = await resolveRoles(actionType.notificationOnCreationRoles, allRoles, newActionData);
+            const infoNotificationResult = await sendCreationInformationEmail(newActionData, recipients);
+            if (infoNotificationResult) commentsToAdd.push(infoNotificationResult);
+        }
+
+        if (commentsToAdd.length > 0) {
+            newActionData.comments = commentsToAdd;
         }
     }
     
@@ -644,3 +658,4 @@ async function getPermissionsForState(action: ImprovementAction, newStatus: Impr
 
     return { readers: combinedReaders, authors: [...new Set(newAuthors)] };
 }
+
