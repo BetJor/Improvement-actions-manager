@@ -608,3 +608,60 @@ export async function sendCreationInformationEmail(action: ImprovementAction, re
     
     return commentText ? { id: crypto.randomUUID(), author: { id: 'system', name: 'Sistema' }, date: new Date().toISOString(), text: commentText.trim() } : null;
 }
+
+/**
+ * Sends a purely informational email when an action is closed.
+ */
+export async function sendClosureInformationEmail(action: ImprovementAction, recipients: string[]): Promise<ActionComment | null> {
+    if (recipients.length === 0) return null;
+
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9002';
+    const actionUrl = `${appUrl}/actions/${action.id}`;
+    const subject = `Acción Finalizada: ${action.actionId} - ${action.title}`;
+
+    const compliantText = action.closure?.isCompliant ? 
+        '<span style="color: #28a745; font-weight: bold;">Conforme</span>' : 
+        '<span style="color: #dc3545; font-weight: bold;">No Conforme</span>';
+    
+    const bisMessage = !action.closure?.isCompliant ? 
+        '<p style="font-weight: bold; color: #dc3545;">Se ha generado una nueva acción BIS para continuar el tratamiento de la no conformidad.</p>' : '';
+
+    const html = `
+      <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+        <div style="max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px;">
+          <h2 style="color: #00529B; border-bottom: 2px solid #00529B; padding-bottom: 10px;">Acción de Mejora Finalizada (Informativo)</h2>
+          <p>La acción de mejora <strong>${action.actionId}: ${action.title}</strong> ha sido cerrada.</p>
+          
+          <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;">
+            <h3 style="margin-top: 0; color: #00529B;">Detalles del Cierre</h3>
+            <p><strong>Cerrada por:</strong> ${action.closure?.closureResponsible.name || 'N/D'}</p>
+            <p><strong>Fecha de Cierre:</strong> ${action.closure?.date ? format(safeParseDate(action.closure.date), 'dd/MM/yyyy') : 'N/D'}</p>
+            <p><strong>Resultado:</strong> ${compliantText}</p>
+            <h4 style="margin-top: 15px; margin-bottom: 5px; color: #333;">Observaciones de Cierre:</h4>
+            <p style="margin: 0; white-space: pre-wrap; font-style: italic;">${action.closure?.notes || 'Sin observaciones.'}</p>
+          </div>
+
+          ${bisMessage}
+          
+          <p>Puedes revisar los detalles completos del cierre en la plataforma.</p>
+          <a href="${actionUrl}" style="background-color: #6c757d; color: white; padding: 12px 20px; text-decoration: none; border-radius: 5px; display: inline-block; text-align: center;">Ver Acción</a>
+        </div>
+      </div>
+    `;
+
+    const emailTasks = recipients.map(recipient => 
+        sendEmail(recipient, subject, html).then(url => ({ recipient, url }))
+    );
+    
+    const results = await Promise.all(emailTasks);
+    const successfulSends = results.filter(r => r.url && !r.url.startsWith('FALLO_DE_ENVIO'));
+    
+    if (successfulSends.length > 0) {
+        const uniqueRecipients = [...new Set(successfulSends.map(r => r.recipient))];
+        const previews = successfulSends.map(r => r.url).filter(Boolean).join(' ');
+        const commentText = `Notificación informativa de cierre enviada a: ${uniqueRecipients.join(', ')}. ${previews}`;
+        return { id: crypto.randomUUID(), author: { id: 'system', name: 'Sistema' }, date: new Date().toISOString(), text: commentText.trim() };
+    }
+
+    return null;
+}

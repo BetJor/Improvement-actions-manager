@@ -8,7 +8,7 @@ import { planTraditionalActionWorkflow, getWorkflowSettings } from './workflow-s
 import { getUsers, getUserById } from './users-service';
 import { getCategories, getSubcategories, getAffectedAreas, getCenters, getActionTypes, getResponsibilityRoles } from './master-data-service';
 import { getPermissionRuleForState, resolveRoles } from './permissions-service';
-import { sendStateChangeEmail, sendProposedActionUpdateEmail, sendBisCreationNotificationEmail, sendCreationInformationEmail } from './notification-service';
+import { sendStateChangeEmail, sendProposedActionUpdateEmail, sendBisCreationNotificationEmail, sendCreationInformationEmail, sendClosureInformationEmail } from './notification-service';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError, type SecurityRuleContext } from '@/firebase/errors';
 
@@ -366,6 +366,7 @@ export async function updateAction(
     const actionDocRef = doc(db, 'actions', actionId);
     let bisCreationResult: { createdBisTitle?: string, foundBisTitle?: string } = {};
     let finalNotificationResult: ActionComment | null = null;
+    let closureNotificationResult: ActionComment | null = null;
     
     if (data.analysis && Array.isArray(data.analysis.proposedActions)) {
         data.analysis.proposedActions = data.analysis.proposedActions.map(pa => ({
@@ -502,12 +503,30 @@ export async function updateAction(
     }
 
     const finalActionDoc = await getDoc(actionDocRef);
-    const finalAction = { id: finalActionDoc.id, ...finalActionDoc.data() } as ImprovementAction;
+    let finalAction = { id: finalActionDoc.id, ...finalActionDoc.data() } as ImprovementAction;
     
-    // Call BIS creation logic AFTER the transaction is complete
-    if (data.closure?.isCompliant === false) {
-        bisCreationResult = await handleBisCreation(finalAction);
+    // Call post-transaction logic
+    if (data.closure) {
+        const { actionType, allRoles } = await getNotificationContext(finalAction.typeId);
+
+        // Send informational email about the closure
+        if (actionType?.notificationOnCreationRoles) {
+            const recipients = await resolveRoles(actionType.notificationOnCreationRoles, allRoles, finalAction);
+            closureNotificationResult = await sendClosureInformationEmail(finalAction, recipients);
+            if (closureNotificationResult) {
+                await addCommentToAction(finalAction.id, closureNotificationResult);
+            }
+        }
+        
+        // Handle BIS creation if non-compliant
+        if (data.closure.isCompliant === false) {
+            const bisResult = await handleBisCreation(finalAction);
+            bisCreationResult = bisResult;
+        }
     }
+
+    // Re-fetch the action to include the very last comments.
+    finalAction = await getActionById(actionId) || finalAction;
 
     return { updatedAction: finalAction, bisCreationResult, notificationResult: finalNotificationResult };
 }
@@ -625,6 +644,13 @@ export async function getFollowedActions(userId: string): Promise<ImprovementAct
     return actions;
 }
 
+async function getNotificationContext(actionTypeId: string) {
+    const allRoles = await getResponsibilityRoles();
+    const allAmbits = await getActionTypes();
+    const actionType = allAmbits.find(a => a.id === actionTypeId);
+    return { actionType, allRoles };
+}
+
 async function getPermissionsForState(action: ImprovementAction, newStatus: ImprovementActionStatus): Promise<{ readers: string[], authors: string[] }> {
     if (newStatus === 'Borrador') {
         const creatorEmail = action.creator?.email || (await getUserById(action.creator.id))?.email;
@@ -658,4 +684,5 @@ async function getPermissionsForState(action: ImprovementAction, newStatus: Impr
 
     return { readers: combinedReaders, authors: [...new Set(newAuthors)] };
 }
+
 
