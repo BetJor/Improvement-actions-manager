@@ -2,7 +2,6 @@
 
 import { collection, getDocs, doc, getDoc, query, orderBy, writeBatch, updateDoc, deleteDoc, setDoc } from 'firebase/firestore';
 import { db, auth } from '@/lib/firebase';
-import { users as mockUsers } from '@/lib/static-data';
 import type { User } from '@/lib/types';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { errorEmitter } from '@/firebase/error-emitter';
@@ -11,18 +10,6 @@ import { FirestorePermissionError, type SecurityRuleContext } from '@/firebase/e
 export async function getUsers(): Promise<User[]> {
     const usersCol = collection(db, 'users');
     let snapshot = await getDocs(query(usersCol, orderBy("name")));
-
-    if (snapshot.empty) {
-        console.log("Users collection is empty. Populating from static data...");
-        const batch = writeBatch(db);
-        mockUsers.forEach((user: User) => {
-            const docRef = doc(usersCol, user.id);
-            batch.set(docRef, user);
-        });
-        await batch.commit();
-        snapshot = await getDocs(query(usersCol, orderBy("name")));
-        console.log("Users collection populated.");
-    }
 
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
 }
