@@ -26,7 +26,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { getPrompt } from "@/lib/data"
 import { useToast } from "@/hooks/use-toast"
 import { useState, useMemo, useEffect, useRef, useCallback } from "react"
-import { Loader2, Mic, MicOff, Wand2, Save, Send, Ban, ChevronsUpDown, Check, Pencil } from "lucide-react"
+import { Loader2, Mic, MicOff, Wand2, Save, Send, Ban, ChevronsUpDown, Check, Pencil, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { improveWriting } from "@/ai/flows/improveWriting"
 import {
@@ -196,7 +196,7 @@ export function ActionForm({
             affectedAreasIds: selectedAffectedAreasIds,
             affectedCentersIds: selectedAffectedCentersIds
         },
-        locations: masterData.locations // Pass all locations for lookups
+        locations: masterData.locations || [] // Pass all locations for lookups, ensuring it's an array
     };
 
     actionType.possibleAnalysisRoles.forEach(roleId => {
@@ -520,7 +520,12 @@ export function ActionForm({
                                         {selectedAffectedAreasIds && selectedAffectedAreasIds.length > 0 && (
                                             <div className="p-2 border rounded-md text-sm text-muted-foreground space-y-1">
                                                 {selectedAffectedAreasIds.map(id => (
-                                                    <div key={id}>{masterData.affectedAreas.find((a: AffectedArea) => a.id === id)?.name}</div>
+                                                    <div key={id} className="flex items-center justify-between">
+                                                        <span>{masterData.affectedAreas.find((a: AffectedArea) => a.id === id)?.name}</span>
+                                                        <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => field.onChange(field.value.filter(v => v !== id))}>
+                                                            <X className="h-3 w-3" />
+                                                        </Button>
+                                                    </div>
                                                 ))}
                                             </div>
                                         )}
@@ -576,7 +581,12 @@ export function ActionForm({
                                         {selectedAffectedCentersIds && selectedAffectedCentersIds.length > 0 && (
                                             <div className="p-2 border rounded-md text-sm text-muted-foreground space-y-1 max-h-32 overflow-y-auto">
                                                 {selectedAffectedCentersIds.map(id => (
-                                                    <div key={id}>{masterData.centers.data.find((c: Center) => c.id === id)?.name}</div>
+                                                     <div key={id} className="flex items-center justify-between">
+                                                        <span>{masterData.centers.data.find((c: Center) => c.id === id)?.name}</span>
+                                                        <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => field.onChange(field.value.filter(v => v !== id))}>
+                                                            <X className="h-3 w-3" />
+                                                        </Button>
+                                                    </div>
                                                 ))}
                                             </div>
                                         )}
