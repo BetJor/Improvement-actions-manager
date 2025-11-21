@@ -25,7 +25,7 @@ export function evaluatePattern(role: ResponsibilityRole, context: any): string[
             return role.email ? [role.email] : [];
         
         case 'FixedLocation': {
-            if (!role.fixedLocationId || !role.locationResponsibleField) return [];
+            if (!role.fixedLocationId || !role.locationResponsibleField || !locations) return [];
             const location = locations.find((l: any) => l.id === role.fixedLocationId);
             if (location?.responsibles?.[role.locationResponsibleField]) {
                 return [location.responsibles[role.locationResponsibleField]];
@@ -34,7 +34,7 @@ export function evaluatePattern(role: ResponsibilityRole, context: any): string[
         }
 
         case 'Location': {
-            if (!role.actionFieldSource || !role.locationResponsibleField) return [];
+            if (!role.actionFieldSource || !role.locationResponsibleField || !locations) return [];
             
             const sourceIds = getProperty(action, role.actionFieldSource);
             const locationIds = Array.isArray(sourceIds) ? sourceIds : [sourceIds].filter(Boolean);
