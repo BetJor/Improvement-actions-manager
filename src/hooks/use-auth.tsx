@@ -17,7 +17,9 @@ import {
 import { auth, firebaseApp } from '@/lib/firebase';
 import { usePathname, useRouter } from 'next/navigation';
 import type { User, ImprovementActionType, UserGroup } from '@/lib/types';
-import { getUserById, updateUser, getResponsibilityRoles, getActionTypes } from '@/services/users-service';
+import { getUserById, updateUser } from '@/services/users-service';
+import { getResponsibilityRoles, getActionTypes } from '@/services/master-data-service';
+
 
 interface AuthContextType {
   user: User | null;
