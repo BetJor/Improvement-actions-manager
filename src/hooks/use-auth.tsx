@@ -1,5 +1,4 @@
-
-"use client";
+'use client';
 
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { 
@@ -13,10 +12,11 @@ import {
   sendPasswordResetEmail,
   signInWithRedirect,
   getRedirectResult,
+  getIdTokenResult,
 } from 'firebase/auth';
 import { auth, firebaseApp } from '@/lib/firebase';
 import { usePathname, useRouter } from 'next/navigation';
-import type { User, ImprovementActionType } from '@/lib/types';
+import type { User, ImprovementActionType, UserGroup } from '@/lib/types';
 import { getUserById, updateUser, getResponsibilityRoles, getActionTypes } from '@/services/users-service';
 
 interface AuthContextType {
@@ -24,6 +24,7 @@ interface AuthContextType {
   loading: boolean;
   isAdmin: boolean;
   userRoles: string[]; // IDs of ResponsibilityRole
+  userGroups: UserGroup[]; // Groups from custom claims
   canManageSettings: boolean;
   isImpersonating: boolean;
   impersonateUser: (userToImpersonate: User) => void;
@@ -47,14 +48,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [isImpersonating, setIsImpersonating] = useState(false);
   const [userRoles, setUserRoles] = useState<string[]>([]);
+  const [userGroups, setUserGroups] = useState<UserGroup[]>([]);
   const [canManageSettings, setCanManageSettings] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
 
-  const resolveUserPermissions = useCallback(async (userToResolve: User | null) => {
-    if (!userToResolve) {
+  const resolveUserPermissions = useCallback(async (fbUser: FirebaseUser | null, userToResolve: User | null) => {
+    if (!fbUser || !userToResolve) {
       setUserRoles([]);
       setCanManageSettings(false);
+      setUserGroups([]);
       return;
     }
     
@@ -62,14 +65,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const isGlobalAdmin = userToResolve.role === 'Admin';
     
     try {
+      const idTokenResult = await getIdTokenResult(fbUser);
+      const claims = idTokenResult.claims;
+      const groupsFromClaims: string[] = (claims.groups as string[]) || [];
+      
+      const mappedGroups: UserGroup[] = groupsFromClaims.map(g => ({
+          id: g,
+          name: g.split('@')[0].replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()), // Heuristic name
+          userIds: []
+      }));
+      setUserGroups(mappedGroups);
+
       const [allRoles, allAmbits] = await Promise.all([
         getResponsibilityRoles(),
         getActionTypes(),
       ]);
       
-      const matchedRoles = userToResolve.email 
-        ? allRoles.filter(role => role.type === 'Fixed' && role.email === userToResolve.email).map(role => role.id!)
-        : [];
+      const matchedRoles = allRoles
+        .filter(role => 
+            (role.type === 'Fixed' && groupsFromClaims.includes(role.email || ''))
+        )
+        .map(role => role.id!);
         
       setUserRoles(matchedRoles);
 
@@ -85,6 +101,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch (error) {
       console.error("Failed to resolve user permissions:", error);
       setUserRoles([]);
+      setUserGroups([]);
       setCanManageSettings(isGlobalAdmin);
     }
   }, []);
@@ -97,7 +114,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             if (originalUser?.id === fbUser.uid) {
                 setUser(impersonatedUser);
                 setFirebaseUser(fbUser);
-                await resolveUserPermissions(impersonatedUser);
+                await resolveUserPermissions(fbUser, impersonatedUser);
                 setIsImpersonating(true);
                 setLoading(false);
                 return;
@@ -108,28 +125,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         
         const fullUserDetails = await getUserById(fbUser.uid);
         setUser(fullUserDetails);
-        await resolveUserPermissions(fullUserDetails);
+        await resolveUserPermissions(fbUser, fullUserDetails);
         setFirebaseUser(fbUser);
         setIsImpersonating(false);
     } else {
         setUser(null);
         setFirebaseUser(null);
         setIsImpersonating(false);
-        await resolveUserPermissions(null);
+        await resolveUserPermissions(null, null);
     }
     setLoading(false);
   }, [resolveUserPermissions]);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
-        // Only trigger a full user load if the actual user ID has changed.
-        // This prevents reloads when admin actions (like creating a user)
-        // trigger auth state changes without actually changing the logged-in user.
         if (fbUser?.uid !== firebaseUser?.uid) {
             setLoading(true);
             await loadFullUser(fbUser);
             
-            // Redirect after login only if we were on the login page
             if (fbUser && pathname.includes('/login')) {
                 const redirectUrl = sessionStorage.getItem(REDIRECT_URL_KEY);
                 sessionStorage.removeItem(REDIRECT_URL_KEY);
@@ -155,9 +168,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const handleRedirectResult = async () => {
       try {
         const result = await getRedirectResult(auth);
-        if (result) {
-          // User is signed in. The onAuthStateChanged listener will handle loading the user data.
-        }
+        // If result is not null, onAuthStateChanged will handle the user loading.
       } catch (error) {
         console.error("Error during sign-in redirect:", error);
       }
@@ -190,21 +201,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = async () => {
     try {
-      // First, sign out from Firebase to invalidate the user's token.
       await signOut(auth);
-      
-      // Then, clean up local state like impersonation.
       sessionStorage.removeItem(IMPERSONATION_KEY);
       setIsImpersonating(false);
       setUser(null);
       setFirebaseUser(null);
-
-      // Finally, redirect to the login page.
       router.push(`/login`);
-      
     } catch (error) {
       console.error("Error signing out", error);
-      // Even if there's an error, force a clean state and redirect.
       sessionStorage.removeItem(IMPERSONATION_KEY);
       setUser(null);
       router.push(`/login`);
@@ -219,7 +223,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         originalUser: originalUser
       }));
       setUser(userToImpersonate);
-      await resolveUserPermissions(userToImpersonate);
+      // We pass `null` for fbUser because we can't get claims for another user on the client.
+      // Permissions for impersonated user will be based on their DB role, not claims.
+      await resolveUserPermissions(null, userToImpersonate);
       setIsImpersonating(true);
       window.location.reload(); 
     } else {
@@ -236,11 +242,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const updateDashboardLayout = useCallback(async (layout: string[]) => {
       if (!user) return;
       try {
-        // Update backend without causing a full user reload
         await updateUser(user.id, { dashboardLayout: layout });
       } catch (error) {
         console.error("Failed to update dashboard layout:", error);
-        // Optionally revert local state on error by fetching the user again
         const originalUser = await getUserById(user.id);
         setUser(originalUser);
       }
@@ -252,6 +256,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         loading, 
         isAdmin: user?.role === 'Admin',
         userRoles,
+        userGroups,
         canManageSettings,
         isImpersonating,
         impersonateUser,
