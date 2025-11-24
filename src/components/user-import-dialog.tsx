@@ -68,8 +68,9 @@ export function UserImportDialog({ isOpen, onClose, onImport, existingUsers }: U
               name: u.name?.fullName || 'N/A',
               email: u.primaryEmail || 'N/A',
               avatar: u.thumbnailPhotoUrl || `https://picsum.photos/seed/${u.id}/40/40`,
+              role: (u.isAdmin ? 'Admin' : 'Creator') as 'Admin' | 'Creator',
             }))
-            .filter(u => u.email && !existingUserEmails.has(u.email));
+            .filter(u => u.email && u.email !== 'N/A' && !existingUserEmails.has(u.email));
 
           setAllUsers(mappedUsers);
         })
