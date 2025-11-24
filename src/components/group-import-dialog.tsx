@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useState, useMemo, useRef } from "react";
@@ -71,7 +70,6 @@ export function GroupImportDialog({ isOpen, onClose, onImport, existingGroups }:
             .map((g: any) => ({
               id: g.email,
               name: g.name,
-              description: g.description || '',
               userIds: [], // This will be populated later
             }))
             .filter(g => g.id && !existingGroupEmails.has(g.id));
