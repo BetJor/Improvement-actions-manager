@@ -14,10 +14,10 @@ import { Loader2, Terminal, Search } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Input } from "@/components/ui/input";
-import { getWorkspaceUsers } from "@/services/google-workspace";
-import type { User } from '@/lib/types';
+import { getWorkspaceGroups } from "@/services/google-workspace";
+import type { UserGroup as Group } from "@/lib/types";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
+
 
 function ErrorDisplay({ error }: { error: string | null }) {
     if (!error) return null;
@@ -31,16 +31,16 @@ function ErrorDisplay({ error }: { error: string | null }) {
     );
 }
 
-interface UserImportDialogProps {
+interface GroupImportDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  onImport: (selectedUsers: User[]) => void;
-  existingUsers: User[];
+  onImport: (selectedGroups: Group[]) => void;
+  existingGroups: Group[];
 }
 
-export function UserImportDialog({ isOpen, onClose, onImport, existingUsers }: UserImportDialogProps) {
-  const [allUsers, setAllUsers] = useState<User[]>([]);
-  const [selectedUsers, setSelectedUsers] = useState<User[]>([]);
+export function GroupImportDialog({ isOpen, onClose, onImport, existingGroups }: GroupImportDialogProps) {
+  const [allGroups, setAllGroups] = useState<Group[]>([]);
+  const [selectedGroups, setSelectedGroups] = useState<Group[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -48,64 +48,72 @@ export function UserImportDialog({ isOpen, onClose, onImport, existingUsers }: U
   const [isMounted, setIsMounted] = useState(false);
   const parentRef = useRef<HTMLDivElement>(null);
 
+  // Ensure component is mounted on client before initializing virtualizer
   useEffect(() => {
     setIsMounted(true);
   }, []);
 
+  // Load all groups when dialog opens
   useEffect(() => {
     if (isOpen) {
-      setSelectedUsers([]);
+      // Reset state when dialog opens
+      setSelectedGroups([]);
       setSearchTerm("");
       setError(null);
 
+      // Fetch all groups from Google Workspace
       setIsLoading(true);
-      getWorkspaceUsers('costaisa.com')
-        .then((usersFromApi) => {
-          const existingUserEmails = new Set(existingUsers.map(u => u.email));
-          const mappedUsers: User[] = usersFromApi
-            .map((u: any) => ({
-              id: u.id || `unknown-${Math.random()}`,
-              name: u.name?.fullName || 'N/A',
-              email: u.primaryEmail || 'N/A',
-              avatar: u.thumbnailPhotoUrl || `https://picsum.photos/seed/${u.id}/40/40`,
+      getWorkspaceGroups()
+        .then((groupsFromApi) => {
+          const existingGroupEmails = new Set(existingGroups.map(g => g.id));
+          const mappedGroups: Group[] = groupsFromApi
+            .map((g: any) => ({
+              id: g.email,
+              name: g.name,
+              description: g.description || '',
+              userIds: [], // This will be populated later
+              membersCount: g.directMembersCount || '0'
             }))
-            .filter(u => u.email && !existingUserEmails.has(u.email));
+            .filter(g => g.id && !existingGroupEmails.has(g.id));
 
-          setAllUsers(mappedUsers);
+          setAllGroups(mappedGroups);
         })
         .catch((err) => {
-          console.error("Failed to fetch Google Users:", err);
-          setError(err.message || "No s'han pogut carregar els usuaris des de Google Workspace.");
+          console.error("Failed to fetch Google Groups:", err);
+          setError(err.message || "No s'han pogut carregar els grups des de Google Workspace.");
         })
         .finally(() => {
           setIsLoading(false);
         });
     }
-  }, [isOpen, existingUsers]);
+  }, [isOpen, existingGroups]);
 
-  const filteredUsers = useMemo(() => {
+  // Filter groups based on search term (client-side)
+  const filteredGroups = useMemo(() => {
     if (!searchTerm.trim()) {
-      return allUsers;
+      return allGroups;
     }
     const lowerSearch = searchTerm.toLowerCase();
-    return allUsers.filter(u =>
-      u.name.toLowerCase().includes(lowerSearch) ||
-      u.email.toLowerCase().includes(lowerSearch)
+    return allGroups.filter(g =>
+      g.name.toLowerCase().includes(lowerSearch) ||
+      g.id.toLowerCase().includes(lowerSearch)
     );
-  }, [allUsers, searchTerm]);
+  }, [allGroups, searchTerm]);
 
+  // Setup virtualizer (only on client-side after mount)
   const rowVirtualizer = useVirtualizer({
-    count: isMounted ? filteredUsers.length : 0,
+    count: isMounted ? filteredGroups.length : 0,
     getScrollElement: () => parentRef.current,
     estimateSize: () => 70,
     overscan: 5,
   });
 
-  const handleSelectUser = (user: User, checked: boolean | "indeterminate") => {
+
+  const handleSelectGroup = (group: Group, checked: boolean | "indeterminate") => {
     if (checked) {
-      setSelectedUsers((prev) => [...prev, user]);
+      setSelectedGroups((prev) => [...prev, group]);
     } else {
-      setSelectedUsers((prev) => prev.filter((u) => u.id !== user.id));
+      setSelectedGroups((prev) => prev.filter((g) => g.id !== group.id));
     }
   };
 
@@ -113,32 +121,34 @@ export function UserImportDialog({ isOpen, onClose, onImport, existingUsers }: U
     setIsImporting(true);
     setError(null);
     try {
-        await onImport(selectedUsers);
+        await onImport(selectedGroups);
         onClose();
     } catch (e: any) {
-        setError(e.message || "Hi ha hagut un error en importar els usuaris.");
+        setError(e.message || "Hi ha hagut un error en importar els grups.");
     } finally {
         setIsImporting(false);
     }
   };
 
   const handleSelectAll = () => {
-    if (selectedUsers.length === filteredUsers.length) {
-      setSelectedUsers([]);
+    if (selectedGroups.length === filteredGroups.length) {
+      // Deselect all
+      setSelectedGroups([]);
     } else {
-      setSelectedUsers([...filteredUsers]);
+      // Select all filtered groups
+      setSelectedGroups([...filteredGroups]);
     }
   };
 
-  const isAllSelected = filteredUsers.length > 0 && selectedUsers.length === filteredUsers.length;
+  const isAllSelected = filteredGroups.length > 0 && selectedGroups.length === filteredGroups.length;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
         <DialogContent className="sm:max-w-2xl">
             <DialogHeader>
-            <DialogTitle>Importar Usuaris des de Google Workspace</DialogTitle>
+            <DialogTitle>Importar Grups des de Google Workspace</DialogTitle>
             <DialogDescription>
-                Selecciona els usuaris que vols afegir a l'aplicació. {allUsers.length > 0 && `(${allUsers.length} usuaris disponibles)`}
+                Selecciona els grups que vols afegir a l'aplicació. {allGroups.length > 0 && `(${allGroups.length} grups disponibles)`}
             </DialogDescription>
             </DialogHeader>
 
@@ -155,10 +165,10 @@ export function UserImportDialog({ isOpen, onClose, onImport, existingUsers }: U
 
             <ErrorDisplay error={error} />
 
-            {filteredUsers.length > 0 && (
+            {filteredGroups.length > 0 && (
               <div className="flex items-center justify-between py-2">
                 <span className="text-sm text-muted-foreground">
-                  {filteredUsers.length} usuaris {searchTerm && "(filtrats)"}
+                  {filteredGroups.length} grups {searchTerm && "(filtrats)"}
                 </span>
                 <Button
                   variant="ghost"
@@ -178,13 +188,13 @@ export function UserImportDialog({ isOpen, onClose, onImport, existingUsers }: U
               {isLoading ? (
                 <div className="flex flex-col items-center justify-center h-full">
                   <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-                  <span className="ml-2 text-sm text-muted-foreground mt-2">Carregant usuaris...</span>
+                  <span className="ml-2 text-sm text-muted-foreground mt-2">Carregant grups...</span>
                 </div>
               ) : !isMounted ? (
                 <div className="flex items-center justify-center h-full">
                   <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                 </div>
-              ) : filteredUsers.length > 0 ? (
+              ) : filteredGroups.length > 0 ? (
                 <div
                   style={{
                     height: `${rowVirtualizer.getTotalSize()}px`,
@@ -193,7 +203,7 @@ export function UserImportDialog({ isOpen, onClose, onImport, existingUsers }: U
                   }}
                 >
                   {rowVirtualizer.getVirtualItems().map((virtualRow) => {
-                    const user = filteredUsers[virtualRow.index];
+                    const group = filteredGroups[virtualRow.index];
                     return (
                       <div
                         key={virtualRow.key}
@@ -209,19 +219,13 @@ export function UserImportDialog({ isOpen, onClose, onImport, existingUsers }: U
                       >
                         <div className="flex items-start space-x-3 py-2">
                           <Checkbox
-                            id={`user-${user.id}`}
-                            onCheckedChange={(checked) => handleSelectUser(user, checked)}
-                            checked={selectedUsers.some(u => u.id === user.id)}
+                            id={`group-${group.id}`}
+                            onCheckedChange={(checked) => handleSelectGroup(group, checked)}
+                            checked={selectedGroups.some(g => g.id === group.id)}
                           />
-                          <label htmlFor={`user-${user.id}`} className="flex items-center gap-3 cursor-pointer flex-1">
-                            <Avatar className="h-10 w-10">
-                              <AvatarImage src={user.avatar} alt={user.name} />
-                              <AvatarFallback>{user.name.charAt(0).toUpperCase()}</AvatarFallback>
-                            </Avatar>
-                            <div className="grid gap-0.5">
-                              <span className="font-medium">{user.name}</span>
-                              <span className="text-sm text-muted-foreground">{user.email}</span>
-                            </div>
+                          <label htmlFor={`group-${group.id}`} className="flex flex-col cursor-pointer flex-1">
+                            <span className="font-medium">{group.name}</span>
+                            <span className="text-sm text-muted-foreground">{group.id}</span>
                           </label>
                         </div>
                       </div>
@@ -230,7 +234,7 @@ export function UserImportDialog({ isOpen, onClose, onImport, existingUsers }: U
                 </div>
               ) : (
                 <div className="flex items-center justify-center h-full text-center text-muted-foreground">
-                  {allUsers.length === 0 ? "No hi ha usuaris disponibles per importar." : "No s'han trobat usuaris amb aquest criteri de cerca."}
+                  {allGroups.length === 0 ? "No hi ha grups disponibles per importar." : "No s'han trobat grups amb aquest criteri de cerca."}
                 </div>
               )}
             </div>
@@ -239,9 +243,9 @@ export function UserImportDialog({ isOpen, onClose, onImport, existingUsers }: U
             <Button variant="outline" onClick={onClose} disabled={isImporting}>
                 Cancel·lar
             </Button>
-            <Button onClick={handleImportClick} disabled={selectedUsers.length === 0 || isImporting}>
+            <Button onClick={handleImportClick} disabled={selectedGroups.length === 0 || isImporting}>
                 {isImporting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                Importar ({selectedUsers.length})
+                Importar ({selectedGroups.length})
             </Button>
             </DialogFooter>
         </DialogContent>
