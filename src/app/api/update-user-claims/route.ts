@@ -8,7 +8,9 @@ interface ImportUserRequest {
   name: string;
   avatar: string;
   role: 'Creator' | 'Responsible' | 'Director' | 'Committee' | 'Admin';
+  password?: string;
 }
+
 
 /**
  * Creates a user document in Firestore if it doesn't already exist.
@@ -43,7 +45,7 @@ export async function POST(request: NextRequest) {
     const auth = getAdminAuth();
     const db = getAdminFirestore();
     const body: ImportUserRequest = await request.json();
-    const { email, name, avatar, role } = body;
+    const { email, name, avatar, role, password } = body;
 
     if (!email || !name) {
       return NextResponse.json({ success: false, message: 'Email and name are required' }, { status: 400 });
@@ -58,15 +60,16 @@ export async function POST(request: NextRequest) {
     } catch (error: any) {
       if (error.code === 'auth/user-not-found') {
         console.log(`[API Route] User ${email} not found in Firebase Auth. Creating a new user...`);
+        
+        if (!password) {
+          throw new Error("La contraseña es obligatoria para crear un nuevo usuario.");
+        }
+        
         try {
-          // Generate a secure random password as it's required for creation,
-          // but the user will use Google Sign-In or password reset.
-          const randomPassword = Math.random().toString(36).slice(-10) + 'A1!';
-
           userRecord = await auth.createUser({
             email: email,
             emailVerified: true,
-            password: randomPassword,
+            password: password,
             displayName: name,
             photoURL: avatar
           });
@@ -94,6 +97,19 @@ export async function POST(request: NextRequest) {
         }
         return NextResponse.json({ success: false, message: `Failed to create user profile in database: ${firestoreError.message}` }, { status: 500 });
     }
+
+    // After a successful user creation/update, we revoke the refresh tokens.
+    // This forces the client to get a new ID token with the latest claims on the next request.
+    try {
+        await auth.revokeRefreshTokens(userRecord.uid);
+        const user = await auth.getUser(userRecord.uid);
+        const metadata = user.metadata;
+        const revocationTime = new Date(metadata.tokensValidAfterTime!).getTime() / 1000;
+        console.log(`[API Route] Tokens for ${email} revoked at: ${revocationTime}`);
+    } catch(e: any) {
+        console.error(`[API Route] Failed to revoke refresh tokens for ${userRecord.uid}:`, e.message);
+    }
+
 
     return NextResponse.json({
       success: true,
