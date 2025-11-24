@@ -9,7 +9,7 @@ import path from 'path';
 
 // --- CONFIGURACIÓ IMPORTANT ---
 // Pots canviar aquest email o usar una variable d'entorn
-const WORKSPACE_ADMIN_SUBJECT = process.env.WORKSPACE_ADMIN_EMAIL || 'dcampillo@costaisa.com';
+const WORKSPACE_ADMIN_SUBJECT = process.env.WORKSPACE_ADMIN_EMAIL || 'svc-gcds@costaisa.com';
 // ---
 
 // --- ATENCIÓ: Tots aquests permisos han d'estar autoritzats a la consola de Google ---
@@ -31,27 +31,21 @@ async function getAdminSdk() {
     try {
         console.log(`[GoogleWorkspaceService] Initializing Admin SDK client for subject: ${WORKSPACE_ADMIN_SUBJECT}`);
         
-        const serviceAccountKeyPath = path.resolve('./service-account.json');
-        if (!fs.existsSync(serviceAccountKeyPath)) {
-            throw new Error('service-account.json not found at the root of the project.');
+        const keyPath = process.env.GOOGLE_APPLICATION_CREDENTIALS;
+        if (!keyPath || !fs.existsSync(keyPath)) {
+            throw new Error('GOOGLE_APPLICATION_CREDENTIALS environment variable is not set or file not found.');
         }
 
-        const keyFile = JSON.parse(fs.readFileSync(serviceAccountKeyPath, 'utf8'));
+        const keyFile = JSON.parse(fs.readFileSync(keyPath, 'utf8'));
 
-        const auth = new google.auth.GoogleAuth({
-            credentials: {
-                client_email: keyFile.client_email,
-                private_key: keyFile.private_key,
-            },
+        const auth = new google.auth.JWT({
+            email: keyFile.client_email,
+            key: keyFile.private_key,
             scopes: WORKSPACE_SCOPES,
-            clientOptions: {
-                subject: WORKSPACE_ADMIN_SUBJECT,
-            }
+            subject: WORKSPACE_ADMIN_SUBJECT,
         });
 
-        const authClient = await auth.getClient();
-        
-        admin = google.admin({ version: 'directory_v1', auth: authClient as any });
+        admin = google.admin({ version: 'directory_v1', auth: auth as any });
         console.log('[GoogleWorkspaceService] Admin SDK client initialized successfully.');
         return admin;
 
