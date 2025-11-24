@@ -67,7 +67,7 @@ export function UserImportDialog({ isOpen, onClose, onImport, existingUsers }: U
               id: u.id || `unknown-${Math.random()}`,
               name: u.name?.fullName || 'N/A',
               email: u.primaryEmail || 'N/A',
-              avatar: u.thumbnailPhotoUrl || `https://picsum.photos/seed/${u.id}/40/40`,
+              avatar: u.thumbnailPhotoUrl || `https://i.pravatar.cc/150?u=${u.id}`,
               role: (u.isAdmin ? 'Admin' : 'Creator') as 'Admin' | 'Creator',
             }))
             .filter(u => u.email && u.email !== 'N/A' && !existingUserEmails.has(u.email));

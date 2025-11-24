@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/table"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Loader2, Pencil, PlusCircle, Trash2, LogIn } from "lucide-react";
+import { Loader2, Pencil, PlusCircle, Trash2, LogIn, Import } from "lucide-react";
 import { useEffect, useState, useCallback } from "react";
 import type { User } from "@/lib/types";
 import { getUsers, addUser, updateUser, deleteUser } from "@/lib/data";
@@ -36,6 +36,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { useAuth } from "@/hooks/use-auth"
+import { UserImportDialog } from "@/components/user-import-dialog";
 
 
 export default function UserManagementPage() {
@@ -44,6 +45,7 @@ export default function UserManagementPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isUserImportOpen, setIsUserImportOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
 
   const loadUsers = useCallback(async () => {
@@ -90,7 +92,9 @@ export default function UserManagementPage() {
             await updateUser(id, data);
             toast({ title: "Usuario actualizado", description: "El usuario se ha actualizado correctamente." });
         } else {
-            await addUser(data);
+            // The password is required for creation, but it's handled inside addUser.
+            // We just need to make sure the type is correct.
+            await addUser(data as Omit<User, 'id'> & { password?: string });
             toast({ title: "Usuario creado", description: "El usuario se ha creado correctamente." });
         }
         await loadUsers();
@@ -98,6 +102,37 @@ export default function UserManagementPage() {
     } catch (error) {
         console.error("Failed to save user:", error);
         toast({ variant: "destructive", title: "Error", description: "No se pudo guardar el usuario." });
+    }
+  };
+
+  const handleImportUsers = async (selectedUsers: User[]) => {
+    console.log("Importing users:", selectedUsers);
+    try {
+      const importPromises = selectedUsers.map(userToImport => {
+        // We'll assign a secure random password. The user will have to use "Forgot Password".
+        const randomPassword = Math.random().toString(36).slice(-8) + "A1!";
+        const userData = { ...userToImport, password: randomPassword, role: 'Creator' as const };
+        return addUser(userData);
+      });
+      
+      await Promise.all(importPromises);
+
+      toast({
+        title: "Importación Completada",
+        description: `${selectedUsers.length} usuarios han sido importados correctamente. Deberán usar la función 'Restablecer Contraseña' para su primer acceso.`,
+        duration: 7000
+      });
+      
+      await loadUsers();
+      setIsUserImportOpen(false);
+
+    } catch (error) {
+       console.error("Failed to import users:", error);
+       toast({
+        variant: "destructive",
+        title: "Error de Importación",
+        description: `Ha ocurrido un error al importar los usuarios.`,
+      });
     }
   };
   
@@ -118,12 +153,16 @@ export default function UserManagementPage() {
           <CardTitle>Gestión de Usuarios</CardTitle>
           <CardDescription>Administra los usuarios de la aplicación, asigna roles y gestiona permisos.</CardDescription>
         </div>
-        {/*
-        <Button onClick={handleAddNew}>
-            <PlusCircle className="mr-2 h-4 w-4" />
-            Añadir Nuevo Usuario
-        </Button>
-        */}
+        <div className="flex items-center gap-2">
+            <Button variant="outline" onClick={() => setIsUserImportOpen(true)}>
+                <Import className="mr-2 h-4 w-4" />
+                Importar Usuarios
+            </Button>
+            <Button onClick={handleAddNew}>
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Añadir Nuevo Usuario
+            </Button>
+        </div>
       </CardHeader>
       <CardContent>
         <div className="rounded-md border">
@@ -162,7 +201,6 @@ export default function UserManagementPage() {
                                     <LogIn className="h-4 w-4" />
                                 </Button>
                             )}
-                            {/*
                             <Button variant="ghost" size="icon" onClick={() => handleEdit(user)}>
                                 <Pencil className="h-4 w-4" />
                             </Button>
@@ -185,7 +223,6 @@ export default function UserManagementPage() {
                                 </AlertDialogFooter>
                                 </AlertDialogContent>
                             </AlertDialog>
-                            */}
                         </TableCell>
                     </TableRow>
                     ))
@@ -208,6 +245,15 @@ export default function UserManagementPage() {
             setIsOpen={setIsFormOpen}
             user={editingUser}
             onSave={handleSave}
+        />
+    )}
+
+    {isUserImportOpen && (
+        <UserImportDialog
+            isOpen={isUserImportOpen}
+            onClose={() => setIsUserImportOpen(false)}
+            onImport={handleImportUsers}
+            existingUsers={users}
         />
     )}
     </>

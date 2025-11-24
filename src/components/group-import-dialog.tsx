@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState, useMemo, useRef } from "react";
@@ -15,7 +16,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Input } from "@/components/ui/input";
 import { getWorkspaceGroups } from "@/services/google-workspace";
-import type { UserGroup as Group } from "@/lib/types";
+import type { UserGroup } from "@/lib/types";
 import { useVirtualizer } from "@tanstack/react-virtual";
 
 
@@ -34,13 +35,13 @@ function ErrorDisplay({ error }: { error: string | null }) {
 interface GroupImportDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  onImport: (selectedGroups: Group[]) => void;
-  existingGroups: Group[];
+  onImport: (selectedGroups: UserGroup[]) => void;
+  existingGroups: UserGroup[];
 }
 
 export function GroupImportDialog({ isOpen, onClose, onImport, existingGroups }: GroupImportDialogProps) {
-  const [allGroups, setAllGroups] = useState<Group[]>([]);
-  const [selectedGroups, setSelectedGroups] = useState<Group[]>([]);
+  const [allGroups, setAllGroups] = useState<UserGroup[]>([]);
+  const [selectedGroups, setSelectedGroups] = useState<UserGroup[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -66,13 +67,12 @@ export function GroupImportDialog({ isOpen, onClose, onImport, existingGroups }:
       getWorkspaceGroups()
         .then((groupsFromApi) => {
           const existingGroupEmails = new Set(existingGroups.map(g => g.id));
-          const mappedGroups: Group[] = groupsFromApi
+          const mappedGroups: UserGroup[] = groupsFromApi
             .map((g: any) => ({
               id: g.email,
               name: g.name,
               description: g.description || '',
               userIds: [], // This will be populated later
-              membersCount: g.directMembersCount || '0'
             }))
             .filter(g => g.id && !existingGroupEmails.has(g.id));
 
@@ -109,7 +109,7 @@ export function GroupImportDialog({ isOpen, onClose, onImport, existingGroups }:
   });
 
 
-  const handleSelectGroup = (group: Group, checked: boolean | "indeterminate") => {
+  const handleSelectGroup = (group: UserGroup, checked: boolean | "indeterminate") => {
     if (checked) {
       setSelectedGroups((prev) => [...prev, group]);
     } else {
