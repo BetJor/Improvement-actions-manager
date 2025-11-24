@@ -1,4 +1,5 @@
 
+
 import { collection, getDocs, doc, addDoc, query, orderBy, updateDoc, deleteDoc, writeBatch, where, getDoc, setDoc, limit, arrayRemove } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { ImprovementActionType, ActionCategory, ActionSubcategory, AffectedArea, MasterDataItem, ResponsibilityRole, Center } from '@/lib/types';
@@ -345,11 +346,11 @@ export async function addMasterDataItem(collectionName: string, item: Omit<Maste
 export async function updateMasterDataItem(collectionName: string, itemId: string, item: Partial<Omit<MasterDataItem, 'id'>>): Promise<void> {
   const docRef = doc(db, collectionName, itemId);
   const dataToSave = sanitizeDataForFirestore(item);
-  await setDoc(docRef, dataToSave, { merge: false })
+  setDoc(docRef, dataToSave, { merge: true })
     .catch(async (serverError) => {
         const permissionError = new FirestorePermissionError({
             path: docRef.path,
-            operation: 'write', // Using write because setDoc can overwrite
+            operation: 'update',
             requestResourceData: dataToSave,
         } satisfies SecurityRuleContext);
         errorEmitter.emit('permission-error', permissionError);

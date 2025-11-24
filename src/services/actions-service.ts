@@ -282,7 +282,7 @@ export async function createAction(data: CreateActionData, masterData: any): Pro
     newActionData.readers = readers;
     newActionData.authors = authors;
 
-    await setDoc(docRef, sanitizeDataForFirestore(newActionData))
+    setDoc(docRef, sanitizeDataForFirestore(newActionData))
       .catch(async (serverError) => {
         const permissionError = new FirestorePermissionError({
             path: docRef.path,
@@ -589,7 +589,7 @@ async function handleBisCreation(originalAction: ImprovementAction): Promise<{ c
 
 export async function addCommentToAction(actionId: string, comment: ActionComment): Promise<void> {
     const actionDocRef = doc(db, 'actions', actionId);
-    await updateDoc(actionDocRef, {
+    updateDoc(actionDocRef, {
         comments: arrayUnion(comment)
     }).catch(async (serverError) => {
         const permissionError = new FirestorePermissionError({
@@ -606,7 +606,7 @@ export async function addCommentToAction(actionId: string, comment: ActionCommen
 export async function toggleFollowAction(actionId: string, userId: string): Promise<void> {
     const actionDocRef = doc(db, 'actions', actionId);
     
-    await runTransaction(db, async (transaction) => {
+    runTransaction(db, async (transaction) => {
         const actionDoc = await transaction.get(actionDocRef);
         if (!actionDoc.exists()) {
             throw "Document does not exist!";
@@ -684,5 +684,6 @@ async function getPermissionsForState(action: ImprovementAction, newStatus: Impr
 
     return { readers: combinedReaders, authors: [...new Set(newAuthors)] };
 }
+
 
 
