@@ -4,10 +4,12 @@
  * This service handles authentication and provides methods to fetch data from Google Workspace.
  */
 import { google } from 'googleapis';
+import fs from 'fs';
+import path from 'path';
 
 // --- CONFIGURACIÓ IMPORTANT ---
 // Pots canviar aquest email o usar una variable d'entorn
-const WORKSPACE_ADMIN_SUBJECT = process.env.WORKSPACE_ADMIN_EMAIL || 'svc-gcds@costaisa.com';
+const WORKSPACE_ADMIN_SUBJECT = process.env.WORKSPACE_ADMIN_EMAIL || 'dcampillo@costaisa.com';
 // ---
 
 // --- ATENCIÓ: Tots aquests permisos han d'estar autoritzats a la consola de Google ---
@@ -19,42 +21,52 @@ const WORKSPACE_SCOPES = [
     'https://www.googleapis.com/auth/admin.directory.group.member.readonly',
 ];
 
-/**
- * Creates an authenticated GoogleAuth client for the Admin SDK.
- * This client uses a service account and impersonates a user in the target domain.
- * @returns A promise that resolves to an authenticated auth client.
- */
-async function getAuthClient() {
-    console.log(`[GoogleWorkspaceService] Attempting to get auth client for subject: ${WORKSPACE_ADMIN_SUBJECT}`);
-    // La variable d'entorn GOOGLE_APPLICATION_CREDENTIALS s'utilitzarà automàticament.
-    const auth = new google.auth.GoogleAuth({
-        scopes: WORKSPACE_SCOPES,
-        clientOptions: {
-            subject: WORKSPACE_ADMIN_SUBJECT,
-        },
-    });
+let admin: ReturnType<typeof google.admin> | null = null;
+
+async function getAdminSdk() {
+    if (admin) {
+        return admin;
+    }
 
     try {
-        const client = await auth.getClient();
-        console.log('[GoogleWorkspaceService] Auth client obtained successfully.');
-        return client;
-    } catch(error: any) {
-        console.error('[GoogleWorkspaceService] Error getting auth client:', error.message);
-        if (process.env.GOOGLE_APPLICATION_CREDENTIALS) {
-            console.log(`[GoogleWorkspaceService] GOOGLE_APPLICATION_CREDENTIALS is set to: ${process.env.GOOGLE_APPLICATION_CREDENTIALS}`);
-        } else {
-            console.warn('[GoogleWorkspaceService] GOOGLE_APPLICATION_CREDENTIALS environment variable is not set.');
+        console.log(`[GoogleWorkspaceService] Initializing Admin SDK client for subject: ${WORKSPACE_ADMIN_SUBJECT}`);
+        
+        const serviceAccountKeyPath = path.resolve('./service-account.json');
+        if (!fs.existsSync(serviceAccountKeyPath)) {
+            throw new Error('service-account.json not found at the root of the project.');
         }
 
+        const keyFile = JSON.parse(fs.readFileSync(serviceAccountKeyPath, 'utf8'));
+
+        const auth = new google.auth.GoogleAuth({
+            credentials: {
+                client_email: keyFile.client_email,
+                private_key: keyFile.private_key,
+            },
+            scopes: WORKSPACE_SCOPES,
+            clientOptions: {
+                subject: WORKSPACE_ADMIN_SUBJECT,
+            }
+        });
+
+        const authClient = await auth.getClient();
+        
+        admin = google.admin({ version: 'directory_v1', auth: authClient as any });
+        console.log('[GoogleWorkspaceService] Admin SDK client initialized successfully.');
+        return admin;
+
+    } catch(error: any) {
+        console.error('[GoogleWorkspaceService] Error initializing Admin SDK client:', error.message);
         if (error.message.includes('unauthorized_client')) {
              throw new Error(`Client not authorized. Please check that the service account has the correct scopes delegated in the Google Admin Console. Required scopes: ${WORKSPACE_SCOPES.join(', ')}`);
         }
         if (error.message.includes('credential')) {
-             throw new Error(`Authentication error. Ensure the GOOGLE_APPLICATION_CREDENTIALS environment variable is set correctly and points to a valid service account file. Original error: ${error.message}`);
+             throw new Error(`Authentication error. Ensure service-account.json is valid. Original error: ${error.message}`);
         }
         throw error;
     }
 }
+
 
 /**
  * Fetches all users from a specified Google Workspace domain with pagination.
@@ -64,14 +76,13 @@ async function getAuthClient() {
 export async function getWorkspaceUsers(domain: string): Promise<any[]> {
     console.log(`[GoogleWorkspaceService] Fetching all users for domain: ${domain}`);
     try {
-        const authClient = await getAuthClient();
-        const admin = google.admin({ version: 'directory_v1', auth: authClient as any });
+        const adminSdk = await getAdminSdk();
 
         let allUsers: any[] = [];
         let pageToken: string | undefined = undefined;
 
         do {
-            const res = await admin.users.list({
+            const res = await adminSdk.users.list({
                 domain: domain,
                 maxResults: 500, // Maximum allowed per page
                 orderBy: 'email',
@@ -105,14 +116,13 @@ export async function getWorkspaceGroups(): Promise<any[]> {
   const domain = 'costaisa.com';
   console.log(`[GoogleWorkspaceService] Fetching all groups for domain: ${domain}`);
   try {
-    const authClient = await getAuthClient();
-    const admin = google.admin({ version: 'directory_v1', auth: authClient as any });
+    const adminSdk = await getAdminSdk();
 
     let allGroups: any[] = [];
     let pageToken: string | undefined = undefined;
 
     do {
-      const res = await admin.groups.list({
+      const res = await adminSdk.groups.list({
         domain,
         maxResults: 200, // Maximum allowed per page
         pageToken,
@@ -146,10 +156,9 @@ export async function getWorkspaceGroups(): Promise<any[]> {
 export async function getWorkspaceGroupById(groupId: string): Promise<any | null> {
     console.log(`[GoogleWorkspaceService] Fetching group by ID: ${groupId}`);
     try {
-        const authClient = await getAuthClient();
-        const admin = google.admin({ version: 'directory_v1', auth: authClient as any });
+        const adminSdk = await getAdminSdk();
 
-        const res = await admin.groups.get({
+        const res = await adminSdk.groups.get({
             groupKey: groupId,
         });
 
@@ -174,8 +183,7 @@ export async function getWorkspaceGroupById(groupId: string): Promise<any | null
  */
 export async function isUserMemberOfGroup(userEmail: string, groupKey: string): Promise<boolean> {
     console.log(`[isUserMemberOfGroup] Starting check for user '${userEmail}' in group '${groupKey}'`);
-    const authClient = await getAuthClient();
-    const admin = google.admin({ version: 'directory_v1', auth: authClient as any });
+    const adminSdk = await getAdminSdk();
     const visitedGroups = new Set<string>(); // To prevent infinite loops with circular nesting
 
     async function checkMembership(currentGroupKey: string): Promise<boolean> {
@@ -190,7 +198,7 @@ export async function isUserMemberOfGroup(userEmail: string, groupKey: string): 
             // Use hasMember to check directly, it's more efficient for direct members.
             try {
                 console.log(`[isUserMemberOfGroup] Checking direct membership of '${userEmail}' in '${currentGroupKey}'...`);
-                const checkRes = await admin.members.hasMember({ groupKey: currentGroupKey, memberKey: userEmail });
+                const checkRes = await adminSdk.members.hasMember({ groupKey: currentGroupKey, memberKey: userEmail });
                 if (checkRes.data.isMember) {
                     console.log(`[isUserMemberOfGroup] User is a DIRECT member of ${currentGroupKey}.`);
                     return true;
@@ -202,7 +210,7 @@ export async function isUserMemberOfGroup(userEmail: string, groupKey: string): 
             
             // Fallback to listing members to check for nested groups.
             console.log(`[isUserMemberOfGroup] Listing members of group '${currentGroupKey}' to check for nested groups...`);
-            const res = await admin.members.list({ groupKey: currentGroupKey });
+            const res = await adminSdk.members.list({ groupKey: currentGroupKey });
             const members = res.data.members;
 
             if (!members || members.length === 0) {
