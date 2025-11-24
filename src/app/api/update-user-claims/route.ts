@@ -47,6 +47,8 @@ export async function POST(request: NextRequest) {
     const body: ImportUserRequest = await request.json();
     const { email, name, avatar, role, password } = body;
 
+    console.log(`[API Route] Processing user import for: ${email}`);
+
     if (!email || !name) {
       return NextResponse.json({ success: false, message: 'Email and name are required' }, { status: 400 });
     }
@@ -62,7 +64,8 @@ export async function POST(request: NextRequest) {
         console.log(`[API Route] User ${email} not found in Firebase Auth. Creating a new user...`);
         
         if (!password) {
-          throw new Error("La contraseña es obligatoria para crear un nuevo usuario.");
+            console.error("[API Route] Password is required to create a new user but was not provided.");
+            throw new Error("La contraseña es obligatoria para crear un nuevo usuario.");
         }
         
         try {
@@ -101,11 +104,16 @@ export async function POST(request: NextRequest) {
     // After a successful user creation/update, we revoke the refresh tokens.
     // This forces the client to get a new ID token with the latest claims on the next request.
     try {
+        console.log(`[API Route] Revoking refresh tokens for user: ${email} (UID: ${userRecord.uid})`);
         await auth.revokeRefreshTokens(userRecord.uid);
         const user = await auth.getUser(userRecord.uid);
         const metadata = user.metadata;
-        const revocationTime = new Date(metadata.tokensValidAfterTime!).getTime() / 1000;
-        console.log(`[API Route] Tokens for ${email} revoked at: ${revocationTime}`);
+        if (metadata.tokensValidAfterTime) {
+          const revocationTime = new Date(metadata.tokensValidAfterTime).getTime() / 1000;
+          console.log(`[API Route] Tokens for ${email} successfully revoked. New tokens must be issued after: ${revocationTime}`);
+        } else {
+           console.log(`[API Route] Tokens for ${email} successfully revoked.`);
+        }
     } catch(e: any) {
         console.error(`[API Route] Failed to revoke refresh tokens for ${userRecord.uid}:`, e.message);
     }
