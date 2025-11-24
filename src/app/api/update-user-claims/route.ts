@@ -11,23 +11,30 @@ interface ImportUserRequest {
 }
 
 /**
- * Creates a user document in Firestore. This should only be called from a secure server environment.
+ * Creates a user document in Firestore if it doesn't already exist.
+ * This function is intended to be used only within a secure server environment (like this API route).
  * @param db - The Firestore admin instance.
  * @param userRecord - The user record from Firebase Authentication.
  * @param userData - Additional data for the user profile.
  */
-async function createUserInFirestore(db: FirebaseFirestore.Firestore, userRecord: import('firebase-admin/auth').UserRecord, userData: Omit<ImportUserRequest, 'email'>) {
-    const userProfile: User = {
-        id: userRecord.uid,
-        name: userData.name,
-        email: userRecord.email!,
-        role: userData.role,
-        avatar: userData.avatar || `https://i.pravatar.cc/150?u=${userRecord.uid}`
-    };
+async function findOrCreateUserInFirestore(db: FirebaseFirestore.Firestore, userRecord: import('firebase-admin/auth').UserRecord, userData: Omit<ImportUserRequest, 'email'>) {
+    const userDocRef = db.collection("users").doc(userRecord.uid);
+    const userDoc = await userDocRef.get();
 
-    const docRef = db.collection("users").doc(userRecord.uid);
-    await docRef.set(userProfile);
-    console.log(`[API Route] Successfully created Firestore document for user: ${userRecord.email}`);
+    if (!userDoc.exists) {
+        console.log(`[API Route] User ${userRecord.email} does not have a Firestore document. Creating one...`);
+        const userProfile: User = {
+            id: userRecord.uid,
+            name: userData.name,
+            email: userRecord.email!,
+            role: userData.role,
+            avatar: userData.avatar || `https://i.pravatar.cc/150?u=${userRecord.uid}`
+        };
+        await userDocRef.set(userProfile);
+        console.log(`[API Route] Successfully created Firestore document for user: ${userRecord.email}`);
+    } else {
+        console.log(`[API Route] User ${userRecord.email} already has a Firestore document.`);
+    }
 }
 
 
@@ -54,7 +61,7 @@ export async function POST(request: NextRequest) {
         try {
           // Generate a secure random password as it's required for creation,
           // but the user will use Google Sign-In or password reset.
-          const randomPassword = Math.random().toString(36).slice(-10) + 'A!';
+          const randomPassword = Math.random().toString(36).slice(-10) + 'A1!';
 
           userRecord = await auth.createUser({
             email: email,
@@ -77,23 +84,15 @@ export async function POST(request: NextRequest) {
     }
     
     // After creating or finding the user in Auth, ensure they exist in Firestore.
-    const userDocRef = db.collection('users').doc(userRecord.uid);
-    const userDoc = await userDocRef.get();
-
-    if (!userDoc.exists) {
-        console.log(`[API Route] User ${email} does not have a Firestore document. Creating one...`);
-        try {
-            await createUserInFirestore(db, userRecord, { name, avatar, role });
-        } catch(firestoreError: any) {
-            console.error(`[API Route] Failed to create Firestore document for ${email}:`, firestoreError);
-            // If we just created the auth user, we should consider rolling it back or logging this inconsistency.
-            if(wasUserCreated) {
-                console.warn(`[API Route] Inconsistency: Auth user ${email} was created, but Firestore doc creation failed.`);
-            }
-            return NextResponse.json({ success: false, message: `Failed to create user profile in database: ${firestoreError.message}` }, { status: 500 });
+    try {
+        await findOrCreateUserInFirestore(db, userRecord, { name, avatar, role });
+    } catch(firestoreError: any) {
+        console.error(`[API Route] Failed to create Firestore document for ${email}:`, firestoreError);
+        // If we just created the auth user, we should consider rolling it back or logging this inconsistency.
+        if(wasUserCreated) {
+            console.warn(`[API Route] Inconsistency: Auth user ${email} was created, but Firestore doc creation failed.`);
         }
-    } else {
-        console.log(`[API Route] User ${email} already has a Firestore document.`);
+        return NextResponse.json({ success: false, message: `Failed to create user profile in database: ${firestoreError.message}` }, { status: 500 });
     }
 
     return NextResponse.json({
