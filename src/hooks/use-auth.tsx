@@ -17,7 +17,7 @@ import {
 import { auth, firebaseApp } from '@/lib/firebase';
 import { usePathname, useRouter } from 'next/navigation';
 import type { User, ImprovementActionType } from '@/lib/types';
-import { getUserById, updateUser, getResponsibilityRoles, getActionTypes } from '@/lib/data';
+import { getUserById, updateUser, getResponsibilityRoles, getActionTypes } from '@/services/users-service';
 
 interface AuthContextType {
   user: User | null;
@@ -122,24 +122,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
-      setLoading(true);
-      await loadFullUser(fbUser);
-      if (fbUser && pathname.includes('/login')) {
-        const redirectUrl = sessionStorage.getItem(REDIRECT_URL_KEY);
-        sessionStorage.removeItem(REDIRECT_URL_KEY);
-        // Use window.location.href for a full page navigation, which is cleaner
-        // for redirecting away from a login page.
-        window.location.href = redirectUrl || '/dashboard';
-      }
+        // Only trigger a full user load if the actual user ID has changed.
+        // This prevents reloads when admin actions (like creating a user)
+        // trigger auth state changes without actually changing the logged-in user.
+        if (fbUser?.uid !== firebaseUser?.uid) {
+            setLoading(true);
+            await loadFullUser(fbUser);
+            
+            // Redirect after login only if we were on the login page
+            if (fbUser && pathname.includes('/login')) {
+                const redirectUrl = sessionStorage.getItem(REDIRECT_URL_KEY);
+                sessionStorage.removeItem(REDIRECT_URL_KEY);
+                window.location.href = redirectUrl || '/dashboard';
+            }
+        }
     });
 
     return () => unsubscribe();
-  }, [pathname, loadFullUser]);
+  }, [pathname, loadFullUser, firebaseUser]);
 
 
   useEffect(() => {
-    // If the user is not being authenticated and is not on the login page,
-    // save the current path and redirect to login.
+    // If the initial load is done and there's still no user, and we are not on the login page, redirect.
     if (!loading && !user && !pathname.includes('/login')) {
       sessionStorage.setItem(REDIRECT_URL_KEY, pathname);
       router.push('/login');
