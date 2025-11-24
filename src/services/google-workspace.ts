@@ -4,8 +4,6 @@
  * This service handles authentication and provides methods to fetch data from Google Workspace.
  */
 import { google } from 'googleapis';
-import fs from 'fs';
-import path from 'path';
 
 // --- CONFIGURACIÓ IMPORTANT ---
 // Pots canviar aquest email o usar una variable d'entorn
@@ -31,21 +29,17 @@ async function getAdminSdk() {
     try {
         console.log(`[GoogleWorkspaceService] Initializing Admin SDK client for subject: ${WORKSPACE_ADMIN_SUBJECT}`);
         
-        const keyPath = process.env.GOOGLE_APPLICATION_CREDENTIALS;
-        if (!keyPath || !fs.existsSync(keyPath)) {
-            throw new Error('GOOGLE_APPLICATION_CREDENTIALS environment variable is not set or file not found.');
-        }
-
-        const keyFile = JSON.parse(fs.readFileSync(keyPath, 'utf8'));
-
-        const auth = new google.auth.JWT({
-            email: keyFile.client_email,
-            key: keyFile.private_key,
+        // Les credencials s'haurien de carregar automàticament des de la variable d'entorn GOOGLE_APPLICATION_CREDENTIALS
+        const auth = new google.auth.GoogleAuth({
             scopes: WORKSPACE_SCOPES,
-            subject: WORKSPACE_ADMIN_SUBJECT,
+            clientOptions: {
+              subject: WORKSPACE_ADMIN_SUBJECT
+            }
         });
+        
+        const authClient = await auth.getClient();
 
-        admin = google.admin({ version: 'directory_v1', auth: auth as any });
+        admin = google.admin({ version: 'directory_v1', auth: authClient as any });
         console.log('[GoogleWorkspaceService] Admin SDK client initialized successfully.');
         return admin;
 
