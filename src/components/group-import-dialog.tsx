@@ -68,9 +68,9 @@ export function GroupImportDialog({ isOpen, onClose, onImport, existingGroups }:
           const existingGroupEmails = new Set(existingGroups.map(g => g.id));
           const mappedGroups: UserGroup[] = groupsFromApi
             .map((g: any) => ({
-              id: g.email,
+              id: g.email, // Use email as the main ID
               name: g.name,
-              userIds: [], // This will be populated later
+              userIds: []
             }))
             .filter(g => g.id && !existingGroupEmails.has(g.id));
 

@@ -19,8 +19,8 @@ import {
     updateWorkflowSettings,
     getLocations,
 } from "@/lib/data";
-import type { MasterDataItem, ActionCategory, ResponsibilityRole, ImprovementActionType, ActionSubcategory } from "@/lib/types";
-import { Loader2 } from "lucide-react";
+import type { MasterDataItem, ActionCategory, ResponsibilityRole, ImprovementActionType, ActionSubcategory, UserGroup } from "@/lib/types";
+import { Loader2, Import } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { arrayMove } from "@dnd-kit/sortable";
@@ -30,6 +30,8 @@ import { PlusCircle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { useToast } from "@/hooks/use-toast";
+import { GroupImportDialog } from "@/components/group-import-dialog";
 
 
 const settingsSchema = z.object({
@@ -42,12 +44,14 @@ type SettingsFormValues = z.infer<typeof settingsSchema>;
 
 export default function SettingsPage() {
     const { user, isAdmin, userRoles } = useAuth();
+    const { toast } = useToast();
     const [masterData, setMasterData] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
     const [activeTab, setActiveTab] = useState<string>("codificacion");
     
     const [isFormOpen, setIsFormOpen] = useState(false);
+    const [isGroupImportOpen, setIsGroupImportOpen] = useState(false);
     const [formConfig, setFormConfig] = useState<{
         collectionName: string;
         item: MasterDataItem | null;
@@ -348,6 +352,33 @@ export default function SettingsPage() {
         { key: 'email', label: 'Email' },
         { key: 'locationResponsibleField', label: 'Campo Responsable'},
     ];
+    
+    const handleImportGroup = async (selectedGroups: UserGroup[]) => {
+      const importPromises = selectedGroups.map(group => {
+        const roleData: Omit<ResponsibilityRole, 'id'> = {
+          name: group.name,
+          email: group.id, // Group email is the ID
+          type: 'Fixed'
+        };
+        return addMasterDataItem('responsibilityRoles', roleData);
+      });
+  
+      try {
+        await Promise.all(importPromises);
+        toast({
+          title: "Importación Completada",
+          description: `${selectedGroups.length} grupos han sido importados como Roles de Responsabilidad.`,
+        });
+        await loadData(activeTab); // Reload data
+      } catch (error) {
+        console.error("Failed to import groups:", error);
+        toast({
+          variant: "destructive",
+          title: "Error de Importación",
+          description: "Ha ocurrido un error al importar los grupos.",
+        });
+      }
+    };
 
 
     return (
@@ -405,7 +436,10 @@ export default function SettingsPage() {
                         <TabsContent value="responsibilityRoles" className="flex-grow mt-4">
                             <Card>
                                 <CardContent className="p-6">
-                                    <div className="flex justify-end mb-4">
+                                    <div className="flex justify-end mb-4 gap-2">
+                                        <Button variant="outline" onClick={() => setIsGroupImportOpen(true)}>
+                                            <Import className="mr-2 h-4 w-4" /> Importar Grups
+                                        </Button>
                                         <Button onClick={handleAddNew} disabled={!canAddItem}>
                                             <PlusCircle className="mr-2 h-4 w-4" /> Añadir Nuevo Rol
                                         </Button>
@@ -499,6 +533,14 @@ export default function SettingsPage() {
                             locations: masterData.locations,
                         }}
                         userIsAdmin={isAdmin}
+                    />
+                 )}
+                 {isGroupImportOpen && (
+                    <GroupImportDialog
+                        isOpen={isGroupImportOpen}
+                        onClose={() => setIsGroupImportOpen(false)}
+                        onImport={handleImportGroup}
+                        existingGroups={masterData?.responsibilityRoles?.data.filter((r: ResponsibilityRole) => r.type === 'Fixed') || []}
                     />
                  )}
                 </>
