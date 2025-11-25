@@ -10,8 +10,10 @@ import type { ImprovementAction } from '@/lib/types';
 
 
 export default function DashboardPage() {
-  const { user, loading: authLoading } = useAuth();
+  const { user, userGroups, loading: authLoading } = useAuth();
   const { actions, isLoading } = useActionState();
+
+  const userGroupEmails = useMemo(() => new Set(userGroups.map(g => g.id)), [userGroups]);
 
   const assignedActions = useMemo(() => {
     if (!user || !actions) return [];
@@ -20,11 +22,9 @@ export default function DashboardPage() {
       // It's a draft I created
       const isCreatorOfDraft = action.status === 'Borrador' && action.creator.id === user.id;
 
-      // It's a draft assigned to my group, even if I didn't create it
-      const isResponsibleForDraft = action.status === 'Borrador' && action.responsibleGroupId === user.email;
-
-      // I am responsible for the analysis
-      const isResponsibleForAnalysis = action.status === 'Pendiente Análisis' && action.responsibleGroupId === user.email;
+      // I am responsible for analysis (directly or through group)
+      const isResponsibleForAnalysis = action.status === 'Pendiente Análisis' && 
+        (action.responsibleGroupId === user.email || userGroupEmails.has(action.responsibleGroupId));
 
       // I am responsible for one of the proposed actions that is not yet implemented
       const isResponsibleForProposedAction = (action.status === 'Pendiente Comprobación' || action.status === 'Pendiente Análisis') &&
@@ -38,10 +38,10 @@ export default function DashboardPage() {
       // I am the creator, responsible for closure
       const isResponsibleForClosure = action.status === 'Pendiente de Cierre' && action.creator.id === user.id;
 
-      return isCreatorOfDraft || isResponsibleForDraft || isResponsibleForAnalysis || isResponsibleForProposedAction || isResponsibleForVerification || isResponsibleForClosure;
+      return isCreatorOfDraft || isResponsibleForAnalysis || isResponsibleForProposedAction || isResponsibleForVerification || isResponsibleForClosure;
     });
 
-  }, [actions, user]);
+  }, [actions, user, userGroupEmails]);
 
 
   if (isLoading || authLoading) {

@@ -20,13 +20,13 @@ import { useAuth } from "@/hooks/use-auth"
 import { Loader2 } from "lucide-react";
 
 export default function MyGroupsPage() {
-  const { user, userGroups, loading } = useAuth();
+  const { userGroups, loading } = useAuth();
   
   return (
     <Card>
       <CardHeader>
         <CardTitle>Mis Grupos</CardTitle>
-        <CardDescription>Estos son los grupos de Google Workspace a los que perteneces según tus permisos.</CardDescription>
+        <CardDescription>Estos son los grupos de responsabilidad a los que perteneces, incluyendo roles fijos y dinámicos basados en tu función.</CardDescription>
       </CardHeader>
       <CardContent>
         <Table>
@@ -42,7 +42,7 @@ export default function MyGroupsPage() {
                 <TableCell colSpan={2} className="h-24 text-center">
                     <div className="flex items-center justify-center gap-2">
                         <Loader2 className="h-5 w-5 animate-spin" />
-                        <span>Cargando tus grupos...</span>
+                        <span>Calculando tus grupos...</span>
                     </div>
                 </TableCell>
               </TableRow>

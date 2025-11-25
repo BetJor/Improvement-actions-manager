@@ -26,7 +26,7 @@ interface AuthContextType {
   loading: boolean;
   isAdmin: boolean;
   userRoles: string[]; // IDs of ResponsibilityRole
-  userGroups: UserGroup[]; // Groups from custom claims
+  userGroups: UserGroup[]; // Groups from custom claims AND resolved roles
   canManageSettings: boolean;
   isImpersonating: boolean;
   impersonateUser: (userToImpersonate: User) => void;
@@ -63,7 +63,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return;
     }
     
-    // Global admins can always manage settings
     const isGlobalAdmin = userToResolve.role === 'Admin';
     
     try {
@@ -73,7 +72,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       const mappedGroups: UserGroup[] = groupsFromClaims.map(g => ({
           id: g,
-          name: g.split('@')[0].replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()), // Heuristic name
+          name: g.split('@')[0].replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
           userIds: []
       }));
       setUserGroups(mappedGroups);
@@ -158,7 +157,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
 
   useEffect(() => {
-    // If the initial load is done and there's still no user, and we are not on the login page, redirect.
     if (!loading && !user && !pathname.includes('/login')) {
       sessionStorage.setItem(REDIRECT_URL_KEY, pathname);
       router.push('/login');
@@ -170,7 +168,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const handleRedirectResult = async () => {
       try {
         const result = await getRedirectResult(auth);
-        // If result is not null, onAuthStateChanged will handle the user loading.
       } catch (error) {
         console.error("Error during sign-in redirect:", error);
       }
@@ -225,8 +222,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         originalUser: originalUser
       }));
       setUser(userToImpersonate);
-      // We pass `null` for fbUser because we can't get claims for another user on the client.
-      // Permissions for impersonated user will be based on their DB role, not claims.
       await resolveUserPermissions(null, userToImpersonate);
       setIsImpersonating(true);
       window.location.reload(); 
