@@ -19,7 +19,7 @@ import { auth, firebaseApp } from '@/lib/firebase';
 import { usePathname, useRouter } from 'next/navigation';
 import type { User, ImprovementActionType, UserGroup } from '@/lib/types';
 import { getUserById, updateUser } from '@/services/users-service';
-import { getResponsibilityRoles, getActionTypes } from '@/services/master-data-service';
+import { getActionTypes, getResponsibilityRoles } from '@/services/master-data-service';
 import { useToast } from './use-toast';
 
 
@@ -69,46 +69,47 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const isGlobalAdmin = userToResolve.role === 'Admin';
     
     try {
-      const idTokenResult = await getIdTokenResult(fbUser, true); // Force refresh
-      const claims = idTokenResult.claims;
-      const groupsFromClaims: string[] = (claims.groups as string[]) || [];
-      
-      const mappedGroups: UserGroup[] = groupsFromClaims.map(g => ({
-          id: g,
-          name: g.split('@')[0].replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
-          userIds: []
-      }));
-      setUserGroups(mappedGroups);
+      // Don't block the UI. Update claims in the background.
+      fetch('/api/update-user-claims', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: fbUser.email }),
+      }).then(async () => {
+          // Once claims are updated, force a token refresh to get them on the client.
+          const idTokenResult = await getIdTokenResult(fbUser, true);
+          const claims = idTokenResult.claims;
+          const groupsFromClaims: string[] = (claims.groups as string[]) || [];
+          
+          const mappedGroups: UserGroup[] = groupsFromClaims.map(g => ({
+              id: g,
+              name: g.split('@')[0].replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+              userIds: []
+          }));
+          setUserGroups(mappedGroups);
 
-      if (mappedGroups.length > 0) {
-        toast({
-            title: `S'han detectat ${mappedGroups.length} grups per al teu usuari.`,
-            description: `Grups: ${mappedGroups.map(g => g.name).join(', ')}`,
-        });
-      }
+          if (mappedGroups.length > 0) {
+            toast({
+                title: `S'han detectat ${mappedGroups.length} grups per al teu usuari.`,
+                description: `Grups: ${mappedGroups.map(g => g.name).join(', ')}`,
+            });
+          }
 
+          const allRoles = await getResponsibilityRoles();
+          const matchedRoles = allRoles
+            .filter(role => role.type === 'Fixed' && groupsFromClaims.includes(role.email || ''))
+            .map(role => role.id!);
+          setUserRoles(matchedRoles);
 
-      const [allRoles, allAmbits] = await Promise.all([
-        getResponsibilityRoles(),
-        getActionTypes(),
-      ]);
-      
-      const matchedRoles = allRoles
-        .filter(role => 
-            (role.type === 'Fixed' && groupsFromClaims.includes(role.email || ''))
-        )
-        .map(role => role.id!);
-        
-      setUserRoles(matchedRoles);
-
-      if (isGlobalAdmin) {
-        setCanManageSettings(true);
-      } else {
-        const isConfigAdmin = allAmbits.some(ambit => 
-          ambit.configAdminRoleIds?.some(adminRoleId => matchedRoles.includes(adminRoleId))
-        );
-        setCanManageSettings(isConfigAdmin);
-      }
+          if (isGlobalAdmin) {
+            setCanManageSettings(true);
+          } else {
+            const allAmbits = await getActionTypes();
+            const isConfigAdmin = allAmbits.some(ambit => 
+              ambit.configAdminRoleIds?.some(adminRoleId => matchedRoles.includes(adminRoleId))
+            );
+            setCanManageSettings(isConfigAdmin);
+          }
+      });
 
     } catch (error) {
       console.error("Failed to resolve user permissions:", error);
@@ -151,6 +152,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
+        // Only trigger a full reload if the UID is actually different.
+        // This prevents re-renders when the token is refreshed in the background.
         if (fbUser?.uid !== firebaseUser?.uid) {
             setLoading(true);
             await loadFullUser(fbUser);

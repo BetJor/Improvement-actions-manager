@@ -171,66 +171,17 @@ export async function getWorkspaceGroupById(groupId: string): Promise<any | null
  */
 export async function isUserMemberOfGroup(userEmail: string, groupKey: string): Promise<boolean> {
     console.log(`[isUserMemberOfGroup] Starting check for user '${userEmail}' in group '${groupKey}'`);
-    const adminSdk = await getAdminSdk();
-    const visitedGroups = new Set<string>(); // To prevent infinite loops with circular nesting
-
-    async function checkMembership(currentGroupKey: string): Promise<boolean> {
-        console.log(`[isUserMemberOfGroup] ==> Checking group: ${currentGroupKey}`);
-        if (visitedGroups.has(currentGroupKey)) {
-            console.log(`[isUserMemberOfGroup] Circular dependency detected for group ${currentGroupKey}. Skipping.`);
-            return false;
+    try {
+        const adminSdk = await getAdminSdk();
+        const res = await adminSdk.members.hasMember({ groupKey: groupKey, memberKey: userEmail });
+        return res.data.isMember || false;
+    } catch (error: any) {
+        if (error.code === 404) {
+             console.warn(`[isUserMemberOfGroup] Group '${groupKey}' not found while checking membership for '${userEmail}'.`);
+             return false;
         }
-        visitedGroups.add(currentGroupKey);
-
-        try {
-            // Use hasMember to check directly, it's more efficient for direct members.
-            try {
-                console.log(`[isUserMemberOfGroup] Checking direct membership of '${userEmail}' in '${currentGroupKey}'...`);
-                const checkRes = await adminSdk.members.hasMember({ groupKey: currentGroupKey, memberKey: userEmail });
-                if (checkRes.data.isMember) {
-                    console.log(`[isUserMemberOfGroup] User is a DIRECT member of ${currentGroupKey}.`);
-                    return true;
-                }
-                 console.log(`[isUserMemberOfGroup] User is NOT a direct member of ${currentGroupKey}.`);
-            } catch (e: any) {
-                console.warn(`[isUserMemberOfGroup] 'hasMember' call failed for group '${currentGroupKey}' (this can be normal). Error: ${e.message}. Proceeding to list members.`);
-            }
-            
-            // Fallback to listing members to check for nested groups.
-            console.log(`[isUserMemberOfGroup] Listing members of group '${currentGroupKey}' to check for nested groups...`);
-            const res = await adminSdk.members.list({ groupKey: currentGroupKey });
-            const members = res.data.members;
-
-            if (!members || members.length === 0) {
-                console.log(`[isUserMemberOfGroup] Group '${currentGroupKey}' has no members.`);
-                return false;
-            }
-
-            console.log(`[isUserMemberOfGroup] Group '${currentGroupKey}' has ${members.length} members. Iterating...`);
-            for (const member of members) {
-                 if (member.type === 'USER' && member.email?.toLowerCase() === userEmail.toLowerCase()) {
-                    console.log(`[isUserMemberOfGroup] Found user '${userEmail}' as a member in group '${currentGroupKey}'.`);
-                    return true;
-                }
-                if (member.type === 'GROUP' && member.id) {
-                    console.log(`[isUserMemberOfGroup] Found nested group '${member.email}'. Recursing...`);
-                    // Recursive call to check the nested group
-                    if (await checkMembership(member.id)) {
-                        console.log(`[isUserMemberOfGroup] User found in nested group '${member.email}'.`);
-                        return true;
-                    }
-                }
-            }
-            console.log(`[isUserMemberOfGroup] User not found in any members of '${currentGroupKey}'.`);
-            return false;
-        } catch (error: any) {
-            console.error(`[isUserMemberOfGroup] Error checking members for group ${currentGroupKey}:`, error.message);
-            // If a group can't be checked, assume the user is not a member of it.
-            return false;
-        }
+        console.error(`[isUserMemberOfGroup] Error checking membership for user '${userEmail}' in group '${groupKey}': ${error.message}`);
+        // In case of other errors, we assume the user is not a member to be safe.
+        return false;
     }
-
-    const result = await checkMembership(groupKey);
-    console.log(`[isUserMemberOfGroup] Final result for user '${userEmail}' in group '${groupKey}': ${result}`);
-    return result;
 }
