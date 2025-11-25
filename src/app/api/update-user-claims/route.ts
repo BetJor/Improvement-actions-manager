@@ -1,113 +1,107 @@
 'use server';
 import { NextRequest, NextResponse } from 'next/server';
 import { getAdminAuth, getAdminFirestore } from '@/lib/firebase-admin';
-import type { User } from '@/lib/types';
+import { isUserMemberOfGroup } from '@/services/google-workspace';
 
-interface ImportUserRequest {
+interface UpdateClaimsRequest {
   email: string;
-  name: string;
-  avatar: string;
-  role: 'Creator' | 'Responsible' | 'Director' | 'Committee' | 'Admin';
-  password?: string;
 }
-
 
 /**
- * Creates a user document in Firestore if it doesn't already exist.
- * This function is intended to be used only within a secure server environment (like this API route).
- * @param db - The Firestore admin instance.
- * @param userRecord - The user record from Firebase Authentication.
- * @param userData - Additional data for the user profile.
+ * POST /api/update-user-claims
+ * This route acts as a secure backend endpoint (like a Cloud Function)
+ * to update a user's custom claims based on their Google Workspace group memberships.
  */
-async function findOrCreateUserInFirestore(db: FirebaseFirestore.Firestore, userRecord: import('firebase-admin/auth').UserRecord, userData: Omit<ImportUserRequest, 'email'>) {
-    const userDocRef = db.collection("users").doc(userRecord.uid);
-    const userDoc = await userDocRef.get();
-
-    if (!userDoc.exists) {
-        console.log(`[API Route] User ${userRecord.email} does not have a Firestore document. Creating one...`);
-        const userProfile: User = {
-            id: userRecord.uid,
-            name: userData.name,
-            email: userRecord.email!,
-            role: userData.role,
-            avatar: userData.avatar || `https://i.pravatar.cc/150?u=${userRecord.uid}`
-        };
-        await userDocRef.set(userProfile);
-        console.log(`[API Route] Successfully created Firestore document for user: ${userRecord.email}`);
-    } else {
-        console.log(`[API Route] User ${userRecord.email} already has a Firestore document.`);
-    }
-}
-
-
 export async function POST(request: NextRequest) {
   try {
     const auth = getAdminAuth();
     const db = getAdminFirestore();
-    const body: ImportUserRequest = await request.json();
-    const { email, name, avatar, role, password } = body;
+    const body: UpdateClaimsRequest = await request.json();
+    const { email } = body;
 
-    console.log(`[API Route] Processing user import for: ${email}`);
-
-    if (!email || !name) {
-      return NextResponse.json({ success: false, message: 'Email and name are required' }, { status: 400 });
+    if (!email) {
+      return NextResponse.json({ error: 'Email is required' }, { status: 400 });
     }
 
-    let userRecord;
-    let wasUserCreated = false;
+    console.log(`[API Route] Processing claims update for user: ${email}`);
 
+    let user;
     try {
-      userRecord = await auth.getUserByEmail(email);
-      console.log(`[API Route] User ${email} already exists in Firebase Auth with UID: ${userRecord.uid}.`);
+      user = await auth.getUserByEmail(email);
+      console.log(`[API Route] User ${email} found in Firebase Auth with UID: ${user.uid}.`);
     } catch (error: any) {
       if (error.code === 'auth/user-not-found') {
         console.log(`[API Route] User ${email} not found in Firebase Auth. Creating a new user...`);
-        
-        if (!password) {
-            console.error("[API Route] Password is required to create a new user but was not provided.");
-            throw new Error("La contraseña es obligatoria para crear un nuevo usuario.");
-        }
-        
         try {
-          userRecord = await auth.createUser({
+          user = await auth.createUser({
             email: email,
-            emailVerified: true,
-            password: password,
-            displayName: name,
-            photoURL: avatar
+            emailVerified: true, // Assume verified as it comes from a trusted source
           });
-          wasUserCreated = true;
-          console.log(`[API Route] Successfully created user ${email} in Auth with UID: ${userRecord.uid}`);
+          console.log(`[API Route] Successfully created user ${email} with UID: ${user.uid}`);
         } catch (createUserError: any) {
-          console.error(`[API Route] Failed to create user ${email} in Auth:`, createUserError);
-          return NextResponse.json({ success: false, message: `Failed to create user in Auth: ${createUserError.message}` }, { status: 500 });
+          console.error(`[API Route] Failed to create user ${email}:`, createUserError);
+          throw new Error(`Failed to create user: ${createUserError.message}`);
         }
       } else {
-        // Handle other auth errors during user fetching
-        console.error(`[API Route] Error fetching user ${email} from Auth:`, error);
-        return NextResponse.json({ success: false, message: error.message || 'An error occurred while fetching user data from Auth.' }, { status: 500 });
+        console.error(`[API Route] Error fetching user ${email}:`, error);
+        throw new Error(error.message || 'An error occurred while fetching user data.');
       }
     }
     
-    // After creating or finding the user in Auth, ensure they exist in Firestore.
-    try {
-        await findOrCreateUserInFirestore(db, userRecord, { name, avatar, role });
-    } catch(firestoreError: any) {
-        console.error(`[API Route] Failed to create Firestore document for ${email}:`, firestoreError);
-        // If we just created the auth user, we should consider rolling it back or logging this inconsistency.
-        if(wasUserCreated) {
-            console.warn(`[API Route] Inconsistency: Auth user ${email} was created, but Firestore doc creation failed.`);
-        }
-        return NextResponse.json({ success: false, message: `Failed to create user profile in database: ${firestoreError.message}` }, { status: 500 });
-    }
+    // --- NEW LOGIC: Fetch groups from correct sources ---
+    const rolesSnapshot = await db.collection('responsibilityRoles').get();
+    const locationsSnapshot = await db.collection('locations').get();
 
-    // After a successful user creation/update, we revoke the refresh tokens.
+    const emailsFromRoles = rolesSnapshot.docs
+      .map(doc => doc.data())
+      .filter(role => role.type === 'Fixed' && role.email)
+      .map(role => role.email);
+
+    const emailsFromLocations = locationsSnapshot.docs.flatMap(doc => {
+        const responsibles = doc.data().responsibles;
+        if (responsibles && typeof responsibles === 'object') {
+            return Object.values(responsibles);
+        }
+        return [];
+    });
+    
+    const allPossibleGroupEmails = [...new Set([...emailsFromRoles, ...emailsFromLocations])].filter(email => typeof email === 'string' && email.includes('@'));
+    
+    console.log(`[API Route] Found ${allPossibleGroupEmails.length} unique potential group emails in Firestore to check against.`);
+
+
+    // Run all membership checks in parallel for performance
+    const membershipChecks = allPossibleGroupEmails.map(groupEmail =>
+      isUserMemberOfGroup(email, groupEmail)
+        .then(isMember => ({ groupEmail, isMember }))
+        .catch(error => {
+          console.warn(`[API Route] Failed to check membership for group ${groupEmail}:`, error);
+          return { groupEmail, isMember: false };
+        })
+    );
+
+    const results = await Promise.all(membershipChecks);
+
+    const userGroups = results
+      .filter(result => result.isMember)
+      .map(result => result.groupEmail);
+
+    console.log(`[API Route] User ${email} belongs to ${userGroups.length} groups: [${userGroups.join(', ')}]`);
+
+    await auth.setCustomUserClaims(user.uid, {
+      groups: userGroups,
+      updatedAt: Date.now(),
+    });
+    
+    console.log(`[API Route] Successfully updated custom claims for user: ${email}`);
+
+    // After a successful claims update, we revoke the refresh tokens.
     // This forces the client to get a new ID token with the latest claims on the next request.
     try {
-        console.log(`[API Route] Revoking refresh tokens for user: ${email} (UID: ${userRecord.uid})`);
-        await auth.revokeRefreshTokens(userRecord.uid);
-        const user = await auth.getUser(userRecord.uid);
-        const metadata = user.metadata;
+        console.log(`[API Route] Revoking refresh tokens for user: ${email} (UID: ${user.uid})`);
+        await auth.revokeRefreshTokens(user.uid);
+        const updatedUser = await auth.getUser(user.uid); // Re-fetch user to get metadata
+        const metadata = updatedUser.metadata;
         if (metadata.tokensValidAfterTime) {
           const revocationTime = new Date(metadata.tokensValidAfterTime).getTime() / 1000;
           console.log(`[API Route] Tokens for ${email} successfully revoked. New tokens must be issued after: ${revocationTime}`);
@@ -115,19 +109,21 @@ export async function POST(request: NextRequest) {
            console.log(`[API Route] Tokens for ${email} successfully revoked.`);
         }
     } catch(e: any) {
-        console.error(`[API Route] Failed to revoke refresh tokens for ${userRecord.uid}:`, e.message);
+        console.error(`[API Route] Failed to revoke refresh tokens for ${user.uid}:`, e.message);
     }
 
 
     return NextResponse.json({
       success: true,
-      message: `User ${email} has been successfully processed.`,
+      email,
+      groups: userGroups,
+      message: `Updated custom claims with ${userGroups.length} groups`,
     });
 
   } catch (error: any) {
-    console.error('[API Route] Critical error in user processing route:', error);
+    console.error('[API Route] Critical error in update-user-claims:', error);
     return NextResponse.json(
-      { success: false, message: error.message || 'An unexpected error occurred on the server.' },
+      { error: error.message || 'Failed to update custom claims' },
       { status: 500 }
     );
   }
