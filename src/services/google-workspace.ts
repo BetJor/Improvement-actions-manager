@@ -174,14 +174,24 @@ export async function isUserMemberOfGroup(userEmail: string, groupKey: string): 
     try {
         const adminSdk = await getAdminSdk();
         const res = await adminSdk.members.hasMember({ groupKey: groupKey, memberKey: userEmail });
-        return res.data.isMember || false;
+        
+        // hasMember returns a 200 response with a boolean isMember property
+        if (res.status === 200 && typeof res.data.isMember === 'boolean') {
+            return res.data.isMember;
+        }
+        // If the response is unexpected, assume not a member for safety.
+        console.warn(`[isUserMemberOfGroup] Unexpected response from hasMember for group '${groupKey}'. Status: ${res.status}`);
+        return false;
+        
     } catch (error: any) {
+        // A 404 error here means either the group or the member doesn't exist.
+        // In either case, the user is not a member of the group.
         if (error.code === 404) {
-             console.warn(`[isUserMemberOfGroup] Group '${groupKey}' not found while checking membership for '${userEmail}'.`);
+             console.warn(`[isUserMemberOfGroup] Group '${groupKey}' or user '${userEmail}' not found.`);
              return false;
         }
+        // For other errors, log it and return false to be safe.
         console.error(`[isUserMemberOfGroup] Error checking membership for user '${userEmail}' in group '${groupKey}': ${error.message}`);
-        // In case of other errors, we assume the user is not a member to be safe.
         return false;
     }
 }
