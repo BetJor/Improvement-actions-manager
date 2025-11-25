@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
@@ -19,6 +20,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import type { User, ImprovementActionType, UserGroup } from '@/lib/types';
 import { getUserById, updateUser } from '@/services/users-service';
 import { getResponsibilityRoles, getActionTypes } from '@/services/master-data-service';
+import { useToast } from './use-toast';
 
 
 interface AuthContextType {
@@ -54,6 +56,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [canManageSettings, setCanManageSettings] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
+  const { toast } = useToast();
 
   const resolveUserPermissions = useCallback(async (fbUser: FirebaseUser | null, userToResolve: User | null) => {
     if (!fbUser || !userToResolve) {
@@ -66,7 +69,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const isGlobalAdmin = userToResolve.role === 'Admin';
     
     try {
-      const idTokenResult = await getIdTokenResult(fbUser);
+      const idTokenResult = await getIdTokenResult(fbUser, true); // Force refresh
       const claims = idTokenResult.claims;
       const groupsFromClaims: string[] = (claims.groups as string[]) || [];
       
@@ -76,6 +79,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           userIds: []
       }));
       setUserGroups(mappedGroups);
+
+      if (mappedGroups.length > 0) {
+        toast({
+            title: `S'han detectat ${mappedGroups.length} grups per al teu usuari.`,
+            description: `Grups: ${mappedGroups.map(g => g.name).join(', ')}`,
+        });
+      }
+
 
       const [allRoles, allAmbits] = await Promise.all([
         getResponsibilityRoles(),
@@ -105,7 +116,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUserGroups([]);
       setCanManageSettings(isGlobalAdmin);
     }
-  }, []);
+  }, [toast]);
 
   const loadFullUser = useCallback(async (fbUser: FirebaseUser | null, forceReload: boolean = false) => {
     if (fbUser) {
