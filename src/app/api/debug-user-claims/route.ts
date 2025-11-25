@@ -21,23 +21,12 @@ export async function POST(request: NextRequest) {
 
     // --- Logic copied from update-user-claims route ---
     const rolesSnapshot = await db.collection('responsibilityRoles').get();
-    const locationsSnapshot = await db.collection('locations').get();
-
-    const emailsFromRoles = rolesSnapshot.docs
-      .map(doc => doc.data())
-      .filter(role => role.type === 'Fixed' && role.email)
-      .map(role => role.email);
-
-    const emailsFromLocations = locationsSnapshot.docs.flatMap(doc => {
-        const responsibles = doc.data().responsibles;
-        if (responsibles && typeof responsibles === 'object') {
-            return Object.values(responsibles);
-        }
-        return [];
-    });
     
-    const allPotentialGroupEmails = [...new Set([...emailsFromRoles, ...emailsFromLocations])].filter(email => typeof email === 'string' && email.includes('@'));
-    
+    // Extract all potential group emails directly from the responsibilityRoles collection
+    const allPotentialGroupEmails = rolesSnapshot.docs
+      .map(doc => doc.data().email) // Get the email field
+      .filter(email => typeof email === 'string' && email.includes('@')); // Filter for valid emails
+
     console.log(`[API Debug] Found ${allPotentialGroupEmails.length} unique potential group emails in Firestore to check against.`);
 
     // Run all membership checks in parallel for performance

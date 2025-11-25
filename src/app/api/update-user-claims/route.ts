@@ -50,23 +50,13 @@ export async function POST(request: NextRequest) {
     
     // --- NEW LOGIC: Fetch groups from correct sources ---
     const rolesSnapshot = await db.collection('responsibilityRoles').get();
-    const locationsSnapshot = await db.collection('locations').get();
-
-    const emailsFromRoles = rolesSnapshot.docs
-      .map(doc => doc.data())
-      .filter(role => role.type === 'Fixed' && role.email)
-      .map(role => role.email);
-
-    const emailsFromLocations = locationsSnapshot.docs.flatMap(doc => {
-        const responsibles = doc.data().responsibles;
-        if (responsibles && typeof responsibles === 'object') {
-            return Object.values(responsibles);
-        }
-        return [];
-    });
     
-    const allPossibleGroupEmails = [...new Set([...emailsFromRoles, ...emailsFromLocations])].filter(email => typeof email === 'string' && email.includes('@'));
-    
+    // Extract all potential group emails directly from the responsibilityRoles collection
+    // This is simpler and more reliable than scanning 'locations'
+    const allPossibleGroupEmails = rolesSnapshot.docs
+      .map(doc => doc.data().email) // Get the email field from each role
+      .filter(email => typeof email === 'string' && email.includes('@')); // Filter for valid emails
+
     console.log(`[API Route] Found ${allPossibleGroupEmails.length} unique potential group emails in Firestore to check against.`);
 
 
